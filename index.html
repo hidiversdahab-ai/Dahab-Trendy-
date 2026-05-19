@@ -23,7 +23,7 @@ body{background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));color:v
 .nb.exp-btn{background:rgba(201,168,76,0.12);color:var(--gold);border-color:var(--gold)}
 .nb.imp-btn{background:rgba(74,144,217,0.12);color:#7ab8f5;border-color:#4A90D9}
 /* LAYOUT */
-.page{display:none;padding:16px;max-width:1200px;margin:0 auto}
+.page{display:none;padding:16px;max-width:1200px;width:100%;margin:0 auto;box-sizing:border-box}
 .page.on{display:block}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
@@ -152,6 +152,30 @@ select option{background:#1a1a2e;color:var(--text)}
 .menu-cat-tab.cat-shisha.act{background:linear-gradient(135deg,#5d3a8e,#8e44ad);border-color:#8e44ad;}
 .menu-cat-tab.cat-other.act{background:linear-gradient(135deg,#7f8c8d,#95a5a6);border-color:#95a5a6;}
 .menu-cat-tab.cat-all.act{background:linear-gradient(135deg,var(--gold),var(--gold2));border-color:var(--gold);}
+.menu-cat-tab.cat-soup.act{background:linear-gradient(135deg,#d35400,#e67e22);border-color:#e67e22;}
+.menu-cat-tab.cat-salad.act{background:linear-gradient(135deg,#27ae60,#52be80);border-color:#52be80;}
+.menu-cat-tab.cat-pasta.act{background:linear-gradient(135deg,#c0392b,#e74c3c);border-color:#e74c3c;}
+.menu-cat-tab.cat-grill.act{background:linear-gradient(135deg,#922b21,#e74c3c);border-color:#e74c3c;}
+.menu-cat-tab.cat-breakfast.act{background:linear-gradient(135deg,#d4ac0d,#f1c40f);border-color:#f1c40f;}
+.menu-cat-tab.cat-pizza.act{background:linear-gradient(135deg,#a93226,#e74c3c);border-color:#e74c3c;}
+.menu-cat-tab.cat-sandwiches.act{background:linear-gradient(135deg,#1f618d,#2980b9);border-color:#2980b9;}
+.menu-cat-tab.cat-rice.act{background:linear-gradient(135deg,#b7950b,#d4ac0d);border-color:#d4ac0d;}
+.menu-editor-cat-stripe.cat-soup{background:linear-gradient(90deg,#d35400,#e67e22);}
+.menu-editor-cat-stripe.cat-salad{background:linear-gradient(90deg,#27ae60,#52be80);}
+.menu-editor-cat-stripe.cat-pasta{background:linear-gradient(90deg,#c0392b,#e74c3c);}
+.menu-editor-cat-stripe.cat-grill{background:linear-gradient(90deg,#922b21,#e74c3c);}
+.menu-editor-cat-stripe.cat-breakfast{background:linear-gradient(90deg,#d4ac0d,#f1c40f);}
+.menu-editor-cat-stripe.cat-pizza{background:linear-gradient(90deg,#a93226,#e74c3c);}
+.menu-editor-cat-stripe.cat-sandwiches{background:linear-gradient(90deg,#1f618d,#2980b9);}
+.menu-editor-cat-stripe.cat-rice{background:linear-gradient(90deg,#b7950b,#d4ac0d);}
+.menu-item-card.cat-soup::before{background:linear-gradient(90deg,#d35400,#e67e22);}
+.menu-item-card.cat-salad::before{background:linear-gradient(90deg,#27ae60,#52be80);}
+.menu-item-card.cat-pasta::before{background:linear-gradient(90deg,#c0392b,#e74c3c);}
+.menu-item-card.cat-grill::before{background:linear-gradient(90deg,#922b21,#e74c3c);}
+.menu-item-card.cat-breakfast::before{background:linear-gradient(90deg,#d4ac0d,#f1c40f);}
+.menu-item-card.cat-pizza::before{background:linear-gradient(90deg,#a93226,#e74c3c);}
+.menu-item-card.cat-sandwiches::before{background:linear-gradient(90deg,#1f618d,#2980b9);}
+.menu-item-card.cat-rice::before{background:linear-gradient(90deg,#b7950b,#d4ac0d);}
 
 .menu-section-header{display:flex;align-items:center;gap:10px;margin:16px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--bdr);}
 .menu-section-icon{font-size:28px;}
@@ -189,6 +213,9 @@ select option{background:#1a1a2e;color:var(--text)}
 .menu-editor-cat-stripe.cat-shisha{background:linear-gradient(90deg,#5d3a8e,#8e44ad);}
 .menu-editor-cat-stripe.cat-other{background:linear-gradient(90deg,#7f8c8d,#95a5a6);}
 
+.pos-tbl-btn{padding:5px 9px;border-radius:7px;border:1.5px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.07);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .15s;}
+.pos-tbl-btn:hover{background:rgba(201,168,76,0.2);border-color:var(--gold);}
+.pos-tbl-btn.act{background:var(--gold);color:#1a1a2e;border-color:var(--gold);}
 .rest-stats-bar{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
 .rest-stat-mini{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
 .rest-stat-mini-icon{font-size:22px;}
@@ -816,6 +843,7 @@ select option{background:#1a1a2e;color:var(--text)}
 <button class="nb" onclick="goPage('debt',this)" style="background:rgba(231,76,60,0.12);color:#e74c3c;border-color:rgba(231,76,60,0.4);font-weight:700;">💳 <span class="t" data-ar="مديونيات" data-en="Debt">مديونيات</span></button>
 <button class="nb" onclick="goPage('invoice',this)">📄 <span class="t" data-ar="الفاتورة" data-en="Invoice">Invoice</span></button>
 <button class="nb" onclick="goPage('restaurant',this)">🍽️ <span class="t" data-ar="المطعم" data-en="Restaurant">Restaurant</span></button>
+<button class="nb" onclick="goPage('tours',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;">🏔️ <span class="t" data-ar="رحلات" data-en="Tours">رحلات</span></button>
 <button class="nb" onclick="goPage('settings',this)">⚙️ <span class="t" data-ar="الإعدادات" data-en="Settings">Settings</span></button>
 <button class="nb" onclick="goPage('analytics',this)" style="background:rgba(155,89,182,0.12);color:#c39bd3;border-color:rgba(155,89,182,0.4);">📊 Analytics</button>
 <button class="nb" onclick="goPage('guestsreg',this)" style="background:rgba(22,160,133,0.12);color:#1abc9c;border-color:rgba(22,160,133,0.4);font-weight:700;">📋 <span class="t" data-ar="سجل الضيوف" data-en="Guests Register">Guests Register</span></button>
@@ -2032,8 +2060,8 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 </div>
 
 <!-- ═══════ TOUR MODAL ═══════ -->
-<div class="modal" id="tour-modal">
-<div class="modal-box" style="max-width:480px;">
+<div class="ovl" id="tour-modal">
+<div class="mdl" style="max-width:480px;">
   <div class="mtitle">🏔️ <span id="tour-modal-title">إضافة رحلة جديدة</span></div>
 
   <div class="g2">
@@ -2115,8 +2143,8 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 </div>
 
 <!-- ═══════ TOUR INVOICE MODAL (كاش) ═══════ -->
-<div class="modal" id="tour-inv-modal">
-<div class="modal-box" style="max-width:480px;">
+<div class="ovl" id="tour-inv-modal">
+<div class="mdl" style="max-width:480px;">
   <div class="mtitle">📄 فاتورة رحلة</div>
   <div id="tour-inv-preview" class="invp" style="margin-bottom:12px;"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -2200,6 +2228,28 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
       <div class="card" style="margin-bottom:10px;">
         <div class="ctitle">🧾 الطلب الحالي</div>
         <div class="fld" style="margin-bottom:10px;">
+          <label>🪑 رقم الترابيزة</label>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;" id="pos-table-btns">
+            <button type="button" onclick="setPOSTable(this,'1')"  class="pos-tbl-btn">1</button>
+            <button type="button" onclick="setPOSTable(this,'2')"  class="pos-tbl-btn">2</button>
+            <button type="button" onclick="setPOSTable(this,'3')"  class="pos-tbl-btn">3</button>
+            <button type="button" onclick="setPOSTable(this,'4')"  class="pos-tbl-btn">4</button>
+            <button type="button" onclick="setPOSTable(this,'5')"  class="pos-tbl-btn">5</button>
+            <button type="button" onclick="setPOSTable(this,'6')"  class="pos-tbl-btn">6</button>
+            <button type="button" onclick="setPOSTable(this,'7')"  class="pos-tbl-btn">7</button>
+            <button type="button" onclick="setPOSTable(this,'8')"  class="pos-tbl-btn">8</button>
+            <button type="button" onclick="setPOSTable(this,'9')"  class="pos-tbl-btn">9</button>
+            <button type="button" onclick="setPOSTable(this,'10')" class="pos-tbl-btn">10</button>
+            <button type="button" onclick="setPOSTable(this,'11')" class="pos-tbl-btn">11</button>
+            <button type="button" onclick="setPOSTable(this,'12')" class="pos-tbl-btn">12</button>
+            <button type="button" onclick="setPOSTable(this,'13')" class="pos-tbl-btn">13</button>
+            <button type="button" onclick="setPOSTable(this,'14')" class="pos-tbl-btn">14</button>
+            <button type="button" onclick="setPOSTable(this,'15')" class="pos-tbl-btn">15</button>
+            <button type="button" onclick="setPOSTable(this,'')"   class="pos-tbl-btn" style="color:#e74c3c;border-color:rgba(231,76,60,0.4);">✕</button>
+          </div>
+          <input id="pos-table" placeholder="أو اكتب رقم الترابيزة..." style="padding:6px 8px;font-size:12px;">
+        </div>
+        <div class="fld" style="margin-bottom:10px;">
           <label>🏨 ربط بغرفة (اختياري)</label>
           <select id="pos-room-select" style="padding:6px 8px;font-size:12px;">
             <option value="">— بدون غرفة —</option>
@@ -2250,6 +2300,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 <div id="rest-view-menu" style="display:none;">
   <div class="flex" style="margin-bottom:12px;flex-wrap:wrap;gap:8px;">
     <button class="btn bg" onclick="openMenuItemM()">+ إضافة صنف</button>
+    <button class="btn" onclick="openDrinksImport()" style="background:linear-gradient(135deg,rgba(26,188,156,0.2),rgba(22,160,133,0.2));color:#1abc9c;border:1px solid rgba(26,188,156,0.5);font-weight:700;">🥤 استيراد قائمة مشروبات</button>
     <!-- Category filter for editor -->
     <select id="menu-editor-cat-filter" onchange="renderMenuEditor()" style="width:auto;padding:6px 10px;font-size:12px;">
       <option value="">كل الفئات</option>
@@ -2264,6 +2315,35 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 
 </div>
 
+
+<!-- ══ DRINKS IMPORT MODAL ══ -->
+<div class="ovl" id="drinks-import-modal">
+<div class="mdl" style="max-width:620px;">
+  <div class="flex" style="justify-content:space-between;margin-bottom:14px;">
+    <div class="mtitle" style="margin-bottom:0;">🥤 استيراد قائمة المشروبات</div>
+    <button onclick="closeM('drinks-import-modal')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;">✕</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">اختر الأصناف اللي عايز تضيفها — هتتضاف مباشرة لقائمتك</div>
+
+  <!-- أزرار تحديد الكل / إلغاء الكل / تصفية -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+    <button type="button" onclick="drinksSelectAll()" style="padding:5px 12px;border-radius:7px;border:1px solid rgba(26,188,156,0.5);background:rgba(26,188,156,0.1);color:#1abc9c;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">✅ تحديد الكل</button>
+    <button type="button" onclick="drinksSelectNone()" style="padding:5px 12px;border-radius:7px;border:1px solid rgba(231,76,60,0.4);background:rgba(231,76,60,0.08);color:#e74c3c;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">✕ إلغاء الكل</button>
+    <span id="drinks-selected-count" style="font-size:11px;color:var(--gold);font-weight:700;margin-right:auto;">0 صنف محدد</span>
+  </div>
+
+  <!-- فلتر الفئات -->
+  <div id="drinks-cat-filter-tabs" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;"></div>
+
+  <!-- قائمة الأصناف -->
+  <div id="drinks-items-list" style="max-height:380px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;padding:2px;"></div>
+
+  <div class="flex mt" style="gap:8px;">
+    <button class="btn bg" onclick="importSelectedDrinks()" style="flex:2;font-size:14px;font-weight:700;">💾 إضافة المحدد للمنيو</button>
+    <button class="btn bb" onclick="closeM('drinks-import-modal')" style="flex:1;">إلغاء</button>
+  </div>
+</div>
+</div>
 <!-- ══ MENU ITEM MODAL ══ -->
 <div class="ovl" id="menu-item-modal">
 <div class="mdl" style="max-width:460px;">
@@ -2275,16 +2355,24 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   <!-- Category Quick Picker -->
   <div style="margin-bottom:14px;">
     <label style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:8px;">الفئة *</label>
-    <div id="mi-cat-picker" style="display:flex;gap:7px;flex-wrap:wrap;">
-      <button type="button" onclick="selectMenuCat(this,'لحوم 🥩')" data-cat="لحوم 🥩" class="mi-cat-btn" style="padding:7px 12px;border-radius:8px;border:1.5px solid rgba(231,76,60,0.4);background:rgba(231,76,60,0.08);color:#e74c3c;cursor:pointer;font-size:12px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🥩 لحوم</button>
-      <button type="button" onclick="selectMenuCat(this,'فراخ 🍗')" data-cat="فراخ 🍗" class="mi-cat-btn" style="padding:7px 12px;border-radius:8px;border:1.5px solid rgba(230,126,34,0.4);background:rgba(230,126,34,0.08);color:#e67e22;cursor:pointer;font-size:12px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🍗 فراخ</button>
-      <button type="button" onclick="selectMenuCat(this,'أسماك 🐟')" data-cat="أسماك 🐟" class="mi-cat-btn" style="padding:7px 12px;border-radius:8px;border:1.5px solid rgba(52,152,219,0.4);background:rgba(52,152,219,0.08);color:#3498db;cursor:pointer;font-size:12px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🐟 أسماك</button>
-      <button type="button" onclick="selectMenuCat(this,'مشروبات 🥤')" data-cat="مشروبات 🥤" class="mi-cat-btn" style="padding:7px 12px;border-radius:8px;border:1.5px solid rgba(26,188,156,0.4);background:rgba(26,188,156,0.08);color:#1abc9c;cursor:pointer;font-size:12px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🥤 مشروبات</button>
-      <button type="button" onclick="selectMenuCat(this,'حلويات 🍰')" data-cat="حلويات 🍰" class="mi-cat-btn" style="padding:7px 12px;border-radius:8px;border:1.5px solid rgba(155,89,182,0.4);background:rgba(155,89,182,0.08);color:#9b59b6;cursor:pointer;font-size:12px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🍰 حلويات</button>
-      <button type="button" onclick="selectMenuCat(this,'وجبات خفيفة 🥪')" data-cat="وجبات خفيفة 🥪" class="mi-cat-btn" style="padding:7px 12px;border-radius:8px;border:1.5px solid rgba(39,174,96,0.4);background:rgba(39,174,96,0.08);color:#27ae60;cursor:pointer;font-size:12px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🥪 وجبات خفيفة</button>
-      <button type="button" onclick="selectMenuCat(this,'شيشة 💨')" data-cat="شيشة 💨" class="mi-cat-btn" style="padding:7px 12px;border-radius:8px;border:1.5px solid rgba(142,68,173,0.4);background:rgba(142,68,173,0.08);color:#8e44ad;cursor:pointer;font-size:12px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">💨 شيشة</button>
-      <button type="button" onclick="selectMenuCat(this,'أكل 🍽️')" data-cat="أكل 🍽️" class="mi-cat-btn" style="padding:7px 12px;border-radius:8px;border:1.5px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.08);color:var(--gold);cursor:pointer;font-size:12px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🍽️ أكل عام</button>
-      <button type="button" onclick="selectMenuCat(this,'أخرى 📌')" data-cat="أخرى 📌" class="mi-cat-btn" style="padding:7px 12px;border-radius:8px;border:1.5px solid rgba(127,140,141,0.4);background:rgba(127,140,141,0.08);color:#95a5a6;cursor:pointer;font-size:12px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">📌 أخرى</button>
+    <div id="mi-cat-picker" style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button type="button" onclick="selectMenuCat(this,'لحوم 🥩')" data-cat="لحوم 🥩" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(231,76,60,0.4);background:rgba(231,76,60,0.08);color:#e74c3c;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🥩 لحوم</button>
+      <button type="button" onclick="selectMenuCat(this,'فراخ 🍗')" data-cat="فراخ 🍗" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(230,126,34,0.4);background:rgba(230,126,34,0.08);color:#e67e22;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🍗 فراخ</button>
+      <button type="button" onclick="selectMenuCat(this,'أسماك 🐟')" data-cat="أسماك 🐟" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(52,152,219,0.4);background:rgba(52,152,219,0.08);color:#3498db;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🐟 أسماك</button>
+      <button type="button" onclick="selectMenuCat(this,'مشروبات 🥤')" data-cat="مشروبات 🥤" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(26,188,156,0.4);background:rgba(26,188,156,0.08);color:#1abc9c;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🥤 مشروبات</button>
+      <button type="button" onclick="selectMenuCat(this,'حلويات 🍰')" data-cat="حلويات 🍰" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(155,89,182,0.4);background:rgba(155,89,182,0.08);color:#9b59b6;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🍰 حلويات</button>
+      <button type="button" onclick="selectMenuCat(this,'وجبات خفيفة 🥪')" data-cat="وجبات خفيفة 🥪" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(39,174,96,0.4);background:rgba(39,174,96,0.08);color:#27ae60;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🥪 خفيفة</button>
+      <button type="button" onclick="selectMenuCat(this,'شيشة 💨')" data-cat="شيشة 💨" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(142,68,173,0.4);background:rgba(142,68,173,0.08);color:#8e44ad;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">💨 شيشة</button>
+      <button type="button" onclick="selectMenuCat(this,'أكل 🍽️')" data-cat="أكل 🍽️" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.08);color:var(--gold);cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🍽️ أكل</button>
+      <button type="button" onclick="selectMenuCat(this,'شوربة 🍲')" data-cat="شوربة 🍲" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(211,84,0,0.4);background:rgba(211,84,0,0.08);color:#d35400;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🍲 شوربة</button>
+      <button type="button" onclick="selectMenuCat(this,'سلطات 🥗')" data-cat="سلطات 🥗" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(39,174,96,0.4);background:rgba(39,174,96,0.08);color:#27ae60;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🥗 سلطات</button>
+      <button type="button" onclick="selectMenuCat(this,'باستا 🍝')" data-cat="باستا 🍝" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(192,57,43,0.4);background:rgba(192,57,43,0.08);color:#c0392b;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🍝 باستا</button>
+      <button type="button" onclick="selectMenuCat(this,'مشويات 🔥')" data-cat="مشويات 🔥" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(146,43,33,0.4);background:rgba(146,43,33,0.08);color:#922b21;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🔥 مشويات</button>
+      <button type="button" onclick="selectMenuCat(this,'إفطار 🍳')" data-cat="إفطار 🍳" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(212,172,13,0.4);background:rgba(212,172,13,0.08);color:#d4ac0d;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🍳 إفطار</button>
+      <button type="button" onclick="selectMenuCat(this,'بيتزا 🍕')" data-cat="بيتزا 🍕" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(169,50,38,0.4);background:rgba(169,50,38,0.08);color:#a93226;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🍕 بيتزا</button>
+      <button type="button" onclick="selectMenuCat(this,'سندوتشات 🥙')" data-cat="سندوتشات 🥙" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(31,97,141,0.4);background:rgba(31,97,141,0.08);color:#1f618d;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🥙 سندوتشات</button>
+      <button type="button" onclick="selectMenuCat(this,'أرز وحبوب 🍚')" data-cat="أرز وحبوب 🍚" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(183,149,11,0.4);background:rgba(183,149,11,0.08);color:#b7950b;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">🍚 أرز</button>
+      <button type="button" onclick="selectMenuCat(this,'أخرى 📌')" data-cat="أخرى 📌" class="mi-cat-btn" style="padding:6px 10px;border-radius:8px;border:1.5px solid rgba(127,140,141,0.4);background:rgba(127,140,141,0.08);color:#95a5a6;cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .15s;">📌 أخرى</button>
     </div>
     <input type="hidden" id="mi-cat" value="أكل 🍽️">
   </div>
@@ -2294,6 +2382,20 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     <div class="fld"><label>السعر (EGP) *</label><input id="mi-price" type="number" min="0" step="0.5" placeholder="0"></div>
     <div class="fld"><label>رمز / إيموجي</label><input id="mi-emoji" placeholder="🍕" maxlength="4" style="font-size:20px;text-align:center;"></div>
     <div class="fld s2"><label>ملاحظة (اختياري)</label><input id="mi-note" placeholder="مثال: متاح فقط الليل، حار جداً..."></div>
+  </div>
+  <!-- صورة الصنف -->
+  <div style="margin-bottom:14px;">
+    <label style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:8px;">📷 صورة الصنف (اختياري)</label>
+    <div style="display:flex;gap:10px;align-items:flex-start;">
+      <div id="mi-img-preview" style="width:80px;height:80px;border-radius:10px;border:2px dashed var(--bdr);background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;overflow:hidden;">🍽️</div>
+      <div style="flex:1;">
+        <input type="file" id="mi-img-file" accept="image/*" onchange="previewMenuImg(this)" style="display:none;">
+        <button type="button" onclick="document.getElementById('mi-img-file').click()" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;margin-bottom:6px;">📁 اختر صورة</button>
+        <button type="button" onclick="clearMenuImg()" style="width:100%;padding:6px;border-radius:8px;border:1.5px solid rgba(231,76,60,0.3);background:rgba(231,76,60,0.07);color:#e74c3c;font-size:11px;cursor:pointer;font-family:Arial,sans-serif;">🗑 إزالة الصورة</button>
+        <div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.5;">الحجم الأقصى: 500KB · JPG أو PNG</div>
+      </div>
+    </div>
+    <input type="hidden" id="mi-img">
   </div>
   <div class="flex mt">
     <button class="btn bg" onclick="saveMenuItem()" style="flex:2;">💾 حفظ الصنف</button>
@@ -2318,6 +2420,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     <button class="btn bgr" onclick="sendPOSReceiptWA()" style="flex:1;min-width:80px;">💬 واتساب</button>
     <button class="btn bg" onclick="printPOSReceipt()" style="flex:1;min-width:80px;">🖨️ طباعة</button>
     <button class="btn" onclick="printRestaurantInvoice()" style="flex:1;min-width:80px;background:linear-gradient(135deg,#2471a3,#3498db);color:#fff;font-weight:700;border:none;">📄 فاتورة رسمية</button>
+    <button class="btn" onclick="printKitchenOrder()" style="flex:1;min-width:80px;background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;font-weight:700;border:none;">👨‍🍳 أوردر المطبخ</button>
     <button class="btn bb" onclick="closeM('pos-receipt-modal')" style="flex:1;min-width:80px;">إغلاق</button>
   </div>
 </div>
@@ -13070,7 +13173,11 @@ function renderMenuEditor(){
     <div class="menu-editor-card">
       <div class="menu-editor-cat-stripe ${meta.cls}" style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,${meta.color},${meta.color2||meta.color});border-radius:14px 14px 0 0;"></div>
       <div style="margin-top:6px;">
-        <div style="font-size:32px;margin-bottom:6px;">${item.emoji||"🍽️"}</div>
+        <div style="font-size:32px;margin-bottom:6px;">
+          ${item.img
+            ? `<img src="${item.img}" style="width:60px;height:60px;object-fit:cover;border-radius:10px;border:2px solid var(--bdr);">`
+            : item.emoji||"🍽️"}
+        </div>
         <div style="font-weight:700;font-size:12px;color:var(--text);margin-bottom:4px;">${item.name}</div>
         <div style="font-size:10px;color:${meta.color};margin-bottom:6px;background:${meta.color}18;border-radius:20px;padding:2px 8px;display:inline-block;">${item.cat||""}</div>
         <div style="font-size:16px;font-weight:800;color:var(--gold);margin-bottom:6px;">£${item.price}</div>
@@ -13086,15 +13193,23 @@ function renderMenuEditor(){
 
 function getCatMeta(){
   return {
-    "لحوم 🥩":      {color:"#e74c3c", color2:"#c0392b", cls:"cat-meat",    emoji:"🥩"},
-    "فراخ 🍗":      {color:"#e67e22", color2:"#f39c12", cls:"cat-chicken", emoji:"🍗"},
-    "أسماك 🐟":     {color:"#3498db", color2:"#2980b9", cls:"cat-fish",    emoji:"🐟"},
-    "مشروبات 🥤":   {color:"#1abc9c", color2:"#16a085", cls:"cat-drinks",  emoji:"🥤"},
-    "حلويات 🍰":    {color:"#9b59b6", color2:"#8e44ad", cls:"cat-sweets",  emoji:"🍰"},
-    "وجبات خفيفة 🥪":{color:"#27ae60",color2:"#2ecc71", cls:"cat-snacks",  emoji:"🥪"},
-    "شيشة 💨":      {color:"#8e44ad", color2:"#5d3a8e", cls:"cat-shisha",  emoji:"💨"},
-    "أكل 🍽️":      {color:"#c9a84c", color2:"#a07830", cls:"cat-other",   emoji:"🍽️"},
-    "أخرى 📌":      {color:"#95a5a6", color2:"#7f8c8d", cls:"cat-other",   emoji:"📌"},
+    "لحوم 🥩":        {color:"#e74c3c", color2:"#c0392b", cls:"cat-meat",        emoji:"🥩"},
+    "فراخ 🍗":        {color:"#e67e22", color2:"#f39c12", cls:"cat-chicken",     emoji:"🍗"},
+    "أسماك 🐟":       {color:"#3498db", color2:"#2980b9", cls:"cat-fish",        emoji:"🐟"},
+    "مشروبات 🥤":     {color:"#1abc9c", color2:"#16a085", cls:"cat-drinks",      emoji:"🥤"},
+    "حلويات 🍰":      {color:"#9b59b6", color2:"#8e44ad", cls:"cat-sweets",      emoji:"🍰"},
+    "وجبات خفيفة 🥪": {color:"#27ae60", color2:"#2ecc71", cls:"cat-snacks",      emoji:"🥪"},
+    "شيشة 💨":        {color:"#8e44ad", color2:"#5d3a8e", cls:"cat-shisha",      emoji:"💨"},
+    "أكل 🍽️":        {color:"#c9a84c", color2:"#a07830", cls:"cat-other",       emoji:"🍽️"},
+    "شوربة 🍲":       {color:"#d35400", color2:"#e67e22", cls:"cat-soup",        emoji:"🍲"},
+    "سلطات 🥗":       {color:"#27ae60", color2:"#52be80", cls:"cat-salad",       emoji:"🥗"},
+    "باستا 🍝":       {color:"#c0392b", color2:"#e74c3c", cls:"cat-pasta",       emoji:"🍝"},
+    "مشويات 🔥":      {color:"#922b21", color2:"#e74c3c", cls:"cat-grill",       emoji:"🔥"},
+    "إفطار 🍳":       {color:"#d4ac0d", color2:"#f1c40f", cls:"cat-breakfast",   emoji:"🍳"},
+    "بيتزا 🍕":       {color:"#a93226", color2:"#e74c3c", cls:"cat-pizza",       emoji:"🍕"},
+    "سندوتشات 🥙":    {color:"#1f618d", color2:"#2980b9", cls:"cat-sandwiches",  emoji:"🥙"},
+    "أرز وحبوب 🍚":   {color:"#b7950b", color2:"#d4ac0d", cls:"cat-rice",        emoji:"🍚"},
+    "أخرى 📌":        {color:"#95a5a6", color2:"#7f8c8d", cls:"cat-other",       emoji:"📌"},
   };
 }
 
@@ -13163,7 +13278,11 @@ function renderMenuBrowse(){
           const inCart = posCart.find(c=>c.idx===i);
           return `<div class="menu-item-card ${meta.cls} ${inCart?"in-cart":""}" onclick="quickAddFromBrowse(${i})">
             ${inCart?`<div class="menu-cart-badge">${inCart.qty}</div>`:""}
-            <span class="menu-item-emoji-wrap">${item.emoji||"🍽️"}</span>
+            <span class="menu-item-emoji-wrap">
+            ${item.img
+              ? `<img src="${item.img}" style="width:54px;height:54px;object-fit:cover;border-radius:10px;margin-bottom:2px;">`
+              : item.emoji||"🍽️"}
+          </span>
             <div class="menu-item-name">${item.name}</div>
             <div class="menu-item-price">£${item.price}</div>
             ${item.note?`<div class="menu-item-note-tag">${item.note}</div>`:""}
@@ -13226,7 +13345,11 @@ function renderPOSMenu(){
     const meta = catMeta[item.cat]||{color:"#95a5a6"};
     return `<div onclick="addToCart(${i})" class="menu-item-card ${inCart?"in-cart":""}" style="padding:10px 8px;">
       ${inCart?`<div class="menu-cart-badge">${inCart.qty}</div>`:""}
-      <div style="font-size:26px;margin-bottom:3px;">${item.emoji||"🍽️"}</div>
+      <div style="font-size:26px;margin-bottom:3px;">
+        ${item.img
+          ? `<img src="${item.img}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;border:2px solid var(--bdr);">`
+          : item.emoji||"🍽️"}
+      </div>
       <div style="font-weight:700;font-size:11px;color:var(--text);margin-bottom:3px;line-height:1.3;">${item.name}</div>
       <div style="font-size:13px;font-weight:800;color:var(--gold);">£${item.price}</div>
     </div>`;
@@ -13306,11 +13429,20 @@ function setPOSPayMethod(method){
   });
 }
 
+function setPOSTable(btn, val){
+  // تفعيل الزر المضغوط
+  document.querySelectorAll(".pos-tbl-btn").forEach(b=>b.classList.remove("act"));
+  if(val) btn.classList.add("act");
+  const inp = document.getElementById("pos-table");
+  if(inp) inp.value = val;
+}
 function clearPOSCart(){
   posCart = [];
   if(document.getElementById("pos-discount")) document.getElementById("pos-discount").value = "0";
   if(document.getElementById("pos-notes")) document.getElementById("pos-notes").value = "";
   if(document.getElementById("pos-customer")) document.getElementById("pos-customer").value = "";
+  if(document.getElementById("pos-table")) document.getElementById("pos-table").value = "";
+  document.querySelectorAll(".pos-tbl-btn").forEach(b=>b.classList.remove("act"));
   renderPOSCart();
   renderPOSMenu();
 }
@@ -13323,8 +13455,10 @@ function submitPOSOrder(){
   const notes = document.getElementById("pos-notes")?.value.trim()||"";
   const methodLabel = {cash:"💵 كاش",card:"💳 بطاقة",room:"🏨 على الغرفة"}[posPayMethod]||"كاش";
   const roomGuest = room ? bookings.find(b=>String(b.room)===String(room)&&b.ci<=toDay()&&b.co>=toDay()&&b.status!=="Cancelled") : null;
+  const tableNo = document.getElementById("pos-table")?.value.trim()||"";
   const orderDesc = posCart.map(c=>`${c.emoji}${c.name}×${c.qty}`).join(", ");
-  const fullDesc = `🧾 POS: ${orderDesc}`+(customer?` — ${customer}`:""+(room?` — غرفة ${room}`:""));
+  const tableLabel = tableNo ? ` — ترابيزة ${tableNo}` : "";
+  const fullDesc = `🧾 POS: ${orderDesc}`+(customer?` — ${customer}`:"")+(room?` — غرفة ${room}`:"")+tableLabel;
 
   // Save as restaurant income
   const tx = {
@@ -13342,6 +13476,7 @@ function submitPOSOrder(){
     method:methodLabel,
     room:room||"",
     customer:customer,
+    tableNo:tableNo||"",
     notes:notes,
   };
   restaurantTx.push(tx);
@@ -13376,6 +13511,7 @@ function showPOSReceipt(tx){
     <div style="text-align:center;border-bottom:1px dashed #ccc;padding-bottom:8px;margin-bottom:8px;">
       <div style="font-weight:700;font-size:13px;">${PROP&&PROP.name?PROP.name:"Dahab Trendy"}</div>
       <div style="color:#888;font-size:10px;">${toDay()} · ${now}</div>
+      ${tx.tableNo?`<div style="color:#e67e22;font-size:12px;font-weight:700;">🪑 ترابيزة ${tx.tableNo}</div>`:""}
       ${tx.room?`<div style="color:#888;font-size:10px;">غرفة ${tx.room}</div>`:""}
       ${tx.customer?`<div style="font-size:11px;">👤 ${tx.customer}</div>`:""}
     </div>
@@ -13680,6 +13816,12 @@ function openMenuItemM(idx){
   document.getElementById("mi-emoji").value = item ? (item.emoji||"") : "";
   document.getElementById("mi-cat").value = item ? (item.cat||"أكل 🍽️") : "أكل 🍽️";
   document.getElementById("mi-note").value = item ? (item.note||"") : "";
+  document.getElementById("mi-img").value = item ? (item.img||"") : "";
+  const prevEl = document.getElementById("mi-img-preview");
+  if(prevEl){
+    if(item && item.img) prevEl.innerHTML = `<img src="${item.img}" style="width:100%;height:100%;object-fit:cover;">`;
+    else prevEl.innerHTML = item ? (item.emoji||"🍽️") : "🍽️";
+  }
   // Highlight the right category button
   const targetCat = item ? (item.cat||"أكل 🍽️") : "أكل 🍽️";
   document.querySelectorAll(".mi-cat-btn").forEach(b=>{
@@ -13701,6 +13843,7 @@ function saveMenuItem(){
     emoji: document.getElementById("mi-emoji").value.trim()||"🍽️",
     cat: document.getElementById("mi-cat").value || "أكل 🍽️",
     note: document.getElementById("mi-note").value.trim(),
+    img: document.getElementById("mi-img").value || "",
   };
   if(menuItemEdit!==null) restMenu[menuItemEdit]=item; else restMenu.push(item);
   sv("dta_rest_menu", restMenu);
@@ -13716,6 +13859,284 @@ function deleteMenuItem(i){
   renderMenuEditor();
   renderPOSMenu();
   renderPOSCatQuick();
+}
+
+// ══ DRINKS IMPORT ══════════════════════════════════════════════
+const DRINKS_CATALOG = [
+  // ── عصائر طازجة ──
+  {cat:"عصائر طازجة 🍊", emoji:"🍊", name:"عصير برتقال",       price:25, note:"طازج"},
+  {cat:"عصائر طازجة 🍊", emoji:"🥭", name:"عصير مانجو",         price:30, note:""},
+  {cat:"عصائر طازجة 🍊", emoji:"🍋", name:"عصير ليمون",         price:20, note:"بالنعناع"},
+  {cat:"عصائر طازجة 🍊", emoji:"🍓", name:"عصير فراولة",        price:30, note:""},
+  {cat:"عصائر طازجة 🍊", emoji:"🍉", name:"عصير بطيخ",          price:20, note:""},
+  {cat:"عصائر طازجة 🍊", emoji:"🍑", name:"عصير خوخ",           price:30, note:""},
+  {cat:"عصائر طازجة 🍊", emoji:"🍍", name:"عصير أناناس",        price:30, note:""},
+  {cat:"عصائر طازجة 🍊", emoji:"🥝", name:"عصير كيوي",          price:35, note:""},
+  {cat:"عصائر طازجة 🍊", emoji:"🍇", name:"عصير عنب",           price:30, note:""},
+  {cat:"عصائر طازجة 🍊", emoji:"🥕", name:"عصير جزر",           price:20, note:""},
+  {cat:"عصائر طازجة 🍊", emoji:"🍹", name:"كوكتيل فواكه",       price:40, note:"مشكل"},
+  // ── مشروبات ساخنة ──
+  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"قهوة عربي",          price:20, note:""},
+  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"نسكافيه",            price:25, note:""},
+  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"شاي أحمر",           price:15, note:""},
+  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"شاي بالحليب",        price:20, note:""},
+  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"شاي أخضر",           price:20, note:""},
+  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"كركديه ساخن",        price:20, note:""},
+  {cat:"مشروبات ساخنة ☕", emoji:"🍵", name:"زنجبيل بليمون",      price:25, note:""},
+  {cat:"مشروبات ساخنة ☕", emoji:"🍫", name:"كاكاو بالحليب",      price:30, note:""},
+  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"كابتشينو",           price:35, note:""},
+  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"لاتيه",              price:35, note:""},
+  // ── مياه ومشروبات باردة ──
+  {cat:"مياه وبارد 💧",   emoji:"💧", name:"مياه معدنية صغيرة",  price:10, note:""},
+  {cat:"مياه وبارد 💧",   emoji:"💧", name:"مياه معدنية كبيرة",  price:15, note:""},
+  {cat:"مياه وبارد 💧",   emoji:"🧊", name:"مياه بالثلج",        price:12, note:""},
+  {cat:"مياه وبارد 💧",   emoji:"🫗", name:"عصير علبة مشكل",     price:20, note:""},
+  {cat:"مياه وبارد 💧",   emoji:"🧃", name:"ريد بول",            price:35, note:""},
+  // ── مشروبات غازية ──
+  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"بيبسي",              price:15, note:""},
+  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"سفن أب",             price:15, note:""},
+  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"ميرندا برتقال",      price:15, note:""},
+  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"كوكاكولا",           price:15, note:""},
+  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"مياه غازية",         price:15, note:""},
+  // ── سموزي ومثلجات ──
+  {cat:"سموزي ومثلجات 🧋", emoji:"🧋", name:"سموزي فراولة وموز", price:45, note:""},
+  {cat:"سموزي ومثلجات 🧋", emoji:"🧋", name:"سموزي مانجو",        price:45, note:""},
+  {cat:"سموزي ومثلجات 🧋", emoji:"🍦", name:"ميلك شيك فانيليا",  price:40, note:""},
+  {cat:"سموزي ومثلجات 🧋", emoji:"🍦", name:"ميلك شيك شوكولاتة", price:40, note:""},
+  {cat:"سموزي ومثلجات 🧋", emoji:"🧃", name:"تمر هندي",           price:20, note:""},
+  {cat:"سموزي ومثلجات 🧋", emoji:"🧃", name:"كركديه بارد",        price:20, note:""},
+];
+
+let _drinksActiveCat = "الكل";
+let _drinksSelected = new Set();
+
+function openDrinksImport(){
+  _drinksSelected = new Set();
+  _drinksActiveCat = "الكل";
+  _renderDrinksCatTabs();
+  _renderDrinksItems();
+  _updateDrinksCount();
+  document.getElementById("drinks-import-modal").classList.add("on");
+}
+
+function _renderDrinksCatTabs(){
+  const el = document.getElementById("drinks-cat-filter-tabs");
+  if(!el) return;
+  const cats = ["الكل", ...new Set(DRINKS_CATALOG.map(d=>d.cat))];
+  const catColors = {
+    "عصائر طازجة 🍊":"#e67e22","مشروبات ساخنة ☕":"#c0392b",
+    "مياه وبارد 💧":"#2980b9","مشروبات غازية 🥤":"#1abc9c","سموزي ومثلجات 🧋":"#9b59b6"
+  };
+  el.innerHTML = cats.map(cat=>{
+    const isAll = cat==="الكل";
+    const color = isAll ? "var(--gold)" : (catColors[cat]||"#95a5a6");
+    const act = _drinksActiveCat===cat;
+    return `<button type="button" onclick="_setDrinksCat('${cat}')"
+      style="padding:5px 12px;border-radius:8px;border:1.5px solid ${act?color:color+'66'};
+      background:${act?color+'33':'transparent'};color:${act?color:color+'cc'};
+      font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .15s;">
+      ${cat}
+    </button>`;
+  }).join("");
+}
+
+function _setDrinksCat(cat){
+  _drinksActiveCat = cat;
+  _renderDrinksCatTabs();
+  _renderDrinksItems();
+}
+
+function _renderDrinksItems(){
+  const el = document.getElementById("drinks-items-list");
+  if(!el) return;
+  const filtered = _drinksActiveCat==="الكل"
+    ? DRINKS_CATALOG
+    : DRINKS_CATALOG.filter(d=>d.cat===_drinksActiveCat);
+
+  const catColors = {
+    "عصائر طازجة 🍊":"#e67e22","مشروبات ساخنة ☕":"#c0392b",
+    "مياه وبارد 💧":"#2980b9","مشروبات غازية 🥤":"#1abc9c","سموزي ومثلجات 🧋":"#9b59b6"
+  };
+
+  el.innerHTML = filtered.map((d,fi)=>{
+    const globalIdx = DRINKS_CATALOG.indexOf(d);
+    const sel = _drinksSelected.has(globalIdx);
+    const color = catColors[d.cat]||"#95a5a6";
+    return `<div onclick="_toggleDrink(${globalIdx},this)" data-idx="${globalIdx}"
+      style="background:var(--card);border:2px solid ${sel?color:color+'44'};border-radius:12px;
+      padding:10px 12px;cursor:pointer;transition:all .15s;position:relative;
+      ${sel?'box-shadow:0 0 0 2px '+color+'55;background:'+color+'11;':''}">
+      <div style="position:absolute;top:8px;left:8px;width:18px;height:18px;border-radius:4px;
+        border:2px solid ${sel?color:color+'66'};background:${sel?color:'transparent'};
+        display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;">
+        ${sel?'✓':''}
+      </div>
+      <div style="text-align:center;font-size:26px;margin-bottom:4px;">${d.emoji}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--text);text-align:center;margin-bottom:3px;">${d.name}</div>
+      <div style="font-size:11px;color:${color};text-align:center;font-weight:700;">£${d.price}</div>
+      ${d.note?`<div style="font-size:9px;color:var(--muted);text-align:center;margin-top:2px;">${d.note}</div>`:''}
+      <div style="font-size:9px;color:${color};text-align:center;margin-top:4px;opacity:.7;">${d.cat}</div>
+    </div>`;
+  }).join("");
+}
+
+function _toggleDrink(idx){
+  if(_drinksSelected.has(idx)) _drinksSelected.delete(idx);
+  else _drinksSelected.add(idx);
+  _renderDrinksItems();
+  _updateDrinksCount();
+}
+
+function _updateDrinksCount(){
+  const el = document.getElementById("drinks-selected-count");
+  if(el) el.textContent = _drinksSelected.size + " صنف محدد";
+}
+
+function drinksSelectAll(){
+  const filtered = _drinksActiveCat==="الكل"
+    ? DRINKS_CATALOG
+    : DRINKS_CATALOG.filter(d=>d.cat===_drinksActiveCat);
+  filtered.forEach(d=> _drinksSelected.add(DRINKS_CATALOG.indexOf(d)));
+  _renderDrinksItems();
+  _updateDrinksCount();
+}
+
+function drinksSelectNone(){
+  if(_drinksActiveCat==="الكل") _drinksSelected.clear();
+  else {
+    DRINKS_CATALOG.forEach((d,i)=>{ if(d.cat===_drinksActiveCat) _drinksSelected.delete(i); });
+  }
+  _renderDrinksItems();
+  _updateDrinksCount();
+}
+
+function importSelectedDrinks(){
+  if(!_drinksSelected.size){ sNotify("⚠️","اختار صنف واحد على الأقل","info",2500); return; }
+  let added = 0, skipped = 0;
+  _drinksSelected.forEach(idx=>{
+    const d = DRINKS_CATALOG[idx];
+    if(!d) return;
+    const exists = restMenu.find(m=>m.name===d.name && m.cat.includes("مشروبات") || m.cat.includes("عصائر") || m.cat.includes("سموزي") || m.cat.includes("مياه") || m.cat.includes("ساخنة") || m.cat.includes("غازية"));
+    const dupName = restMenu.find(m=>m.name===d.name);
+    if(dupName){ skipped++; return; }
+    restMenu.push({
+      name: d.name,
+      price: d.price,
+      emoji: d.emoji,
+      cat: "مشروبات 🥤",
+      note: d.note||"",
+      img: "",
+    });
+    added++;
+  });
+  sv("dta_rest_menu", restMenu);
+  closeM("drinks-import-modal");
+  renderMenuEditor();
+  renderPOSMenu();
+  renderPOSCatQuick();
+  let msg = `✅ تم إضافة ${added} صنف`;
+  if(skipped) msg += ` · تم تخطي ${skipped} مكرر`;
+  sNotify("🥤 قائمة المشروبات", msg, "success", 3500);
+}
+// ══════════════════════════════════════════════════════════════
+
+function previewMenuImg(input){
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 600*1024){ sNotify("⚠️ الصورة كبيرة","الحد الأقصى 500KB","info",3000); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById("mi-img").value = e.target.result;
+    const prev = document.getElementById("mi-img-preview");
+    if(prev) prev.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearMenuImg(){
+  document.getElementById("mi-img").value = "";
+  const emoji = document.getElementById("mi-emoji").value || "🍽️";
+  const prev = document.getElementById("mi-img-preview");
+  if(prev) prev.innerHTML = emoji;
+  const fileInput = document.getElementById("mi-img-file");
+  if(fileInput) fileInput.value = "";
+}
+
+function printKitchenOrder(){
+  if(!lastPOSOrder){ sNotify("⚠️","لا يوجد طلب حالي","info",2500); return; }
+  const tx = lastPOSOrder;
+  const now = new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"});
+  const orderNo = tx.id ? tx.id.replace("POS-","") : Date.now().toString().slice(-4);
+  const tableInfo = tx.tableNo ? `<div class="k-table">🪑 ترابيزة رقم: <strong>${tx.tableNo}</strong></div>` : "";
+  const roomInfo = tx.room ? `<div class="k-room">🏨 غرفة: <strong>${tx.room}</strong></div>` : "";
+  const custInfo = tx.customer ? `<div class="k-cust">👤 ${tx.customer}</div>` : "";
+  const notesInfo = tx.notes ? `<div class="k-notes">📝 <strong>ملاحظات:</strong> ${tx.notes}</div>` : "";
+
+  const itemsHTML = tx.items.map((c,i)=>`
+    <tr>
+      <td class="k-qty">${c.qty}×</td>
+      <td class="k-item">${c.emoji||""} ${c.name}</td>
+      ${c.note ? `<td class="k-note">${c.note}</td>` : "<td></td>"}
+    </tr>`).join("");
+
+  const html = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>أوردر المطبخ #${orderNo}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Cairo',Arial,sans-serif;background:#fff;padding:12px;max-width:320px;margin:0 auto;}
+  .k-header{border:3px solid #1a1a2e;border-radius:8px;padding:10px 14px;margin-bottom:12px;text-align:center;}
+  .k-title{font-size:22px;font-weight:900;color:#1a1a2e;letter-spacing:2px;}
+  .k-subtitle{font-size:11px;color:#555;letter-spacing:3px;text-transform:uppercase;margin-top:2px;}
+  .k-meta{background:#f5f5f5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:14px;line-height:2;}
+  .k-table{font-size:20px;font-weight:900;color:#e67e22;}
+  .k-room{font-size:14px;color:#2980b9;}
+  .k-cust{font-size:13px;color:#555;}
+  .k-time{font-size:12px;color:#888;margin-top:4px;}
+  .k-order-no{display:inline-block;background:#1a1a2e;color:#fff;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:8px;}
+  .k-items{width:100%;border-collapse:collapse;margin-bottom:12px;}
+  .k-items thead tr{background:#1a1a2e;}
+  .k-items thead th{color:#fff;padding:8px 10px;font-size:12px;font-weight:700;text-align:right;}
+  .k-items tbody tr{border-bottom:1.5px dashed #ddd;}
+  .k-items tbody tr:last-child{border-bottom:none;}
+  .k-qty{padding:10px 8px;font-size:20px;font-weight:900;color:#e67e22;white-space:nowrap;text-align:center;width:40px;}
+  .k-item{padding:10px 8px;font-size:16px;font-weight:700;color:#1a1a2e;}
+  .k-note{padding:10px 8px;font-size:11px;color:#e74c3c;font-style:italic;}
+  .k-notes{background:#fff8e1;border:1.5px solid #f0c040;border-radius:6px;padding:8px 12px;font-size:13px;color:#856404;margin-bottom:10px;}
+  .k-footer{text-align:center;font-size:11px;color:#aaa;border-top:2px dashed #ddd;padding-top:8px;margin-top:8px;}
+  @media print{body{padding:4px;}.no-print{display:none!important;}}
+</style>
+</head>
+<body>
+  <div class="k-header">
+    <div class="k-title">👨‍🍳 أوردر المطبخ</div>
+    <div class="k-subtitle">Kitchen Order</div>
+  </div>
+  <div class="k-meta">
+    <div class="k-order-no">طلب # ${orderNo.slice(-6)}</div>
+    ${tableInfo}${roomInfo}${custInfo}
+    <div class="k-time">⏰ ${now} · 📅 ${tx.date||""}</div>
+  </div>
+  ${notesInfo}
+  <table class="k-items">
+    <thead><tr><th style="text-align:center;">كمية</th><th>الصنف</th><th>ملاحظة</th></tr></thead>
+    <tbody>${itemsHTML}</tbody>
+  </table>
+  <div class="k-footer">— يُرجى التنفيذ فوراً —</div>
+  <div class="no-print" style="text-align:center;margin-top:14px;">
+    <button onclick="window.print()" style="background:#e67e22;color:#fff;border:none;padding:10px 28px;font-size:14px;font-weight:700;border-radius:8px;cursor:pointer;font-family:Cairo,Arial,sans-serif;">🖨️ طباعة الأوردر</button>
+  </div>
+  <script>window.onload=()=>window.print();<\/script>
+</body>
+</html>`;
+
+  const w = window.open("","_blank","width=400,height=600");
+  if(!w){ sNotify("⚠️","يرجى السماح بالنوافذ المنبثقة","info",3000); return; }
+  w.document.write(html);
+  w.document.close();
 }
 
 // ══ override renderRestaurant to support POS filter ══
