@@ -1123,16 +1123,16 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <div class="fld"><label>Email</label><input id="iv-email" type="email" placeholder="guest@email.com" oninput="buildPreview()"></div>
 <div class="fld s2"><label>Nationality</label><input id="iv-nat" placeholder="Egyptian" oninput="buildPreview()"></div>
 <div class="fld s2">
-  <label>👤 صورة الضيف / Guest Photo</label>
-  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  <label>🪪 صور الجوازات / بطاقات الهوية</label>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
     <label style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:700;">
-      📷 رفع صورة
-      <input type="file" accept="image/*" style="display:none;" onchange="uploadInvIdPhoto(this)">
+      ➕ إضافة صورة
+      <input type="file" accept="image/*" multiple style="display:none;" onchange="uploadInvIdPhotos(this)">
     </label>
-    <button onclick="clearInvIdPhoto()" style="background:rgba(231,76,60,0.1);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;display:none;" id="iv-id-clear">حذف</button>
-    <span style="font-size:11px;color:var(--muted);" id="iv-id-status">لم يتم رفع صورة</span>
+    <button onclick="clearAllInvPhotos()" style="background:rgba(231,76,60,0.1);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;" id="iv-id-clear">🗑️ حذف الكل</button>
+    <span style="font-size:11px;color:var(--muted);" id="iv-id-status">لا توجد صور</span>
   </div>
-  <div id="iv-id-preview" style="margin-top:8px;"></div>
+  <div id="iv-id-preview" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px;"></div>
 </div>
 
 </div>
@@ -6219,29 +6219,22 @@ const actualPaid=b.payments?b.payments.reduce((s,p)=>s+p.amount,0):(b.prepay||0)
 document.getElementById("iv-prepay").value=actualPaid;
 document.getElementById("iv-bf").checked=b.bf;
 document.getElementById("iv-notes").value=b.notes||"";
-// Auto-load guest photo first, then fallback to booking photos
-const guestPhotoSrc = b.allGuestsData && b.allGuestsData[0] && b.allGuestsData[0].photo
-  ? b.allGuestsData[0].photo
-  : (b.guestPhoto || '');
-if(guestPhotoSrc){
-  _invIdPhoto = guestPhotoSrc;
-  const prev=document.getElementById('iv-id-preview');
-  const status=document.getElementById('iv-id-status');
-  const clr=document.getElementById('iv-id-clear');
-  if(prev) prev.innerHTML='<img src="'+_invIdPhoto+'" style="max-width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:2px solid rgba(201,168,76,0.4);cursor:pointer;" onclick="viewInvIdPhoto()">';
-  if(status) status.textContent='✅ صورة الضيف';
-  if(clr) clr.style.display='inline-flex';
-} else if(b.photos && b.photos.length > 0){
-  _invIdPhoto = b.photos[0];
-  const prev=document.getElementById('iv-id-preview');
-  const status=document.getElementById('iv-id-status');
-  const clr=document.getElementById('iv-id-clear');
-  if(prev) prev.innerHTML='<img src="'+_invIdPhoto+'" style="max-width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:2px solid rgba(201,168,76,0.4);cursor:pointer;" onclick="viewInvIdPhoto()">';
-  if(status) status.textContent='✅ تم تحميل الصورة من الحجز';
-  if(clr) clr.style.display='inline-flex';
-} else {
-  clearInvIdPhoto();
+// Auto-load ALL guest photos from allGuestsData
+_invIdPhotos = [];
+if(b.allGuestsData && b.allGuestsData.length){
+  b.allGuestsData.forEach(g=>{
+    if(g.photo) _invIdPhotos.push({src:g.photo, label:g.name||''});
+  });
 }
+// fallback: booking photos
+if(!_invIdPhotos.length && b.photos && b.photos.length){
+  b.photos.forEach((p,i)=>_invIdPhotos.push({src:p,label:'صورة '+(i+1)}));
+}
+// fallback: old single guestPhoto
+if(!_invIdPhotos.length && b.guestPhoto){
+  _invIdPhotos.push({src:b.guestPhoto,label:''});
+}
+_renderInvPhotosPreview();
 // Load transfer data into invoice
 const hasTrInv=b.hasTransfer||false;
 document.getElementById("iv-transfer").checked=hasTrInv;
@@ -7391,18 +7384,7 @@ proformaBanner+
   return "<div class='invp-gbox' style='display:flex;gap:12px;align-items:flex-start;'>"+
     "<div style='flex:1;'><div><strong>"+d.name+"</strong></div><div>"+d.nat+"</div><div>"+d.phone+"</div><div>"+d.email+"</div></div>"+
     (pics.length ? "<div style='flex-shrink:0;text-align:center;'><div style='font-size:9px;color:#888;margin-bottom:4px;'>🏨 Room</div>"+roomPicsHtml+"</div>" : "")+
-    (()=>{
-      const allG = (curBookingIdx>=0 && bookings[curBookingIdx] && bookings[curBookingIdx].allGuestsData) ? bookings[curBookingIdx].allGuestsData : [];
-      const photosWithNames = allG.filter(g=>g.photo).map(g=>({photo:g.photo,name:g.name||''}));
-      if(photosWithNames.length){
-        return "<div style='flex-shrink:0;text-align:center;'><div style='font-size:9px;color:#888;margin-bottom:6px;font-weight:700;'>👤 Guests</div><div style='display:flex;flex-direction:column;gap:8px;align-items:center;'>"+
-          photosWithNames.map(g=>"<div style='text-align:center;'><img src='"+g.photo+"' style='width:72px;height:72px;object-fit:cover;border-radius:50%;border:2px solid #c9a84c;display:block;'>"+(g.name?"<div style='font-size:8px;color:#888;margin-top:3px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+g.name+"</div>":"")+"</div>").join('')+
-          "</div></div>";
-      } else if(_invIdPhoto){
-        return "<div style='flex-shrink:0;text-align:center;'><div style='font-size:9px;color:#888;margin-bottom:4px;'>👤 Guest</div><img src='"+_invIdPhoto+"' style='width:72px;height:72px;object-fit:cover;border-radius:50%;border:2px solid #c9a84c;'></div>";
-      }
-      return "";
-    })()+
+    (_invIdPhotos.length ? "<div style='flex-shrink:0;'><div style='font-size:9px;color:#888;margin-bottom:6px;font-weight:700;text-align:center;'>🪪 IDs</div><div style='display:flex;flex-direction:column;gap:8px;align-items:center;'>"+_invIdPhotos.map(p=>"<div style='text-align:center;'><img src='"+p.src+"' style='width:75px;height:75px;object-fit:cover;border-radius:8px;border:2px solid #c9a84c;display:block;'>"+(p.label?"<div style='font-size:8px;color:#888;margin-top:2px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+p.label+"</div>":"")+"</div>").join('')+"</div></div>" : "")+
   "</div>";
 })()+
 "<div class='invp-sec'>Stay Details</div>"+
@@ -7568,18 +7550,7 @@ w.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>Invoic
   return "<div class='gbox' style='display:flex;gap:14px;align-items:flex-start;'>"+
     "<div style='flex:1;display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:11px;color:#555;'><p><b>"+d.name+"</b></p><p>"+d.nat+"</p><p>"+d.phone+"</p><p>"+d.email+"</p></div>"+
     (pics2.length?"<div style='flex-shrink:0;text-align:center;'><div style='font-size:9px;color:#888;margin-bottom:4px;'>🏨 Room</div>"+roomPicsHtml2+"</div>":"")+
-    (function(){
-      var allG2=(curBookingIdx>=0&&bookings[curBookingIdx]&&bookings[curBookingIdx].allGuestsData)?bookings[curBookingIdx].allGuestsData:[];
-      var pG2=allG2.filter(function(g){return g.photo;}).map(function(g){return {photo:g.photo,name:g.name||''};});
-      if(pG2.length){
-        return "<div style='flex-shrink:0;text-align:center;'><div style='font-size:9px;color:#888;margin-bottom:6px;font-weight:bold;'>👤 Guests</div><div style='display:flex;flex-direction:column;gap:10px;align-items:center;'>"+
-          pG2.map(function(g){return "<div style='text-align:center;'><img src='"+g.photo+"' style='width:78px;height:78px;object-fit:cover;border-radius:50%;border:2px solid #c9a84c;display:block;'>"+(g.name?"<div style='font-size:9px;color:#888;margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+g.name+"</div>":"")+"</div>";}).join('')+
-          "</div></div>";
-      }else if(_invIdPhoto){
-        return "<div style='flex-shrink:0;text-align:center;'><div style='font-size:9px;color:#888;margin-bottom:3px;'>👤 Guest</div><img src='"+_invIdPhoto+"' style='width:78px;height:78px;object-fit:cover;border-radius:50%;border:2px solid #c9a84c;'></div>";
-      }
-      return "";
-    })()+
+    (_invIdPhotos.length?"<div style='flex-shrink:0;'><div style='font-size:9px;color:#888;margin-bottom:6px;font-weight:bold;text-align:center;'>🪪 IDs</div><div style='display:flex;flex-direction:column;gap:10px;align-items:center;'>"+_invIdPhotos.map(function(p){return "<div style='text-align:center;'><img src='"+p.src+"' style='width:78px;height:78px;object-fit:cover;border-radius:8px;border:2px solid #c9a84c;display:block;'>"+(p.label?"<div style='font-size:9px;color:#888;margin-top:3px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+p.label+"</div>":"")+"</div>";}).join('')+"</div></div>":"")+
   "</div>";
 })()+
 "<div class='sec'>Stay Details</div>"+
@@ -7910,44 +7881,77 @@ function viewRoomPhoto(type){viewRoomPhotoIdx(type,0);}
 // ═══════════════════════════════════════════════
 // 🪪 INVOICE ID PHOTO
 // ═══════════════════════════════════════════════
-let _invIdPhoto = '';
-function uploadInvIdPhoto(input){
-  const file = input.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e){
-    const img = new Image();
-    img.onload = function(){
-      const canvas = document.createElement('canvas');
-      const MAX=900; let w=img.width,h=img.height;
-      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;} if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
-      canvas.width=w;canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      _invIdPhoto = canvas.toDataURL('image/jpeg',0.82);
-      const prev = document.getElementById('iv-id-preview');
-      const status = document.getElementById('iv-id-status');
-      const clr = document.getElementById('iv-id-clear');
-      if(prev) prev.innerHTML = '<img src="'+_invIdPhoto+'" style="max-width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:2px solid rgba(201,168,76,0.4);cursor:pointer;" onclick="viewInvIdPhoto()">';
-      if(status) status.textContent = '✅ تم رفع الصورة';
-      if(clr) clr.style.display='inline-flex';
-      buildPreview();
+// ═══════════════════════════════════════════════
+// 🪪 INVOICE ID PHOTOS (متعددة)
+// ═══════════════════════════════════════════════
+let _invIdPhotos = []; // array of {src, label}
+// backward-compat alias — بعض الأماكن بتقرأ _invIdPhoto
+Object.defineProperty(window,'_invIdPhoto',{get:()=>_invIdPhotos.length?_invIdPhotos[0].src:'',set:(v)=>{if(v)_invIdPhotos=[{src:v,label:''}]; else _invIdPhotos=[];}});
+
+function _renderInvPhotosPreview(){
+  const prev = document.getElementById('iv-id-preview');
+  const status = document.getElementById('iv-id-status');
+  const clr = document.getElementById('iv-id-clear');
+  if(!prev) return;
+  if(!_invIdPhotos.length){
+    prev.innerHTML='';
+    if(status) status.textContent='لا توجد صور';
+    if(clr) clr.style.display='none';
+    return;
+  }
+  if(status) status.textContent='✅ '+_invIdPhotos.length+' صورة';
+  if(clr) clr.style.display='inline-flex';
+  prev.innerHTML = _invIdPhotos.map((p,i)=>
+    "<div style='position:relative;display:inline-block;'>"+
+    "<img src='"+p.src+"' style='width:90px;height:90px;object-fit:cover;border-radius:8px;border:2px solid rgba(201,168,76,0.5);cursor:pointer;' onclick='_viewInvPhoto("+i+")' title='اضغط للعرض'>"+
+    "<button onclick='_removeInvPhoto("+i+")' style='position:absolute;top:-6px;right:-6px;background:#e74c3c;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;line-height:20px;text-align:center;padding:0;'>×</button>"+
+    (p.label?"<div style='font-size:9px;color:var(--muted);text-align:center;margin-top:2px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+p.label+"</div>":"")+
+    "</div>"
+  ).join('');
+}
+function uploadInvIdPhotos(input){
+  const files = Array.from(input.files); if(!files.length) return;
+  let done=0;
+  files.forEach(file=>{
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const img=new Image();
+      img.onload=function(){
+        const canvas=document.createElement('canvas');
+        const MAX=900; let w=img.width,h=img.height;
+        if(w>MAX){h=Math.round(h*MAX/w);w=MAX;} if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        _invIdPhotos.push({src:canvas.toDataURL('image/jpeg',0.82),label:''});
+        done++;
+        if(done===files.length){_renderInvPhotosPreview();buildPreview();}
+      };
+      img.src=e.target.result;
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  });
   input.value='';
 }
-function clearInvIdPhoto(){
-  _invIdPhoto='';
-  const prev=document.getElementById('iv-id-preview'); if(prev) prev.innerHTML='';
-  const status=document.getElementById('iv-id-status'); if(status) status.textContent='لم يتم رفع صورة';
-  const clr=document.getElementById('iv-id-clear'); if(clr) clr.style.display='none';
+function _removeInvPhoto(i){
+  _invIdPhotos.splice(i,1);
+  _renderInvPhotosPreview();
   buildPreview();
 }
-function viewInvIdPhoto(){
-  if(!_invIdPhoto) return;
-  const w=window.open('','_blank','width=700,height=550');
-  w.document.write('<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="'+_invIdPhoto+'" style="max-width:100%;max-height:100%;object-fit:contain;"></body>');
+function clearAllInvPhotos(){
+  _invIdPhotos=[];
+  _renderInvPhotosPreview();
+  buildPreview();
 }
+// backward-compat
+function clearInvIdPhoto(){ clearAllInvPhotos(); }
+function uploadInvIdPhoto(input){ uploadInvIdPhotos(input); }
+function viewInvIdPhoto(){ if(_invIdPhotos.length) _viewInvPhoto(0); }
+function _viewInvPhoto(i){
+  if(!_invIdPhotos[i]) return;
+  const w=window.open('','_blank','width=700,height=550');
+  w.document.write('<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="'+_invIdPhotos[i].src+'" style="max-width:100%;max-height:100%;object-fit:contain;"></body>');
+}
+
 
 let _bkPhotos=[];
 function addBkPhotos(input){
