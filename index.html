@@ -1885,8 +1885,8 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <div class="fld"><label>🧒 Children (أطفال)</label><input id="bm-children" type="number" value="0" min="0" oninput="rebuildGuestRows()"></div>
 </div>
 <div id="repeater-alert" style="display:none;margin:0 0 10px 0;background:linear-gradient(135deg,rgba(52,152,219,0.12),rgba(26,188,156,0.08));border:1px solid rgba(52,152,219,0.4);border-radius:10px;padding:10px 14px;cursor:pointer;" onclick="fillFromRepeater()"></div>
-<!-- حقول النزلاء ديناميكية -->
-<div id="bm-all-guests" style="display:flex;flex-direction:column;gap:10px;"></div>
+<!-- حقول النزلاء ديناميكية — تظهر جنباً إلى جنب -->
+<div id="bm-all-guests" style="display:flex;flex-direction:row;flex-wrap:wrap;gap:10px;align-items:flex-start;"></div>
 <!-- Hidden legacy fields للتوافق مع الكود الموجود -->
 <input type="hidden" id="bm-name">
 <input type="hidden" id="bm-phone">
@@ -3422,7 +3422,18 @@ function LSS(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}cat
 let bookings   = LS("dta_bk",[]);
 let prices     = LS("dta_pr",JSON.parse(JSON.stringify(DEF_PRICES)));
 let duPrices   = LS("dta_du",JSON.parse(JSON.stringify(DEF_DU_PRICES)));
-let roomPhotos = LS("dta_room_photos",{});
+// roomPhotos: { type: [url1, url2, ...] } — متعددة صور لكل نوع غرفة
+let roomPhotos = (function(){
+  const raw = LS("dta_room_photos",{});
+  // ترقية البيانات القديمة: إذا كانت قيمة string حوّلها لـ array
+  const upgraded = {};
+  Object.keys(raw).forEach(k => {
+    if(typeof raw[k] === 'string' && raw[k]) upgraded[k] = [raw[k]];
+    else if(Array.isArray(raw[k])) upgraded[k] = raw[k];
+    else upgraded[k] = [];
+  });
+  return upgraded;
+})();
 let roomSt     = LS("dta_rs",{});
 let policies   = LS("dta_pol",{title:"Free Cancellation 48hrs",text:"Free cancellation up to 48 hours before check-in. After that, 1 night charge applies.",fee:"1night",prepay:"none",pnotes:""});
 let expenses   = LS("dta_ex",[]);
@@ -6338,9 +6349,16 @@ const isAvail=(st==="available");
 const hasFutureRes=(st==="occupied"||st==="checkin"||st==="checkout")&&(res||resStandby);
 const futureBook=res||resStandby;
 const rtype = b ? b.type : (res ? res.type : (ci ? ci.type : (co ? co.type : '')));
-const rphoto = rtype && roomPhotos[rtype] ? roomPhotos[rtype] : '';
+const rphotos = (rtype && roomPhotos[rtype] && roomPhotos[rtype].length) ? roomPhotos[rtype] : [];
+const rphoto = rphotos[0] || '';
+const rphotoHtml = rphotos.length
+  ? "<div style='width:100%;height:160px;border-radius:10px;overflow:hidden;margin-bottom:10px;box-shadow:0 3px 12px rgba(0,0,0,0.4);position:relative;'>"
+    + "<img id='rph-"+r+"' src='"+rphoto+"' style='width:100%;height:100%;object-fit:cover;cursor:pointer;' onclick=\"viewRoomPhotoIdx('"+rtype+"',0)\">"
+    + (rphotos.length>1 ? "<div style='position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.55);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;'>📷 "+rphotos.length+"</div>" : "")
+    + "</div>"
+  : "";
 return "<div class='card "+RSTATUS_CLS[st]+"' style='margin-bottom:0;'>"+ 
-(rphoto ? "<div style='width:100%;height:160px;border-radius:10px;overflow:hidden;margin-bottom:10px;box-shadow:0 3px 12px rgba(0,0,0,0.4);'><img src='"+rphoto+"' style='width:100%;height:100%;object-fit:cover;' onclick=\"viewRoomPhoto('"+rtype+"')\"></div>" : "")+
+rphotoHtml+
 "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;'>"+
 "<span style='font-size:14px;font-weight:700;color:var(--gold);'>Room "+r+"</span>"+
 "<span style='display:flex;gap:4px;align-items:center;'>"+
@@ -7364,7 +7382,7 @@ proformaBanner+
 "<div class='invp-sec'>Bill To</div>"+
 (()=>{
   const roomTypes = [...new Set((d.lines||[]).map(l=>l.type).filter(Boolean))];
-  const pics = roomTypes.map(t=>roomPhotos[t]).filter(Boolean);
+  const pics = roomTypes.map(t=>(roomPhotos[t]&&roomPhotos[t].length)?roomPhotos[t][0]:null).filter(Boolean);
   const roomPicsHtml = pics.length
     ? "<div style='display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;'>"+
       pics.map(p=>"<img src='"+p+"' style='width:120px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #ddd;'>").join('')+
@@ -7534,7 +7552,7 @@ w.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>Invoic
 "<div class='sec'>Bill To</div>"+
 (()=>{
   const roomTypes2=[...new Set((d.lines||[]).map(l=>l.type).filter(Boolean))];
-  const pics2=roomTypes2.map(t=>roomPhotos[t]).filter(Boolean);
+  const pics2=roomTypes2.map(t=>(roomPhotos[t]&&roomPhotos[t].length)?roomPhotos[t][0]:null).filter(Boolean);
   const roomPicsHtml2=pics2.length?"<div style='display:flex;gap:6px;flex-wrap:wrap;'>"+pics2.map(p=>"<img src='"+p+"' style='width:130px;height:85px;object-fit:cover;border-radius:6px;border:1px solid #ddd;'>").join('')+"</div>":"";
   return "<div class='gbox' style='display:flex;gap:14px;align-items:flex-start;'>"+
     "<div style='flex:1;display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:11px;color:#555;'><p><b>"+d.name+"</b></p><p>"+d.nat+"</p><p>"+d.phone+"</p><p>"+d.email+"</p></div>"+
@@ -7790,45 +7808,79 @@ function renderRoomPhotosGrid(){
   const grid = document.getElementById('room-photos-grid');
   if(!grid) return;
   grid.innerHTML = RTYPES.map(type => {
-    const photo = roomPhotos[type] || '';
-    return '<div style="display:flex;align-items:center;gap:12px;padding:10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;">' +
-      '<div style="width:80px;height:60px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,0.3);flex-shrink:0;display:flex;align-items:center;justify-content:center;">' +
-      (photo ? '<img src="'+photo+'" style="width:100%;height:100%;object-fit:cover;cursor:pointer;" onclick="viewRoomPhoto(\''+type+'\')">' : '<span style="font-size:22px;">🏠</span>') +
+    const photos = (roomPhotos[type] && roomPhotos[type].length) ? roomPhotos[type] : [];
+    const thumbsHtml = photos.length
+      ? photos.map((p,idx) =>
+          '<div style="position:relative;display:inline-block;margin:3px;">' +
+          '<img src="'+p+'" style="width:72px;height:60px;border-radius:7px;object-fit:cover;cursor:pointer;border:2px solid rgba(201,168,76,0.35);" onclick="viewRoomPhotoIdx(\''+type+'\','+idx+')" title="عرض">' +
+          '<button onclick="deleteRoomPhotoIdx(\''+type+'\','+idx+')" style="position:absolute;top:-5px;right:-5px;background:#e74c3c;color:#fff;border:none;border-radius:50%;width:17px;height:17px;font-size:9px;cursor:pointer;font-weight:700;line-height:1;padding:0;">✕</button>' +
+          '</div>'
+        ).join('')
+      : '<div style="width:72px;height:60px;border-radius:8px;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;border:2px dashed rgba(255,255,255,0.15);">🏠</div>';
+
+    return '<div style="padding:10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+      '<div style="font-weight:700;color:var(--gold);font-size:13px;">'+type+'</div>' +
+      '<span style="font-size:10px;color:var(--muted);">('+photos.length+' صورة)</span>' +
+      '<label style="margin-left:auto;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.4);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700;">📷 إضافة صورة<input type="file" accept="image/*" multiple style="display:none;" onchange="uploadRoomPhotos(\''+type+'\', this)"></label>' +
+      (photos.length ? '<button onclick="deleteAllRoomPhotos(\''+type+'\')" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.35);border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">🗑️ حذف الكل</button>' : '') +
       '</div>' +
-      '<div style="flex:1;">' +
-      '<div style="font-weight:700;color:var(--gold);margin-bottom:6px;">'+type+'</div>' +
-      '<div style="display:flex;gap:6px;">' +
-      '<label style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.4);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700;">📷 '+(photo?'تغيير':'إضافة')+'<input type="file" accept="image/*" style="display:none;" onchange="uploadRoomPhoto(\''+type+'\', this)"></label>' +
-      (photo ? '<button onclick="deleteRoomPhoto(\''+type+'\')" style="background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.4);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">🗑️ حذف</button>' : '') +
-      '</div></div></div>';
+      '<div style="display:flex;flex-wrap:wrap;gap:4px;">' + thumbsHtml + '</div>' +
+      '</div>';
   }).join('');
 }
-function uploadRoomPhoto(type, input){
-  const file = input.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e){
-    const img = new Image();
-    img.onload = function(){
-      const canvas = document.createElement('canvas');
-      const MAX=600; let w=img.width,h=img.height;
-      if(w>MAX){h=Math.round(h*MAX/w);w=MAX;} if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
-      canvas.width=w;canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      roomPhotos[type]=canvas.toDataURL('image/jpeg',0.75);
-      sv('dta_room_photos',roomPhotos);
-      renderRoomPhotosGrid(); renderRooms();
-      sNotify('📸 تم الحفظ','صورة '+type+' تم حفظها','success',2500);
+function uploadRoomPhotos(type, input){
+  const files = Array.from(input.files); if(!files.length) return;
+  if(!roomPhotos[type]) roomPhotos[type] = [];
+  let done = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const img = new Image();
+      img.onload = function(){
+        const canvas = document.createElement('canvas');
+        const MAX=600; let w=img.width,h=img.height;
+        if(w>MAX){h=Math.round(h*MAX/w);w=MAX;} if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        roomPhotos[type].push(canvas.toDataURL('image/jpeg',0.75));
+        done++;
+        if(done===files.length){
+          sv('dta_room_photos',roomPhotos);
+          renderRoomPhotosGrid(); renderRooms();
+          sNotify('📸 تم الحفظ','تم إضافة '+files.length+' صورة لـ '+type,'success',2500);
+        }
+      };
+      img.src=e.target.result;
     };
-    img.src=e.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  });
+  input.value='';
 }
-function deleteRoomPhoto(type){delete roomPhotos[type];sv('dta_room_photos',roomPhotos);renderRoomPhotosGrid();renderRooms();}
-function viewRoomPhoto(type){
-  const photo=roomPhotos[type]; if(!photo) return;
-  const w=window.open('','_blank','width=600,height=500');
-  w.document.write('<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="'+photo+'" style="max-width:100%;max-height:100%;object-fit:contain;"></body>');
+function deleteRoomPhotoIdx(type,idx){
+  if(!roomPhotos[type]) return;
+  roomPhotos[type].splice(idx,1);
+  sv('dta_room_photos',roomPhotos);
+  renderRoomPhotosGrid(); renderRooms();
 }
+function deleteAllRoomPhotos(type){
+  if(!confirm('حذف كل صور '+type+'؟')) return;
+  roomPhotos[type]=[];
+  sv('dta_room_photos',roomPhotos);
+  renderRoomPhotosGrid(); renderRooms();
+}
+// للتوافق القديم
+function deleteRoomPhoto(type){deleteAllRoomPhotos(type);}
+function viewRoomPhotoIdx(type,idx){
+  const photos=roomPhotos[type]; if(!photos||!photos[idx]) return;
+  const w=window.open('','_blank','width=650,height=520');
+  const nav = photos.length>1
+    ? '<div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;">'
+      + photos.map((_,i)=>'<div style="width:10px;height:10px;border-radius:50%;background:'+(i===idx?'#c9a84c':'rgba(255,255,255,0.3)+')+';cursor:pointer;"></div>').join('')
+      + '</div>' : '';
+  w.document.write('<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="'+photos[idx]+'" style="max-width:100%;max-height:100%;object-fit:contain;">'+nav+'</body>');
+}
+function viewRoomPhoto(type){viewRoomPhotoIdx(type,0);}
 
 // ═══════════════════════════════════════════════
 // 📸 BOOKING PHOTOS
@@ -15769,6 +15821,8 @@ function rebuildGuestRows(savedData){
     const wrap = document.createElement("div");
     wrap.className = "bm-guest-row";
     wrap.dataset.idx = i;
+    // عرض ثابت ليظهر جنباً إلى جنب
+    wrap.style.cssText = "flex:1 1 300px;min-width:280px;max-width:360px;";
 
     const inner = document.createElement("div");
     inner.style.cssText = `background:${bgClr};border:1px solid ${borderClr};border-radius:10px;padding:12px 14px;`;
