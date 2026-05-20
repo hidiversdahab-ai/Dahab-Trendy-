@@ -10,6 +10,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dahab Trendy">
+<!-- Google Identity Services for Drive Sync -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230f0f1a' rx='20'/><text y='.9em' font-size='80'>🏨</text></svg>">
 <style>
 :root{--bg1:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;--gold:#c9a84c;--gold2:#e0c068;--text:#f0e6cc;--muted:#7a8fa6;--card:rgba(255,255,255,0.05);--bdr:rgba(201,168,76,0.22);--inp:rgba(255,255,255,0.07)}
@@ -1790,6 +1792,15 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 </div>
 </div>
 
+<!-- Google Drive Sync -->
+<div class="card" id="drive-card" style="border:1px solid rgba(66,133,244,0.4);background:rgba(66,133,244,0.05);">
+<div class="ctitle" style="color:#7ab8f5;">☁️ مزامنة Google Drive</div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.8;">احفظ بيانات الحجوزات تلقائياً على Google Drive.<br><span style="color:#e0c068;">⚠️ يتطلب تشغيل الملف عبر HTTP وليس file://</span><br>احصل على Client ID من <a href="https://console.cloud.google.com" target="_blank" style="color:#7ab8f5;">console.cloud.google.com</a></div>
+<div class="fld"><label>Google Client ID</label><div style="display:flex;gap:6px;"><input id="st-drive-clientid" type="text" placeholder="xxxxxxx.apps.googleusercontent.com" style="flex:1;font-family:monospace;font-size:11px;" oninput="saveDriveClientId()"></div></div>
+<div id="drive-status" style="font-size:11px;color:var(--muted);margin:7px 0;min-height:16px;"></div>
+<div class="flex mt" id="drive-btns"></div>
+</div>
+
 <!-- PIN Lock Settings -->
 <div class="card" style="border:1px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.04);">
 <div class="ctitle">🔐 قفل النظام بـ PIN</div>
@@ -3500,7 +3511,7 @@ function pad(n){return String(n).padStart(2,"0");}
 function toDay(){return new Date().toISOString().split("T")[0];}
 function fmtD(s){if(!s)return"—";return new Date(s).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});}
 function nts(a,b){if(!a||!b)return 0;return Math.max(0,Math.round((new Date(b)-new Date(a))/86400000));}
-function sv(key,val){LSS(key,val);showToast();}
+function sv(key,val){LSS(key,val);showToast();scheduleDriveSync();}
 function showToast(m="✓ Saved!"){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2000);}
 function closeM(id){document.getElementById(id).classList.remove("on");}
 function fillRoomSel(id){
@@ -16016,5 +16027,193 @@ self.addEventListener('fetch', e => {
     .catch(err => console.warn('[PWA] SW registration failed:', err));
 })();
 
+// ═══════════════════════════════════════════════════════════
+// ══ GOOGLE DRIVE AUTO-SYNC ══
+// ═══════════════════════════════════════════════════════════
+let gDriveToken = null;
+let gDriveFileId = localStorage.getItem('dta_drive_file_id') || null;
+let gDriveSyncTimer = null;
+const DRIVE_FILE_NAME = 'DahabTrendy_AutoBackup.json';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+
+function getDriveClientId(){return localStorage.getItem('dta_drive_client_id')||'';}
+function saveDriveClientId(){
+  const v=(document.getElementById('st-drive-clientid')||{}).value||'';
+  localStorage.setItem('dta_drive_client_id',v.trim());
+  updateDriveStatus('✅ تم الحفظ — اضغط Connect للتفعيل');
+  renderDriveBtn();
+}
+
+function updateDriveStatus(msg,color){
+  const el=document.getElementById('drive-status');
+  if(!el)return;
+  el.textContent=msg;
+  el.style.color=color||'var(--muted)';
+}
+
+function renderDriveBtn(){
+  const wrap=document.getElementById('drive-btns');
+  if(!wrap)return;
+  const cid=getDriveClientId();
+  const connected=!!gDriveToken;
+  const lastSync=localStorage.getItem('dta_drive_last_sync')||'';
+  const input=document.getElementById('st-drive-clientid');
+  if(input && !input.value) input.value=cid;
+  if(lastSync && !document.getElementById('drive-status').textContent)
+    updateDriveStatus('☁️ آخر مزامنة: '+lastSync,'#4cda7a');
+
+  wrap.innerHTML='';
+  if(!connected){
+    if(cid){
+      const b=document.createElement('button');
+      b.className='btn bbl';b.textContent='🔗 Connect Google Drive';
+      b.onclick=connectGDrive;wrap.appendChild(b);
+    }
+  } else {
+    const b1=document.createElement('button');
+    b1.className='btn bbl';b1.textContent='☁️ مزامنة الآن';
+    b1.onclick=()=>syncToDrive(true);wrap.appendChild(b1);
+    const b2=document.createElement('button');
+    b2.className='btn bb';b2.textContent='📥 استعادة من Drive';
+    b2.onclick=loadFromDrive;wrap.appendChild(b2);
+    const b3=document.createElement('button');
+    b3.className='btn br bsm';b3.textContent='قطع الاتصال';
+    b3.onclick=disconnectGDrive;wrap.appendChild(b3);
+  }
+}
+
+function connectGDrive(){
+  const clientId=getDriveClientId();
+  if(!clientId){alert('أدخل Google Client ID أولاً');return;}
+  if(location.protocol==='file:'){
+    alert('⚠️ Google Drive لا يعمل مع file://\nافتح الملف عبر سيرفر محلي أو استضافة.\nمثال: استخدم VS Code Live Server أو رفع الملف على GitHub Pages');
+    return;
+  }
+  try{
+    const client=google.accounts.oauth2.initTokenClient({
+      client_id:clientId,
+      scope:DRIVE_SCOPE,
+      callback:(resp)=>{
+        if(resp.error){updateDriveStatus('❌ فشل: '+resp.error,'#e74c3c');return;}
+        gDriveToken=resp.access_token;
+        localStorage.setItem('dta_drive_connected','1');
+        updateDriveStatus('✅ متصل — جاري المزامنة...','#4cda7a');
+        renderDriveBtn();
+        syncToDrive(true);
+      }
+    });
+    client.requestAccessToken();
+  }catch(e){updateDriveStatus('❌ Google GIS غير محمّل بعد — انتظر ثانية وحاول مرة ثانية','#e74c3c');}
+}
+
+function disconnectGDrive(){
+  if(!confirm('قطع الاتصال بـ Google Drive؟'))return;
+  gDriveToken=null;
+  localStorage.removeItem('dta_drive_connected');
+  updateDriveStatus('تم قطع الاتصال');
+  renderDriveBtn();
+}
+
+function getAllAppData(){
+  return{
+    version:2, ts:new Date().toISOString(),
+    dta_bk:bookings, dta_pr:prices, dta_du:duPrices,
+    dta_rs:roomSt, dta_ex:expenses, dta_rest:restaurantTx,
+    dta_rate:localStorage.getItem('dta_rate')||'50',
+    dta_eur_rate:localStorage.getItem('dta_eur_rate')||'55'
+  };
+}
+
+async function syncToDrive(manual){
+  if(!gDriveToken)return;
+  const data=JSON.stringify(getAllAppData());
+  try{
+    if(gDriveFileId){
+      const r=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${gDriveFileId}?uploadType=media`,{
+        method:'PATCH',
+        headers:{'Authorization':'Bearer '+gDriveToken,'Content-Type':'application/json'},
+        body:data
+      });
+      if(r.status===404){gDriveFileId=null;localStorage.removeItem('dta_drive_file_id');await syncToDrive(manual);return;}
+      if(r.status===401){gDriveToken=null;updateDriveStatus('⚠️ انتهت الجلسة — أعد الاتصال','#e0c068');renderDriveBtn();return;}
+      if(!r.ok) throw new Error('HTTP '+r.status);
+    } else {
+      const meta={name:DRIVE_FILE_NAME,mimeType:'application/json'};
+      const form=new FormData();
+      form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+      form.append('file',new Blob([data],{type:'application/json'}));
+      const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{
+        method:'POST',headers:{'Authorization':'Bearer '+gDriveToken},body:form
+      });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const j=await r.json();
+      gDriveFileId=j.id;
+      localStorage.setItem('dta_drive_file_id',gDriveFileId);
+    }
+    const now=new Date().toLocaleString('ar-EG');
+    localStorage.setItem('dta_drive_last_sync',now);
+    updateDriveStatus('☁️ آخر مزامنة: '+now,'#4cda7a');
+    if(manual) showToast('☁️ تمت المزامنة مع Drive!');
+  }catch(e){
+    updateDriveStatus('⚠️ فشل: '+e.message,'#e74c3c');
+    console.warn('[Drive]',e);
+  }
+}
+
+async function loadFromDrive(){
+  if(!gDriveToken){alert('اتصل بـ Drive أولاً');return;}
+  if(!gDriveFileId){
+    // Try to find file by name
+    try{
+      const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}'&spaces=drive`,{
+        headers:{'Authorization':'Bearer '+gDriveToken}
+      });
+      const j=await r.json();
+      if(j.files&&j.files.length){gDriveFileId=j.files[0].id;localStorage.setItem('dta_drive_file_id',gDriveFileId);}
+      else{alert('لم يتم العثور على ملف backup في Drive.');return;}
+    }catch(e){alert('خطأ في البحث: '+e.message);return;}
+  }
+  try{
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${gDriveFileId}?alt=media`,{
+      headers:{'Authorization':'Bearer '+gDriveToken}
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    if(!d.dta_bk) throw new Error('بيانات غير صحيحة');
+    if(!confirm(`📥 استعادة البيانات من Drive?\nآخر حفظ: ${d.ts}\nالحجوزات: ${d.dta_bk.length}\n\nسيتم استبدال البيانات الحالية!`))return;
+    bookings=d.dta_bk||[];expenses=d.dta_ex||[];
+    roomSt=d.dta_rs||{};restaurantTx=d.dta_rest||[];
+    if(d.dta_pr)prices=d.dta_pr;
+    if(d.dta_du)duPrices=d.dta_du;
+    if(d.dta_rate)localStorage.setItem('dta_rate',d.dta_rate);
+    if(d.dta_eur_rate)localStorage.setItem('dta_eur_rate',d.dta_eur_rate);
+    LSS('dta_bk',bookings);LSS('dta_ex',expenses);LSS('dta_rs',roomSt);
+    LSS('dta_rest',restaurantTx);LSS('dta_pr',prices);LSS('dta_du',duPrices);
+    renderDashboard();renderBookings();renderRooms();renderExpenses();renderSettings();
+    showToast('✅ تم الاستعادة من Drive!');
+  }catch(e){updateDriveStatus('⚠️ فشل التحميل: '+e.message,'#e74c3c');}
+}
+
+// Debounced sync — يشتغل 4 ثواني بعد آخر تغيير
+function scheduleDriveSync(){
+  if(!gDriveToken)return;
+  clearTimeout(gDriveSyncTimer);
+  gDriveSyncTimer=setTimeout(()=>syncToDrive(false),4000);
+}
+
+// Re-render Drive buttons when renderSettings is called
+const _origRenderSettings=renderSettings;
+renderSettings=function(){
+  _origRenderSettings();
+  setTimeout(renderDriveBtn,50);
+};
+
+// Init on load
+window.addEventListener('load',()=>{
+  const cid=getDriveClientId();
+  setTimeout(()=>{renderDriveBtn();},300);
+});
+
 </script>
 </body></html>
+
