@@ -130,6 +130,12 @@ select option{background:#1a1a2e;color:var(--text)}
 .sdiv{color:var(--gold);font-size:10px;letter-spacing:2px;text-transform:uppercase;margin:14px 0 9px;padding-bottom:5px;border-bottom:1px solid var(--bdr)}
 .toast{position:fixed;bottom:18px;right:18px;background:#25a244;color:#fff;padding:9px 16px;border-radius:8px;font-weight:700;font-size:13px;display:none;z-index:999}
 .banner{display:none;background:rgba(37,211,102,0.13);border-bottom:1px solid rgba(37,211,102,0.3);padding:7px 16px;font-size:12px;color:#4cda7a;text-align:center;font-weight:700}
+/* HOLIDAY BANNER */
+.holiday-banner{display:none;position:relative;background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(230,192,80,0.10));border-bottom:2px solid rgba(201,168,76,0.45);padding:10px 40px 10px 16px;font-size:13px;color:var(--gold);text-align:center;font-weight:700;z-index:100;animation:hb-pulse 2.5s ease-in-out infinite;}
+.holiday-banner.on{display:block;}
+.holiday-banner .hb-close{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--gold);font-size:18px;cursor:pointer;line-height:1;opacity:.7;}
+.holiday-banner .hb-close:hover{opacity:1;}
+@keyframes hb-pulse{0%,100%{background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(230,192,80,0.10));}50%{background:linear-gradient(135deg,rgba(201,168,76,0.28),rgba(230,192,80,0.18));}}
 /* reserved pulse animation */
 @keyframes pulse-res{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.7;transform:scale(1.05);}}
 /* RESTAURANT */
@@ -353,7 +359,7 @@ select option{background:#1a1a2e;color:var(--text)}
 #birthday-popup .bp-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;margin-top:14px;overflow:hidden;}
 #birthday-popup .bp-bar-fill{height:100%;background:linear-gradient(90deg,#f5c518,#ff9800);border-radius:2px;width:100%;}
 @keyframes bp-bounce{from{transform:scale(1) rotate(-8deg);}to{transform:scale(1.2) rotate(8deg);}}
-#bday-badge{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99995;background:linear-gradient(135deg,#2e1f00,#1a1400);border:2px solid #f5c518;border-radius:50px;padding:11px 16px 11px 14px;box-shadow:0 4px 28px rgba(245,197,24,0.55),0 2px 10px rgba(0,0,0,0.7);display:flex;align-items:center;gap:9px;cursor:pointer;white-space:nowrap;}
+#bday-badge{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99995;background:linear-gradient(135deg,#2e1f00,#1a1400);border:2px solid #f5c518;border-radius:50px;padding:11px 16px 11px 14px;box-shadow:0 4px 28px rgba(245,197,24,0.55),0 2px 10px rgba(0,0,0,0.7);display:none;align-items:center;gap:9px;cursor:pointer;white-space:nowrap;}
 #bday-badge:active{opacity:0.85;}
 #bday-badge .bb-emoji{font-size:24px;flex-shrink:0;}
 #bday-badge .bb-info{display:flex;flex-direction:column;gap:1px;flex:1;}
@@ -888,6 +894,7 @@ select option{background:#1a1a2e;color:var(--text)}
 </div>
 </div>
 <div class="banner" id="banner">✅ Data imported successfully!</div>
+<div class="holiday-banner" id="holiday-banner"><span id="holiday-banner-msg"></span><button class="hb-close" onclick="document.getElementById('holiday-banner').classList.remove('on');localStorage.setItem('hb_dismissed_'+new Date().toDateString(),'1')">✕</button></div>
 <div class="toast" id="toast">✓ Saved!</div>
 <div id="undo-toast" style="display:none;position:fixed;bottom:18px;right:18px;background:#e67e22;color:#fff;padding:10px 16px;border-radius:8px;font-weight:700;font-size:13px;z-index:1000;display:none;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,0.4);">
   <span id="undo-toast-msg"></span>
@@ -12004,8 +12011,7 @@ function updateBirthdayBadge(){
     badgeCount.style.display='flex';
     badgeNames.textContent=birthdayGuests.map(b=>(b.name||'ضيف')+(b.room?' · غرفة '+b.room:'')).join(' | ');
   } else {
-    badgeNames.textContent='لا يوجد ضيوف اليوم';
-    badgeCount.style.display='none';
+    badge.style.display='none';
   }
 }
 function closeBdayBadge(e){
@@ -16236,6 +16242,106 @@ window.addEventListener('load',()=>{
   const cid=getDriveClientId();
   setTimeout(()=>{renderDriveBtn();},300);
 });
+
+// ═══════════════════════════════════════════════
+//  🎉 HOLIDAY NOTIFICATIONS — تنبيهات المناسبات
+// ═══════════════════════════════════════════════
+(function initHolidayBanner(){
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const DAYS_BEFORE = 5;
+
+  // ── تحويل هجري تقريبي ──
+  function hijriToGregorian(hy, hm, hd){
+    // الخوارزمية التقريبية لتحويل التاريخ الهجري إلى ميلادي
+    const jd = Math.floor((11*hy+3)/30) + 354*hy + 30*hm
+              - Math.floor((hm-1)/2) + hd + 1948440 - 385;
+    const l = jd + 68569;
+    const n = Math.floor(4*l/146097);
+    const ll = l - Math.floor((146097*n+3)/4);
+    const i = Math.floor(4000*(ll+1)/1461001);
+    const lll = ll - Math.floor(1461*i/4) + 31;
+    const j = Math.floor(80*lll/2447);
+    const day = lll - Math.floor(2447*j/80);
+    const lv = Math.floor(j/11);
+    const month = j + 2 - 12*lv;
+    const year = 100*(n-49) + i + lv;
+    return new Date(year, month-1, day);
+  }
+
+  // ── حساب السنة الهجرية الحالية تقريباً ──
+  function currentHijriYear(){
+    const msPerHijriYear = 354.367 * 24 * 3600 * 1000;
+    const hijriEpoch = new Date(622, 6, 16).getTime();
+    return Math.floor((Date.now() - hijriEpoch) / msPerHijriYear) + 1;
+  }
+
+  // ── حساب Easter (خوارزمية Anonymous Gregorian) ──
+  function getEaster(year){
+    const a=year%19, b=Math.floor(year/100), c=year%100;
+    const d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25);
+    const g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30;
+    const i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7;
+    const m=Math.floor((a+11*h+22*l)/451);
+    const month=Math.floor((h+l-7*m+114)/31);
+    const day=((h+l-7*m+114)%31)+1;
+    return new Date(year, month-1, day);
+  }
+
+  // ── قائمة المناسبات ──
+  const hy = currentHijriYear();
+  const yr = today.getFullYear();
+
+  const holidays = [
+    // ميلادية ثابتة
+    { name:'🎄 عيد الميلاد (Christmas)', date: new Date(yr,11,25) },
+    { name:'🎄 عيد الميلاد (Christmas)', date: new Date(yr+1,11,25) },
+    // Easter متغير
+    { name:'🐣 عيد القيامة (Easter)',    date: getEaster(yr) },
+    { name:'🐣 عيد القيامة (Easter)',    date: getEaster(yr+1) },
+    // رأس السنة
+    { name:'🎆 رأس السنة الميلادية',     date: new Date(yr+1,0,1) },
+    // هجرية — نجرب السنة الحالية والتالية
+    { name:'🌙 شهر رمضان المبارك',       date: hijriToGregorian(hy,9,1) },
+    { name:'🌙 شهر رمضان المبارك',       date: hijriToGregorian(hy+1,9,1) },
+    { name:'🎊 عيد الفطر المبارك',       date: hijriToGregorian(hy,10,1) },
+    { name:'🎊 عيد الفطر المبارك',       date: hijriToGregorian(hy+1,10,1) },
+    { name:'🐑 عيد الأضحى المبارك',      date: hijriToGregorian(hy,12,10) },
+    { name:'🐑 عيد الأضحى المبارك',      date: hijriToGregorian(hy+1,12,10) },
+  ];
+
+  // ── البحث عن مناسبة قادمة خلال 5 أيام ──
+  const upcoming = [];
+  holidays.forEach(h=>{
+    const hd = new Date(h.date); hd.setHours(0,0,0,0);
+    const diff = Math.round((hd - today) / (1000*3600*24));
+    if(diff >= 0 && diff <= DAYS_BEFORE){
+      upcoming.push({ name: h.name, diff });
+    }
+  });
+
+  // إزالة التكرار
+  const seen = new Set();
+  const unique = upcoming.filter(u=>{ if(seen.has(u.name)) return false; seen.add(u.name); return true; });
+
+  if(!unique.length) return;
+
+  // هل تم إغلاقه اليوم؟
+  if(localStorage.getItem('hb_dismissed_'+today.toDateString())) return;
+
+  const msgs = unique.map(u=>{
+    if(u.diff === 0) return `🎉 اليوم ${u.name}!`;
+    if(u.diff === 1) return `⏰ غداً ${u.name}`;
+    return `⏰ بعد ${u.diff} أيام — ${u.name}`;
+  });
+
+  const msgEl = document.getElementById('holiday-banner-msg');
+  const banner = document.getElementById('holiday-banner');
+  if(msgEl && banner){
+    msgEl.textContent = msgs.join('  •  ');
+    banner.classList.add('on');
+  }
+})();
 
 </script>
 </body></html>
