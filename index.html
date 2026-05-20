@@ -353,21 +353,15 @@ select option{background:#1a1a2e;color:var(--text)}
 #birthday-popup .bp-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;margin-top:14px;overflow:hidden;}
 #birthday-popup .bp-bar-fill{height:100%;background:linear-gradient(90deg,#f5c518,#ff9800);border-radius:2px;width:100%;}
 @keyframes bp-bounce{from{transform:scale(1) rotate(-8deg);}to{transform:scale(1.2) rotate(8deg);}}
-#bday-badge{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99995;background:linear-gradient(135deg,#2e1f00,#1a1400);border:2px solid #f5c518;border-radius:50px;padding:11px 16px 11px 14px;box-shadow:0 4px 28px rgba(245,197,24,0.55),0 2px 10px rgba(0,0,0,0.7);display:flex;align-items:center;gap:9px;cursor:pointer;white-space:nowrap;direction:rtl;unicode-bidi:embed;}
+#bday-badge{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99995;background:linear-gradient(135deg,#2e1f00,#1a1400);border:2px solid #f5c518;border-radius:50px;padding:11px 16px 11px 14px;box-shadow:0 4px 28px rgba(245,197,24,0.55),0 2px 10px rgba(0,0,0,0.7);display:flex;align-items:center;gap:9px;cursor:pointer;white-space:nowrap;}
 #bday-badge:active{opacity:0.85;}
 #bday-badge .bb-emoji{font-size:24px;flex-shrink:0;}
 #bday-badge .bb-info{display:flex;flex-direction:column;gap:1px;flex:1;}
 #bday-badge .bb-title{font-size:12px;font-weight:700;color:#f5c518;line-height:1.3;}
 #bday-badge .bb-names{font-size:12px;font-weight:600;color:#fff;line-height:1.4;word-break:break-word;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
-#bday-badge .bb-close{font-size:20px;color:rgba(255,229,122,0.9);line-height:1;flex-shrink:0;padding:4px 4px 4px 10px;font-weight:700;}
+#bday-badge .bb-close{font-size:16px;color:rgba(255,229,122,0.7);line-height:1;flex-shrink:0;padding-left:6px;font-weight:700;}
 #bday-badge .bb-count{position:absolute;top:-8px;right:-8px;background:#e74c3c;color:#fff;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:2px solid #1a1400;}
-@media(max-width:768px){
-  #bday-badge{bottom:70px;left:10px;right:10px;transform:none;width:calc(100% - 20px);border-radius:14px;white-space:normal;box-sizing:border-box;z-index:100000!important;}
-  #bday-badge .bb-emoji{font-size:26px;}
-  #bday-badge .bb-title{font-size:13px;}
-  #bday-badge .bb-names{font-size:11px;max-width:100%;white-space:normal;overflow:visible;text-overflow:unset;}
-  #bday-badge .bb-close{font-size:22px;padding:6px 4px 6px 12px;}
-}
+@media(max-width:768px){#bday-badge{bottom:20px;padding:10px 14px 10px 12px;}#bday-badge .bb-emoji{font-size:22px;}#bday-badge .bb-title{font-size:12px;}#bday-badge .bb-names{font-size:10px;max-width:140px;}}
 
 /* ══ FEATURE 8: AI Welcome Message ══ */
 #ai-welcome-modal .mdl{max-width:620px;}
@@ -925,11 +919,6 @@ select option{background:#1a1a2e;color:var(--text)}
 <div class="card"><div class="ctitle">🏨 <span class="t" data-ar="حالة الغرف" data-en="Room Status">Room Status</span></div><div id="db-rooms"></div></div>
 <div class="card"><div class="ctitle">📋 <span class="t" data-ar="آخر الحجوزات" data-en="Recent Bookings">Recent Bookings</span></div><div id="db-recent-alerts" style="margin-bottom:8px;"></div><div id="db-recent"></div></div>
 </div>
-<!-- 📅 MONTHLY BREAKDOWN TABLE -->
-<div class="card" style="margin-top:12px;">
-<div class="ctitle">📅 <span class="t" data-ar="تقرير شهري" data-en="Monthly Report">Monthly Report</span></div>
-<div id="db-monthly-table"></div>
-</div>
 <!-- 🧺 LAUNDRY ALERTS -->
 <div id="db-laundry-alerts" style="margin-top:12px;"></div>
 <!-- 🔔 EMPTY ROOM ALERTS -->
@@ -968,12 +957,12 @@ select option{background:#1a1a2e;color:var(--text)}
 <span style="background:rgba(155,89,182,0.15);padding:2px 8px;border-radius:4px;color:#c39bd3;margin-left:auto;">✋ اسحب الحجز لنقله</span>
 </div>
 <div id="cal-stats-bar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
+<div class="card" style="margin-bottom:12px;">
+<div class="ctitle">💰 ملخص مالي كلي</div>
+<div id="cal-finance" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;"></div>
+</div>
 <div class="card" style="padding:8px;">
 <div class="cal-wrap"><table class="cal-tbl" id="cal-tbl"></table></div>
-</div>
-<div class="card" style="margin-top:14px;">
-<div class="ctitle">📅 <span class="t" data-ar="تقرير شهري" data-en="Monthly Report">Monthly Report</span></div>
-<div id="cal-monthly-table"></div>
 </div>
 <div class="ovl" id="cal-dd-modal">
 <div class="mdl" style="max-width:420px;">
@@ -4052,15 +4041,14 @@ const reserved=bookings.filter(b=>b.ci>td&&b.status!=="Cancelled"&&b.status!=="S
 const reservedStandby=bookings.filter(b=>b.ci>td&&b.status==="Standby");
 const ciTd=bookings.filter(b=>b.ci===td&&b.status!=="Cancelled");
 const coTd=bookings.filter(b=>b.co===td&&b.status!=="Cancelled"&&!b.coConfirmed);
-const thisMonthStr=td.slice(0,7);
-const revEGP=bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(thisMonthStr)).reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
-const collectedEGP=bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(thisMonthStr)).reduce((s,b)=>{
+const revEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
+const collectedEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{
 const paid=b.payments?b.payments.reduce((ps,p)=>ps+p.amount,0):(b.prepay||0);
 const paidEGP=b.cur==="EGP"?paid:paid*exRate;
 return s+paidEGP;
 },0);
 const unpaidEGP=revEGP-collectedEGP;
-const expEGP=expenses.filter(e=>e.date&&e.date.startsWith(thisMonthStr)).reduce((s,e)=>s+e.egp,0);
+const expEGP=expenses.reduce((s,e)=>s+e.egp,0);
 const netEGP=collectedEGP-expEGP;
 const occupiedCount=[...new Set(active.map(b=>String(b.room)))].length;
 const activeRoomSet=new Set(active.map(b=>String(b.room)));
@@ -4078,7 +4066,7 @@ mkStat(reservedCount, ar?"محجوزة":"Reserved")+
 mkStat(Math.max(0,availableCount), ar?"متاحة":"Available")+
 mkStat(ciTd.length, ar?"وصول اليوم":"Check-ins Today");
 document.getElementById("db-finance").innerHTML=
-mkFin("£"+revEGP.toFixed(0), ar?"إيرادات الشهر الحالي":"This Month Revenue","rgba(201,168,76,0.1)","rgba(201,168,76,0.25)","var(--gold)")+
+mkFin("£"+revEGP.toFixed(0), ar?"إجمالي الإيرادات":"Total Revenue","rgba(201,168,76,0.1)","rgba(201,168,76,0.25)","var(--gold)")+
 mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
 mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid Balance","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
 mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
@@ -4139,67 +4127,11 @@ return "<div style='padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05)
 renderAlerts();
 renderBirthdayAlerts();
 renderLiveDash();
-  renderMonthlyTable();
 }
 
 // ═══════════════════════════════════════════════════════
 // ══ LIVE ANIMATED DASHBOARD ══
 // ═══════════════════════════════════════════════════════
-function renderMonthlyTable(targetId){
-  const elId=targetId||"db-monthly-table";
-  const el=document.getElementById(elId);
-  if(!el) return;
-  const ar=currentLang==="ar";
-  const monthNames=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-  const monthNamesEn=["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const today=new Date();
-  const monthSet=new Set();
-  bookings.filter(b=>b.status!=="Cancelled"&&b.ci).forEach(b=>monthSet.add(b.ci.slice(0,7)));
-  expenses.filter(e=>e.date).forEach(e=>monthSet.add(e.date.slice(0,7)));
-  if(!monthSet.size){el.innerHTML='<div class="empty" style="padding:12px;">لا توجد بيانات بعد</div>';return;}
-  const months=[...monthSet].sort().reverse();
-  let totalRev=0,totalExp=0;
-  const rows=months.map(m=>{
-    const [y,mo]=m.split("-").map(Number);
-    const rev=bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(m)).reduce((s,b)=>s+(b.cur==="USD"?b.total*(exRate||50):b.cur==="EUR"?b.total*(eurRate||55):b.total),0);
-    const restRev=(restaurantTx||[]).filter(t=>t.type==="income"&&t.date&&t.date.startsWith(m)).reduce((s,t)=>s+t.egp,0);
-    const totalRevWithRest=rev+restRev;
-    const exp=expenses.filter(e=>e.date&&e.date.startsWith(m)).reduce((s,e)=>s+e.egp,0)+(restaurantTx||[]).filter(t=>t.type==="expense"&&t.date&&t.date.startsWith(m)).reduce((s,t)=>s+t.egp,0);
-    const net=totalRevWithRest-exp;
-    const bkCount=bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(m)).length;
-    totalRev+=totalRevWithRest;totalExp+=exp;
-    const isCurrent=m===today.toISOString().slice(0,7);
-    const netColor=net>=0?"#4cda7a":"#e74c3c";
-    const mName=(ar?monthNames:monthNamesEn)[mo-1]+" "+y;
-    const rowBg=isCurrent?"background:rgba(201,168,76,0.08);":"";
-    const nameStyle="padding:7px 10px;font-size:12px;font-weight:"+(isCurrent?"700":"400")+";color:"+(isCurrent?"var(--gold)":"var(--text)")+";";
-    return '<tr style="'+rowBg+'">'+
-      '<td style="'+nameStyle+'">'+(isCurrent?"📍 ":"")+mName+'</td>'+
-      '<td style="padding:7px 10px;font-size:12px;color:#4cda7a;text-align:center;">£'+Math.round(totalRevWithRest).toLocaleString()+'</td>'+
-      '<td style="padding:7px 10px;font-size:12px;color:#e74c3c;text-align:center;">£'+Math.round(exp).toLocaleString()+'</td>'+
-      '<td style="padding:7px 10px;font-size:12px;color:'+netColor+';text-align:center;font-weight:700;">£'+Math.round(net).toLocaleString()+'</td>'+
-      '<td style="padding:7px 10px;font-size:11px;color:var(--muted);text-align:center;">'+bkCount+' حجز</td>'+
-    '</tr>';
-  });
-  const totalNet=totalRev-totalExp;
-  const totColor=totalNet>=0?"#4cda7a":"#e74c3c";
-  el.innerHTML='<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">'+
-    '<thead><tr style="border-bottom:1px solid var(--bdr);">'+
-      '<th style="padding:8px 10px;font-size:11px;color:var(--muted);text-align:right;">الشهر</th>'+
-      '<th style="padding:8px 10px;font-size:11px;color:#4cda7a;text-align:center;">الإيرادات</th>'+
-      '<th style="padding:8px 10px;font-size:11px;color:#e74c3c;text-align:center;">المصروفات</th>'+
-      '<th style="padding:8px 10px;font-size:11px;color:var(--gold);text-align:center;">صافي الربح</th>'+
-      '<th style="padding:8px 10px;font-size:11px;color:var(--muted);text-align:center;">الحجوزات</th>'+
-    '</tr></thead><tbody>'+rows.join('')+'</tbody>'+
-    '<tfoot><tr style="border-top:2px solid var(--bdr);background:rgba(255,255,255,0.03);">'+
-      '<td style="padding:8px 10px;font-size:12px;font-weight:700;color:var(--text);">الإجمالي</td>'+
-      '<td style="padding:8px 10px;font-size:12px;font-weight:700;color:#4cda7a;text-align:center;">£'+Math.round(totalRev).toLocaleString()+'</td>'+
-      '<td style="padding:8px 10px;font-size:12px;font-weight:700;color:#e74c3c;text-align:center;">£'+Math.round(totalExp).toLocaleString()+'</td>'+
-      '<td style="padding:8px 10px;font-size:12px;font-weight:700;color:'+totColor+';text-align:center;">£'+Math.round(totalNet).toLocaleString()+'</td>'+
-      '<td style="padding:8px 10px;font-size:12px;font-weight:700;color:var(--muted);text-align:center;">'+bookings.filter(b=>b.status!=="Cancelled").length+' حجز</td>'+
-    '</tr></tfoot></table></div>';
-}
-
 function renderLiveDash(){
   const strip = document.getElementById('live-dash-strip');
   const occWrap = document.getElementById('live-occ-bar-wrap');
@@ -6604,8 +6536,7 @@ return true;
 const totEGP=list.reduce((s,e)=>s+e.egp,0);
 const totUSD=list.reduce((s,e)=>s+e.usd,0);
 const mthEGP=list.filter(e=>e.date&&e.date.substring(0,7)===toDay().substring(0,7)).reduce((s,e)=>s+e.egp,0);
-const thisMonthStr=td.slice(0,7);
-const revEGP=bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(thisMonthStr)).reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
+const revEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
 const collectedEGP2=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{
 const paid=b.payments?b.payments.reduce((ps,p)=>ps+p.amount,0):(b.prepay||0);
 return s+(b.cur==="EGP"?paid:paid*exRate);
@@ -8417,8 +8348,6 @@ function _translateDOM(){
     acceptNode(node){
       if(skipTags.has(node.parentElement?.tagName)) return NodeFilter.FILTER_REJECT;
       if(node.textContent.trim() === "") return NodeFilter.FILTER_SKIP;
-      // skip notranslate elements
-      if(node.parentElement?.closest('.notranslate')) return NodeFilter.FILTER_REJECT;
       // only translate if it contains Arabic characters
       if(/[\u0600-\u06FF]/.test(node.textContent)) return NodeFilter.FILTER_ACCEPT;
       return NodeFilter.FILTER_SKIP;
@@ -9701,13 +9630,32 @@ ROOMS.forEach(room=>{
   }
 });
 const occPct=Math.round(occupiedSlots/totalSlots*100);
-// Month revenue — نفس طريقة الـ Dashboard (بناءً على تاريخ check-in)
+// Month revenue
 const monthRev=bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(monthStr))
   .reduce((s,b)=>s+(b.cur==="USD"?b.total*(exRate||50):b.cur==="EUR"?b.total*(eurRate||55):b.total),0);
 // Update stats bar if exists
 const statsBar=document.getElementById("cal-stats-bar");
 if(statsBar){
-  statsBar.innerHTML=`<span style="background:rgba(201,168,76,0.15);border:1px solid var(--bdr);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--gold);">📊 إشغال: <strong>${occPct}%</strong></span><span style="background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.2);border-radius:6px;padding:4px 10px;font-size:11px;color:#4cda7a;">💰 إيراد: <strong>£${Math.round(monthRev).toLocaleString()}</strong></span><span style="background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.2);border-radius:6px;padding:4px 10px;font-size:11px;color:#7ab8f5;">🏨 <strong>${occupiedSlots}</strong> ليلة مباعة من <strong>${totalSlots}</strong></span>`;
+  statsBar.innerHTML=`<span style="background:rgba(201,168,76,0.15);border:1px solid var(--bdr);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--gold);">📊 إشغال: <strong>${occPct}%</strong></span><span style="background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.2);border-radius:6px;padding:4px 10px;font-size:11px;color:#4cda7a;">💰 إيراد الشهر: <strong>£${Math.round(monthRev).toLocaleString()}</strong></span><span style="background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.2);border-radius:6px;padding:4px 10px;font-size:11px;color:#7ab8f5;">🏨 <strong>${occupiedSlots}</strong> ليلة مباعة من <strong>${totalSlots}</strong></span>`;
+}
+// Finance Cards (same as Dashboard)
+const calFinEl=document.getElementById("cal-finance");
+if(calFinEl){
+  const calRevEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>s+(b.cur==="USD"?b.total*(exRate||50):b.cur==="EUR"?b.total*(eurRate||55):b.total),0);
+  const calCollectedEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{
+    const paid=b.payments?b.payments.reduce((ps,p)=>ps+p.amount,0):(b.prepay||0);
+    const paidEGP=b.cur==="EGP"?paid:(b.cur==="USD"?paid*(exRate||50):paid*(eurRate||55));
+    return s+paidEGP;
+  },0);
+  const calUnpaidEGP=calRevEGP-calCollectedEGP;
+  const calExpEGP=(expenses||[]).reduce((s,e)=>s+e.egp,0);
+  const calNetEGP=calCollectedEGP-calExpEGP;
+  calFinEl.innerHTML=
+    mkFin("£"+Math.round(calRevEGP).toLocaleString(),"إجمالي الإيرادات","rgba(201,168,76,0.1)","rgba(201,168,76,0.25)","var(--gold)")+
+    mkFin("£"+Math.round(calCollectedEGP).toLocaleString(),"المحصّل فعلاً","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
+    mkFin("£"+Math.round(calUnpaidEGP).toLocaleString(),"المستحق / غير مدفوع","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
+    mkFin("£"+Math.round(calExpEGP).toLocaleString(),"المصروفات","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
+    mkFin("£"+Math.round(calNetEGP).toLocaleString(),"صافي الربح","rgba("+(calNetEGP>=0?"39,174,96":"231,76,60")+",0.1)","rgba("+(calNetEGP>=0?"39,174,96":"231,76,60")+",0.25)",calNetEGP>=0?"#27ae60":"#e74c3c");
 }
 // Build header row
 let html="<thead><tr><th style='min-width:55px;'>الغرفة</th>";
@@ -9756,7 +9704,6 @@ html+="</tbody>";
 document.getElementById("cal-tbl").innerHTML=html;
 // Enable drag & drop after render
 setTimeout(()=>enableCalDragDropV2(), 100);
-renderMonthlyTable("cal-monthly-table");
 }
 // ════════════════════════════════════════════
 // ══ FEATURE 3: AI CHAT ASSISTANT ══
@@ -10375,8 +10322,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(updateBirthdayBadge,500);
   setTimeout(updateBirthdayBadge,2000);
   setTimeout(checkTodayBirthdays, 3000);
-  // Force show birthday badge
-  // birthday badge shown only by updateBirthdayBadge
   const pdfPeriod = document.getElementById('pdf-period');
   if(pdfPeriod){
     pdfPeriod.addEventListener('change',()=>{
@@ -12012,7 +11957,6 @@ function fillFromRepeater(){
 }
 
 // ══ BIRTHDAY BADGE ══
-// Badge shows every time the app opens — no persistent dismiss
 let _bdayDismissed=false;
 
 function checkTodayBirthdays(){
@@ -12042,49 +11986,35 @@ function updateBirthdayBadge(){
   const badge=document.getElementById('bday-badge');
   const badgeNames=document.getElementById('bday-badge-names');
   const badgeCount=document.getElementById('bday-badge-count');
-  const badgeTitle=document.getElementById('bday-badge-title');
   if(!badge||_bdayDismissed) return;
-  const today=new Date(); today.setHours(0,0,0,0);
-  // جمع كل الضيوف الفريدين بتاريخ ميلاد خلال 3 أيام
-  const guestMap={};
-  (bookings||[]).forEach(b=>{
-    if(!b.dob||!b.name||b.status==='Cancelled') return;
-    const key=b.name.trim().toLowerCase();
-    if(!guestMap[key]) guestMap[key]={name:b.name,room:b.room,dob:b.dob};
+  const birthdayGuests=(bookings||[]).filter(b=>{
+    if(b.status==='Cancelled'||!b.dob||!b.ci||!b.co) return false;
+    const dob=new Date(b.dob);
+    if(isNaN(dob)) return false;
+    const dm=dob.getMonth(),dd=dob.getDate();
+    const ci=new Date(b.ci),co=new Date(b.co);
+    for(let d=new Date(ci);d<=co;d.setDate(d.getDate()+1)){
+      if(d.getMonth()===dm&&d.getDate()===dd) return true;
+    }
+    return false;
   });
-  const upcoming=[];
-  Object.values(guestMap).forEach(g=>{
-    const dob=new Date(g.dob);
-    if(isNaN(dob)) return;
-    let bday=new Date(today.getFullYear(),dob.getMonth(),dob.getDate());
-    if(bday<today) bday=new Date(today.getFullYear()+1,dob.getMonth(),dob.getDate());
-    const diff=Math.round((bday-today)/86400000);
-    if(diff<=3) upcoming.push({...g, days:diff});
-  });
-  if(upcoming.length>0){
-    if(!_bdayDismissed) badge.style.display='flex';
-    badgeCount.textContent=upcoming.length;
-    if(!_bdayDismissed) badgeCount.style.display='flex';
-    const hasToday=upcoming.some(g=>g.days===0);
-    if(badgeTitle) badgeTitle.textContent=hasToday?'🎉 عيد ميلاد اليوم!':'🎂 عيد ميلاد قريب!';
-    badgeNames.innerHTML='<span class="notranslate">'+upcoming.map(g=>{
-      const lbl=g.days===0?'اليوم':g.days===1?'غداً':'بعد '+g.days+' أيام';
-      return (g.name||'ضيف')+' ('+lbl+')'+(g.room?' · غرفة '+g.room:'');
-    }).join(' | ')+'</span>';
+  if(birthdayGuests.length>0){
+    badge.style.display='flex';
+    badgeCount.textContent=birthdayGuests.length;
+    badgeCount.style.display='flex';
+    badgeNames.textContent=birthdayGuests.map(b=>(b.name||'ضيف')+(b.room?' · غرفة '+b.room:'')).join(' | ');
   } else {
-    badge.style.display='none';
-    if(badgeCount) badgeCount.style.display='none';
-    if(badgeTitle) badgeTitle.textContent='🎂 أعياد الميلاد';
-    if(badgeNames) badgeNames.innerHTML='<span class="notranslate">لا يوجد أعياد ميلاد قريبة</span>';
+    badgeNames.textContent='لا يوجد ضيوف اليوم';
+    badgeCount.style.display='none';
   }
 }
 function closeBdayBadge(e){
-  if(e){e.stopPropagation();e.preventDefault();}
+  e.stopPropagation();
   _bdayDismissed=true;
   const badge=document.getElementById('bday-badge');
   if(badge) badge.style.display='none';
 }
-function goToBirthdayGuests(){ nav('bookings'); }
+function goToBirthdayGuests(){ nav('bookings'); updateBirthdayBadge(); }
 
 // ══ GUEST CARD FROM NAME CLICK ══
 function openGuestCard(name){
@@ -12241,14 +12171,14 @@ function applyScanData(){
 
 
 <!-- ══ BIRTHDAY FLOATING BADGE ══ -->
-<div id="bday-badge" style="display:none;align-items:center;justify-content:space-between;">
-  <span id="bday-badge-close" style="font-size:28px;color:#ffe57a;font-weight:700;padding:4px 12px 4px 4px;cursor:pointer;flex-shrink:0;line-height:1;pointer-events:all;z-index:100001;position:relative;" onclick="event.stopPropagation();event.preventDefault();_bdayDismissed=true;document.getElementById('bday-badge').style.display='none';">✕</span>
-  <div class="bb-info notranslate" style="flex:1;text-align:right;cursor:pointer;" onclick="goToBirthdayGuests()">
-    <div class="bb-title notranslate" id="bday-badge-title" style="font-size:13px;font-weight:700;color:#f5c518;">🎉 أعياد الميلاد</div>
-    <div class="bb-names notranslate" id="bday-badge-names" style="font-size:11px;color:#fff;">لا يوجد أعياد ميلاد قريبة</div>
+<div id="bday-badge" onclick="goToBirthdayGuests()" title="اضغط لعرض الضيوف أصحاب أعياد الميلاد">
+  <span class="bb-emoji">🎂</span>
+  <div class="bb-info">
+    <div class="bb-title">🎉 عيد ميلاد اليوم!</div>
+    <div class="bb-names" id="bday-badge-names">جاري التحميل...</div>
   </div>
-  <span style="font-size:26px;margin-right:10px;cursor:pointer;" onclick="goToBirthdayGuests()">🎂</span>
-  <div class="bb-count notranslate" id="bday-badge-count" style="display:none;">1</div>
+  <span class="bb-close" onclick="closeBdayBadge(event)">✕</span>
+  <div class="bb-count" id="bday-badge-count">1</div>
 </div>
 
 <!-- ══ BIRTHDAY POPUP ══ -->
