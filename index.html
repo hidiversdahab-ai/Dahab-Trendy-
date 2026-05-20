@@ -6219,16 +6219,17 @@ const actualPaid=b.payments?b.payments.reduce((s,p)=>s+p.amount,0):(b.prepay||0)
 document.getElementById("iv-prepay").value=actualPaid;
 document.getElementById("iv-bf").checked=b.bf;
 document.getElementById("iv-notes").value=b.notes||"";
-// تحميل كل صور الجوازات من allGuestsData
+// تحميل صور الجوازات — أولوية: invPhotos → allGuestsData → photos → guestPhoto
 _invIdPhotos = [];
-if(b.allGuestsData && b.allGuestsData.length){
-  b.allGuestsData.forEach(g=>{ if(g.photo) _invIdPhotos.push({src:g.photo, label:g.name||''}); });
-}
-if(!_invIdPhotos.length && b.photos && b.photos.length){
-  b.photos.forEach((p,i)=>_invIdPhotos.push({src:p, label:'صورة '+(i+1)}));
-}
-if(!_invIdPhotos.length && b.guestPhoto){
-  _invIdPhotos.push({src:b.guestPhoto, label:''});
+if(b.invPhotos && b.invPhotos.length){
+  // الصور المحفوظة مباشرة من الـ invoice
+  b.invPhotos.forEach(p=>_invIdPhotos.push({src:p.src||p,label:p.label||''}));
+} else if(b.allGuestsData && b.allGuestsData.length){
+  b.allGuestsData.forEach(g=>{ if(g.photo) _invIdPhotos.push({src:g.photo,label:g.name||''}); });
+} else if(b.photos && b.photos.length){
+  b.photos.forEach((p,i)=>_invIdPhotos.push({src:p,label:'صورة '+(i+1)}));
+} else if(b.guestPhoto){
+  _invIdPhotos.push({src:b.guestPhoto,label:''});
 }
 _renderInvPhotosPreview();
 // Load transfer data into invoice
@@ -7878,9 +7879,9 @@ function viewRoomPhoto(type){viewRoomPhotoIdx(type,0);}
 // ═══════════════════════════════════════════════
 // 🪪 INVOICE ID PHOTO
 // ═══════════════════════════════════════════════
-// ── INVOICE ID PHOTOS (متعددة) ──
+// ── INVOICE ID PHOTOS (متعددة + حفظ تلقائي) ──
 let _invIdPhotos = [];
-// backward-compat: أماكن تقرأ _invIdPhoto القديم
+// backward-compat
 Object.defineProperty(window,'_invIdPhoto',{
   get:()=>_invIdPhotos.length?_invIdPhotos[0].src:'',
   set:(v)=>{_invIdPhotos = v?[{src:v,label:''}]:[];}
@@ -7906,6 +7907,22 @@ function _renderInvPhotosPreview(){
     "</div>"
   ).join('');
 }
+function _saveInvPhotosToBooking(){
+  // حفظ الصور في allGuestsData + invPhotos في الـ booking
+  if(loadInvIdx<0||!bookings[loadInvIdx]) return;
+  const bk=bookings[loadInvIdx];
+  // حفظ في invPhotos (array مستقل)
+  bk.invPhotos = _invIdPhotos.map(p=>({src:p.src,label:p.label}));
+  // تحديث allGuestsData — لو فيه ضيوف بدون صور نضيف ليهم
+  if(bk.allGuestsData&&bk.allGuestsData.length){
+    _invIdPhotos.forEach((p,i)=>{
+      if(bk.allGuestsData[i]) bk.allGuestsData[i].photo=p.src;
+      else bk.allGuestsData.push({name:p.label,photo:p.src});
+    });
+  }
+  LSS('dta_bk',bookings);
+  scheduleDriveSync&&scheduleDriveSync();
+}
 function uploadInvIdPhotos(input){
   const files=Array.from(input.files); if(!files.length) return;
   let done=0;
@@ -7921,7 +7938,11 @@ function uploadInvIdPhotos(input){
         canvas.getContext('2d').drawImage(img,0,0,w,h);
         _invIdPhotos.push({src:canvas.toDataURL('image/jpeg',0.82),label:''});
         done++;
-        if(done===files.length){_renderInvPhotosPreview();buildPreview();}
+        if(done===files.length){
+          _renderInvPhotosPreview();
+          _saveInvPhotosToBooking();
+          buildPreview();
+        }
       };
       img.src=e.target.result;
     };
@@ -7929,8 +7950,18 @@ function uploadInvIdPhotos(input){
   });
   input.value='';
 }
-function _removeInvPhoto(i){_invIdPhotos.splice(i,1);_renderInvPhotosPreview();buildPreview();}
-function clearAllInvPhotos(){_invIdPhotos=[];_renderInvPhotosPreview();buildPreview();}
+function _removeInvPhoto(i){
+  _invIdPhotos.splice(i,1);
+  _renderInvPhotosPreview();
+  _saveInvPhotosToBooking();
+  buildPreview();
+}
+function clearAllInvPhotos(){
+  _invIdPhotos=[];
+  _renderInvPhotosPreview();
+  _saveInvPhotosToBooking();
+  buildPreview();
+}
 function clearInvIdPhoto(){clearAllInvPhotos();}
 function uploadInvIdPhoto(input){uploadInvIdPhotos(input);}
 function viewInvIdPhoto(){if(_invIdPhotos.length)_viewInvPhoto(0);}
