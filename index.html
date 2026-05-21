@@ -894,7 +894,7 @@ select option{background:#1a1a2e;color:var(--text)}
 </div>
 </div>
 <div class="banner" id="banner">✅ Data imported successfully!</div>
-<div class="holiday-banner" id="holiday-banner"><span id="holiday-banner-msg"></span><button class="hb-close" onclick="document.getElementById('holiday-banner').classList.remove('on');localStorage.setItem('hb_dismissed_'+new Date().toDateString(),'1')">✕</button></div>
+<div class="holiday-banner" id="holiday-banner"><span id="holiday-banner-msg"></span><button class="hb-close" onclick="document.getElementById('holiday-banner').classList.remove('on')">✕</button></div>
 <div class="toast" id="toast">✓ Saved!</div>
 <div id="undo-toast" style="display:none;position:fixed;bottom:18px;right:18px;background:#e67e22;color:#fff;padding:10px 16px;border-radius:8px;font-weight:700;font-size:13px;z-index:1000;display:none;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,0.4);">
   <span id="undo-toast-msg"></span>
@@ -16351,7 +16351,7 @@ window.addEventListener('load',()=>{
 (function initHolidayBanner(){
   const today = new Date();
   today.setHours(0,0,0,0);
-  const DAYS_BEFORE = 5;
+  const DAYS_BEFORE = 30;
 
   // ── تحويل هجري تقريبي ──
   function hijriToGregorian(hy, hm, hd){
@@ -16391,7 +16391,6 @@ window.addEventListener('load',()=>{
   }
 
   // ── قائمة المناسبات ──
-  const hy = currentHijriYear();
   const yr = today.getFullYear();
 
   const holidays = [
@@ -16403,13 +16402,11 @@ window.addEventListener('load',()=>{
     { name:'🐣 عيد القيامة (Easter)',    date: getEaster(yr+1) },
     // رأس السنة
     { name:'🎆 رأس السنة الميلادية',     date: new Date(yr+1,0,1) },
-    // هجرية — نجرب السنة الحالية والتالية
-    { name:'🌙 شهر رمضان المبارك',       date: hijriToGregorian(hy,9,1) },
-    { name:'🌙 شهر رمضان المبارك',       date: hijriToGregorian(hy+1,9,1) },
-    { name:'🎊 عيد الفطر المبارك',       date: hijriToGregorian(hy,10,1) },
-    { name:'🎊 عيد الفطر المبارك',       date: hijriToGregorian(hy+1,10,1) },
-    { name:'🐑 عيد الأضحى المبارك',      date: hijriToGregorian(hy,12,10) },
-    { name:'🐑 عيد الأضحى المبارك',      date: hijriToGregorian(hy+1,12,10) },
+    // إسلامية — تواريخ ميلادية صحيحة
+    { name:'🐑 عيد الأضحى المبارك',      date: new Date(2026,4,27) },
+    { name:'🌙 شهر رمضان المبارك',       date: new Date(2027,1,17) },
+    { name:'🎊 عيد الفطر المبارك',       date: new Date(2027,2,20) },
+    { name:'🐑 عيد الأضحى المبارك',      date: new Date(2027,4,17) },
   ];
 
   // ── البحث عن مناسبة قادمة خلال 5 أيام ──
@@ -16428,9 +16425,6 @@ window.addEventListener('load',()=>{
 
   if(!unique.length) return;
 
-  // هل تم إغلاقه اليوم؟
-  if(localStorage.getItem('hb_dismissed_'+today.toDateString())) return;
-
   const msgs = unique.map(u=>{
     if(u.diff === 0) return `🎉 اليوم ${u.name}!`;
     if(u.diff === 1) return `⏰ غداً ${u.name}`;
@@ -16443,6 +16437,143 @@ window.addEventListener('load',()=>{
     msgEl.textContent = msgs.join('  •  ');
     banner.classList.add('on');
   }
+})();
+
+// ═══════════ HOLIDAY ALARM ═══════════
+(function setupHolidayAlarm(){
+  function getUpcomingHolidays(){
+    const today = new Date(); today.setHours(0,0,0,0);
+    const DAYS_BEFORE = 30; // نطاق 30 يوم
+    // مواعيد المناسبات الإسلامية الثابتة (ميلادي) لعام 2026 و2027
+    const fixedHolidays=[
+      {name:'🐑 عيد الأضحى المبارك', date: new Date(2026, 4, 27)},  // 27 مايو 2026
+      {name:'🌙 شهر رمضان المبارك',  date: new Date(2027, 1, 17)},  // 17 فبراير 2027
+      {name:'🎊 عيد الفطر المبارك',  date: new Date(2027, 2, 20)},  // 20 مارس 2027
+      {name:'🐑 عيد الأضحى المبارك', date: new Date(2027, 4, 17)},  // 17 مايو 2027
+    ];
+    const yr = today.getFullYear();
+    function getEaster(y){
+      const h=(y%19*19+24)%30,l=(y%100*2+y%400*6+y%4*4+6*h+2)%7,
+            m=Math.floor((h+l-114)/31)+3,
+            day=((h+l-7*Math.floor((h+l-114)/31)*7+114)%31)+1;
+      return new Date(y,m-1,day);
+    }
+    const holidays=[
+      ...fixedHolidays,
+      {name:'🎄 عيد الميلاد (Christmas)', date:new Date(yr,11,25)},
+      {name:'🎄 عيد الميلاد (Christmas)', date:new Date(yr+1,11,25)},
+      {name:'🐣 عيد القيامة (Easter)',    date:getEaster(yr)},
+      {name:'🐣 عيد القيامة (Easter)',    date:getEaster(yr+1)},
+      {name:'🎆 رأس السنة الميلادية',     date:new Date(yr+1,0,1)},
+    ];
+    const seen=new Set(), upcoming=[];
+    holidays.forEach(h=>{
+      const hd=new Date(h.date); hd.setHours(0,0,0,0);
+      const diff=Math.round((hd-today)/(1000*3600*24));
+      if(diff>=0 && diff<=DAYS_BEFORE && !seen.has(h.name)){
+        seen.add(h.name);
+        upcoming.push({name:h.name,diff});
+      }
+    });
+    upcoming.sort((a,b)=>a.diff-b.diff);
+    return upcoming;
+  }
+
+  function playAlarmSound(){
+    try{
+      const ctx=new (window.AudioContext||window.webkitAudioContext)();
+      [0,0.3,0.6].forEach(delay=>{
+        const osc=ctx.createOscillator();
+        const gain=ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type='sine'; osc.frequency.setValueAtTime(880,ctx.currentTime+delay);
+        gain.gain.setValueAtTime(0.4,ctx.currentTime+delay);
+        gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+0.4);
+        osc.start(ctx.currentTime+delay);
+        osc.stop(ctx.currentTime+delay+0.4);
+      });
+    } catch(e){}
+  }
+
+  function showAlarmPopup(holidays){
+    // إزالة قديم لو موجود
+    const old=document.getElementById('holiday-alarm-popup');
+    if(old) old.remove();
+
+    const msgs=holidays.map(u=>{
+      if(u.diff===0) return `🎉 اليوم — ${u.name}`;
+      if(u.diff===1) return `⏰ غداً — ${u.name}`;
+      return `⏰ بعد ${u.diff} أيام — ${u.name}`;
+    }).join('<br>');
+
+    const popup=document.createElement('div');
+    popup.id='holiday-alarm-popup';
+    popup.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999999;background:linear-gradient(135deg,#1a1400,#2a2000);border:2px solid #f5c518;border-radius:16px;padding:20px 28px;min-width:300px;max-width:460px;text-align:center;box-shadow:0 8px 40px rgba(245,197,24,0.5);font-family:inherit;';
+    popup.innerHTML=`
+      <div style="font-size:32px;margin-bottom:8px;">🔔</div>
+      <div style="font-size:16px;font-weight:700;color:#f5c518;margin-bottom:10px;">تنبيه المناسبات</div>
+      <div style="font-size:13px;color:#ffe57a;line-height:1.8;">${msgs}</div>
+      <button onclick="document.getElementById('holiday-alarm-popup').remove()" style="margin-top:14px;background:#f5c518;color:#1a1a2e;border:none;border-radius:8px;padding:7px 22px;font-size:13px;font-weight:700;cursor:pointer;">حسناً ✓</button>
+    `;
+    document.body.appendChild(popup);
+
+    // إغلاق تلقائي بعد 30 ثانية
+    setTimeout(()=>{ if(document.getElementById('holiday-alarm-popup')) popup.remove(); }, 30000);
+  }
+
+  // ✅ يظهر التنبيه عند كل فتح للصفحة — يعرض أقرب مناسبة دايمًا
+  (function(){
+    const upcoming=getUpcomingHolidays();
+    if(upcoming.length){
+      // مناسبة خلال 7 أيام — يعرضها عادي
+      playAlarmSound();
+      showAlarmPopup(upcoming);
+    } else {
+      // مفيش مناسبة قريبة — يدور على أقرب مناسبة قادمة ويعرضها
+      const today=new Date(); today.setHours(0,0,0,0);
+      function currentHijriYear(){const d=new Date();return Math.floor((d-new Date(622,6,16))/(1000*3600*24*354.367))+1;}
+      function hijriToGregorian(hy,hm,hd){const jd=Math.floor((11*hy+3)/30)+354*hy+30*hm-Math.floor((hm-1)/2)+hd+1948440-385;const l=jd-1948440+68569,n=Math.floor(4*l/146097),ll=l-Math.floor((146097*n+3)/4),i=Math.floor(4000*(ll+1)/1461001),l2=ll-Math.floor(1461*i/4)+31,j=Math.floor(80*l2/2447),day=l2-Math.floor(2447*j/80),m=j+2-12*Math.floor(j/11),year=100*(n-49)+i+Math.floor(j/11);return new Date(year,m-1,day);}
+      function getEaster(yr){const h=(yr%19*19+24)%30,l=(yr%100*2+yr%400*6+yr%4*4+6*h+2)%7,m=Math.floor((h+l-114)/31)+3,day=((h+l-7*Math.floor((h+l-114)/31)*7+114)%31)+1;return new Date(yr,m-1,day);}
+      const hy=currentHijriYear(), yr=today.getFullYear();
+      const allHolidays=[
+        {name:'🎄 عيد الميلاد (Christmas)',date:new Date(yr,11,25)},
+        {name:'🎄 عيد الميلاد (Christmas)',date:new Date(yr+1,11,25)},
+        {name:'🐣 عيد القيامة (Easter)',date:getEaster(yr)},
+        {name:'🐣 عيد القيامة (Easter)',date:getEaster(yr+1)},
+        {name:'🎆 رأس السنة الميلادية',date:new Date(yr+1,0,1)},
+        {name:'🌙 شهر رمضان المبارك',date:hijriToGregorian(hy,9,1)},
+        {name:'🌙 شهر رمضان المبارك',date:hijriToGregorian(hy+1,9,1)},
+        {name:'🎊 عيد الفطر المبارك',date:hijriToGregorian(hy,10,1)},
+        {name:'🎊 عيد الفطر المبارك',date:hijriToGregorian(hy+1,10,1)},
+        {name:'🐑 عيد الأضحى المبارك',date:hijriToGregorian(hy,12,10)},
+        {name:'🐑 عيد الأضحى المبارك',date:hijriToGregorian(hy+1,12,10)},
+      ];
+      const seen=new Set();
+      const future=allHolidays.map(h=>{
+        const hd=new Date(h.date); hd.setHours(0,0,0,0);
+        const diff=Math.round((hd-today)/(1000*3600*24));
+        return {name:h.name,diff};
+      }).filter(h=>h.diff>0 && !seen.has(h.name) && seen.add(h.name));
+      future.sort((a,b)=>a.diff-b.diff);
+      const nearest=future.slice(0,1); // أقرب مناسبة واحدة
+      if(nearest.length){
+        playAlarmSound();
+        showAlarmPopup(nearest);
+      }
+    }
+  })();
+
+  // زر تجربة التنبيه
+  window.testHolidayAlarm = function(){
+    const upcoming=getUpcomingHolidays();
+    if(upcoming.length){
+      playAlarmSound();
+      showAlarmPopup(upcoming);
+    } else {
+      playAlarmSound();
+      showAlarmPopup([{name:'🔔 تجربة التنبيه — لا توجد مناسبات قريبة حالياً',diff:99}]);
+    }
+  };
 })();
 
 </script>
