@@ -6219,22 +6219,21 @@ const actualPaid=b.payments?b.payments.reduce((s,p)=>s+p.amount,0):(b.prepay||0)
 document.getElementById("iv-prepay").value=actualPaid;
 document.getElementById("iv-bf").checked=b.bf;
 document.getElementById("iv-notes").value=b.notes||"";
-// تحميل صور الجوازات — جمع كل المصادر مع بعض
+// تحميل صور الجوازات — مصدر واحد فقط لتجنب التكرار
 _invIdPhotos = [];
-// 1. صور الفاتورة المحفوظة
 if(b.invPhotos && b.invPhotos.length){
+  // الأولوية: invPhotos هو المصدر الرسمي الوحيد
   b.invPhotos.forEach(p=>_invIdPhotos.push({src:p.src||p,label:p.label||''}));
-}
-// 2. صور الضيوف من allGuestsData
-if(b.allGuestsData && b.allGuestsData.length){
+} else if(b.allGuestsData && b.allGuestsData.length){
+  // fallback: صور الضيوف إذا لم تُحفظ invPhotos بعد
   b.allGuestsData.forEach(g=>{ if(g.photo) _invIdPhotos.push({src:g.photo,label:g.name||''}); });
 } else if(b.guestPhoto){
+  // fallback أخير: صورة الضيف الرئيسي
   _invIdPhotos.push({src:b.guestPhoto,label:''});
 }
-// 3. Booking Photos — تضاف دايماً
-if(b.photos && b.photos.length){
-  b.photos.forEach((p,i)=>_invIdPhotos.push({src:p,label:'صورة '+(i+1)}));
-}
+// إزالة أي تكرار بناءً على src
+const _seenSrcs = new Set();
+_invIdPhotos = _invIdPhotos.filter(p=>{ if(_seenSrcs.has(p.src)) return false; _seenSrcs.add(p.src); return true; });
 _renderInvPhotosPreview();
 // Load transfer data into invoice
 const hasTrInv=b.hasTransfer||false;
@@ -7912,18 +7911,21 @@ function _renderInvPhotosPreview(){
   ).join('');
 }
 function _saveInvPhotosToBooking(){
-  // حفظ الصور في allGuestsData + invPhotos في الـ booking
   if(loadInvIdx<0||!bookings[loadInvIdx]) return;
   const bk=bookings[loadInvIdx];
-  // حفظ في invPhotos (array مستقل)
+  // invPhotos هو المصدر الوحيد — يُحدَّث دايماً
   bk.invPhotos = _invIdPhotos.map(p=>({src:p.src,label:p.label}));
-  // تحديث allGuestsData — لو فيه ضيوف بدون صور نضيف ليهم
+  // مزامنة allGuestsData: تحديث الصور الموجودة فقط بدون إضافة جديدة
   if(bk.allGuestsData&&bk.allGuestsData.length){
+    // أولاً: امسح كل صور allGuestsData عشان تبدأ نضيف الصح
+    bk.allGuestsData.forEach(g=>{ delete g.photo; });
+    // ثانياً: أضف الصور الجديدة للضيوف المقابلين بالترتيب
     _invIdPhotos.forEach((p,i)=>{
       if(bk.allGuestsData[i]) bk.allGuestsData[i].photo=p.src;
-      else bk.allGuestsData.push({name:p.label,photo:p.src});
     });
   }
+  // امسح guestPhoto القديمة إذا كانت موجودة عشان ما تترددش
+  if(bk.guestPhoto) delete bk.guestPhoto;
   LSS('dta_bk',bookings);
   scheduleDriveSync&&scheduleDriveSync();
 }
