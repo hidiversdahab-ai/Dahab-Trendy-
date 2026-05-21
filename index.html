@@ -1759,8 +1759,8 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 </div>
 </div>
 <div class="card">
-<div class="ctitle">📸 صور الغرف / Room Type Photos</div>
-<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">أضف صورة لكل نوع غرفة — ستظهر في بطاقات الغرف والحجوزات</div>
+<div class="ctitle">📸 صور الغرف / Room Photos</div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">أضف صورة لكل غرفة — ستظهر في الحجوزات والفاتورة</div>
 <div id="room-photos-grid" style="display:flex;flex-direction:column;gap:12px;"></div>
 </div>
 <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
@@ -1906,7 +1906,10 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <input type="checkbox" id="bm-walkin" onchange="toggleWalkIn()" style="width:16px;height:16px;accent-color:#2ecc71;cursor:pointer;">
 <label for="bm-walkin" style="letter-spacing:0;text-transform:none;font-size:13px;cursor:pointer;color:#2ecc71;font-weight:700;">🚶 Walk-in (وصول مباشر — بدون حجز مسبق)</label>
 </div>
-<div class="fld"><label>Room</label><select id="bm-room"></select></div>
+<div class="fld"><label>Room</label><select id="bm-room" onchange="showBMRoomPhoto()"></select></div>
+<div id="bm-room-photo-wrap" style="display:none;" class="fld s2">
+  <div id="bm-room-photo-inner" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:8px 10px;"></div>
+</div>
 <div class="fld"><label>Type</label>
 <select id="bm-type" onchange="calcBM()"><option>Single</option><option selected>Double</option><option>Triple</option><option>Suite</option><option>Dorm Bed</option></select>
 </div>
@@ -4640,6 +4643,26 @@ s+r+"/night"+(customP>0?" <span style='color:#f39c12;font-size:10px;'>\u270F\uFE
 "Select dates to calculate";
 }
 }
+function showBMRoomPhoto(){
+  const roomEl = document.getElementById("bm-room");
+  const room = roomEl ? roomEl.value : '';
+  const key = 'room_' + room;
+  const wrap = document.getElementById("bm-room-photo-wrap");
+  const inner = document.getElementById("bm-room-photo-inner");
+  if(!wrap || !inner) return;
+  const photos = (roomPhotos[key] && roomPhotos[key].length) ? roomPhotos[key] : [];
+  if(!photos.length){ wrap.style.display="none"; return; }
+  inner.innerHTML =
+    "<div style='font-size:11px;color:var(--gold);font-weight:700;margin-bottom:5px;width:100%;'>🏨 غرفة " + room + "</div>" +
+    photos.map((p,i) =>
+      "<div style='position:relative;cursor:pointer;' onclick=\"viewRoomPhotoIdx('" + key + "'," + i + ")\">" +
+      "<img src='" + p + "' style='width:88px;height:62px;object-fit:cover;border-radius:7px;border:2px solid rgba(201,168,76,0.6);display:block;'>" +
+      "<div style='position:absolute;bottom:3px;right:4px;background:rgba(0,0,0,0.55);color:#fff;font-size:9px;border-radius:3px;padding:1px 4px;'>" + (i+1) + "/" + photos.length + "</div>" +
+      "</div>"
+    ).join("") +
+    "<div style='font-size:10px;color:var(--muted);align-self:center;'>" + photos.length + " صورة</div>";
+  wrap.style.display = "";
+}
 function buildNightTable(ci,co,defaultRate,cur){
 const s=cur==="USD"?"$":cur==="EUR"?"€":"£";
 // Build date array
@@ -4852,6 +4875,7 @@ var lnm=document.getElementById("bm-linked-name"); if(lnm) lnm.value="";
 // لو New Booking ابن الصف الأول
 if(bkEdit===null) rebuildGuestRows([]);
 loadBkPhotos(bkEdit!==null ? bookings[bkEdit] : null);
+showBMRoomPhoto();
 document.getElementById("bk-modal").classList.add("on");
 }
 function saveBM(){
@@ -7374,8 +7398,11 @@ proformaBanner+
 "</div>"+
 "<div class='invp-sec'>Bill To</div>"+
 (()=>{
-  const roomTypes = [...new Set((d.lines||[]).map(l=>l.type).filter(Boolean))];
-  const pics = roomTypes.map(t=>(roomPhotos[t]&&roomPhotos[t].length)?roomPhotos[t][0]:null).filter(Boolean);
+  const roomNums = [...new Set((d.lines||[]).map(l=>l.room).filter(Boolean))];
+  const pics = roomNums.map(r=>{
+    const key='room_'+r;
+    return (roomPhotos[key]&&roomPhotos[key].length)?roomPhotos[key][0]:null;
+  }).filter(Boolean);
   const roomPicsHtml = pics.length
     ? "<div style='display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;'>"+
       pics.map(p=>"<img src='"+p+"' style='width:120px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #ddd;'>").join('')+
@@ -7544,8 +7571,8 @@ w.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>Invoic
 "<div class='meta'><div><span>Invoice No.</span><b>"+curInvNo+"</b></div><div><span>Date</span><b>"+fmtD(td)+"</b></div><div><span>Currency</span><b>"+invCur+"</b></div><div><span>Status</span><span style='padding:2px 8px;border-radius:20px;font-size:10px;font-weight:bold;"+ss+"'>"+d.status+"</span></div></div>"+
 "<div class='sec'>Bill To</div>"+
 (()=>{
-  const roomTypes2=[...new Set((d.lines||[]).map(l=>l.type).filter(Boolean))];
-  const pics2=roomTypes2.map(t=>(roomPhotos[t]&&roomPhotos[t].length)?roomPhotos[t][0]:null).filter(Boolean);
+  const roomNums2=[...new Set((d.lines||[]).map(l=>l.room).filter(Boolean))];
+  const pics2=roomNums2.map(r=>{const key='room_'+r;return (roomPhotos[key]&&roomPhotos[key].length)?roomPhotos[key][0]:null;}).filter(Boolean);
   const roomPicsHtml2=pics2.length?"<div style='display:flex;gap:6px;flex-wrap:wrap;'>"+pics2.map(p=>"<img src='"+p+"' style='width:130px;height:85px;object-fit:cover;border-radius:6px;border:1px solid #ddd;'>").join('')+"</div>":"";
   return "<div class='gbox' style='display:flex;gap:14px;align-items:flex-start;'>"+
     "<div style='flex:1;display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:11px;color:#555;'><p><b>"+d.name+"</b></p><p>"+d.nat+"</p><p>"+d.phone+"</p><p>"+d.email+"</p></div>"+
@@ -7801,27 +7828,34 @@ function resetDUPrices(){duPrices=JSON.parse(JSON.stringify(DEF_DU_PRICES));sv("
 function renderRoomPhotosGrid(){
   const grid = document.getElementById('room-photos-grid');
   if(!grid) return;
-  grid.innerHTML = RTYPES.map(type => {
-    const photos = (roomPhotos[type] && roomPhotos[type].length) ? roomPhotos[type] : [];
-    const thumbsHtml = photos.length
-      ? photos.map((p,idx) =>
-          '<div style="position:relative;display:inline-block;margin:3px;">' +
-          '<img src="'+p+'" style="width:72px;height:60px;border-radius:7px;object-fit:cover;cursor:pointer;border:2px solid rgba(201,168,76,0.35);" onclick="viewRoomPhotoIdx(\''+type+'\','+idx+')" title="عرض">' +
-          '<button onclick="deleteRoomPhotoIdx(\''+type+'\','+idx+')" style="position:absolute;top:-5px;right:-5px;background:#e74c3c;color:#fff;border:none;border-radius:50%;width:17px;height:17px;font-size:9px;cursor:pointer;font-weight:700;line-height:1;padding:0;">✕</button>' +
-          '</div>'
-        ).join('')
-      : '<div style="width:72px;height:60px;border-radius:8px;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;border:2px dashed rgba(255,255,255,0.15);">🏠</div>';
-
-    return '<div style="padding:10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;">' +
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
-      '<div style="font-weight:700;color:var(--gold);font-size:13px;">'+type+'</div>' +
-      '<span style="font-size:10px;color:var(--muted);">('+photos.length+' صورة)</span>' +
-      '<label style="margin-left:auto;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.4);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:700;">📷 إضافة صورة<input type="file" accept="image/*" multiple style="display:none;" onchange="uploadRoomPhotos(\''+type+'\', this)"></label>' +
-      (photos.length ? '<button onclick="deleteAllRoomPhotos(\''+type+'\')" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.35);border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;">🗑️ حذف الكل</button>' : '') +
-      '</div>' +
-      '<div style="display:flex;flex-wrap:wrap;gap:4px;">' + thumbsHtml + '</div>' +
-      '</div>';
-  }).join('');
+  const rows = [];
+  for(let i=0;i<ROOMS.length;i+=4){ rows.push(ROOMS.slice(i,i+4)); }
+  grid.innerHTML = rows.map(rowRooms =>
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;">' +
+    rowRooms.map(room => {
+      const key = 'room_'+room;
+      const photos = (roomPhotos[key] && roomPhotos[key].length) ? roomPhotos[key] : [];
+      const thumbsHtml = photos.length
+        ? photos.map((p,idx) =>
+            '<div style="position:relative;display:inline-block;margin:2px;">' +
+            '<img src="'+p+'" style="width:60px;height:48px;border-radius:6px;object-fit:cover;cursor:pointer;border:2px solid rgba(201,168,76,0.5);" onclick="viewRoomPhotoIdx(\''+key+'\','+idx+')" title="عرض">' +
+            '<button onclick="deleteRoomPhotoIdx(\''+key+'\','+idx+')" style="position:absolute;top:-5px;right:-5px;background:#e74c3c;color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:9px;cursor:pointer;font-weight:700;line-height:1;padding:0;">✕</button>' +
+            '</div>'
+          ).join('')
+        : '<div style="width:60px;height:48px;border-radius:7px;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;border:2px dashed rgba(255,255,255,0.15);">🏠</div>';
+      return '<div style="padding:8px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;text-align:center;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">' +
+        '<div style="font-weight:700;color:var(--gold);font-size:13px;">🏨 '+room+'</div>' +
+        '<span style="font-size:9px;color:var(--muted);">('+photos.length+')</span>' +
+        '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-bottom:5px;">' + thumbsHtml + '</div>' +
+        '<div style="display:flex;gap:4px;justify-content:center;">' +
+        '<label style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.4);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-weight:700;">📷 إضافة<input type="file" accept="image/*" multiple style="display:none;" onchange="uploadRoomPhotos(\''+key+'\', this)"></label>' +
+        (photos.length ? '<button onclick="deleteAllRoomPhotos(\''+key+'\')" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.35);border-radius:6px;padding:3px 6px;font-size:10px;cursor:pointer;">🗑️</button>' : '') +
+        '</div>' +
+        '</div>';
+    }).join('') + '</div>'
+  ).join('');
 }
 function uploadRoomPhotos(type, input){
   const files = Array.from(input.files); if(!files.length) return;
