@@ -16195,13 +16195,14 @@ self.addEventListener('fetch', e => {
 })();
 
 // ═══════════════════════════════════════════════════════════
-// ══ GOOGLE DRIVE AUTO-SYNC ══
+// ══ GOOGLE DRIVE AUTO-SYNC (نسخ يومية — 7 أيام) ══
 // ═══════════════════════════════════════════════════════════
 let gDriveToken = null;
-let gDriveFileId = localStorage.getItem('dta_drive_file_id') || null;
 let gDriveSyncTimer = null;
-const DRIVE_FILE_NAME = 'DahabTrendy_AutoBackup.json';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+
+function getTodayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function getDailyFileName(){return 'DahabTrendy_Backup_'+getTodayStr()+'.json';}
 
 function getDriveClientId(){return localStorage.getItem('dta_drive_client_id')||'';}
 function saveDriveClientId(){
@@ -16241,8 +16242,8 @@ function renderDriveBtn(){
     b1.className='btn bbl';b1.textContent='☁️ مزامنة الآن';
     b1.onclick=()=>syncToDrive(true);wrap.appendChild(b1);
     const b2=document.createElement('button');
-    b2.className='btn bb';b2.textContent='📥 استعادة من Drive';
-    b2.onclick=loadFromDrive;wrap.appendChild(b2);
+    b2.className='btn bb';b2.textContent='📋 استعادة نسخة';
+    b2.onclick=showRestorePicker;wrap.appendChild(b2);
     const b3=document.createElement('button');
     b3.className='btn br bsm';b3.textContent='قطع الاتصال';
     b3.onclick=disconnectGDrive;wrap.appendChild(b3);
@@ -16294,18 +16295,26 @@ function getAllAppData(){
 async function syncToDrive(manual){
   if(!gDriveToken)return;
   const data=JSON.stringify(getAllAppData());
+  const fileName=getDailyFileName();
   try{
-    if(gDriveFileId){
-      const r=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${gDriveFileId}?uploadType=media`,{
+    // ابحث عن ملف اليوم
+    const searchR=await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${fileName}'&spaces=drive`,{
+      headers:{'Authorization':'Bearer '+gDriveToken}
+    });
+    if(searchR.status===401){gDriveToken=null;updateDriveStatus('⚠️ انتهت الجلسة — أعد الاتصال','#e0c068');renderDriveBtn();return;}
+    const searchJ=await searchR.json();
+    if(searchJ.files&&searchJ.files.length){
+      // حدّث ملف اليوم
+      const fileId=searchJ.files[0].id;
+      const r=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,{
         method:'PATCH',
         headers:{'Authorization':'Bearer '+gDriveToken,'Content-Type':'application/json'},
         body:data
       });
-      if(r.status===404){gDriveFileId=null;localStorage.removeItem('dta_drive_file_id');await syncToDrive(manual);return;}
-      if(r.status===401){gDriveToken=null;updateDriveStatus('⚠️ انتهت الجلسة — أعد الاتصال','#e0c068');renderDriveBtn();return;}
       if(!r.ok) throw new Error('HTTP '+r.status);
     } else {
-      const meta={name:DRIVE_FILE_NAME,mimeType:'application/json'};
+      // أنشئ ملف جديد لليوم
+      const meta={name:fileName,mimeType:'application/json'};
       const form=new FormData();
       form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
       form.append('file',new Blob([data],{type:'application/json'}));
@@ -16313,13 +16322,10 @@ async function syncToDrive(manual){
         method:'POST',headers:{'Authorization':'Bearer '+gDriveToken},body:form
       });
       if(!r.ok) throw new Error('HTTP '+r.status);
-      const j=await r.json();
-      gDriveFileId=j.id;
-      localStorage.setItem('dta_drive_file_id',gDriveFileId);
     }
     const now=new Date().toLocaleString('ar-EG');
     localStorage.setItem('dta_drive_last_sync',now);
-    updateDriveStatus('☁️ آخر مزامنة: '+now,'#4cda7a');
+    updateDriveStatus('☁️ آخر مزامنة: '+now+' ('+fileName+')','#4cda7a');
     if(manual) showToast('☁️ تمت المزامنة مع Drive!');
   }catch(e){
     updateDriveStatus('⚠️ فشل: '+e.message,'#e74c3c');
@@ -16327,27 +16333,40 @@ async function syncToDrive(manual){
   }
 }
 
-async function loadFromDrive(){
+async function showRestorePicker(){
   if(!gDriveToken){alert('اتصل بـ Drive أولاً');return;}
-  if(!gDriveFileId){
-    // Try to find file by name
-    try{
-      const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}'&spaces=drive`,{
-        headers:{'Authorization':'Bearer '+gDriveToken}
-      });
-      const j=await r.json();
-      if(j.files&&j.files.length){gDriveFileId=j.files[0].id;localStorage.setItem('dta_drive_file_id',gDriveFileId);}
-      else{alert('لم يتم العثور على ملف backup في Drive.');return;}
-    }catch(e){alert('خطأ في البحث: '+e.message);return;}
-  }
+  updateDriveStatus('🔍 جاري البحث عن النسخ...','#e0c068');
   try{
-    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${gDriveFileId}?alt=media`,{
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=name+contains+'DahabTrendy_Backup_'&spaces=drive&orderBy=name+desc&pageSize=10`,{
+      headers:{'Authorization':'Bearer '+gDriveToken}
+    });
+    const j=await r.json();
+    if(!j.files||!j.files.length){alert('لا توجد نسخ احتياطية في Drive.');updateDriveStatus('','');return;}
+    // عرض قائمة النسخ
+    let msg='اختر النسخة للاستعادة:\n\n';
+    j.files.forEach((f,i)=>{
+      const dateStr=f.name.replace('DahabTrendy_Backup_','').replace('.json','');
+      msg+=(i+1)+'. '+dateStr+'\n';
+    });
+    const choice=prompt(msg+'\nاكتب رقم النسخة:');
+    if(!choice)return;
+    const idx=parseInt(choice)-1;
+    if(isNaN(idx)||idx<0||idx>=j.files.length){alert('رقم غير صحيح');return;}
+    await loadFromDrive(j.files[idx].id, j.files[idx].name);
+  }catch(e){updateDriveStatus('⚠️ فشل: '+e.message,'#e74c3c');}
+}
+
+async function loadFromDrive(fileId, fileName){
+  if(!gDriveToken){alert('اتصل بـ Drive أولاً');return;}
+  try{
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,{
       headers:{'Authorization':'Bearer '+gDriveToken}
     });
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
     if(!d.dta_bk) throw new Error('بيانات غير صحيحة');
-    if(!confirm(`📥 استعادة البيانات من Drive?\nآخر حفظ: ${d.ts}\nالحجوزات: ${d.dta_bk.length}\n\nسيتم استبدال البيانات الحالية!`))return;
+    const dateStr=fileName?fileName.replace('DahabTrendy_Backup_','').replace('.json',''):'';
+    if(!confirm(`📥 استعادة البيانات من ${dateStr}?\nالحجوزات: ${d.dta_bk.length}\n\nسيتم استبدال البيانات الحالية!`))return;
     bookings=d.dta_bk||[];expenses=d.dta_ex||[];
     roomSt=d.dta_rs||{};restaurantTx=d.dta_rest||[];
     if(d.dta_pr)prices=d.dta_pr;
@@ -16357,7 +16376,8 @@ async function loadFromDrive(){
     LSS('dta_bk',bookings);LSS('dta_ex',expenses);LSS('dta_rs',roomSt);
     LSS('dta_rest',restaurantTx);LSS('dta_pr',prices);LSS('dta_du',duPrices);
     renderDashboard();renderBookings();renderRooms();renderExpenses();renderSettings();
-    showToast('✅ تم الاستعادة من Drive!');
+    showToast('✅ تم الاستعادة من '+dateStr+'!');
+    updateDriveStatus('✅ تم الاستعادة من '+dateStr,'#4cda7a');
   }catch(e){updateDriveStatus('⚠️ فشل التحميل: '+e.message,'#e74c3c');}
 }
 
