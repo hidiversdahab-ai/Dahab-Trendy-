@@ -16304,28 +16304,104 @@ function autoReconnectDrive(){
 function checkRepeaterGuest(){
   const nameInp = document.getElementById('g0-name');
   if(!nameInp) return;
-  const name = nameInp.value.trim().toLowerCase();
-  // إزالة أي badge قديم
-  let old = document.getElementById('repeater-badge');
-  if(old) old.remove();
-  if(name.length < 3) return;
-  // ابحث في الحجوزات السابقة (غير الحجز الحالي)
+  const typed = nameInp.value.trim();
+  const name = typed.toLowerCase();
+
+  // إزالة قائمة وبادج قديمة
+  ['repeater-badge','guest-autocomplete'].forEach(id=>{ const el=document.getElementById(id); if(el) el.remove(); });
+  if(name.length < 2) return;
+
   const editId = typeof bkEdit !== 'undefined' ? bkEdit : null;
-  const prev = bookings.filter(b => {
-    if(editId !== null && b.id === editId) return false;
-    return b.name && b.name.trim().toLowerCase().includes(name);
+
+  // اجمع نزلاء فريدين من الحجوزات (مرتبين بالأحدث)
+  const guestMap = {};
+  bookings.forEach(b => {
+    if(editId !== null && b.id === editId) return;
+    if(!b.name) return;
+    const key = b.name.trim().toLowerCase();
+    if(!key.includes(name)) return;
+    if(!guestMap[key] || new Date(b.ci) > new Date(guestMap[key].lastCi)){
+      guestMap[key] = {
+        name: b.name, phone: b.phone||'', email: b.email||'',
+        nat: b.nat||'', idno: b.idno||b.idNo||'', dob: b.dob||'',
+        gender: b.gender||'', whatsapp: b.whatsapp||b.wa||'',
+        lastCi: b.ci, count: 0
+      };
+    }
+    guestMap[key].count++;
   });
-  if(!prev.length) return;
-  // رتّب حسب تاريخ Check-in
-  prev.sort((a,b)=> new Date(b.ci)-new Date(a.ci));
-  const lastVisit = fmtD(prev[0].ci);
-  const count = prev.length;
-  // أنشئ badge
+
+  const guests = Object.values(guestMap).sort((a,b)=> new Date(b.lastCi)-new Date(a.lastCi));
+  if(!guests.length) return;
+
+  // لو كان اسم واحد فقط وهو مطابق تماماً — أظهر badge فقط
+  if(guests.length === 1 && guests[0].name.trim().toLowerCase() === name){
+    showRepeaterBadge(guests[0]);
+    return;
+  }
+
+  // أنشئ قائمة autocomplete
+  const list = document.createElement('div');
+  list.id = 'guest-autocomplete';
+  list.style.cssText = 'position:absolute;z-index:9999;background:#1a1a2e;border:1px solid rgba(201,168,76,0.4);border-radius:8px;width:100%;max-height:220px;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
+
+  guests.forEach(g => {
+    const item = document.createElement('div');
+    item.style.cssText = 'padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;gap:2px;';
+    item.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="color:#f0e6c8;font-weight:600;">${g.name}</span>
+        <span style="font-size:10px;background:rgba(46,204,113,0.2);color:#2ecc71;border-radius:4px;padding:1px 6px;">⭐ ${g.count} زيارة</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);">${g.phone||''} ${g.nat?'· '+g.nat:''} · آخر زيارة: ${fmtD(g.lastCi)}</div>`;
+    item.onmouseenter = ()=> item.style.background='rgba(201,168,76,0.1)';
+    item.onmouseleave = ()=> item.style.background='';
+    item.onclick = ()=> fillGuestData(g);
+    list.appendChild(item);
+  });
+
+  // ضعها تحت حقل الاسم
+  const nameField = nameInp.closest('.fld');
+  if(!nameField) return;
+  nameField.style.position = 'relative';
+  nameField.appendChild(list);
+
+  // إخفاء لما تضغط برة
+  setTimeout(()=>{
+    document.addEventListener('click', function hide(e){
+      if(!list.contains(e.target) && e.target !== nameInp){ list.remove(); document.removeEventListener('click', hide); }
+    });
+  }, 100);
+}
+
+function fillGuestData(g){
+  // إزالة قائمة
+  ['guest-autocomplete','repeater-badge'].forEach(id=>{ const el=document.getElementById(id); if(el) el.remove(); });
+
+  // ملء الحقول
+  const setVal = (id, val) => { const el=document.getElementById(id); if(el && val) el.value=val; };
+  setVal('g0-name', g.name);
+  setVal('g0-phone', g.phone);
+  setVal('g0-wa', g.whatsapp || g.phone);
+  setVal('g0-email', g.email);
+  setVal('g0-nat', g.nat);
+  setVal('g0-idno', g.idno);
+  setVal('g0-dob', g.dob);
+  const genEl = document.getElementById('g0-gender');
+  if(genEl && g.gender) genEl.value = g.gender;
+
+  syncMainGuest();
+  showRepeaterBadge(g);
+}
+
+function showRepeaterBadge(g){
+  let old = document.getElementById('repeater-badge'); if(old) old.remove();
+  const nameInp = document.getElementById('g0-name');
+  if(!nameInp) return;
   const badge = document.createElement('div');
   badge.id = 'repeater-badge';
   badge.style.cssText = 'margin:6px 0 2px 0;padding:7px 12px;background:rgba(46,204,113,0.15);border:1px solid rgba(46,204,113,0.4);border-radius:8px;font-size:12px;color:#2ecc71;display:flex;align-items:center;gap:6px;';
-  badge.innerHTML = `⭐ نزيل قديم — زار <strong>${count}</strong> مرة | آخر زيارة: <strong>${lastVisit}</strong>`;
-  // أضفه بعد حقل الاسم
+  badge.innerHTML = `⭐ نزيل قديم — زار <strong>${g.count}</strong> مرة | آخر زيارة: <strong>${fmtD(g.lastCi)}</strong>`;
   const nameField = nameInp.closest('.fld');
   if(nameField) nameField.insertAdjacentElement('afterend', badge);
 }
