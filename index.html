@@ -4608,14 +4608,16 @@ const s=cur==="USD"?"$":cur==="EUR"?"€":"£";
 const cpEl=document.getElementById("bm-customprice");
 if(document.getElementById("bm-cpsym")) document.getElementById("bm-cpsym").textContent=s;
 if(document.getElementById("bm-npsym")) document.getElementById("bm-npsym").textContent=s;
-const customP=cpEl?parseFloat(cpEl.value)||0:0;
+const cpRaw=cpEl?cpEl.value:"";
+const customP=(cpRaw==="")?null:parseFloat(cpRaw);
+const hasCustom=(customP!==null&&!isNaN(customP));
 if(du){
 const p=duPrices[t]||{usd:0,egp:0,eur:0};
 const baseR=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
-const r=customP>0?customP:baseR;
+const r=hasCustom?customP:baseR;
 const inT=document.getElementById("bm-du-in").value||"10:00";
 const outT=document.getElementById("bm-du-out").value||"18:00";
-document.getElementById("bm-calc").innerHTML="🌤️ Day Use · "+inT+" → "+outT+" · <strong style='color:#fff;'>"+s+r+"</strong>"+(customP>0?" <span style='color:#f39c12;font-size:10px;'>✏️ Custom</span>":"");
+document.getElementById("bm-calc").innerHTML="🌤️ Day Use · "+inT+" → "+outT+" · <strong style='color:#fff;'>"+s+r+"</strong>"+(hasCustom?" <span style='color:#f39c12;font-size:10px;'>✏️ Custom</span>":"");
 document.getElementById("bm-nights-section").style.display="none";
 } else {
 const ci=document.getElementById("bm-ci").value;
@@ -4623,7 +4625,7 @@ const co=document.getElementById("bm-co").value;
 const n=nts(ci,co);
 const p=prices[t]||{usd:0,egp:0,eur:0};
 const baseR=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
-const r=customP>0?customP:baseR;
+const r=hasCustom?customP:baseR;
 if(n>0 && ci && co){
 buildNightTable(ci,co,r,cur);
 document.getElementById("bm-nights-section").style.display="";
@@ -4632,11 +4634,11 @@ document.getElementById("bm-nights-section").style.display="none";
 nightPrices=[];
 }
 // If custom price set, override all per-night prices
-if(customP>0) nightPrices=nightPrices.map(x=>({...x,price:customP}));
+if(hasCustom) nightPrices=nightPrices.map(x=>({...x,price:customP}));
 const nightTotal=nightPrices.length>0?nightPrices.reduce((s,x)=>s+x.price,0):r*n;
 const trPrice=document.getElementById("bm-transfer")?.checked?(parseFloat(document.getElementById("bm-transfer-price")?.value)||0):0;
 document.getElementById("bm-calc").innerHTML=n>0?
-s+r+"/night"+(customP>0?" <span style='color:#f39c12;font-size:10px;'>\u270F\uFE0F Custom</span>":"")+
+s+r+"/night"+(hasCustom?" <span style='color:#f39c12;font-size:10px;'>\u270F\uFE0F Custom</span>":"")+
 " · <strong style='color:#fff;'>"+n+" nights = "+s+nightTotal.toFixed(2)+"</strong>"+
 (trPrice>0?" · ✈️ Transfer: <strong style='color:#7ab8f5;'>"+s+trPrice.toFixed(2)+"</strong>"+
 " · Grand: <strong style='color:#4cda7a;'>"+s+(nightTotal+trPrice).toFixed(2)+"</strong>":""):
@@ -4718,17 +4720,17 @@ document.getElementById("bm-nights-total").innerHTML=
 "الإجمالي: <span style='color:var(--gold);font-size:14px;'>"+sym+total.toFixed(2)+"</span>";
 // Also update main calc info
 const ci=document.getElementById("bm-ci").value;
-const co=document.getElementById("bm-co").value;
-const nights=nts(ci,co);
-const customP=parseFloat(document.getElementById("bm-customprice").value)||0;
+const customPRaw2=document.getElementById("bm-customprice").value;
+const customP=(customPRaw2==="")?null:parseFloat(customPRaw2);
+const hasCustom2=(customP!==null&&!isNaN(customP));
 const cur=document.getElementById("bm-cur").value;
 const t=document.getElementById("bm-type").value;
 const p=prices[t]||{usd:0,egp:0,eur:0};
 const baseR=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
-const r=customP>0?customP:baseR;
+const r=hasCustom2?customP:baseR;
 if(nights>0){
 document.getElementById("bm-calc").innerHTML=
-sym+r+"/night"+(customP>0?" <span style='color:#f39c12;font-size:10px;'>✏️ Custom</span>":"")+
+sym+r+"/night"+(hasCustom2?" <span style='color:#f39c12;font-size:10px;'>✏️ Custom</span>":"")+
 " · <strong style='color:#fff;'>"+nights+" nights = "+sym+total.toFixed(2)+"</strong>"+
 (total!==r*nights?" <span style='color:#f39c12;font-size:10px;'>✏️ مخصص</span>":"");
 }
@@ -4737,10 +4739,11 @@ function fillNightPrices(mode){
 // mode=0 → clear to 0, mode=-1 → fill with default rate
 const cur=document.getElementById("bm-cur").value;
 const t=document.getElementById("bm-type").value;
-const customP=parseFloat(document.getElementById("bm-customprice").value)||0;
+const cpRaw3=document.getElementById("bm-customprice").value;
+const customP3=(cpRaw3==="")?null:parseFloat(cpRaw3);
 const p=prices[t]||{usd:0,egp:0,eur:0};
 const baseR=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
-const r=customP>0?customP:baseR;
+const r=(customP3!==null&&!isNaN(customP3))?customP3:baseR;
 nightPrices=nightPrices.map(x=>({...x,price:mode===0?0:r}));
 renderNightTable();
 }
@@ -4787,7 +4790,7 @@ document.getElementById("bm-type").value=b.type;
 document.getElementById("bm-ci").value=b.ci;
 document.getElementById("bm-co").value=b.co;
 document.getElementById("bm-cur").value=b.cur||"EGP";
-document.getElementById("bm-customprice").value=b.customPrice||0;
+document.getElementById("bm-customprice").value=(b.customPrice!==null&&b.customPrice!==undefined)?b.customPrice:"";
 document.getElementById("bm-status").value=b.status;
 onStatusChange(b.status);
 document.getElementById("bm-method").value=b.method;
@@ -4935,8 +4938,9 @@ const isDU=document.getElementById("bm-dayuse").checked;
 const n=isDU?0:nts(ci,co);
 const p=isDU?(duPrices[type]||{usd:0,egp:0,eur:0}):(prices[type]||{usd:0,egp:0,eur:0});
 const baseRate=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
-const customP=parseFloat(document.getElementById("bm-customprice").value)||0;
-const rate=customP>0?customP:baseRate;
+const customPRaw=document.getElementById("bm-customprice").value;
+const customP=(customPRaw===""||customPRaw===null)?null:parseFloat(customPRaw);
+const rate=(customP!==null&&!isNaN(customP))?customP:baseRate;
 const duIn=isDU?document.getElementById("bm-du-in").value:"";
 const duOut=isDU?document.getElementById("bm-du-out").value:"";
 // Total: use nightPrices sum if available, else rate*n
@@ -4985,7 +4989,7 @@ coGuests: (allGuests||[]).slice(1), // النزلاء من 2 فصاعداً
 allGuestsData: allGuests||[],      // كل النزلاء شامل الرئيسي
 room,
 type,ci,co,cur,
-customPrice:customP,
+customPrice:(customP!==null&&!isNaN(customP))?customP:null,
 nightPrices:(!isDU&&nightPrices.length===n&&n>0)?[...nightPrices]:[],
 total:isDU?rate:nightTotal,
 status:payStatus,
@@ -7120,8 +7124,8 @@ ${["Single","Double","Triple","Suite","Dorm Bed"].map(t=>`<option ${r.type===t?"
 <input type="number" min="0" value="${r.children}" onchange="updateInvRoom(${r.id},'children',this.value)" style="padding:5px 8px;font-size:12px;">
 </div>
 <div class="fld s2" style="margin-bottom:4px;background:rgba(201,168,76,0.07);border-radius:6px;padding:7px 10px;">
-<label>💰 Custom Price/Night (${sym}) — فاضي = افتراضي</label>
-<input type="number" min="0" step="0.01" value="${r.customPrice!==null?r.customPrice:''}" onchange="updateInvRoom(${r.id},'customPrice',this.value===''?'':this.value)" style="padding:5px 8px;font-size:12px;" ${r.isMonthly?"disabled style='opacity:0.4;padding:5px 8px;font-size:12px;'":""}>
+<label>💰 Custom Price/Night (${sym}) — 0 = افتراضي</label>
+<input type="number" min="0" step="0.01" value="${r.customPrice!==null?r.customPrice:''}" onchange="updateInvRoom(${r.id},'customPrice',this.value)" style="padding:5px 8px;font-size:12px;" ${r.isMonthly?"disabled style='opacity:0.4;padding:5px 8px;font-size:12px;'":""}>
 </div>
 <div class="fld" style="display:flex;align-items:center;gap:7px;margin-bottom:0;">
 <input type="checkbox" ${r.isDU?"checked":""} onchange="updateInvRoom(${r.id},'isDU',this.checked)" style="width:14px;height:14px;accent-color:#e67e22;">
@@ -7208,7 +7212,7 @@ function updateInvRoom(id, field, val){
 const r = ivRooms.find(r=>r.id===id);
 if(!r) return;
 if(field==="adults"||field==="children") r[field]=parseInt(val)||0;
-else if(field==="customPrice"||field==="monthlyTotal"){if(field==="customPrice"){const trimmed=String(val).trim();if(trimmed===""||trimmed===null){r.customPrice=null;r.customPriceSet=false;}else{const parsed=parseFloat(trimmed);r.customPrice=isNaN(parsed)?null:parsed;r.customPriceSet=(r.customPrice!==null);}}else{const parsed=parseFloat(val);r[field]=parsed||0;}}
+else if(field==="customPrice"||field==="monthlyTotal"){const parsed=parseFloat(val);if(field==="customPrice"){r.customPrice=isNaN(parsed)?null:parsed;r.customPriceSet=(r.customPrice!==null);}else r[field]=parsed||0;}
 else if(field==="isDU"||field==="isMonthly") r[field]=!!val;
 else r[field]=val;
 // Reset monthPrices when dates or type change so they rebuild
