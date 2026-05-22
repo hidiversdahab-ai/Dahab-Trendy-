@@ -7120,8 +7120,8 @@ ${["Single","Double","Triple","Suite","Dorm Bed"].map(t=>`<option ${r.type===t?"
 <input type="number" min="0" value="${r.children}" onchange="updateInvRoom(${r.id},'children',this.value)" style="padding:5px 8px;font-size:12px;">
 </div>
 <div class="fld s2" style="margin-bottom:4px;background:rgba(201,168,76,0.07);border-radius:6px;padding:7px 10px;">
-<label>💰 Custom Price/Night (${sym}) — 0 = افتراضي</label>
-<input type="number" min="0" step="0.01" value="${r.customPrice!==null?r.customPrice:''}" onchange="updateInvRoom(${r.id},'customPrice',this.value)" style="padding:5px 8px;font-size:12px;" ${r.isMonthly?"disabled style='opacity:0.4;padding:5px 8px;font-size:12px;'":""}>
+<label>💰 Custom Price/Night (${sym}) — فاضي = افتراضي</label>
+<input type="number" min="0" step="0.01" value="${r.customPrice!==null?r.customPrice:''}" onchange="updateInvRoom(${r.id},'customPrice',this.value===''?'':this.value)" style="padding:5px 8px;font-size:12px;" ${r.isMonthly?"disabled style='opacity:0.4;padding:5px 8px;font-size:12px;'":""}>
 </div>
 <div class="fld" style="display:flex;align-items:center;gap:7px;margin-bottom:0;">
 <input type="checkbox" ${r.isDU?"checked":""} onchange="updateInvRoom(${r.id},'isDU',this.checked)" style="width:14px;height:14px;accent-color:#e67e22;">
@@ -7208,7 +7208,7 @@ function updateInvRoom(id, field, val){
 const r = ivRooms.find(r=>r.id===id);
 if(!r) return;
 if(field==="adults"||field==="children") r[field]=parseInt(val)||0;
-else if(field==="customPrice"||field==="monthlyTotal"){const parsed=parseFloat(val);if(field==="customPrice"){r.customPrice=isNaN(parsed)?null:parsed;r.customPriceSet=(r.customPrice!==null);}else r[field]=parsed||0;}
+else if(field==="customPrice"||field==="monthlyTotal"){if(field==="customPrice"){const trimmed=String(val).trim();if(trimmed===""||trimmed===null){r.customPrice=null;r.customPriceSet=false;}else{const parsed=parseFloat(trimmed);r.customPrice=isNaN(parsed)?null:parsed;r.customPriceSet=(r.customPrice!==null);}}else{const parsed=parseFloat(val);r[field]=parsed||0;}}
 else if(field==="isDU"||field==="isMonthly") r[field]=!!val;
 else r[field]=val;
 // Reset monthPrices when dates or type change so they rebuild
