@@ -6291,7 +6291,7 @@ segments.push({room: mv.fromRoom, type: mv.fromType, ci: segCI, co: mv.date, cus
 segCI = mv.date;
 });
 // Last segment = current room
-segments.push({room: b.room, type: b.type, ci: segCI, co: b.co, customPrice: (b.customPrice!==null&&b.customPrice!==undefined)?b.customPrice:null});
+segments.push({room: b.room, type: b.type, ci: segCI, co: b.co, customPrice: b.customPrice||0});
 ivRooms = segments.map(seg => ({
 id: Date.now() + Math.random(),
 room: seg.room,
@@ -6303,7 +6303,7 @@ children: b.children||0,
 isDU: false,
 duIn: "10:00",
 duOut: "18:00",
-customPrice: (seg.customPrice!==null&&seg.customPrice!==undefined)?seg.customPrice:null,
+customPrice: (seg.customPrice&&seg.customPrice>0)?seg.customPrice:null,
 }));
 } else {
 // Load into multi-room (single segment)
@@ -6318,7 +6318,7 @@ children:b.children||0,
 isDU:b.dayuse||false,
 duIn:b.duIn||"10:00",
 duOut:b.duOut||"18:00",
-customPrice:(b.customPrice!==null&&b.customPrice!==undefined)?b.customPrice:null,
+customPrice:(b.customPrice&&b.customPrice>0)?b.customPrice:null,
 }];
 }
 renderInvRooms();
@@ -7399,9 +7399,9 @@ proformaBanner+
 "<div class='invp-sec'>Bill To</div>"+
 (()=>{
   const roomNums = [...new Set((d.lines||[]).map(l=>l.room).filter(Boolean))];
-  const pics = roomNums.map(r=>{
+  const pics = roomNums.flatMap(r=>{
     const key='room_'+r;
-    return (roomPhotos[key]&&roomPhotos[key].length)?roomPhotos[key][0]:null;
+    return (roomPhotos[key]&&roomPhotos[key].length)?roomPhotos[key]:[];
   }).filter(Boolean);
   const roomPicsHtml = pics.length
     ? "<div style='display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;'>"+
@@ -7572,7 +7572,7 @@ w.document.write("<!DOCTYPE html><html><head><meta charset='utf-8'><title>Invoic
 "<div class='sec'>Bill To</div>"+
 (()=>{
   const roomNums2=[...new Set((d.lines||[]).map(l=>l.room).filter(Boolean))];
-  const pics2=roomNums2.map(r=>{const key='room_'+r;return (roomPhotos[key]&&roomPhotos[key].length)?roomPhotos[key][0]:null;}).filter(Boolean);
+  const pics2=roomNums2.flatMap(r=>{const key='room_'+r;return (roomPhotos[key]&&roomPhotos[key].length)?roomPhotos[key]:[];}).filter(Boolean);
   const roomPicsHtml2=pics2.length?"<div style='display:flex;gap:6px;flex-wrap:wrap;'>"+pics2.map(p=>"<img src='"+p+"' style='width:130px;height:85px;object-fit:cover;border-radius:6px;border:1px solid #ddd;'>").join('')+"</div>":"";
   return "<div class='gbox' style='display:flex;gap:14px;align-items:flex-start;'>"+
     "<div style='flex:1;display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:11px;color:#555;'><p><b>"+d.name+"</b></p><p>"+d.nat+"</p><p>"+d.phone+"</p><p>"+d.email+"</p></div>"+
