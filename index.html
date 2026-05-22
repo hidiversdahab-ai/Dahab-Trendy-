@@ -10465,6 +10465,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(updateBirthdayBadge,500);
   setTimeout(updateBirthdayBadge,2000);
   setTimeout(checkTodayBirthdays, 3000);
+  // اتصال تلقائي بـ Drive عند الفتح
+  setTimeout(()=>{
+    if(getDriveClientId() && localStorage.getItem('dta_drive_connected')==='1' && location.protocol!=='file:'){
+      autoReconnectDrive();
+    }
+  }, 1500);
   const pdfPeriod = document.getElementById('pdf-period');
   if(pdfPeriod){
     pdfPeriod.addEventListener('change',()=>{
@@ -16272,6 +16278,56 @@ function connectGDrive(){
     });
     client.requestAccessToken();
   }catch(e){updateDriveStatus('❌ Google GIS غير محمّل بعد — انتظر ثانية وحاول مرة ثانية','#e74c3c');}
+}
+
+function autoReconnectDrive(){
+  const clientId=getDriveClientId();
+  if(!clientId) return;
+  try{
+    const client=google.accounts.oauth2.initTokenClient({
+      client_id:clientId,
+      scope:DRIVE_SCOPE,
+      prompt:'',
+      callback:(resp)=>{
+        if(resp.error){updateDriveStatus('⚠️ تعذّر الاتصال التلقائي — اضغط Connect','#e0c068');return;}
+        gDriveToken=resp.access_token;
+        updateDriveStatus('✅ متصل تلقائياً','#4cda7a');
+        renderDriveBtn();
+        syncToDrive(false);
+      }
+    });
+    client.requestAccessToken();
+  }catch(e){/* GIS not loaded yet */}
+}
+
+// ══ التحقق من النزيل المتكرر ══
+function checkRepeaterGuest(){
+  const nameInp = document.getElementById('g0-name');
+  if(!nameInp) return;
+  const name = nameInp.value.trim().toLowerCase();
+  // إزالة أي badge قديم
+  let old = document.getElementById('repeater-badge');
+  if(old) old.remove();
+  if(name.length < 3) return;
+  // ابحث في الحجوزات السابقة (غير الحجز الحالي)
+  const editId = typeof bkEdit !== 'undefined' ? bkEdit : null;
+  const prev = bookings.filter(b => {
+    if(editId !== null && b.id === editId) return false;
+    return b.name && b.name.trim().toLowerCase().includes(name);
+  });
+  if(!prev.length) return;
+  // رتّب حسب تاريخ Check-in
+  prev.sort((a,b)=> new Date(b.ci)-new Date(a.ci));
+  const lastVisit = fmtD(prev[0].ci);
+  const count = prev.length;
+  // أنشئ badge
+  const badge = document.createElement('div');
+  badge.id = 'repeater-badge';
+  badge.style.cssText = 'margin:6px 0 2px 0;padding:7px 12px;background:rgba(46,204,113,0.15);border:1px solid rgba(46,204,113,0.4);border-radius:8px;font-size:12px;color:#2ecc71;display:flex;align-items:center;gap:6px;';
+  badge.innerHTML = `⭐ نزيل قديم — زار <strong>${count}</strong> مرة | آخر زيارة: <strong>${lastVisit}</strong>`;
+  // أضفه بعد حقل الاسم
+  const nameField = nameInp.closest('.fld');
+  if(nameField) nameField.insertAdjacentElement('afterend', badge);
 }
 
 function disconnectGDrive(){
