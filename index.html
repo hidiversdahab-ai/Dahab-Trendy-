@@ -6303,7 +6303,7 @@ children: b.children||0,
 isDU: false,
 duIn: "10:00",
 duOut: "18:00",
-customPrice: seg.customPrice||0,
+customPrice: (seg.customPrice&&seg.customPrice>0)?seg.customPrice:null,
 }));
 } else {
 // Load into multi-room (single segment)
@@ -6318,7 +6318,7 @@ children:b.children||0,
 isDU:b.dayuse||false,
 duIn:b.duIn||"10:00",
 duOut:b.duOut||"18:00",
-customPrice:b.customPrice||0,
+customPrice:(b.customPrice&&b.customPrice>0)?b.customPrice:null,
 }];
 }
 renderInvRooms();
@@ -7056,7 +7056,7 @@ let ivRooms = []; // array of room lines
 let ivExtensions = []; // extension nights from adjust
 function addInvRoom(prefill){
 const id = Date.now();
-const room = prefill || {id, room:ROOMS[0], type:"Double", ci:toDay(), co:"", adults:2, children:0, isDU:false, duIn:"10:00", duOut:"18:00", customPrice:0, isMonthly:false, monthlyTotal:0};
+const room = prefill || {id, room:ROOMS[0], type:"Double", ci:toDay(), co:"", adults:2, children:0, isDU:false, duIn:"10:00", duOut:"18:00", customPrice:null, customPriceSet:false, isMonthly:false, monthlyTotal:0};
 ivRooms.push(room);
 renderInvRooms();
 buildPreview();
@@ -7077,7 +7077,7 @@ return;
 container.innerHTML=ivRooms.map((r,idx)=>{
 const p=r.isDU?(duPrices[r.type]||{usd:0,egp:0,eur:0}):(prices[r.type]||{usd:0,egp:0,eur:0});
 const base=invCur==="USD"?p.usd:invCur==="EUR"?(p.eur||p.usd):p.egp;
-const rate=r.customPrice>0?r.customPrice:base;
+const rate=(r.customPrice!==null&&r.customPrice!==undefined)?r.customPrice:base;
 const n=r.isDU?0:nts(r.ci,r.co);
 const months=r.isMonthly&&r.ci&&r.co?Math.max(1,Math.round((new Date(r.co)-new Date(r.ci))/(1000*60*60*24*30)*10)/10):0;
 const monthlyTotal=r.isMonthly&&r.monthPrices&&r.monthPrices.length>0?r.monthPrices.reduce((s,x)=>s+x.price,0):(r.isMonthly&&r.monthlyTotal>0?r.monthlyTotal:null);
@@ -7121,7 +7121,7 @@ ${["Single","Double","Triple","Suite","Dorm Bed"].map(t=>`<option ${r.type===t?"
 </div>
 <div class="fld s2" style="margin-bottom:4px;background:rgba(201,168,76,0.07);border-radius:6px;padding:7px 10px;">
 <label>💰 Custom Price/Night (${sym}) — 0 = افتراضي</label>
-<input type="number" min="0" step="0.01" value="${r.customPrice}" onchange="updateInvRoom(${r.id},'customPrice',this.value)" style="padding:5px 8px;font-size:12px;" ${r.isMonthly?"disabled style='opacity:0.4;padding:5px 8px;font-size:12px;'":""}>
+<input type="number" min="0" step="0.01" value="${r.customPrice!==null?r.customPrice:''}" onchange="updateInvRoom(${r.id},'customPrice',this.value)" style="padding:5px 8px;font-size:12px;" ${r.isMonthly?"disabled style='opacity:0.4;padding:5px 8px;font-size:12px;'":""}>
 </div>
 <div class="fld" style="display:flex;align-items:center;gap:7px;margin-bottom:0;">
 <input type="checkbox" ${r.isDU?"checked":""} onchange="updateInvRoom(${r.id},'isDU',this.checked)" style="width:14px;height:14px;accent-color:#e67e22;">
@@ -7208,7 +7208,7 @@ function updateInvRoom(id, field, val){
 const r = ivRooms.find(r=>r.id===id);
 if(!r) return;
 if(field==="adults"||field==="children") r[field]=parseInt(val)||0;
-else if(field==="customPrice"||field==="monthlyTotal") r[field]=parseFloat(val)||0;
+else if(field==="customPrice"||field==="monthlyTotal"){const parsed=parseFloat(val);if(field==="customPrice"){r.customPrice=isNaN(parsed)?null:parsed;r.customPriceSet=(r.customPrice!==null);}else r[field]=parsed||0;}
 else if(field==="isDU"||field==="isMonthly") r[field]=!!val;
 else r[field]=val;
 // Reset monthPrices when dates or type change so they rebuild
@@ -7224,7 +7224,7 @@ const prepay=parseFloat(document.getElementById("iv-prepay").value)||0;
 const lines = ivRooms.map(r=>{
 const p=r.isDU?(duPrices[r.type]||{usd:0,egp:0,eur:0}):(prices[r.type]||{usd:0,egp:0,eur:0});
 const base=invCur==="USD"?p.usd:invCur==="EUR"?(p.eur||p.usd):p.egp;
-const rate=r.customPrice>0?r.customPrice:base;
+const rate=(r.customPrice!==null&&r.customPrice!==undefined)?r.customPrice:base;
 const n=r.isDU?0:nts(r.ci,r.co);
 const months=r.isMonthly&&r.ci&&r.co?Math.max(1,Math.round((new Date(r.co)-new Date(r.ci))/(1000*60*60*24*30)*10)/10):0;
 const monthlyTotal=r.isMonthly&&r.monthPrices&&r.monthPrices.length>0?r.monthPrices.reduce((s,x)=>s+x.price,0):(r.isMonthly&&r.monthlyTotal>0?r.monthlyTotal:null);
