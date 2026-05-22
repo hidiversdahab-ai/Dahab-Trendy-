@@ -4608,16 +4608,14 @@ const s=cur==="USD"?"$":cur==="EUR"?"€":"£";
 const cpEl=document.getElementById("bm-customprice");
 if(document.getElementById("bm-cpsym")) document.getElementById("bm-cpsym").textContent=s;
 if(document.getElementById("bm-npsym")) document.getElementById("bm-npsym").textContent=s;
-const cpRaw=cpEl?cpEl.value:"";
-const customP=(cpRaw==="")?null:parseFloat(cpRaw);
-const hasCustom=(customP!==null&&!isNaN(customP));
+const customP=cpEl?parseFloat(cpEl.value)||0:0;
 if(du){
 const p=duPrices[t]||{usd:0,egp:0,eur:0};
 const baseR=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
-const r=hasCustom?customP:baseR;
+const r=customP>0?customP:baseR;
 const inT=document.getElementById("bm-du-in").value||"10:00";
 const outT=document.getElementById("bm-du-out").value||"18:00";
-document.getElementById("bm-calc").innerHTML="🌤️ Day Use · "+inT+" → "+outT+" · <strong style='color:#fff;'>"+s+r+"</strong>"+(hasCustom?" <span style='color:#f39c12;font-size:10px;'>✏️ Custom</span>":"");
+document.getElementById("bm-calc").innerHTML="🌤️ Day Use · "+inT+" → "+outT+" · <strong style='color:#fff;'>"+s+r+"</strong>"+(customP>0?" <span style='color:#f39c12;font-size:10px;'>✏️ Custom</span>":"");
 document.getElementById("bm-nights-section").style.display="none";
 } else {
 const ci=document.getElementById("bm-ci").value;
@@ -4625,7 +4623,7 @@ const co=document.getElementById("bm-co").value;
 const n=nts(ci,co);
 const p=prices[t]||{usd:0,egp:0,eur:0};
 const baseR=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
-const r=hasCustom?customP:baseR;
+const r=customP>0?customP:baseR;
 if(n>0 && ci && co){
 buildNightTable(ci,co,r,cur);
 document.getElementById("bm-nights-section").style.display="";
@@ -4634,11 +4632,11 @@ document.getElementById("bm-nights-section").style.display="none";
 nightPrices=[];
 }
 // If custom price set, override all per-night prices
-if(hasCustom) nightPrices=nightPrices.map(x=>({...x,price:customP}));
+if(customP>0) nightPrices=nightPrices.map(x=>({...x,price:customP}));
 const nightTotal=nightPrices.length>0?nightPrices.reduce((s,x)=>s+x.price,0):r*n;
 const trPrice=document.getElementById("bm-transfer")?.checked?(parseFloat(document.getElementById("bm-transfer-price")?.value)||0):0;
 document.getElementById("bm-calc").innerHTML=n>0?
-s+r+"/night"+(hasCustom?" <span style='color:#f39c12;font-size:10px;'>\u270F\uFE0F Custom</span>":"")+
+s+r+"/night"+(customP>0?" <span style='color:#f39c12;font-size:10px;'>\u270F\uFE0F Custom</span>":"")+
 " · <strong style='color:#fff;'>"+n+" nights = "+s+nightTotal.toFixed(2)+"</strong>"+
 (trPrice>0?" · ✈️ Transfer: <strong style='color:#7ab8f5;'>"+s+trPrice.toFixed(2)+"</strong>"+
 " · Grand: <strong style='color:#4cda7a;'>"+s+(nightTotal+trPrice).toFixed(2)+"</strong>":""):
@@ -4720,17 +4718,17 @@ document.getElementById("bm-nights-total").innerHTML=
 "الإجمالي: <span style='color:var(--gold);font-size:14px;'>"+sym+total.toFixed(2)+"</span>";
 // Also update main calc info
 const ci=document.getElementById("bm-ci").value;
-const customPRaw2=document.getElementById("bm-customprice").value;
-const customP=(customPRaw2==="")?null:parseFloat(customPRaw2);
-const hasCustom2=(customP!==null&&!isNaN(customP));
+const co=document.getElementById("bm-co").value;
+const nights=nts(ci,co);
+const customP=parseFloat(document.getElementById("bm-customprice").value)||0;
 const cur=document.getElementById("bm-cur").value;
 const t=document.getElementById("bm-type").value;
 const p=prices[t]||{usd:0,egp:0,eur:0};
 const baseR=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
-const r=hasCustom2?customP:baseR;
+const r=customP>0?customP:baseR;
 if(nights>0){
 document.getElementById("bm-calc").innerHTML=
-sym+r+"/night"+(hasCustom2?" <span style='color:#f39c12;font-size:10px;'>✏️ Custom</span>":"")+
+sym+r+"/night"+(customP>0?" <span style='color:#f39c12;font-size:10px;'>✏️ Custom</span>":"")+
 " · <strong style='color:#fff;'>"+nights+" nights = "+sym+total.toFixed(2)+"</strong>"+
 (total!==r*nights?" <span style='color:#f39c12;font-size:10px;'>✏️ مخصص</span>":"");
 }
@@ -4739,11 +4737,10 @@ function fillNightPrices(mode){
 // mode=0 → clear to 0, mode=-1 → fill with default rate
 const cur=document.getElementById("bm-cur").value;
 const t=document.getElementById("bm-type").value;
-const cpRaw3=document.getElementById("bm-customprice").value;
-const customP3=(cpRaw3==="")?null:parseFloat(cpRaw3);
+const customP=parseFloat(document.getElementById("bm-customprice").value)||0;
 const p=prices[t]||{usd:0,egp:0,eur:0};
 const baseR=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
-const r=(customP3!==null&&!isNaN(customP3))?customP3:baseR;
+const r=customP>0?customP:baseR;
 nightPrices=nightPrices.map(x=>({...x,price:mode===0?0:r}));
 renderNightTable();
 }
@@ -4790,7 +4787,7 @@ document.getElementById("bm-type").value=b.type;
 document.getElementById("bm-ci").value=b.ci;
 document.getElementById("bm-co").value=b.co;
 document.getElementById("bm-cur").value=b.cur||"EGP";
-document.getElementById("bm-customprice").value=(b.customPrice!==null&&b.customPrice!==undefined)?b.customPrice:"";
+document.getElementById("bm-customprice").value=b.customPrice||0;
 document.getElementById("bm-status").value=b.status;
 onStatusChange(b.status);
 document.getElementById("bm-method").value=b.method;
@@ -4938,9 +4935,8 @@ const isDU=document.getElementById("bm-dayuse").checked;
 const n=isDU?0:nts(ci,co);
 const p=isDU?(duPrices[type]||{usd:0,egp:0,eur:0}):(prices[type]||{usd:0,egp:0,eur:0});
 const baseRate=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
-const customPRaw=document.getElementById("bm-customprice").value;
-const customP=(customPRaw===""||customPRaw===null)?null:parseFloat(customPRaw);
-const rate=(customP!==null&&!isNaN(customP))?customP:baseRate;
+const customP=parseFloat(document.getElementById("bm-customprice").value)||0;
+const rate=customP>0?customP:baseRate;
 const duIn=isDU?document.getElementById("bm-du-in").value:"";
 const duOut=isDU?document.getElementById("bm-du-out").value:"";
 // Total: use nightPrices sum if available, else rate*n
@@ -4989,7 +4985,7 @@ coGuests: (allGuests||[]).slice(1), // النزلاء من 2 فصاعداً
 allGuestsData: allGuests||[],      // كل النزلاء شامل الرئيسي
 room,
 type,ci,co,cur,
-customPrice:(customP!==null&&!isNaN(customP))?customP:null,
+customPrice:customP,
 nightPrices:(!isDU&&nightPrices.length===n&&n>0)?[...nightPrices]:[],
 total:isDU?rate:nightTotal,
 status:payStatus,
@@ -6295,7 +6291,7 @@ segments.push({room: mv.fromRoom, type: mv.fromType, ci: segCI, co: mv.date, cus
 segCI = mv.date;
 });
 // Last segment = current room
-segments.push({room: b.room, type: b.type, ci: segCI, co: b.co, customPrice: b.customPrice||0});
+segments.push({room: b.room, type: b.type, ci: segCI, co: b.co, customPrice: (b.customPrice!==null&&b.customPrice!==undefined)?b.customPrice:null});
 ivRooms = segments.map(seg => ({
 id: Date.now() + Math.random(),
 room: seg.room,
@@ -6307,7 +6303,7 @@ children: b.children||0,
 isDU: false,
 duIn: "10:00",
 duOut: "18:00",
-customPrice: (seg.customPrice&&seg.customPrice>0)?seg.customPrice:null,
+customPrice: (seg.customPrice!==null&&seg.customPrice!==undefined)?seg.customPrice:null,
 }));
 } else {
 // Load into multi-room (single segment)
@@ -6322,7 +6318,7 @@ children:b.children||0,
 isDU:b.dayuse||false,
 duIn:b.duIn||"10:00",
 duOut:b.duOut||"18:00",
-customPrice:(b.customPrice&&b.customPrice>0)?b.customPrice:null,
+customPrice:(b.customPrice!==null&&b.customPrice!==undefined)?b.customPrice:null,
 }];
 }
 renderInvRooms();
