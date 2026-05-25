@@ -1118,6 +1118,30 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <div class="card">
 <div class="ctitle">👤 Guest</div>
 <div class="g2">
+<!-- Client Type Tag -->
+<div class="fld s2" style="margin-bottom:10px;">
+  <label style="margin-bottom:6px;">🏷️ Client Type / نوع العميل</label>
+  <div style="display:flex;gap:8px;">
+    <button type="button" id="ctype-individual" onclick="setClientType('individual')"
+      style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(37,211,102,0.5);background:rgba(37,211,102,0.18);color:#25D366;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .15s;">
+      👤 Individual<br><span style="font-size:9px;font-weight:400;opacity:.8;">فرد / عائلة</span>
+    </button>
+    <button type="button" id="ctype-company" onclick="setClientType('company')"
+      style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(74,144,217,0.3);background:rgba(74,144,217,0.07);color:#7ab8f5;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .15s;">
+      🏢 Company<br><span style="font-size:9px;font-weight:400;opacity:.8;">شركة / مؤسسة</span>
+    </button>
+    <button type="button" id="ctype-travel-agency" onclick="setClientType('travel-agency')"
+      style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.07);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .15s;">
+      ✈️ Travel Agency<br><span style="font-size:9px;font-weight:400;opacity:.8;">وكالة سفر</span>
+    </button>
+  </div>
+  <input type="hidden" id="iv-client-type" value="individual">
+</div>
+<!-- Company Name (shown only when company/travel-agency selected) -->
+<div class="fld s2" id="iv-company-row" style="display:none;">
+  <label>🏢 Company / Agency Name — اسم الشركة</label>
+  <input id="iv-company" placeholder="e.g. Nile Tours Co." oninput="buildPreview()">
+</div>
 <div class="fld s2"><label>Full Name</label><input id="iv-name" placeholder="Ahmed Hassan" oninput="buildPreview()"></div>
 <div class="fld"><label>Phone / WhatsApp</label><input id="iv-phone" placeholder="+20..." oninput="buildPreview()"></div>
 <div class="fld"><label>Email</label><input id="iv-email" type="email" placeholder="guest@email.com" oninput="buildPreview()"></div>
@@ -3551,7 +3575,7 @@ document.getElementById("page-"+id).classList.add("on");
 if(btn) btn.classList.add("act");
 const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours};
 if(map[id]) map[id]();
-if(id==="invoice"){renderInvRooms();buildPreview();}
+if(id==="invoice"){renderInvRooms();buildPreview();setClientType(document.getElementById("iv-client-type")?document.getElementById("iv-client-type").value||"individual":"individual");}
 }
 // ═══════════ BIRTHDAY ALERTS ═══════════
 function renderBirthdayAlerts(){
@@ -7216,6 +7240,26 @@ if(["ci","co","type","isMonthly"].includes(field)) r.monthPrices=[];
 renderInvRooms();
 buildPreview();
 }
+// ─── Client Type ───────────────────────────────────────────────────
+function setClientType(type){
+  document.getElementById("iv-client-type").value=type;
+  const btns={individual:"ctype-individual",company:"ctype-company","travel-agency":"ctype-travel-agency"};
+  const active={individual:["rgba(37,211,102,0.5)","rgba(37,211,102,0.28)","#25D366"],
+                company:["rgba(74,144,217,0.5)","rgba(74,144,217,0.18)","#7ab8f5"],
+                "travel-agency":["rgba(201,168,76,0.5)","rgba(201,168,76,0.2)","var(--gold)"]};
+  const inactive={individual:["rgba(37,211,102,0.3)","rgba(37,211,102,0.07)","#25D366"],
+                  company:["rgba(74,144,217,0.3)","rgba(74,144,217,0.07)","#7ab8f5"],
+                  "travel-agency":["rgba(201,168,76,0.3)","rgba(201,168,76,0.07)","var(--gold)"]};
+  Object.entries(btns).forEach(([k,id])=>{
+    const el=document.getElementById(id);if(!el)return;
+    const c=(k===type)?active[k]:inactive[k];
+    el.style.borderColor=c[0];el.style.background=c[1];el.style.color=c[2];
+  });
+  const compRow=document.getElementById("iv-company-row");
+  if(compRow)compRow.style.display=(type==="company"||type==="travel-agency")?"block":"none";
+  buildPreview();
+}
+
 function getIV(){
 // Collect from multi-room list
 const symMap={USD:"$",EGP:"EGP ",EUR:"€"};
@@ -7252,6 +7296,8 @@ status:document.getElementById("iv-status").value,
 method:document.getElementById("iv-method").value,
 bf:document.getElementById("iv-bf").checked,
 notes:document.getElementById("iv-notes").value,
+clientType:document.getElementById("iv-client-type")?document.getElementById("iv-client-type").value:"individual",
+company:(document.getElementById("iv-company")?document.getElementById("iv-company").value.trim():""),
 payments:null,
 isDU:first.isDU,
 duIn:first.duIn||"",
@@ -7398,6 +7444,10 @@ proformaBanner+
 "</div>"+
 "<div class='invp-sec'>Bill To</div>"+
 (()=>{
+  const ctMap={individual:{label:"👤 Individual",bg:"#d4edda",color:"#155724"},company:{label:"🏢 Company",bg:"#cce5ff",color:"#004085"},"travel-agency":{label:"✈️ Travel Agency",bg:"#fff3cd",color:"#856404"}};
+  const ct=ctMap[d.clientType]||ctMap["individual"];
+  const ctBadge="<span style='display:inline-block;padding:2px 9px;border-radius:20px;font-size:9px;font-weight:700;background:"+ct.bg+";color:"+ct.color+";margin-bottom:5px;'>"+ct.label+"</span>";
+  const companyLine=d.company?"<div style='font-weight:700;font-size:11px;color:#1a1a2e;'>"+d.company+"</div>":"";
   const roomNums = [...new Set((d.lines||[]).map(l=>l.room).filter(Boolean))];
   const pics = roomNums.flatMap(r=>{
     const key='room_'+r;
@@ -7409,7 +7459,7 @@ proformaBanner+
       "</div>"
     : "";
   return "<div class='invp-gbox' style='display:flex;gap:12px;align-items:flex-start;'>"+
-    "<div style='flex:1;'><div><strong>"+d.name+"</strong></div><div>"+d.nat+"</div><div>"+d.phone+"</div><div>"+d.email+"</div></div>"+
+    "<div style='flex:1;'>"+ctBadge+companyLine+"<div><strong>"+d.name+"</strong></div><div>"+d.nat+"</div><div>"+d.phone+"</div><div>"+d.email+"</div></div>"+
     (pics.length ? "<div style='flex-shrink:0;text-align:center;'><div style='font-size:9px;color:#888;margin-bottom:4px;'>🏨 Room</div>"+roomPicsHtml+"</div>" : "")+
     (_invIdPhotos.length ? "<div style='flex-shrink:0;'><div style='font-size:9px;color:#888;margin-bottom:5px;font-weight:700;text-align:center;'>🪪 IDs</div><div style='display:flex;flex-direction:column;gap:7px;align-items:center;'>"+_invIdPhotos.map(p=>"<div style='text-align:center;'><img src='"+p.src+"' style='width:72px;height:72px;object-fit:cover;border-radius:7px;border:2px solid #c9a84c;display:block;'>"+(p.label?"<div style='font-size:8px;color:#888;margin-top:2px;max-width:78px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+p.label+"</div>":"")+"</div>").join('')+"</div></div>" : "")+
   "</div>";
