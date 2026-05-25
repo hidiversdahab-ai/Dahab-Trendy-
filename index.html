@@ -7759,6 +7759,8 @@ return "السلام عليكم ورحمة الله وبركاته\nDear *"+d.na
 "📅 *تاريخ الإصدار / Issue Date:* "+fmtD(td)+"\n\n"+
 "👤 *بيانات الضيف / Guest Details*\n"+
 "   الاسم / Name: *"+d.name+"*\n"+
+(d.company?"   🏢 *الشركة / Company: "+d.company+"*\n":"")+
+(d.tag?"   🏷️ المجموعة / Group: "+d.tag+"\n":"")+
 (d.nat&&d.nat!=="—"?"   الجنسية / Nationality: "+d.nat+"\n":"")+
 (d.phone&&d.phone!=="—"?"   الهاتف / Phone: "+d.phone+"\n":"")+
 "\n🏨 *تفاصيل الإقامة / Stay Details*\n"+
