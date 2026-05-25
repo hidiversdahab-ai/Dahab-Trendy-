@@ -5053,6 +5053,7 @@ payments:existingPayments,
 bf:document.getElementById("bm-bf").checked,
 notes:document.getElementById("bm-notes").value,
 company:document.getElementById("bm-company")?document.getElementById("bm-company").value.trim():"",
+clientType:(document.getElementById("bm-company")&&document.getElementById("bm-company").value.trim())?"company":"individual",
 groupTag:document.getElementById("bm-grouptag").value.trim(),
 dayuse:isDU,
 duIn:duIn,
@@ -6304,6 +6305,7 @@ document.getElementById("iv-bf").checked=b.bf;
 document.getElementById("iv-notes").value=b.notes||"";
 if(document.getElementById("iv-company")) document.getElementById("iv-company").value=b.company||"";
 if(document.getElementById("iv-tag")) document.getElementById("iv-tag").value=b.groupTag||"";
+setClientType(b.clientType||"individual");
 // تحميل صور الجوازات — مصدر واحد فقط لتجنب التكرار
 _invIdPhotos = [];
 if(b.invPhotos && b.invPhotos.length){
