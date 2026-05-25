@@ -7817,7 +7817,7 @@ win.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Invo
 win.document.close();
 // Open WhatsApp with short message
 const phone=d.phone.replace(/\D/g,"");
-const msg="🌊 *Dahab Trendy Accommodation*\nمرحباً "+d.name+"،\nمرفق فاتورة حجزك:\n🏨 غرفة "+d.room+" · "+fmtD(d.ci)+" ← "+fmtD(d.co)+"\n💰 الإجمالي: "+d.sym+d.total.toFixed(2);
+const msg=getShareText();
 setTimeout(()=>{
 const waUrl=phone?"https://wa.me/"+phone+"?text="+encodeURIComponent(msg):"https://wa.me/?text="+encodeURIComponent(msg);
 window.open(waUrl,"_blank");
