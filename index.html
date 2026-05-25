@@ -6305,7 +6305,8 @@ document.getElementById("iv-bf").checked=b.bf;
 document.getElementById("iv-notes").value=b.notes||"";
 if(document.getElementById("iv-company")) document.getElementById("iv-company").value=b.company||"";
 if(document.getElementById("iv-tag")) document.getElementById("iv-tag").value=b.groupTag||"";
-setClientType(b.clientType||"individual");
+const _detectedType = b.clientType || (b.company ? "company" : "individual");
+setClientType(_detectedType);
 // تحميل صور الجوازات — مصدر واحد فقط لتجنب التكرار
 _invIdPhotos = [];
 if(b.invPhotos && b.invPhotos.length){
