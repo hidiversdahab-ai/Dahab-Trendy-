@@ -7699,6 +7699,7 @@ proformaBanner+
   const ct=ctMap[d.clientType]||ctMap["individual"];
   const ctBadge="<span style='display:inline-block;padding:2px 9px;border-radius:20px;font-size:9px;font-weight:700;background:"+ct.bg+";color:"+ct.color+";margin-bottom:5px;'>"+ct.label+"</span>";
   const companyLine=d.company?"<div style='font-weight:700;font-size:11px;color:#1a1a2e;'>"+d.company+"</div>":"";
+  const tagLine=d.tag?"<div style='display:inline-block;margin-top:3px;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;background:#fff3cd;color:#856404;border:1px solid #f0c040;'>🏷️ "+d.tag+"</div>":"";
   const roomNums = [...new Set((d.lines||[]).map(l=>l.room).filter(Boolean))];
   const pics = roomNums.flatMap(r=>{
     const key='room_'+r;
@@ -7710,7 +7711,7 @@ proformaBanner+
       "</div>"
     : "";
   return "<div class='invp-gbox' style='display:flex;gap:12px;align-items:flex-start;'>"+
-    "<div style='flex:1;'>"+ctBadge+companyLine+"<div><strong>"+d.name+"</strong></div><div>"+d.nat+"</div><div>"+d.phone+"</div><div>"+d.email+"</div></div>"+
+    "<div style='flex:1;'>"+ctBadge+companyLine+"<div><strong>"+d.name+"</strong></div><div>"+d.nat+"</div><div>"+d.phone+"</div><div>"+d.email+"</div>"+tagLine+"</div>"+
     (pics.length ? "<div style='flex-shrink:0;text-align:center;'><div style='font-size:9px;color:#888;margin-bottom:4px;'>🏨 Room</div>"+roomPicsHtml+"</div>" : "")+
     (_invIdPhotos.length ? "<div style='flex-shrink:0;'><div style='font-size:9px;color:#888;margin-bottom:5px;font-weight:700;text-align:center;'>🪪 IDs</div><div style='display:flex;flex-direction:column;gap:7px;align-items:center;'>"+_invIdPhotos.map(p=>"<div style='text-align:center;'><img src='"+p.src+"' style='width:72px;height:72px;object-fit:cover;border-radius:7px;border:2px solid #c9a84c;display:block;'>"+(p.label?"<div style='font-size:8px;color:#888;margin-top:2px;max-width:78px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+p.label+"</div>":"")+"</div>").join('')+"</div></div>" : "")+
   "</div>";
