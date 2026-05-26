@@ -600,6 +600,9 @@ select option{background:#1a1a2e;color:var(--text)}
   background:rgba(20,20,40,0.98);border-top:1px solid var(--bdr);
   backdrop-filter:blur(14px);z-index:999;
   padding:12px;
+  max-height:calc(100vh - 70px);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 #bn-more-menu.on{display:block;}
 #bn-more-menu .bn-more-grid{
@@ -779,12 +782,12 @@ select option{background:#1a1a2e;color:var(--text)}
 <!-- More Menu (slides up from bottom nav) -->
 <div id="bn-more-menu">
   <div class="bn-more-grid">
+    <div class="bn-more-item" onclick="openPDFReport();closeBnMore()" style="position:relative;border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);"><span class="bm-icon">📅</span><span class="t" data-ar="تقرير شهري" data-en="Monthly Report">تقرير شهري</span></div>
     <div class="bn-more-item" onclick="bnGo('calendar',null);closeBnMore()"><span class="bm-icon">🗓️</span><span class="t" data-ar="التقويم" data-en="Calendar">التقويم</span></div>
     <div class="bn-more-item" onclick="bnGo('rooms',null);closeBnMore()"><span class="bm-icon">🏨</span><span class="t" data-ar="الغرف" data-en="Rooms">الغرف</span></div>
     <div class="bn-more-item" onclick="bnGo('expenses',null);closeBnMore()"><span class="bm-icon">💸</span><span class="t" data-ar="مصروفات" data-en="Expenses">مصروفات</span></div>
     <div class="bn-more-item" onclick="bnGo('invoice',null);closeBnMore()"><span class="bm-icon">📄</span><span class="t" data-ar="فاتورة" data-en="Invoice">فاتورة</span></div>
     <div class="bn-more-item" onclick="bnGo('analytics',null);closeBnMore()"><span class="bm-icon">📊</span><span class="t" data-ar="تحليلات" data-en="Analytics">تحليلات</span></div>
-    <div class="bn-more-item" onclick="openPDFReport();closeBnMore()" style="position:relative;"><span class="bm-icon">📅</span><span class="t" data-ar="تقرير شهري" data-en="Monthly Report">تقرير شهري</span></div>
     <div class="bn-more-item" onclick="bnGo('housekeeping',null);closeBnMore()"><span class="bm-icon">🧹</span><span class="t" data-ar="تنظيف" data-en="HK">تنظيف</span></div>
     <div class="bn-more-item" onclick="bnGo('guestsreg',null);closeBnMore()"><span class="bm-icon">📋</span><span class="t" data-ar="سجل الضيوف" data-en="Guests Reg.">سجل الضيوف</span></div>
     <div class="bn-more-item" onclick="bnGo('restaurant',null);closeBnMore()"><span class="bm-icon">🍽️</span><span class="t" data-ar="مطعم" data-en="Rest.">مطعم</span></div>
