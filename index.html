@@ -16819,11 +16819,18 @@ function disconnectGDrive(){
 
 function getAllAppData(){
   return{
-    version:2, ts:new Date().toISOString(),
+    version:3, ts:new Date().toISOString(),
     dta_bk:bookings, dta_pr:prices, dta_du:duPrices,
     dta_rs:roomSt, dta_ex:expenses, dta_rest:restaurantTx,
+    dta_pol:policies,
+    dta_tours:tours,
+    dta_wl:waitlist,
+    dta_hk:hkData,
+    dta_hk_staff:HK_STAFF,
+    dta_rest_menu:restMenu,
     dta_rate:localStorage.getItem('dta_rate')||'50',
-    dta_eur_rate:localStorage.getItem('dta_eur_rate')||'55'
+    dta_eur_rate:localStorage.getItem('dta_eur_rate')||'55',
+    dta_lang:localStorage.getItem('dta_lang')||'en'
   };
 }
 
@@ -16906,10 +16913,19 @@ async function loadFromDrive(fileId, fileName){
     roomSt=d.dta_rs||{};restaurantTx=d.dta_rest||[];
     if(d.dta_pr)prices=d.dta_pr;
     if(d.dta_du)duPrices=d.dta_du;
+    if(d.dta_pol)policies=d.dta_pol;
+    if(d.dta_tours)tours=d.dta_tours;
+    if(d.dta_wl)waitlist=d.dta_wl;
+    if(d.dta_hk)hkData=d.dta_hk;
+    if(d.dta_hk_staff&&d.dta_hk_staff.length)HK_STAFF.splice(0,HK_STAFF.length,...d.dta_hk_staff);
+    if(d.dta_rest_menu)restMenu=d.dta_rest_menu;
     if(d.dta_rate)localStorage.setItem('dta_rate',d.dta_rate);
     if(d.dta_eur_rate)localStorage.setItem('dta_eur_rate',d.dta_eur_rate);
+    if(d.dta_lang)localStorage.setItem('dta_lang',d.dta_lang);
     LSS('dta_bk',bookings);LSS('dta_ex',expenses);LSS('dta_rs',roomSt);
     LSS('dta_rest',restaurantTx);LSS('dta_pr',prices);LSS('dta_du',duPrices);
+    LSS('dta_pol',policies);LSS('dta_tours',tours);LSS('dta_wl',waitlist);
+    LSS('dta_hk',hkData);LSS('dta_hk_staff',HK_STAFF);LSS('dta_rest_menu',restMenu);
     renderDashboard();renderBookings();renderRooms();renderExpenses();renderSettings();
     showToast('✅ تم الاستعادة من '+dateStr+'!');
     updateDriveStatus('✅ تم الاستعادة من '+dateStr,'#4cda7a');
