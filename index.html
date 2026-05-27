@@ -6291,20 +6291,48 @@ if(bk.room!==b.room) return false;
 if(bk.ciConfirmed) return false;
 return bk.ci<=today;
 });
-if(nextIdx!==-1){
-const nb=bookings[nextIdx];
-if(confirm("🛬 يوجد حجز قادم للغرفة "+b.room+"!\nالضيف: "+nb.name+"\nتاريخ الوصول: "+fmtD(nb.ci)+"\n\nهل تريد تأكيد Check-in تلقائياً؟")){
-bookings[nextIdx].ciConfirmed=true;
-bookings[nextIdx].ciTime=now.toISOString();
-sv("dta_bk",bookings);
-showToast("🛬 Check-in تلقائي — "+nb.name+" · غرفة "+nb.room);
-}
-}
 renderBookings();
 renderRooms();
 renderDashboard();
 showToast("🛫 Check-out تم تأكيده — "+b.name+" · غرفة "+b.room);
+if(nextIdx!==-1){
+const nb=bookings[nextIdx];
+// show next CI prompt as modal so Review popup works correctly
+let mc=document.getElementById("auto-ci-modal");
+if(!mc){mc=document.createElement("div");mc.id="auto-ci-modal";mc.className="ovl";document.body.appendChild(mc);}
+mc.innerHTML=`<div class="modal" style="max-width:380px;text-align:center;">
+  <div style="font-size:28px;margin-bottom:8px;">🛬</div>
+  <h3 style="color:var(--gold);margin:0 0 8px;">Check-in تلقائي؟</h3>
+  <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">يوجد حجز للغرفة ${nb.room}<br>${nb.name} — ${fmtD(nb.ci)}</p>
+  <div style="display:flex;gap:8px;">
+    <button class="btn bg" style="flex:1;" onclick="
+      bookings[${nextIdx}].ciConfirmed=true;
+      bookings[${nextIdx}].ciTime=new Date().toISOString();
+      sv('dta_bk',bookings);
+      showToast('🛬 Check-in تلقائي — ${nb.name} · غرفة ${nb.room}');
+      renderBookings();renderRooms();renderDashboard();
+      closeM('auto-ci-modal');
+      setTimeout(()=>openReviewModal(${JSON.stringify(b).replace(/'/g,"\\'")}),200);
+    ">✅ نعم</button>
+    <button class="btn bb" style="flex:1;" onclick="closeM('auto-ci-modal');setTimeout(()=>openReviewModal(${JSON.stringify(b).replace(/'/g,"\\'")}),200);">تخطي</button>
+  </div>
+</div>`;
+mc.classList.add("on");
+} else {
 setTimeout(()=>openReviewModal(b),400);
+}
+}
+
+function sendReviewWA(b){
+  const gmLink="https://maps.app.goo.gl/Mcwxstz449hBRvVt5?g_st=ac";
+  const taLink="https://www.tripadvisor.com/Hotel_Review-g297547-d34223219-Reviews-Dahab_Trendy_Accommodation-Dahab_South_Sinai_Red_Sea_and_Sinai.html";
+  const ar=currentLang==="ar";
+  const msg=ar?
+    "🌟 شكراً "+b.name+" على إقامتك معنا في Dahab Trendy!\n\nسعدنا باستضافتك 🙏\n\nيسعدنا لو شاركت تجربتك:\n\n📍 Google Maps:\n"+gmLink+"\n\n✈️ TripAdvisor:\n"+taLink+"\n\nرأيك يهمنا 💙":
+    "🌟 Dear "+b.name+", thank you for staying with us at Dahab Trendy!\n\nWe truly enjoyed having you 🙏\n\nPlease share your experience:\n\n📍 Google Maps:\n"+gmLink+"\n\n✈️ TripAdvisor:\n"+taLink+"\n\nYour feedback means the world to us 💙";
+  const phone=(b.phone||"").replace(/[^0-9]/g,"");
+  const url=phone?"https://wa.me/"+phone+"?text="+encodeURIComponent(msg):"https://wa.me/?text="+encodeURIComponent(msg);
+  window.open(url,"_blank");
 }
 
 function openReviewModal(b){
@@ -6643,6 +6671,7 @@ return "<div style='display:flex;flex-direction:column;gap:5px;margin-top:8px;bo
 "<button class='btn bsm' style='background:#e74c3c;color:#fff;width:100%;' onclick='cancelBK("+bIdx2+")'>❌ Cancellation</button>"+
 "<button class='btn bsm' style='background:#8e44ad;color:#fff;width:100%;' onclick='moreNights("+bIdx2+")'>🌙 More Nights</button>"+
 "<button class='btn bsm' style='background:#16a085;color:#fff;width:100%;' onclick='openMove("+bIdx2+")'>🔀 Move Room</button>"+
+"<button class='btn bsm' style='background:linear-gradient(135deg,#f1c40f,#e67e22);color:#1a1a2e;width:100%;font-weight:700;' onclick='sendReviewWA(bookings["+bIdx2+"])'>⭐ Request Review</button>"+
 "</div>";
 })()+
 "</div>";
