@@ -1655,6 +1655,7 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
   <h2 style="color:#1abc9c;font-size:18px;">🧹 Housekeeping — إدارة التنظيف</h2>
   <div style="display:flex;gap:8px;flex-wrap:wrap;">
     <button class="btn" style="background:#1abc9c;color:#fff;" onclick="hkAutoAssign()">⚡ توزيع تلقائي</button>
+    <button class="btn" style="background:#25D366;color:#fff;" onclick="hkSendCheckinWA()">📲 واتساب Check-in</button>
     <button class="btn bb" onclick="hkPrintSheet()">🖨️ طباعة ورقة العمل</button>
     <button class="btn" style="background:#e74c3c;color:#fff;" onclick="printHKPDFReport()">📄 تقرير PDF</button>
     <button class="btn bb bsm" onclick="hkResetDay()">🔄 إعادة تعيين اليوم</button>
@@ -1678,6 +1679,27 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 
 <!-- Rooms Grid -->
 <div id="hk-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;"></div>
+</div>
+
+<!-- Housekeeping WhatsApp Modal -->
+<div class="ovl" id="hk-wa-modal">
+<div class="mdl" style="max-width:480px;">
+  <div class="flex" style="justify-content:space-between;margin-bottom:14px;">
+    <div class="mtitle" style="margin-bottom:0;">📲 إرسال Check-in عبر واتساب</div>
+    <button onclick="closeM('hk-wa-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
+  </div>
+  <div class="fld">
+    <label>📱 رقم واتساب الهاوس كيبينج (اختياري)</label>
+    <input id="hk-wa-phone" placeholder="+201234567890" style="direction:ltr;" type="tel">
+    <div style="font-size:10px;color:var(--muted);margin-top:3px;">اتركه فارغاً لو عايز تختار جهة الإرسال يدوياً</div>
+  </div>
+  <div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:6px;">📋 معاينة الرسالة:</div>
+  <div style="background:rgba(37,211,102,0.07);border:1px solid rgba(37,211,102,0.25);border-radius:8px;padding:12px;font-size:11px;line-height:1.8;white-space:pre-wrap;max-height:280px;overflow-y:auto;direction:rtl;" id="hk-wa-preview"></div>
+  <div class="flex mt" style="gap:8px;margin-top:14px;">
+    <button class="btn bg" style="flex:2;background:#25D366;color:#fff;" onclick="hkSendWAConfirm()">📲 إرسال واتساب</button>
+    <button class="btn bb" onclick="closeM('hk-wa-modal')" style="flex:1;">إلغاء</button>
+  </div>
+</div>
 </div>
 
 <!-- Housekeeping Task Modal -->
@@ -13156,7 +13178,14 @@ function hkSetFilter(f, btn) {
 
 function renderHousekeeping() {
   const td = toDay();
-  const allRooms = ROOMS.map(r => hkGetRoomStatus(r));
+
+  // الغرف الأوتوماتيك من الحجوزات النهارده (check-in + checkout + stayover)
+  const bookedRooms = bookings
+    .filter(b => b.status !== "Cancelled" && b.room && (b.ci === td || b.co === td || (b.ci < td && b.co > td)))
+    .map(b => Number(b.room))
+    .filter(r => r && !isNaN(r));
+  const allRoomNums = [...new Set([...ROOMS, ...bookedRooms])].sort((a,b)=>a-b);
+  const allRooms = allRoomNums.map(r => hkGetRoomStatus(r));
 
   // Stats
   const counts = { dirty:0, cleaning:0, inspect:0, clean:0, checkout:0, checkin:0 };
@@ -13412,6 +13441,61 @@ function hkPrintSheet() {
   </body></html>`);
   w.document.close();
 }
+
+// ══════════════════════════════════════════════
+// HOUSEKEEPING — WHATSAPP CHECK-IN FUNCTION
+// ══════════════════════════════════════════════
+function hkSendCheckinWA() {
+  const td = toDay();
+  // الغرف اللي هتعمل check-in النهارده من الحجوزات
+  const checkinRooms = bookings.filter(b =>
+    b.status !== "Cancelled" && b.ci === td
+  ).sort((a,b) => String(a.room).localeCompare(String(b.room), undefined, {numeric:true}));
+
+  if (!checkinRooms.length) {
+    sNotify("📭 لا يوجد", "لا توجد غرف check-in اليوم", "info", 3000);
+    return;
+  }
+
+  // بناء الرسالة
+  const dateStr = new Date().toLocaleDateString("ar-EG", {weekday:"long", year:"numeric", month:"long", day:"numeric"});
+  let msg = `🛬 *غرف Check-in اليوم*\n📅 ${dateStr}\n`;
+  msg += `${"─".repeat(28)}\n`;
+  checkinRooms.forEach(b => {
+    const hkInfo = hkData[String(b.room)] || {};
+    const statusLabel = hkInfo.status ? ({dirty:"🔴 تحتاج تنظيف", cleaning:"🧹 جاري التنظيف", inspect:"🔍 فحص", clean:"✅ جاهزة"}[hkInfo.status] || "") : "⬜ لم يُحدد";
+    const nights = b.ci && b.co ? Math.round((new Date(b.co)-new Date(b.ci))/(1000*3600*24)) : "";
+    msg += `\n🚪 *غرفة ${b.room}*\n`;
+    msg += `   👤 ${b.name||"—"}\n`;
+    if (nights) msg += `   🌙 ${nights} ليلة  (${b.ci} ← ${b.co})\n`;
+    if (b.adults||b.children) msg += `   👥 ${b.adults||0} بالغ${b.children?` + ${b.children} طفل`:""}\n`;
+    msg += `   🧹 ${statusLabel}\n`;
+  });
+  msg += `\n${"─".repeat(28)}\n`;
+  msg += `📊 إجمالي: *${checkinRooms.length}* غرفة\n`;
+  msg += `🏨 Dahab Trendy`;
+
+  // فتح نافذة تأكيد قبل الإرسال
+  document.getElementById("hk-wa-preview").textContent = msg;
+  const savedPhone = localStorage.getItem("hk_wa_phone") || "";
+  document.getElementById("hk-wa-phone").value = savedPhone;
+  document.getElementById("hk-wa-modal").classList.add("on");
+}
+
+function hkSendWAConfirm() {
+  const phone = document.getElementById("hk-wa-phone").value.trim().replace(/\s+/g,"");
+  const msg   = document.getElementById("hk-wa-preview").textContent;
+  if (phone) localStorage.setItem("hk_wa_phone", phone);
+  const url = phone
+    ? "https://wa.me/" + phone.replace(/[^0-9]/g,"") + "?text=" + encodeURIComponent(msg)
+    : "https://wa.me/?text=" + encodeURIComponent(msg);
+  window.open(url, "_blank");
+  closeM("hk-wa-modal");
+}
+
+// Auto-add check-in rooms to HK grid when filter = checkin
+const _origHkSetFilter = hkSetFilter;
+// (no override needed — hkGetRoomStatus already pulls from bookings automatically)
 
 // Hook into goPage to render housekeeping when navigating to it
 const _origGoPageHK = goPage;
