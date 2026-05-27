@@ -1655,7 +1655,8 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
   <h2 style="color:#1abc9c;font-size:18px;">🧹 Housekeeping — إدارة التنظيف</h2>
   <div style="display:flex;gap:8px;flex-wrap:wrap;">
     <button class="btn" style="background:#1abc9c;color:#fff;" onclick="hkAutoAssign()">⚡ توزيع تلقائي</button>
-    <button class="btn" style="background:#25D366;color:#fff;" onclick="hkSendCheckinWA()">📲 واتساب Check-in</button>
+    <button class="btn" style="background:#25D366;color:#fff;" onclick="hkSendCheckinWA('today')">📲 واتساب اليوم</button>
+    <button class="btn" style="background:#1a7a45;color:#fff;" onclick="hkSendCheckinWA('tomorrow')">📲 واتساب بكره</button>
     <button class="btn bb" onclick="hkPrintSheet()">🖨️ طباعة ورقة العمل</button>
     <button class="btn" style="background:#e74c3c;color:#fff;" onclick="printHKPDFReport()">📄 تقرير PDF</button>
     <button class="btn bb bsm" onclick="hkResetDay()">🔄 إعادة تعيين اليوم</button>
@@ -13445,21 +13446,27 @@ function hkPrintSheet() {
 // ══════════════════════════════════════════════
 // HOUSEKEEPING — WHATSAPP CHECK-IN FUNCTION
 // ══════════════════════════════════════════════
-function hkSendCheckinWA() {
+function hkSendCheckinWA(when) {
   const td = toDay();
-  // الغرف اللي هتعمل check-in النهارده من الحجوزات
+  // حساب تاريخ بكره
+  const tmrDate = new Date(); tmrDate.setDate(tmrDate.getDate()+1);
+  const tmrStr = tmrDate.toISOString().slice(0,10);
+  const targetDate = (when === 'tomorrow') ? tmrStr : td;
+  const dayLabel   = (when === 'tomorrow') ? 'بكره' : 'اليوم';
+
+  // الغرف اللي هتعمل check-in في التاريخ المطلوب
   const checkinRooms = bookings.filter(b =>
-    b.status !== "Cancelled" && b.ci === td
+    b.status !== "Cancelled" && b.ci === targetDate
   ).sort((a,b) => String(a.room).localeCompare(String(b.room), undefined, {numeric:true}));
 
   if (!checkinRooms.length) {
-    sNotify("📭 لا يوجد", "لا توجد غرف check-in اليوم", "info", 3000);
+    sNotify("📭 لا يوجد", `لا توجد غرف check-in ${dayLabel}`, "info", 3000);
     return;
   }
 
   // بناء الرسالة
-  const dateStr = new Date().toLocaleDateString("ar-EG", {weekday:"long", year:"numeric", month:"long", day:"numeric"});
-  let msg = `🛬 *غرف Check-in اليوم*\n📅 ${dateStr}\n`;
+  const dispDate = new Date(targetDate+"T00:00:00").toLocaleDateString("ar-EG", {weekday:"long", year:"numeric", month:"long", day:"numeric"});
+  let msg = `🛬 *غرف Check-in ${dayLabel}*\n📅 ${dispDate}\n`;
   msg += `${"─".repeat(28)}\n`;
   checkinRooms.forEach(b => {
     const hkInfo = hkData[String(b.room)] || {};
