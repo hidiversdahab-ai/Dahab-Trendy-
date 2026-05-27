@@ -6304,7 +6304,68 @@ renderBookings();
 renderRooms();
 renderDashboard();
 showToast("🛫 Check-out تم تأكيده — "+b.name+" · غرفة "+b.room);
+setTimeout(()=>openReviewModal(b),400);
 }
+
+function openReviewModal(b){
+  const ar=currentLang==="ar";
+  const gmLink="https://maps.app.goo.gl/Mcwxstz449hBRvVt5?g_st=ac";
+  const taLink="https://www.tripadvisor.com/Hotel_Review-g297547-d34223219-Reviews-Dahab_Trendy_Accommodation-Dahab_South_Sinai_Red_Sea_and_Sinai.html";
+  const waMsgAr=
+    "🌟 شكراً "+b.name+" على إقامتك معنا في Dahab Trendy!\n\n"+
+    "سعدنا باستضافتك، ونأمل أن تكون إقامتك كانت مميزة 🙏\n\n"+
+    "يسعدنا كثيراً لو شاركت تجربتك معنا عبر:\n\n"+
+    "📍 Google Maps:\n"+gmLink+"\n\n"+
+    "✈️ TripAdvisor:\n"+taLink+"\n\n"+
+    "رأيك يهمنا ويساعد ضيوفنا القادمين 💙";
+  const waMsgEn=
+    "🌟 Dear "+b.name+", thank you for staying with us at Dahab Trendy!\n\n"+
+    "We truly enjoyed having you as our guest 🙏\n\n"+
+    "We'd love it if you could share your experience:\n\n"+
+    "📍 Google Maps:\n"+gmLink+"\n\n"+
+    "✈️ TripAdvisor:\n"+taLink+"\n\n"+
+    "Your feedback means the world to us 💙";
+  const waMsg=encodeURIComponent(ar?waMsgAr:waMsgEn);
+  const phone=(b.phone||"").replace(/[^0-9]/g,"");
+  const waUrl=phone?"https://wa.me/"+phone+"?text="+waMsg:"https://wa.me/?text="+waMsg;
+  // روابط واتساب للغتين معاً (لو أراد المستخدم الإرسال بلغة مختلفة)
+  const waUrlAr=phone?"https://wa.me/"+phone+"?text="+encodeURIComponent(waMsgAr):"https://wa.me/?text="+encodeURIComponent(waMsgAr);
+  const waUrlEn=phone?"https://wa.me/"+phone+"?text="+encodeURIComponent(waMsgEn):"https://wa.me/?text="+encodeURIComponent(waMsgEn);
+
+  let m=document.getElementById("review-request-modal");
+  if(!m){
+    m=document.createElement("div");
+    m.id="review-request-modal";
+    m.className="ovl";
+    document.body.appendChild(m);
+  }
+  m.innerHTML=`
+    <div class="modal" style="max-width:420px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:8px;">⭐</div>
+      <h3 style="color:var(--gold);margin:0 0 4px;">${ar?"اطلب Review من الضيف":"Request a Guest Review"}</h3>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">${b.name} · ${ar?"غرفة":"Room"} ${b.room}</p>
+      <p style="color:var(--muted);font-size:12px;margin:0 0 12px;opacity:0.8;">${ar?"اختر لغة رسالة الواتساب:":"Choose WhatsApp message language:"}</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <a href="${waUrlAr}" target="_blank" class="btn" style="flex:1;background:#25D366;color:#fff;text-decoration:none;padding:11px 6px;border-radius:10px;font-size:14px;font-weight:700;">
+          📱 عربي
+        </a>
+        <a href="${waUrlEn}" target="_blank" class="btn" style="flex:1;background:#25D366;color:#fff;text-decoration:none;padding:11px 6px;border-radius:10px;font-size:14px;font-weight:700;">
+          📱 English
+        </a>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:18px;">
+        <a href="${gmLink}" target="_blank" class="btn" style="flex:1;background:#4285F4;color:#fff;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">
+          📍 Google Maps
+        </a>
+        <a href="${taLink}" target="_blank" class="btn" style="flex:1;background:#34E0A1;color:#000;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">
+          ✈️ TripAdvisor
+        </a>
+      </div>
+      <button class="btn bb" onclick="closeM('review-request-modal')" style="width:100%;">${ar?"تخطي":"Skip"}</button>
+    </div>`;
+  m.classList.add("on");
+}
+
 let loadInvIdx = -1;
 function loadInv(i){
 const b=bookings[i];
