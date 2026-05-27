@@ -14934,9 +14934,9 @@ document.addEventListener('click', function(e){
 });
 
 function updateBnBadges(){
-  // Bookings badge = today's arrivals
+  // Bookings badge = today's arrivals not yet checked in
   const td = toDay();
-  const todayArriving = bookings.filter(b=>b.ci===td && b.status!=='Cancelled').length;
+  const todayArriving = bookings.filter(b=>b.ci===td && b.status!=='Cancelled' && !b.ciConfirmed).length;
   const badge = document.getElementById('bn-bk-badge');
   if(badge){ badge.textContent=todayArriving; badge.style.display=todayArriving?'flex':'none'; }
   // Debt badge = pending/partial bookings
