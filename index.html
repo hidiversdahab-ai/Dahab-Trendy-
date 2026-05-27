@@ -6665,13 +6665,17 @@ const activeBook2 = bookings.find(bk=>
   !bk.coConfirmed &&
   bk.co >= toDay()
 );
-if(!activeBook2) return "";
+// Review button — show for any recent guest (active or recently departed)
+const reviewBook = activeBook2 || recentCO || b || co;
+const reviewBtnHtml = reviewBook ?
+  "<button class='btn bsm' style='background:linear-gradient(135deg,#f1c40f,#e67e22);color:#1a1a2e;width:100%;font-weight:700;margin-top:5px;' onclick='sendReviewWA("+JSON.stringify({name:reviewBook.name,phone:reviewBook.phone||"",room:reviewBook.room})+")'>⭐ Request Review</button>" : "";
+if(!activeBook2) return reviewBtnHtml ? "<div style='margin-top:8px;border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;'>"+reviewBtnHtml+"</div>" : "";
 const bIdx2 = bookings.indexOf(activeBook2);
 return "<div style='display:flex;flex-direction:column;gap:5px;margin-top:8px;border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;'>"+
 "<button class='btn bsm' style='background:#e74c3c;color:#fff;width:100%;' onclick='cancelBK("+bIdx2+")'>❌ Cancellation</button>"+
 "<button class='btn bsm' style='background:#8e44ad;color:#fff;width:100%;' onclick='moreNights("+bIdx2+")'>🌙 More Nights</button>"+
 "<button class='btn bsm' style='background:#16a085;color:#fff;width:100%;' onclick='openMove("+bIdx2+")'>🔀 Move Room</button>"+
-"<button class='btn bsm' style='background:linear-gradient(135deg,#f1c40f,#e67e22);color:#1a1a2e;width:100%;font-weight:700;' onclick='sendReviewWA(bookings["+bIdx2+"])'>⭐ Request Review</button>"+
+reviewBtnHtml+
 "</div>";
 })()+
 "</div>";
