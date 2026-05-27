@@ -799,6 +799,7 @@ select option{background:#1a1a2e;color:var(--text)}
     <div class="bn-more-item" onclick="exportAll();closeBnMore()"><span class="bm-icon">💾</span><span class="t" data-ar="تصدير" data-en="Export">تصدير</span></div>
     <div class="bn-more-item" onclick="document.getElementById('impfile').click();closeBnMore()"><span class="bm-icon">📂</span><span class="t" data-ar="استيراد" data-en="Import">استيراد</span></div>
     <div class="bn-more-item" onclick="toggleTheme();closeBnMore()"><span class="bm-icon" id="bn-theme-icon">🌙</span><span class="t" data-ar="الوضع" data-en="Theme">الوضع</span></div>
+    <div class="bn-more-item" onclick="toggleLangMenu();closeBnMore()"><span class="bm-icon">🌐</span><span class="t" data-ar="اللغة" data-en="Language">اللغة</span></div>
   </div>
 </div>
 
@@ -6326,10 +6327,15 @@ setTimeout(()=>openReviewModal(b),400);
 function sendReviewWA(b){
   const gmLink="https://maps.app.goo.gl/Mcwxstz449hBRvVt5?g_st=ac";
   const taLink="https://www.tripadvisor.com/Hotel_Review-g297547-d34223219-Reviews-Dahab_Trendy_Accommodation-Dahab_South_Sinai_Red_Sea_and_Sinai.html";
-  const ar=currentLang==="ar";
-  const msg=ar?
-    "🌟 شكراً "+b.name+" على إقامتك معنا في Dahab Trendy!\n\nسعدنا باستضافتك 🙏\n\nيسعدنا لو شاركت تجربتك:\n\n📍 Google Maps:\n"+gmLink+"\n\n✈️ TripAdvisor:\n"+taLink+"\n\nرأيك يهمنا 💙":
-    "🌟 Dear "+b.name+", thank you for staying with us at Dahab Trendy!\n\nWe truly enjoyed having you 🙏\n\nPlease share your experience:\n\n📍 Google Maps:\n"+gmLink+"\n\n✈️ TripAdvisor:\n"+taLink+"\n\nYour feedback means the world to us 💙";
+  const msg=
+    "🌟 شكراً "+b.name+" على إقامتك معنا في Dahab Trendy!\n"+
+    "🌟 Dear "+b.name+", thank you for staying with us at Dahab Trendy!\n\n"+
+    "سعدنا باستضافتك 🙏\n"+
+    "We truly enjoyed having you 🙏\n\n"+
+    "يسعدنا لو شاركت تجربتك | Please share your experience:\n\n"+
+    "📍 Google Maps:\n"+gmLink+"\n\n"+
+    "✈️ TripAdvisor:\n"+taLink+"\n\n"+
+    "رأيك يهمنا 💙 | Your feedback means the world to us 💙";
   const phone=(b.phone||"").replace(/[^0-9]/g,"");
   const url=phone?"https://wa.me/"+phone+"?text="+encodeURIComponent(msg):"https://wa.me/?text="+encodeURIComponent(msg);
   window.open(url,"_blank");
@@ -6339,26 +6345,18 @@ function openReviewModal(b){
   const ar=currentLang==="ar";
   const gmLink="https://maps.app.goo.gl/Mcwxstz449hBRvVt5?g_st=ac";
   const taLink="https://www.tripadvisor.com/Hotel_Review-g297547-d34223219-Reviews-Dahab_Trendy_Accommodation-Dahab_South_Sinai_Red_Sea_and_Sinai.html";
-  const waMsgAr=
-    "🌟 شكراً "+b.name+" على إقامتك معنا في Dahab Trendy!\n\n"+
-    "سعدنا باستضافتك، ونأمل أن تكون إقامتك كانت مميزة 🙏\n\n"+
-    "يسعدنا كثيراً لو شاركت تجربتك معنا عبر:\n\n"+
-    "📍 Google Maps:\n"+gmLink+"\n\n"+
-    "✈️ TripAdvisor:\n"+taLink+"\n\n"+
-    "رأيك يهمنا ويساعد ضيوفنا القادمين 💙";
-  const waMsgEn=
+  const waMsg=
+    "🌟 شكراً "+b.name+" على إقامتك معنا في Dahab Trendy!\n"+
     "🌟 Dear "+b.name+", thank you for staying with us at Dahab Trendy!\n\n"+
+    "سعدنا باستضافتك، ونأمل أن تكون إقامتك كانت مميزة 🙏\n"+
     "We truly enjoyed having you as our guest 🙏\n\n"+
-    "We'd love it if you could share your experience:\n\n"+
+    "يسعدنا كثيراً لو شاركت تجربتك | We'd love it if you could share your experience:\n\n"+
     "📍 Google Maps:\n"+gmLink+"\n\n"+
     "✈️ TripAdvisor:\n"+taLink+"\n\n"+
+    "رأيك يهمنا ويساعد ضيوفنا القادمين 💙\n"+
     "Your feedback means the world to us 💙";
-  const waMsg=encodeURIComponent(ar?waMsgAr:waMsgEn);
-  const phone=(b.phone||"").replace(/[^0-9]/g,"");
-  const waUrl=phone?"https://wa.me/"+phone+"?text="+waMsg:"https://wa.me/?text="+waMsg;
-  // روابط واتساب للغتين معاً (لو أراد المستخدم الإرسال بلغة مختلفة)
-  const waUrlAr=phone?"https://wa.me/"+phone+"?text="+encodeURIComponent(waMsgAr):"https://wa.me/?text="+encodeURIComponent(waMsgAr);
-  const waUrlEn=phone?"https://wa.me/"+phone+"?text="+encodeURIComponent(waMsgEn):"https://wa.me/?text="+encodeURIComponent(waMsgEn);
+  const waUrlAr=phone?"https://wa.me/"+phone+"?text="+encodeURIComponent(waMsg):"https://wa.me/?text="+encodeURIComponent(waMsg);
+  const waUrlEn=waUrlAr;
 
   let m=document.getElementById("review-request-modal");
   if(!m){
