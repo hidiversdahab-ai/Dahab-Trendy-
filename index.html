@@ -3169,21 +3169,98 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 <textarea id="cancel-notes" rows="2" placeholder="تفاصيل إضافية..."></textarea>
 </div>
 </div>
-<div class="sdiv">💰 الاسترداد / Refund</div>
-<div class="g2">
-<div class="fld">
-<label>مبلغ الاسترداد / Refund Amount (<span id="cancel-sym">$</span>)</label>
-<input id="cancel-refund" type="number" min="0" step="0.01" value="0" placeholder="0.00">
+<!-- ══ قسم العربون المعلق ══ -->
+<div id="cancel-deposit-section" style="display:none;margin-bottom:14px;">
+  <div class="sdiv">💰 العربون المدفوع / Deposit Paid</div>
+  <div id="cancel-deposit-info" style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.9;"></div>
+  <!-- خيار المعالجة -->
+  <label style="margin-bottom:6px;display:block;">اختر طريقة تسوية العربون / Deposit Settlement</label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+    <div id="cancel-dep-opt-refund"
+      onclick="setCancelDepOpt('refund')"
+      style="border:2px solid rgba(37,211,102,0.4);border-radius:9px;padding:10px 12px;cursor:pointer;background:rgba(37,211,102,0.06);transition:.2s;text-align:center;">
+      <div style="font-size:18px;">🔄</div>
+      <div style="font-weight:700;font-size:12px;color:#4cda7a;margin-top:3px;">تم رد المبلغ</div>
+      <div style="font-size:10px;color:var(--muted);">Refund to Guest</div>
+    </div>
+    <div id="cancel-dep-opt-deduct"
+      onclick="setCancelDepOpt('deduct')"
+      style="border:2px solid rgba(231,76,60,0.4);border-radius:9px;padding:10px 12px;cursor:pointer;background:rgba(231,76,60,0.06);transition:.2s;text-align:center;">
+      <div style="font-size:18px;">✂️</div>
+      <div style="font-weight:700;font-size:12px;color:#e74c3c;margin-top:3px;">تم خصمه</div>
+      <div style="font-size:10px;color:var(--muted);">Keep as Revenue</div>
+    </div>
+  </div>
+  <!-- تفاصيل الرد -->
+  <div id="cancel-refund-details" style="display:none;">
+    <div class="g2">
+      <div class="fld">
+        <label>مبلغ الاسترداد / Refund Amount (<span id="cancel-sym">$</span>)</label>
+        <input id="cancel-refund" type="number" min="0" step="0.01" value="0" placeholder="0.00">
+      </div>
+      <div class="fld">
+        <label>طريقة الاسترداد / Refund Via</label>
+        <select id="cancel-refund-method">
+          <option value="Cash">💵 كاش / Cash</option>
+          <option value="Bank Transfer">🏦 تحويل بنكي</option>
+          <option value="Card">💳 بطاقة / Card</option>
+          <option value="Online">🌐 Online</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <!-- تفاصيل الخصم -->
+  <div id="cancel-deduct-details" style="display:none;">
+    <div class="g2">
+      <div class="fld">
+        <label>مبلغ الخصم / Deduction Amount (<span id="cancel-deduct-sym">$</span>)</label>
+        <input id="cancel-deduct-amount" type="number" min="0" step="0.01" value="0" placeholder="0.00" oninput="calcCancelDeductRemainder()">
+      </div>
+      <div class="fld">
+        <label>سبب الخصم / Deduction Reason</label>
+        <input id="cancel-deduct-note" type="text" placeholder="مثال: رسوم إلغاء ليلة / Cancellation Fee">
+      </div>
+    </div>
+    <div id="cancel-deduct-remainder-box" style="display:none;background:rgba(52,152,219,0.08);border:1px solid rgba(52,152,219,0.3);border-radius:7px;padding:8px 12px;font-size:11px;margin-top:4px;margin-bottom:6px;"></div>
+    <!-- لو فيه باقي بعد الخصم → خيار رده -->
+    <div id="cancel-deduct-refund-wrap" style="display:none;">
+      <div class="g2">
+        <div class="fld">
+          <label>رد الباقي / Refund Remainder (<span id="cancel-deduct-ref-sym">$</span>)</label>
+          <input id="cancel-deduct-refund" type="number" min="0" step="0.01" value="0" placeholder="0.00">
+        </div>
+        <div class="fld">
+          <label>طريقة الرد / Via</label>
+          <select id="cancel-deduct-refund-method">
+            <option value="Cash">💵 كاش / Cash</option>
+            <option value="Bank Transfer">🏦 تحويل بنكي</option>
+            <option value="Card">💳 بطاقة / Card</option>
+            <option value="Online">🌐 Online</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <input type="hidden" id="cancel-dep-opt" value="">
 </div>
-<div class="fld">
-<label>طريقة الاسترداد / Refund Via</label>
-<select id="cancel-refund-method">
-<option value="Cash">💵 كاش / Cash</option>
-<option value="Bank Transfer">🏦 تحويل بنكي</option>
-<option value="Card">💳 بطاقة / Card</option>
-<option value="Online">🌐 Online</option>
-</select>
-</div>
+<!-- قسم الاسترداد العادي (لو مفيش عربون) -->
+<div id="cancel-refund-section-plain" style="display:none;">
+  <div class="sdiv">💰 الاسترداد / Refund</div>
+  <div class="g2">
+    <div class="fld">
+      <label>مبلغ الاسترداد / Refund Amount (<span id="cancel-sym-plain">$</span>)</label>
+      <input id="cancel-refund-plain" type="number" min="0" step="0.01" value="0" placeholder="0.00">
+    </div>
+    <div class="fld">
+      <label>طريقة الاسترداد / Refund Via</label>
+      <select id="cancel-refund-method-plain">
+        <option value="Cash">💵 كاش / Cash</option>
+        <option value="Bank Transfer">🏦 تحويل بنكي</option>
+        <option value="Card">💳 بطاقة / Card</option>
+        <option value="Online">🌐 Online</option>
+      </select>
+    </div>
+  </div>
 </div>
 <div class="sdiv">📤 إرسال إشعار الإلغاء / Send Cancellation Notice</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
@@ -5247,11 +5324,96 @@ document.getElementById("cancel-info").innerHTML=
 "<div>✅ المدفوع: <strong style='color:#4cda7a;'>"+sym+paidSum.toFixed(2)+"</strong></div>"+
 "<div>📋 "+b.invNo+"</div>"+
 "</div>";
-// Auto-suggest refund = what they paid
-document.getElementById("cancel-refund").value=paidSum.toFixed(2);
+// حساب العربون الفعلي (مدفوعات موجبة فقط)
+const depositSum=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+const sym2=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
 document.getElementById("cancel-notes").value="";
 document.getElementById("cancel-reason").value="Guest Request";
+document.getElementById("cancel-dep-opt").value="";
+// إظهار القسم المناسب
+if(depositSum>0){
+  document.getElementById("cancel-deposit-section").style.display="block";
+  document.getElementById("cancel-refund-section-plain").style.display="none";
+  document.getElementById("cancel-deposit-info").innerHTML=
+    "<div style='display:flex;justify-content:space-between;align-items:center;'>"+
+    "<span>💰 العربون المدفوع: <strong style='color:var(--gold);font-size:14px;'>"+sym2+depositSum.toFixed(2)+"</strong></span>"+
+    "<span style='color:var(--muted);font-size:10px;'>من إجمالي "+sym2+b.total.toFixed(2)+"</span>"+
+    "</div>";
+  document.getElementById("cancel-dep-opt-refund").style.border="2px solid rgba(37,211,102,0.4)";
+  document.getElementById("cancel-dep-opt-deduct").style.border="2px solid rgba(231,76,60,0.4)";
+  document.getElementById("cancel-refund-details").style.display="none";
+  document.getElementById("cancel-deduct-details").style.display="none";
+  document.getElementById("cancel-deduct-sym").textContent=sym2;
+  document.getElementById("cancel-deduct-ref-sym").textContent=sym2;
+  document.getElementById("cancel-deduct-amount").value=depositSum.toFixed(2);
+  document.getElementById("cancel-deduct-refund").value="0";
+  document.getElementById("cancel-deduct-remainder-box").style.display="none";
+  document.getElementById("cancel-deduct-refund-wrap").style.display="none";
+  document.getElementById("cancel-refund").value="0";
+} else {
+  document.getElementById("cancel-deposit-section").style.display="none";
+  document.getElementById("cancel-refund-section-plain").style.display="block";
+  document.getElementById("cancel-refund-plain").value=paidSum.toFixed(2);
+  document.getElementById("cancel-sym-plain").textContent=sym2;
+}
 document.getElementById("cancel-modal").classList.add("on");
+}
+function setCancelDepOpt(opt){
+  document.getElementById("cancel-dep-opt").value=opt;
+  const rDiv=document.getElementById("cancel-dep-opt-refund");
+  const dDiv=document.getElementById("cancel-dep-opt-deduct");
+  if(opt==="refund"){
+    rDiv.style.border="2px solid #4cda7a";
+    rDiv.style.background="rgba(37,211,102,0.15)";
+    dDiv.style.border="2px solid rgba(231,76,60,0.4)";
+    dDiv.style.background="rgba(231,76,60,0.06)";
+    document.getElementById("cancel-refund-details").style.display="block";
+    document.getElementById("cancel-deduct-details").style.display="none";
+    // ضبط مبلغ الرد بالكامل
+    if(cancelIdx!==null){
+      const b=bookings[cancelIdx];
+      const dep=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+      document.getElementById("cancel-refund").value=dep.toFixed(2);
+    }
+  } else {
+    dDiv.style.border="2px solid #e74c3c";
+    dDiv.style.background="rgba(231,76,60,0.15)";
+    rDiv.style.border="2px solid rgba(37,211,102,0.4)";
+    rDiv.style.background="rgba(37,211,102,0.06)";
+    document.getElementById("cancel-deduct-details").style.display="block";
+    document.getElementById("cancel-refund-details").style.display="none";
+    calcCancelDeductRemainder();
+  }
+}
+function calcCancelDeductRemainder(){
+  if(cancelIdx===null) return;
+  const b=bookings[cancelIdx];
+  const sym=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
+  const dep=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+  const deduct=parseFloat(document.getElementById("cancel-deduct-amount").value)||0;
+  const remainder=dep-deduct;
+  const box=document.getElementById("cancel-deduct-remainder-box");
+  const refWrap=document.getElementById("cancel-deduct-refund-wrap");
+  if(deduct>dep){
+    box.style.display="block";
+    box.innerHTML="<span style='color:#e74c3c;'>⚠️ مبلغ الخصم أكبر من العربون!</span>";
+    refWrap.style.display="none";
+    return;
+  }
+  if(remainder>0){
+    box.style.display="block";
+    box.innerHTML="الخصم: <strong style='color:#e74c3c;'>"+sym+deduct.toFixed(2)+"</strong> · الباقي للرد: <strong style='color:#4cda7a;'>"+sym+remainder.toFixed(2)+"</strong>";
+    refWrap.style.display="block";
+    document.getElementById("cancel-deduct-refund").value=remainder.toFixed(2);
+  } else if(deduct===dep){
+    box.style.display="block";
+    box.innerHTML="<span style='color:#e74c3c;font-weight:700;'>✂️ تم خصم كامل العربون كإيراد</span>";
+    refWrap.style.display="none";
+    document.getElementById("cancel-deduct-refund").value="0";
+  } else {
+    box.style.display="none";
+    refWrap.style.display="none";
+  }
 }
 function getCancelMsg(){
 if(cancelIdx===null) return "";
@@ -5351,31 +5513,78 @@ el.style.display="block";
 function confirmCancelBK(){
 if(cancelIdx===null) return;
 const b=bookings[cancelIdx];
-if(!confirm("⚠️ تأكيد نهائي: إلغاء حجز "+b.name+" — غرفة "+b.room+"؟")) return;
-pushUndo("إلغاء حجز: "+b.name, getUndoSnapshot());
-const refund=parseFloat(document.getElementById("cancel-refund").value)||0;
+const sym=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
 const reason=document.getElementById("cancel-reason").value;
 const notes=document.getElementById("cancel-notes").value;
-const refundVia=document.getElementById("cancel-refund-method").value;
+const depOpt=document.getElementById("cancel-dep-opt").value;
+const depositSum=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+// تحقق: لو في عربون لازم يختار خيار
+if(depositSum>0 && !depOpt){
+  alert("⚠️ الرجاء اختيار طريقة تسوية العربون أولاً (رد أو خصم)");
+  return;
+}
+if(!confirm("⚠️ تأكيد نهائي: إلغاء حجز "+b.name+" — غرفة "+b.room+"؟")) return;
+pushUndo("إلغاء حجز: "+b.name, getUndoSnapshot());
 bookings[cancelIdx].status="Cancelled";
 bookings[cancelIdx].cancelReason=reason;
 bookings[cancelIdx].cancelNotes=notes;
 bookings[cancelIdx].cancelDate=toDay();
-// Record refund as negative payment if refund > 0
-if(refund>0){
 if(!bookings[cancelIdx].payments) bookings[cancelIdx].payments=[];
-bookings[cancelIdx].payments.push({
-date:toDay(),
-amount:-refund,
-method:refundVia,
-note:"↩️ استرداد إلغاء / Cancellation Refund"
-});
+let toastExtra="";
+if(depositSum>0){
+  if(depOpt==="refund"){
+    // رد المبلغ كاملاً
+    const refund=parseFloat(document.getElementById("cancel-refund").value)||0;
+    const refundVia=document.getElementById("cancel-refund-method").value;
+    if(refund>0){
+      bookings[cancelIdx].payments.push({
+        date:toDay(), amount:-refund, method:refundVia,
+        note:"🔄 تم رد العربون / Deposit Refunded"
+      });
+      bookings[cancelIdx].depositSettlement={type:"refund",amount:refund,via:refundVia};
+      toastExtra=" · رد: "+sym+refund.toFixed(2);
+    }
+  } else if(depOpt==="deduct"){
+    // خصم
+    const deduct=parseFloat(document.getElementById("cancel-deduct-amount").value)||0;
+    const deductNote=document.getElementById("cancel-deduct-note").value||"رسوم إلغاء / Cancellation Fee";
+    const remainder=depositSum-deduct;
+    const refundRemainder=parseFloat(document.getElementById("cancel-deduct-refund").value)||0;
+    const refundMethod=document.getElementById("cancel-deduct-refund-method").value;
+    // تسجيل الخصم كإيراد (payment موجب بعلامة خاصة)
+    if(deduct>0){
+      bookings[cancelIdx].payments.push({
+        date:toDay(), amount:deduct, method:"Revenue",
+        note:"✂️ "+deductNote, isDeduction:true
+      });
+    }
+    // تسجيل رد الباقي لو في
+    if(remainder>0 && refundRemainder>0){
+      bookings[cancelIdx].payments.push({
+        date:toDay(), amount:-refundRemainder, method:refundMethod,
+        note:"🔄 رد باقي العربون / Remaining Deposit Refunded"
+      });
+    }
+    bookings[cancelIdx].depositSettlement={type:"deduct",deduct,remainder,refundRemainder,note:deductNote};
+    toastExtra=" · خصم: "+sym+deduct.toFixed(2)+(remainder>0&&refundRemainder>0?" · رد باقي: "+sym+refundRemainder.toFixed(2):"");
+  }
+} else {
+  // مفيش عربون — الاسترداد العادي
+  const refund=parseFloat(document.getElementById("cancel-refund-plain").value)||0;
+  const refundVia=document.getElementById("cancel-refund-method-plain").value;
+  if(refund>0){
+    bookings[cancelIdx].payments.push({
+      date:toDay(), amount:-refund, method:refundVia,
+      note:"↩️ استرداد إلغاء / Cancellation Refund"
+    });
+    toastExtra=" · استرداد: "+sym+refund.toFixed(2);
+  }
 }
 sv("dta_bk",bookings);
 closeM("cancel-modal");
 cancelIdx=null;
 renderBookings();renderDashboard();autoUpdateRooms(false);
-showToast("❌ تم إلغاء الحجز"+(refund>0?" · استرداد: "+refund.toFixed(2):""));
+showToast("❌ تم إلغاء الحجز"+toastExtra);
 }
 // ═══════════ EARLY CHECK-OUT ═══════════
 let earlyCOIdx=null;
