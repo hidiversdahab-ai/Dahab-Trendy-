@@ -796,6 +796,7 @@ select option{background:#1a1a2e;color:var(--text)}
     <div class="bn-more-item" onclick="bnGo('settings',null);closeBnMore()"><span class="bm-icon">⚙️</span><span class="t" data-ar="إعدادات" data-en="Settings">إعدادات</span></div>
     <div class="bn-more-item" onclick="openAIChat();closeBnMore()"><span class="bm-icon">🤖</span><span>AI Chat</span></div>
     <div class="bn-more-item" onclick="openWATemplates();closeBnMore()"><span class="bm-icon">💬</span><span>WA Templates</span></div>
+    <div class="bn-more-item" onclick="openBlacklist();closeBnMore()" style="border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.07);"><span class="bm-icon">🚫</span><span style="color:#e74c3c;">Blacklist</span></div>
     <div class="bn-more-item" onclick="exportAll();closeBnMore()"><span class="bm-icon">💾</span><span class="t" data-ar="تصدير" data-en="Export">تصدير</span></div>
     <div class="bn-more-item" onclick="document.getElementById('impfile').click();closeBnMore()"><span class="bm-icon">📂</span><span class="t" data-ar="استيراد" data-en="Import">استيراد</span></div>
     <div class="bn-more-item" onclick="toggleTheme();closeBnMore()"><span class="bm-icon" id="bn-theme-icon">🌙</span><span class="t" data-ar="الوضع" data-en="Theme">الوضع</span></div>
@@ -889,6 +890,7 @@ select option{background:#1a1a2e;color:var(--text)}
 <button class="nb" onclick="openMorningBriefing()" style="background:rgba(245,197,24,0.13);color:#f5c518;border-color:rgba(245,197,24,0.4);font-weight:700;" title="التقرير الصباحي">☀️</button>
 <button class="nb" id="pwa-nav-btn" onclick="installPWA()" style="background:rgba(201,168,76,0.2);color:var(--gold);border-color:var(--gold);font-weight:700;display:none;" title="تثبيت كتطبيق">📲 تثبيت App</button>
 <button class="nb" onclick="openWATemplates()" style="background:rgba(37,211,102,0.12);color:#4cda7a;border-color:rgba(37,211,102,0.3);font-weight:700;" title="قوالب واتساب">💬 WA</button>
+<button class="nb" onclick="openBlacklist()" style="background:rgba(231,76,60,0.12);color:#e74c3c;border-color:rgba(231,76,60,0.35);font-weight:700;" title="القائمة السوداء">🚫 Blacklist</button>
 <button class="nb" onclick="exportIcal()" style="background:rgba(74,144,217,0.12);color:#7ab8f5;border-color:rgba(74,144,217,0.3);font-weight:700;" title="تصدير iCalendar">📅 iCal</button>
 <button class="nb" onclick="openKioskMode()" style="background:rgba(155,89,182,0.12);color:#c39bd3;border-color:rgba(155,89,182,0.3);font-weight:700;" title="وضع الكشك">📺</button>
 <button class="nb" onclick="openYoY()" style="background:rgba(26,188,156,0.12);color:#1abc9c;border-color:rgba(26,188,156,0.3);font-weight:700;" title="مقارنة السنوات">📊 YoY</button>
@@ -1014,6 +1016,7 @@ select option{background:#1a1a2e;color:var(--text)}
 <th>USD</th>
 <th>EGP</th>
 <th class="col-hide-sm">EUR</th>
+<th class="col-hide-sm" style="color:#e74c3c;white-space:nowrap;" title="عمولة الشركة — داخلي فقط">🔒 عمولة</th>
 <th><span class="t" data-ar="الحالة" data-en="Status">Status</span></th>
 <th><span class="t" data-ar="إجراءات" data-en="Actions">Actions</span></th>
 <th style="white-space:nowrap;"><span class="t" data-ar="تأكيد CI/CO" data-en="CI/CO">CI/CO</span></th>
@@ -1758,6 +1761,56 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 </div>
 
 <!-- Guest Profiles Modal -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ══ BLACKLIST MODAL ══ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="ovl" id="blacklist-modal">
+<div class="mdl" style="max-width:580px;">
+  <div class="flex" style="justify-content:space-between;margin-bottom:14px;">
+    <div class="mtitle" style="margin-bottom:0;color:#e74c3c;">🚫 قائمة الضيوف المحظورين / Blacklist</div>
+    <button onclick="closeM('blacklist-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
+  </div>
+  <!-- إضافة ضيف جديد للقائمة -->
+  <div style="background:rgba(231,76,60,0.07);border:1px solid rgba(231,76,60,0.25);border-radius:10px;padding:14px;margin-bottom:14px;">
+    <div style="font-size:11px;color:#e74c3c;font-weight:700;letter-spacing:1px;margin-bottom:10px;">➕ إضافة ضيف للقائمة السوداء</div>
+    <div class="g2" style="gap:8px;">
+      <div class="fld" style="margin-bottom:0;"><label style="color:#e74c3c;">الاسم *</label><input id="bl-name" placeholder="الاسم الكامل للضيف" style="border-color:rgba(231,76,60,0.4);"></div>
+      <div class="fld" style="margin-bottom:0;"><label style="color:#e74c3c;">رقم الهاتف</label><input id="bl-phone" placeholder="+20..."></div>
+      <div class="fld" style="margin-bottom:0;"><label style="color:#e74c3c;">رقم الهوية / جواز السفر</label><input id="bl-idno" placeholder="اختياري"></div>
+      <div class="fld" style="margin-bottom:0;"><label style="color:#e74c3c;">الجنسية</label><input id="bl-nat" placeholder="اختياري"></div>
+    </div>
+    <div class="fld" style="margin-top:8px;margin-bottom:0;"><label style="color:#e74c3c;">سبب الحظر *</label><textarea id="bl-reason" rows="2" placeholder="اكتب سبب الحظر بالتفصيل..." style="border-color:rgba(231,76,60,0.4);resize:vertical;"></textarea></div>
+    <div class="flex mt" style="gap:8px;">
+      <button class="btn br" onclick="addToBlacklist()" style="flex:1;">🚫 إضافة للقائمة السوداء</button>
+      <button class="btn bb" onclick="clearBLForm()" style="">🗑 مسح</button>
+    </div>
+  </div>
+  <!-- البحث -->
+  <input id="bl-search" placeholder="🔍 ابحث في القائمة السوداء..." oninput="renderBlacklist()" style="margin-bottom:10px;width:100%;padding:9px 12px;background:var(--inp);border:1px solid rgba(231,76,60,0.3);border-radius:8px;color:var(--text);">
+  <!-- القائمة -->
+  <div id="bl-list" style="max-height:50vh;overflow-y:auto;"></div>
+  <div id="bl-empty" class="empty" style="display:none;color:#e74c3c;">✅ القائمة السوداء فارغة — لا يوجد ضيوف محظورون</div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ══ BLACKLIST ALERT MODAL (يظهر عند إضافة حجز لضيف محظور) ══ -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="ovl" id="bl-alert-modal">
+<div class="mdl" style="max-width:460px;border:2px solid #e74c3c;">
+  <div style="text-align:center;padding:10px 0 6px;">
+    <div style="font-size:48px;margin-bottom:6px;">🚫</div>
+    <div style="font-size:18px;font-weight:700;color:#e74c3c;margin-bottom:4px;">تحذير — ضيف محظور!</div>
+    <div style="font-size:13px;color:#e74c3c;margin-bottom:14px;">Guest is on the Blacklist</div>
+  </div>
+  <div id="bl-alert-info" style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:8px;padding:14px;margin-bottom:14px;font-size:13px;line-height:1.8;"></div>
+  <div class="flex mt" style="gap:8px;">
+    <button class="btn br" onclick="closeM('bl-alert-modal')" style="flex:1;">🚫 إلغاء الحجز</button>
+    <button class="btn bb" onclick="closeM('bl-alert-modal');proceedDespiteBlacklist=true;" style="flex:1;font-size:11px;">⚠️ تجاوز التحذير والمتابعة</button>
+  </div>
+</div>
+</div>
+
 <div class="ovl" id="guest-profiles-modal">
 <div class="mdl" style="max-width:600px;">
   <div class="flex" style="justify-content:space-between;margin-bottom:14px;">
@@ -2072,9 +2125,29 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   </button>
 </div>
 <div id="bct-name-wrap" style="display:none;">
-  <input id="bm-clientname" placeholder="اكتب اسم الشركة أو وكالة السفر..." oninput="" style="border-color:rgba(201,168,76,0.5);">
+  <input id="bm-clientname" placeholder="اكتب اسم الشركة أو وكالة السفر..." oninput="" style="border-color:rgba(201,168,76,0.5);margin-bottom:8px;">
+  <!-- ══ حقل العمولة ══ -->
+  <div style="background:rgba(231,76,60,0.07);border:1px solid rgba(231,76,60,0.25);border-radius:8px;padding:10px 12px;margin-top:6px;">
+    <div style="font-size:10px;color:#e74c3c;font-weight:700;letter-spacing:1px;margin-bottom:8px;">🔒 خصم / عمولة الشركة — داخلي فقط (لا يظهر في الفاتورة)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end;">
+      <div>
+        <label style="font-size:10px;color:#e74c3c;margin-bottom:3px;display:block;">نوع الخصم</label>
+        <select id="bm-comm-type" onchange="calcBMCommission()" style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);color:var(--text);border-radius:6px;padding:7px 8px;font-size:12px;width:100%;">
+          <option value="percent">نسبة % من الإجمالي</option>
+          <option value="fixed">مبلغ ثابت</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:10px;color:#e74c3c;margin-bottom:3px;display:block;" id="bm-comm-lbl">نسبة العمولة (%)</label>
+        <input id="bm-comm-value" type="number" min="0" max="100" step="0.5" value="0" placeholder="0" oninput="calcBMCommission()" style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);color:var(--text);border-radius:6px;padding:7px 8px;font-size:13px;width:100%;">
+      </div>
+    </div>
+    <div id="bm-comm-result" style="margin-top:8px;font-size:11px;color:#e74c3c;display:none;background:rgba(231,76,60,0.1);border-radius:5px;padding:5px 8px;"></div>
+  </div>
 </div>
 <input type="hidden" id="bm-clienttype" value="individual">
+<input type="hidden" id="bm-commission-amount" value="0">
+<input type="hidden" id="bm-commission-pct" value="0">
 </div>
 <div class="fld"><label>Notes</label><textarea id="bm-notes" rows="2"></textarea></div>
 <div class="fld" id="bm-linked-wrap" style="display:none;">
@@ -3516,6 +3589,7 @@ let bkEdit=null, rmEdit=null, exEdit=null, restEdit=null, tourEdit=null;
 let tours = LS("dta_tours",[]);
 let restFilter="all";
 let restaurantTx=LS("dta_rest",[]);
+let blacklist = LS("dta_blacklist",[]);  // قائمة الضيوف المحظورين
 let invCur="USD", sCur="USD";
 let curInvNo = genNo();
 
@@ -4132,6 +4206,10 @@ const reservedStandby=bookings.filter(b=>b.ci>td&&b.status==="Standby");
 const ciTd=bookings.filter(b=>b.ci===td&&b.status!=="Cancelled");
 const coTd=bookings.filter(b=>b.co===td&&b.status!=="Cancelled"&&!b.coConfirmed);
 const revEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
+const totalCommEGP_db=bookings.filter(b=>b.status!=="Cancelled"&&(b.commissionAmt||0)>0).reduce((s,b)=>{
+  return s+(b.cur==="USD"?(b.commissionAmt*exRate):b.cur==="EUR"?(b.commissionAmt*eurRate):(b.commissionAmt||0));
+},0);
+const netRevAfterCommEGP = revEGP - totalCommEGP_db;
 const collectedEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{
 const paid=b.payments?b.payments.reduce((ps,p)=>ps+p.amount,0):(b.prepay||0);
 const paidEGP=b.cur==="EGP"?paid:paid*exRate;
@@ -4157,6 +4235,8 @@ mkStat(Math.max(0,availableCount), ar?"متاحة":"Available")+
 mkStat(ciTd.length, ar?"وصول اليوم":"Check-ins Today");
 document.getElementById("db-finance").innerHTML=
 mkFin("£"+revEGP.toFixed(0), ar?"إجمالي الإيرادات":"Total Revenue","rgba(201,168,76,0.1)","rgba(201,168,76,0.25)","var(--gold)")+
+(totalCommEGP_db>0?mkFin("−£"+totalCommEGP_db.toFixed(0), ar?"عمولات الشركات":"Agency Commissions","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c")+
+mkFin("£"+netRevAfterCommEGP.toFixed(0), ar?"صافي الإيرادات (بعد العمولة)":"Net Revenue (After Commission)","rgba(155,89,182,0.1)","rgba(155,89,182,0.3)","#c39bd3"):"")+
 mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
 mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid Balance","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
 mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
@@ -4389,6 +4469,7 @@ return "<tr style='"+rowStyle+"'>"+
   return "<div style='width:60px;height:60px;border-radius:50%;background:rgba(201,168,76,0.1);border:1px dashed rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;'>👤</div>";
 })()
 +"<div><div style='font-weight:700;font-size:12px;cursor:pointer;color:var(--gold);text-decoration:underline dotted;' onclick='openGuestCard(\""+b.name.replace(/"/g,"&quot;")+"\")' title='بروفايل الضيف'>"+b.name+guestDot+"</div>"+(b.clientType&&b.clientType!=="individual"&&b.clientName?"<div style='margin-top:2px;'><span style='font-size:8px;padding:1px 6px;border-radius:10px;font-weight:700;background:"+(b.clientType==="agency"?"#cce5ff;color:#004085":"#e8d5f5;color:#6c1f8c")+";'>"+(b.clientType==="agency"?"🏢 ":"🏛️ ")+b.clientName+"</span></div>":"")+
+(checkBlacklist(b.name)?"<div style='margin-top:3px;display:inline-flex;align-items:center;gap:4px;background:#f8d7da;border:1px solid #f5c6cb;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;color:#721c24;cursor:pointer;' onclick=\"openBlacklist()\" title='ضيف محظور — اضغط لعرض التفاصيل'>🚫 Blacklisted</div>":"")+
 "<div style='font-size:10px;color:var(--muted);'>"+b.phone+"</div>"+(b.flightNo?"<div style='font-size:10px;color:#7ab8f5;'>✈️ "+b.flightNo+(b.airline?" · "+b.airline:"")+"</div>":"")+(b.linkedBooking?"<div style='margin-top:3px;background:rgba(52,152,219,0.12);border:1px solid rgba(52,152,219,0.35);border-radius:5px;padding:2px 6px;font-size:9px;color:#7ab8f5;display:inline-block;'>🔗 "+(currentLang==="ar"?"امتداد":"Extension")+": "+b.linkedBooking.id+"</div>":"")+groupTagBadge+bdBadge+"</div></div>"+"</td>"+
 "<td>Rm "+b.room+"<br><span style='font-size:10px;color:var(--muted);'>"+b.type+"</span>"+
 (b.dayuse?"<br><span class='bdg bg-orange' style='font-size:9px;'>🌤️ Day Use</span>":"")+
@@ -4434,9 +4515,17 @@ return "<tr style='"+rowStyle+"'>"+
 "<td>"+(b.dayuse?(b.duOut?"<span style='font-size:10px;color:#e67e22;'>"+b.duOut+"</span>":"—"):fmtD(b.co))+"</td>"+
 "<td class='col-hide-sm'>"+(b.dayuse?"<span style='color:#e67e22;font-size:11px;'>DU</span>":n)+"</td>"+
 "<td class='col-hide-sm' style='font-size:11px;text-align:center;'><span title='Adults'>👤"+b.adults+"</span>"+(b.children>0?"<br><span title='Children' style='color:#7ab8f5;'>🧒"+b.children+"</span>":"")+"</td>"+
-"<td style='color:var(--gold);font-weight:700;'>$"+usd.toFixed(0)+"</td>"+
+"<td class='col-hide-sm' style='color:var(--gold);font-weight:700;'>$"+usd.toFixed(0)+"</td>"+
 "<td style='color:#7ab8f5;font-weight:700;'>£"+egp.toFixed(0)+"</td>"+
 "<td class='col-hide-sm' style='color:#a8d8a8;font-weight:700;'>€"+eur.toFixed(0)+"</td>"+
+"<td class='col-hide-sm' style='text-align:center;'>"+
+((b.commissionAmt||0)>0?
+  "<div style='background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;color:#e74c3c;white-space:nowrap;'>"+
+  "−"+(b.cur==="USD"?"$":b.cur==="EUR"?"€":"£")+(b.commissionAmt).toFixed(0)+
+  (b.commissionPct>0?"<br><span style='font-size:9px;opacity:.8;'>"+parseFloat(b.commissionPct).toFixed(1)+"%</span>":"")+"<br>"+
+  "<span style='font-size:9px;color:var(--muted);'>"+(b.clientName||"")+"</span></div>"
+  :"<span style='color:rgba(255,255,255,0.15);font-size:10px;'>—</span>")+
+"</td>"+
 "<td><span class='bdg "+bc+"'>"+b.status+"</span>"+
 (b.prepay>0?"<div style='font-size:10px;color:var(--muted);'>Pre: "+(b.cur==="USD"?"$":"£")+b.prepay+"</div>":"")+
 (b.roomCharges&&b.roomCharges.length?"<div style='margin-top:3px;background:rgba(230,126,34,0.12);border:1px solid rgba(230,126,34,0.35);border-radius:5px;padding:2px 6px;font-size:9px;color:#e67e22;font-weight:700;'>🍽️ £"+(b.roomCharges.reduce((s,r)=>s+(r.amount||0),0)).toFixed(0)+" مطعم"+(b.roomCharges.some(r=>(r.status||"pending")==="pending")?" ⏳":"")+"</div>":"")+
@@ -4451,6 +4540,7 @@ return "<tr style='"+rowStyle+"'>"+
 +"</button>"+
 "<button class='btn bb bsm' onclick='openBM("+i+")'>✏️</button>"+
 "<button class='btn br bsm' onclick='delBK("+i+")' title='Delete'>🗑</button>"+
+(checkBlacklist(b.name)?"":"<button class='btn bsm' style='background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.4);' onclick='addGuestToBlacklistFromBooking("+i+")' title='إضافة للقائمة السوداء'>🚫</button>")+
 (b.status!=="Cancelled" && !isCheckedOut(b) ? "<button class='btn bsm' style='background:#16a085;color:#fff;width:100%;margin-top:3px;' onclick='openMove("+i+")'>🔀 Move Room</button>" : "")+
 (b.status==="Standby" ? "<button class='btn bsm' style='background:#8e44ad;color:#fff;width:100%;margin-top:3px;' onclick='openDepositReq("+i+")'>💰 Deposit Request</button>" : "")+
 (b.depositPaid ? "<div style='margin-top:3px;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.3);border-radius:5px;padding:3px 6px;font-size:9px;color:#4cda7a;text-align:center;'>✅ Deposit Received</div>" : "")+
@@ -4711,7 +4801,11 @@ s+r+"/night"+(customP>0?" <span style='color:#f39c12;font-size:10px;'>\u270F\uFE
 (trPrice>0?" · ✈️ Transfer: <strong style='color:#7ab8f5;'>"+s+trPrice.toFixed(2)+"</strong>"+
 " · Grand: <strong style='color:#4cda7a;'>"+s+(nightTotal+trPrice).toFixed(2)+"</strong>":""):
 "Select dates to calculate";
+// Store total for commission calc
+document.getElementById("bm-calc").dataset.total = n>0 ? (nightTotal+trPrice).toFixed(2) : "0";
 }
+// Update commission display after price change
+setTimeout(calcBMCommission, 50);
 }
 function showBMRoomPhoto(){
   const roomEl = document.getElementById("bm-room");
@@ -4868,6 +4962,19 @@ const ct = b.clientType || "individual";
 document.getElementById("bm-clienttype").value = ct;
 if(typeof setBClientType === "function") setBClientType(ct);
 if(b.clientName) document.getElementById("bm-clientname").value = b.clientName;
+// Load commission
+if(b.commissionAmt || b.commissionPct){
+  document.getElementById("bm-comm-type").value = b.commissionType || "percent";
+  document.getElementById("bm-comm-value").value = b.commissionType === "fixed" ? (b.commissionAmt||0) : (b.commissionPct||0);
+  document.getElementById("bm-commission-amount").value = b.commissionAmt||0;
+  document.getElementById("bm-commission-pct").value = b.commissionPct||0;
+  setTimeout(calcBMCommission, 300);
+} else {
+  document.getElementById("bm-comm-value").value = "0";
+  document.getElementById("bm-commission-amount").value = "0";
+  document.getElementById("bm-commission-pct").value = "0";
+  document.getElementById("bm-comm-result").style.display = "none";
+}
 document.getElementById("bm-grouptag").value=b.groupTag||"";
 // Load night prices if exist
 nightPrices=b.nightPrices||[];
@@ -4959,6 +5066,14 @@ syncMainGuest();
 const allGuests = collectAllGuestData();
 const name = (document.getElementById("g0-name")?.value || document.getElementById("bm-name").value || "").trim();
 if(!name){alert("Please enter guest name.");return;}
+
+// ══ فحص القائمة السوداء ══
+const blEntry = checkBlacklist(name);
+if(blEntry && !proceedDespiteBlacklist){
+  showBlacklistAlert(blEntry, ()=>{ proceedDespiteBlacklist=true; saveBM(); });
+  return;
+}
+proceedDespiteBlacklist = false; // reset
 const ci=document.getElementById("bm-ci").value;
 const co=document.getElementById("bm-co").value;
 if(!ci||!co||nts(ci,co)<=0){alert("Please enter valid check-in and check-out dates.");return;}
@@ -5099,6 +5214,9 @@ linkedBooking:(function(){
 photos: [..._bkPhotos],
 clientType: document.getElementById("bm-clienttype").value || "individual",
 clientName: document.getElementById("bm-clientname").value.trim() || "",
+commissionAmt: parseFloat(document.getElementById("bm-commission-amount").value) || 0,
+commissionPct: parseFloat(document.getElementById("bm-commission-pct").value) || 0,
+commissionType: document.getElementById("bm-comm-type").value || "percent",
 };
 if(bkEdit!==null) bookings[bkEdit]=bk; else bookings.push(bk);
 sv("dta_bk",bookings);
@@ -7441,6 +7559,38 @@ if(["ci","co","type","isMonthly"].includes(field)) r.monthPrices=[];
 renderInvRooms();
 buildPreview();
 }
+function calcBMCommission(){
+  const total = parseFloat(document.getElementById("bm-calc")?.dataset?.total || 0) || 0;
+  const commType = document.getElementById("bm-comm-type").value;
+  const commVal  = parseFloat(document.getElementById("bm-comm-value").value) || 0;
+  const lbl      = document.getElementById("bm-comm-lbl");
+  const res      = document.getElementById("bm-comm-result");
+  const hiddenAmt = document.getElementById("bm-commission-amount");
+  const hiddenPct = document.getElementById("bm-commission-pct");
+
+  if(commType === "percent"){
+    lbl.textContent = "نسبة العمولة (%)";
+    const amt = total > 0 ? (total * commVal / 100) : 0;
+    hiddenAmt.value = amt.toFixed(2);
+    hiddenPct.value = commVal;
+    if(commVal > 0 && total > 0){
+      const sym = (document.getElementById("bm-cur")?.value === "USD") ? "$" : (document.getElementById("bm-cur")?.value === "EUR") ? "€" : "£";
+      res.style.display = "block";
+      res.innerHTML = `🔻 عمولة ${commVal}% = <strong>${sym}${amt.toFixed(2)}</strong> &nbsp;|&nbsp; صافي الإيراد: <strong>${sym}${(total-amt).toFixed(2)}</strong>`;
+    } else { res.style.display = "none"; }
+  } else {
+    lbl.textContent = "مبلغ العمولة الثابت";
+    const pct = total > 0 ? (commVal/total*100) : 0;
+    hiddenAmt.value = commVal.toFixed(2);
+    hiddenPct.value = pct.toFixed(2);
+    if(commVal > 0){
+      const sym = (document.getElementById("bm-cur")?.value === "USD") ? "$" : (document.getElementById("bm-cur")?.value === "EUR") ? "€" : "£";
+      res.style.display = "block";
+      res.innerHTML = `🔻 عمولة ثابتة = <strong>${sym}${commVal.toFixed(2)}</strong>${total>0?` (${pct.toFixed(1)}%)`:""} &nbsp;|&nbsp; صافي الإيراد: <strong>${sym}${Math.max(0,total-commVal).toFixed(2)}</strong>`;
+    } else { res.style.display = "none"; }
+  }
+}
+
 function setBClientType(type){
   document.getElementById("bm-clienttype").value = type;
   // Reset all buttons
@@ -7463,11 +7613,15 @@ function setBClientType(type){
     const s = k === type ? styles[k] : defaults[k];
     Object.assign(btns[k].style, s);
   });
-  // Show/hide company name field
+  // Show/hide company name + commission field
   const wrap = document.getElementById("bct-name-wrap");
   if(type === "individual"){
     wrap.style.display = "none";
     document.getElementById("bm-clientname").value = "";
+    document.getElementById("bm-comm-value").value = "0";
+    document.getElementById("bm-commission-amount").value = "0";
+    document.getElementById("bm-commission-pct").value = "0";
+    document.getElementById("bm-comm-result").style.display = "none";
   } else {
     wrap.style.display = "block";
     document.getElementById("bm-clientname").placeholder =
@@ -10096,6 +10250,10 @@ if(statsBar){
 const calFinEl=document.getElementById("cal-finance");
 if(calFinEl){
   const calRevEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>s+(b.cur==="USD"?b.total*(exRate||50):b.cur==="EUR"?b.total*(eurRate||55):b.total),0);
+  const calCommEGP=bookings.filter(b=>b.status!=="Cancelled"&&(b.commissionAmt||0)>0).reduce((s,b)=>{
+    return s+(b.cur==="USD"?(b.commissionAmt*(exRate||50)):b.cur==="EUR"?(b.commissionAmt*(eurRate||55)):(b.commissionAmt||0));
+  },0);
+  const calNetRevEGP = calRevEGP - calCommEGP;
   const calCollectedEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{
     const paid=b.payments?b.payments.reduce((ps,p)=>ps+p.amount,0):(b.prepay||0);
     const paidEGP=b.cur==="EGP"?paid:(b.cur==="USD"?paid*(exRate||50):paid*(eurRate||55));
@@ -10106,6 +10264,8 @@ if(calFinEl){
   const calNetEGP=calCollectedEGP-calExpEGP;
   calFinEl.innerHTML=
     mkFin("£"+Math.round(calRevEGP).toLocaleString(),"إجمالي الإيرادات","rgba(201,168,76,0.1)","rgba(201,168,76,0.25)","var(--gold)")+
+    (calCommEGP>0?mkFin("−£"+Math.round(calCommEGP).toLocaleString(),"عمولات الشركات","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c")+
+    mkFin("£"+Math.round(calNetRevEGP).toLocaleString(),"صافي الإيرادات","rgba(155,89,182,0.1)","rgba(155,89,182,0.3)","#c39bd3"):"")+
     mkFin("£"+Math.round(calCollectedEGP).toLocaleString(),"المحصّل فعلاً","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
     mkFin("£"+Math.round(calUnpaidEGP).toLocaleString(),"المستحق / غير مدفوع","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
     mkFin("£"+Math.round(calExpEGP).toLocaleString(),"المصروفات","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
@@ -11998,20 +12158,25 @@ function renderGuestProfiles(){
     const initials = g.name.split(' ').slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('');
     const lastStay = activeBk.sort((a,b)=>b.ci.localeCompare(a.ci))[0];
     const nights = activeBk.reduce((s,b)=>s+nts(b.ci,b.co),0);
-    return `<div class="guest-profile-card" style="cursor:pointer;" onclick="filterBookingsByGuest('${g.name.replace(/'/g,"\\'")}')">
+    const blEntry = checkBlacklist(g.name);
+    return `<div class="guest-profile-card" style="cursor:pointer;${blEntry?'border-color:rgba(231,76,60,0.5);background:rgba(231,76,60,0.05);':''}" onclick="filterBookingsByGuest('${g.name.replace(/'/g,"\\'")}')">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-        <div class="guest-avatar">${initials||'?'}</div>
+        <div class="guest-avatar" style="${blEntry?'background:#e74c3c;':''}">
+          ${blEntry?'🚫':(initials||'?')}
+        </div>
         <div style="flex:1;">
-          <div style="font-weight:700;font-size:14px;">${g.name}</div>
+          <div style="font-weight:700;font-size:14px;">${g.name}${blEntry?` <span style="font-size:10px;background:#f8d7da;color:#721c24;border-radius:4px;padding:1px 6px;font-weight:700;border:1px solid #f5c6cb;">🚫 Blacklisted</span>`:''}
+          </div>
           <div style="font-size:11px;color:var(--muted);">${g.nat||'—'} ${g.phone?'· '+g.phone:''}</div>
           ${g.email?`<div style="font-size:10px;color:var(--muted);">📧 ${g.email}</div>`:''}
+          ${blEntry?`<div style="margin-top:5px;background:rgba(231,76,60,0.1);border-right:3px solid #e74c3c;padding:5px 8px;border-radius:0 5px 5px 0;font-size:11px;color:#e74c3c;">⚠️ ${blEntry.reason}</div>`:''}
         </div>
         <div style="text-align:right;">
-          <div style="font-size:18px;font-weight:700;color:var(--gold);">${activeBk.length}</div>
+          <div style="font-size:18px;font-weight:700;color:${blEntry?'#e74c3c':'var(--gold)'};">${activeBk.length}</div>
           <div style="font-size:9px;color:var(--muted);">إقامات</div>
         </div>
       </div>
-      <div style="display:flex;gap:16px;font-size:11px;">
+      <div style="display:flex;gap:16px;font-size:11px;flex-wrap:wrap;">
         <span>🌙 ${nights} ليلة</span>
         <span>💰 £${Math.round(g.totalRev).toLocaleString()}</span>
         ${lastStay?`<span>📅 آخر إقامة: ${fmtD(lastStay.ci)}</span>`:''}
@@ -12608,6 +12773,142 @@ function checkBirthdayAlert(){
   }
 }
 
+// ════════════════════════════════════════════════
+// ══ BLACKLIST SYSTEM ══
+// ════════════════════════════════════════════════
+
+let proceedDespiteBlacklist = false;
+
+function openBlacklist(){
+  renderBlacklist();
+  document.getElementById('blacklist-modal').classList.add('on');
+}
+
+function clearBLForm(){
+  ['bl-name','bl-phone','bl-idno','bl-nat','bl-reason'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='';
+  });
+}
+
+function addToBlacklist(){
+  const name   = (document.getElementById('bl-name')?.value||'').trim();
+  const phone  = (document.getElementById('bl-phone')?.value||'').trim();
+  const idno   = (document.getElementById('bl-idno')?.value||'').trim();
+  const nat    = (document.getElementById('bl-nat')?.value||'').trim();
+  const reason = (document.getElementById('bl-reason')?.value||'').trim();
+  if(!name){ alert('يرجى كتابة اسم الضيف'); return; }
+  if(!reason){ alert('يرجى كتابة سبب الحظر'); return; }
+  // Check duplicate
+  const exists = blacklist.find(b=>b.name.trim().toLowerCase()===name.toLowerCase());
+  if(exists){ alert('هذا الاسم موجود بالفعل في القائمة السوداء'); return; }
+  const entry = {
+    id: 'bl_'+Date.now(),
+    name, phone, idno, nat, reason,
+    date: toDay(),
+    addedBy: 'Admin'
+  };
+  blacklist.push(entry);
+  sv('dta_blacklist', blacklist);
+  clearBLForm();
+  renderBlacklist();
+  if(typeof sNotify==='function') sNotify('🚫 تم الحظر','تم إضافة '+name+' للقائمة السوداء','success',3000);
+}
+
+function removeFromBlacklist(id){
+  const entry = blacklist.find(b=>b.id===id);
+  if(!entry) return;
+  if(!confirm('هل تريد إزالة "'+entry.name+'" من القائمة السوداء؟')) return;
+  blacklist = blacklist.filter(b=>b.id!==id);
+  sv('dta_blacklist', blacklist);
+  renderBlacklist();
+  if(typeof sNotify==='function') sNotify('✅ تمت الإزالة',entry.name+' تمت إزالته من القائمة السوداء','success',3000);
+}
+
+function addGuestToBlacklistFromBooking(bookingIdx){
+  const b = bookings[bookingIdx];
+  if(!b) return;
+  // Pre-fill the form
+  openBlacklist();
+  setTimeout(()=>{
+    document.getElementById('bl-name').value  = b.name||'';
+    document.getElementById('bl-phone').value = b.phone||b.whatsapp||'';
+    document.getElementById('bl-idno').value  = b.idNo||'';
+    document.getElementById('bl-nat').value   = b.nat||'';
+    document.getElementById('bl-reason').focus();
+  }, 150);
+}
+
+function renderBlacklist(){
+  const q = (document.getElementById('bl-search')?.value||'').toLowerCase();
+  const filtered = blacklist.filter(b=>
+    !q ||
+    b.name.toLowerCase().includes(q) ||
+    (b.phone||'').includes(q) ||
+    (b.idno||'').toLowerCase().includes(q) ||
+    (b.nat||'').toLowerCase().includes(q) ||
+    (b.reason||'').toLowerCase().includes(q)
+  );
+  const listEl  = document.getElementById('bl-list');
+  const emptyEl = document.getElementById('bl-empty');
+  if(!filtered.length){
+    if(listEl)  listEl.innerHTML='';
+    if(emptyEl) emptyEl.style.display='block';
+    return;
+  }
+  if(emptyEl) emptyEl.style.display='none';
+  listEl.innerHTML = [...filtered].reverse().map(b=>`
+    <div style="background:rgba(231,76,60,0.07);border:1px solid rgba(231,76,60,0.25);border-radius:10px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+            <span style="font-size:22px;">🚫</span>
+            <strong style="font-size:15px;color:#e74c3c;">${b.name}</strong>
+            ${b.nat?`<span style="font-size:10px;background:rgba(231,76,60,0.15);color:#e74c3c;border-radius:4px;padding:2px 7px;border:1px solid rgba(231,76,60,0.3);">${b.nat}</span>`:''}
+          </div>
+          <div style="font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;">
+            ${b.phone?`<span>📞 ${b.phone}</span>`:''}
+            ${b.idno?`<span>🪪 ${b.idno}</span>`:''}
+            <span>📅 أُضيف: ${fmtD(b.date)}</span>
+          </div>
+          <div style="background:rgba(231,76,60,0.1);border-right:3px solid #e74c3c;border-radius:0 6px 6px 0;padding:8px 10px;font-size:12px;color:#f0e6cc;line-height:1.6;">
+            <strong style="color:#e74c3c;font-size:10px;letter-spacing:1px;">سبب الحظر:</strong><br>${b.reason}
+          </div>
+        </div>
+        <button onclick="removeFromBlacklist('${b.id}')" class="btn br bsm" style="flex-shrink:0;" title="إزالة من القائمة السوداء">🗑 إزالة</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function checkBlacklist(name){
+  // Returns blacklist entry if found, null otherwise
+  if(!name) return null;
+  const n = name.trim().toLowerCase();
+  return blacklist.find(b=>b.name.trim().toLowerCase()===n) || null;
+}
+
+function showBlacklistAlert(entry, onProceed){
+  document.getElementById('bl-alert-info').innerHTML=`
+    <div style="margin-bottom:8px;"><strong style="color:#e74c3c;font-size:15px;">🚫 ${entry.name}</strong></div>
+    ${entry.phone?`<div>📞 ${entry.phone}</div>`:''}
+    ${entry.nat?`<div>🌍 ${entry.nat}</div>`:''}
+    ${entry.idno?`<div>🪪 ${entry.idno}</div>`:''}
+    <div style="margin-top:10px;background:rgba(231,76,60,0.12);border-right:3px solid #e74c3c;padding:8px 10px;border-radius:0 6px 6px 0;">
+      <div style="font-size:10px;color:#e74c3c;font-weight:700;margin-bottom:4px;">سبب الحظر:</div>
+      <div>${entry.reason}</div>
+    </div>
+    <div style="margin-top:8px;font-size:10px;color:var(--muted);">أُضيف بتاريخ: ${fmtD(entry.date)}</div>
+  `;
+  proceedDespiteBlacklist = false;
+  document.getElementById('bl-alert-modal').classList.add('on');
+  // Override the "proceed" button to run callback
+  const proceedBtn = document.querySelector('#bl-alert-modal .btn.bb');
+  if(proceedBtn){
+    proceedBtn.onclick = ()=>{ closeM('bl-alert-modal'); if(onProceed) onProceed(); };
+  }
+}
+
 function applyScanData(){
   const name = document.getElementById('scan-name').value.trim();
   const nat  = document.getElementById('scan-nat').value.trim();
@@ -12820,6 +13121,8 @@ function applyScanData(){
       <button class="btn bb bsm" onclick="setWAType('late_pay')">⚠️ تذكير دفع</button>
       <button class="btn bb bsm" onclick="setWAType('rebook')">🔄 إعادة الحجز</button>
       <button class="btn bb bsm" onclick="setWAType('upgrade')">🏖️ عرض خاص</button>
+      <button class="btn bsm" style="background:rgba(37,211,102,0.2);color:#25D366;border:1px solid rgba(37,211,102,0.5);font-weight:700;" onclick="setWAType('pay_thanks')">💚 شكر على الدفع</button>
+      <button class="btn bsm" style="background:rgba(255,193,7,0.2);color:#f5c518;border:1px solid rgba(255,193,7,0.5);font-weight:700;" onclick="setWAType('review_thanks')">🌟 شكر على التقييم</button>
     </div>
   </div>
   <div class="wa-tpl-card">
@@ -13034,7 +13337,9 @@ function loadWATemplate(){
       review:{title:'⭐ طلب تقييم',body:`عزيزنا *${b.name}* 🌊\n\nشكراً على إقامتكم معنا في *${prop.name}* من ${fmtD(b.ci)} إلى ${fmtD(b.co)}.\n\nرأيكم يهمنا ويساعدنا على تحسين خدماتنا.\nنقدّر تقييمكم على Google Maps أو TripAdvisor 🙏\n\nشكراً جزيلاً لكم 💛\n— فريق *${prop.name}*`},
       late_pay:{title:'⚠️ تذكير دفع',body:`السلام عليكم *${b.name}* 🌊\n\nبالإشارة إلى حجزكم في *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 الغرفة: ${b.room}\n💰 الإجمالي: ${sym}${b.total}\n\n⚠️ لم يتم استلام الدفعة حتى الآن.\nيرجى التواصل معنا لترتيب الدفع في أقرب وقت.\n📞 ${prop.phone}\n\nشكراً لتعاونكم 🙏`},
       rebook:{title:'🔄 عرض إعادة الحجز',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتكم في *${prop.name}* كانت ممتعة!\n\n🎁 لدينا عروض خاصة لضيوفنا الكرام عند إعادة الحجز مباشرة معنا.\n\nللحجز والاستفسار:\n📞 ${prop.phone}\n\nنتطلع لاستقبالكم مجدداً! 💛`},
-      upgrade:{title:'🏖️ عرض خاص',body:`مرحباً *${b.name}* 🌊\n\nلديكم حجز قادم في *${prop.name}* بتاريخ ${fmtD(b.ci)}.\n\n🌟 عرض خاص لكم: ترقية مجانية للغرفة أو خصم على خدمات الرحلات والمطعم.\n\nللاستفسار والتأكيد:\n📞 ${prop.phone}\n\nنتطلع لاستقبالكم! 💛`}
+      upgrade:{title:'🏖️ عرض خاص',body:`مرحباً *${b.name}* 🌊\n\nلديكم حجز قادم في *${prop.name}* بتاريخ ${fmtD(b.ci)}.\n\n🌟 عرض خاص لكم: ترقية مجانية للغرفة أو خصم على خدمات الرحلات والمطعم.\n\nللاستفسار والتأكيد:\n📞 ${prop.phone}\n\nنتطلع لاستقبالكم! 💛`},
+      pay_thanks:{title:'💚 شكر على الدفع',body:`السلام عليكم *${b.name}* 💚\n\nتم استلام دفعتكم بنجاح! شكراً جزيلاً لكم 🙏\n\n✅ الإيصال:\n🏨 *${prop.name}*\n📋 رقم الحجز: ${b.invNo||b.id}\n🏠 الغرفة: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} ← ${fmtD(b.co)} (${nights_} ليالي)\n💰 المبلغ المُسدَّد: *${sym}${b.total}*\n\nحجزكم مؤكد ومرحباً بكم دائماً 💛\n— فريق *${prop.name}* 🌊\n📞 ${prop.phone}`},
+      review_thanks:{title:'🌟 شكر على التقييم',body:`عزيزنا *${b.name}* 🌊\n\nوصلنا تقييمكم الرائع وأسعدنا كثيراً! 🌟✨\n\nشكراً من القلب على وقتكم وكلماتكم الجميلة — أنتم تحفّزوننا على تقديم الأفضل دائماً.\n\nيشرّفنا استقبالكم من جديد في *${prop.name}* 💛\n\nللحجز والاستفسار:\n📞 ${prop.phone}\n— فريق *${prop.name}* 🌊`}
     },
     en:{
       confirm:{title:'✅ Booking Confirmation',body:`Dear *${b.name}*, 🌊\n\nWe are pleased to confirm your booking at *${prop.name}*:\n\n🏨 Room: ${b.room} (${b.type||''})\n📅 Check-in: ${fmtD(b.ci)}\n📅 Check-out: ${fmtD(b.co)}\n🌙 Nights: ${nights_}\n💰 Total: ${sym}${b.total}\n💳 Status: ${payLbl}\n\nWe look forward to welcoming you! Please let us know your arrival time.\n📞 ${prop.phone}`},
@@ -13047,7 +13352,9 @@ function loadWATemplate(){
       review:{title:'⭐ Review Request',body:`Dear *${b.name}* 🌊\n\nThank you for staying at *${prop.name}* from ${fmtD(b.ci)} to ${fmtD(b.co)}.\n\nYour feedback means a lot to us and helps us improve.\nWe'd really appreciate your review on Google Maps or TripAdvisor 🙏\n\nThank you so much! 💛\n— Team *${prop.name}*`},
       late_pay:{title:'⚠️ Payment Reminder',body:`Dear *${b.name}* 🌊\n\nRegarding your booking at *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Room: ${b.room}\n💰 Total: ${sym}${b.total}\n\n⚠️ We have not received your payment yet.\nKindly contact us to arrange payment at your earliest convenience.\n📞 ${prop.phone}\n\nThank you for your cooperation 🙏`},
       rebook:{title:'🔄 Come Back Soon',body:`Dear *${b.name}* 🌊\n\nWe hope you enjoyed your stay at *${prop.name}*!\n\n🎁 We have exclusive offers for returning guests when booking directly with us.\n\nFor reservations & inquiries:\n📞 ${prop.phone}\n\nWe look forward to welcoming you back! 💛`},
-      upgrade:{title:'🏖️ Special Offer',body:`Hello *${b.name}* 🌊\n\nYou have an upcoming stay at *${prop.name}* on ${fmtD(b.ci)}.\n\n🌟 Special offer for you: free room upgrade (subject to availability) or discounts on tours & restaurant.\n\nFor inquiries & confirmation:\n📞 ${prop.phone}\n\nLooking forward to your visit! 💛`}
+      upgrade:{title:'🏖️ Special Offer',body:`Hello *${b.name}* 🌊\n\nYou have an upcoming stay at *${prop.name}* on ${fmtD(b.ci)}.\n\n🌟 Special offer for you: free room upgrade (subject to availability) or discounts on tours & restaurant.\n\nFor inquiries & confirmation:\n📞 ${prop.phone}\n\nLooking forward to your visit! 💛`},
+      pay_thanks:{title:'💚 Payment Received — Thank You!',body:`Hello *${b.name}* 💚\n\nYour payment has been successfully received! Thank you so much 🙏\n\n✅ Receipt:\n🏨 *${prop.name}*\n📋 Booking Ref: ${b.invNo||b.id}\n🏠 Room: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} nights)\n💰 Amount Paid: *${sym}${b.total}*\n\nYour booking is confirmed — we look forward to welcoming you! 💛\n— Team *${prop.name}* 🌊\n📞 ${prop.phone}`},
+      review_thanks:{title:'🌟 Thank You for Your Review!',body:`Dear *${b.name}* 🌊\n\nWe received your wonderful review and it truly made our day! 🌟✨\n\nThank you so much for taking the time to share your experience — your kind words inspire us to keep delivering the best.\n\nWe'd be honoured to welcome you back to *${prop.name}* 💛\n\nFor reservations & inquiries:\n📞 ${prop.phone}\n— Team *${prop.name}* 🌊`}
     },
     fr:{
       confirm:{title:'✅ Confirmation de réservation',body:`Cher/Chère *${b.name}*, 🌊\n\nNous avons le plaisir de confirmer votre réservation à *${prop.name}* :\n\n🏨 Chambre : ${b.room} (${b.type||''})\n📅 Arrivée : ${fmtD(b.ci)}\n📅 Départ : ${fmtD(b.co)}\n🌙 Nuits : ${nights_}\n💰 Total : ${sym}${b.total}\n💳 Statut : ${payLbl}\n\nNous avons hâte de vous accueillir ! Merci de nous informer de votre heure d'arrivée.\n📞 ${prop.phone}`},
@@ -13060,7 +13367,9 @@ function loadWATemplate(){
       review:{title:'⭐ Demande d\'avis',body:`Cher/Chère *${b.name}* 🌊\n\nMerci de votre séjour à *${prop.name}* du ${fmtD(b.ci)} au ${fmtD(b.co)}.\n\nVotre avis compte beaucoup pour nous et nous aide à nous améliorer.\nNous apprécierions votre avis sur Google Maps ou TripAdvisor 🙏\n\nMerci infiniment ! 💛\n— L'équipe *${prop.name}*`},
       late_pay:{title:'⚠️ Rappel de paiement',body:`Bonjour *${b.name}* 🌊\n\nConcernant votre réservation à *${prop.name}* :\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Chambre : ${b.room}\n💰 Total : ${sym}${b.total}\n\n⚠️ Nous n'avons pas encore reçu votre paiement.\nMerci de nous contacter pour régler ce montant dès que possible.\n📞 ${prop.phone}\n\nMerci pour votre coopération 🙏`},
       rebook:{title:'🔄 Revenez nous voir',body:`Cher/Chère *${b.name}* 🌊\n\nNous espérons que votre séjour à *${prop.name}* a été agréable !\n\n🎁 Nous avons des offres exclusives pour nos clients fidèles lors d'une réservation directe.\n\nPour réservations et renseignements :\n📞 ${prop.phone}\n\nNous avons hâte de vous revoir ! 💛`},
-      upgrade:{title:'🏖️ Offre spéciale',body:`Bonjour *${b.name}* 🌊\n\nVous avez un séjour prévu à *${prop.name}* le ${fmtD(b.ci)}.\n\n🌟 Offre spéciale : surclassement gratuit (sous réserve de disponibilité) ou remise sur les excursions et le restaurant.\n\nPour renseignements et confirmation :\n📞 ${prop.phone}\n\nNous vous attendons avec plaisir ! 💛`}
+      upgrade:{title:'🏖️ Offre spéciale',body:`Bonjour *${b.name}* 🌊\n\nVous avez un séjour prévu à *${prop.name}* le ${fmtD(b.ci)}.\n\n🌟 Offre spéciale : surclassement gratuit (sous réserve de disponibilité) ou remise sur les excursions et le restaurant.\n\nPour renseignements et confirmation :\n📞 ${prop.phone}\n\nNous vous attendons avec plaisir ! 💛`},
+      pay_thanks:{title:'💚 Paiement reçu — Merci !',body:`Bonjour *${b.name}* 💚\n\nVotre paiement a bien été reçu ! Merci beaucoup 🙏\n\n✅ Reçu :\n🏨 *${prop.name}*\n📋 Réf. réservation : ${b.invNo||b.id}\n🏠 Chambre : ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} nuits)\n💰 Montant payé : *${sym}${b.total}*\n\nVotre réservation est confirmée — nous avons hâte de vous accueillir ! 💛\n— L'équipe *${prop.name}* 🌊\n📞 ${prop.phone}`},
+      review_thanks:{title:'🌟 Merci pour votre avis !',body:`Cher/Chère *${b.name}* 🌊\n\nNous avons reçu votre magnifique avis et cela nous a beaucoup touché ! 🌟✨\n\nMerci infiniment d'avoir pris le temps de partager votre expérience — vos mots nous motivent à toujours faire mieux.\n\nNous serions honorés de vous accueillir à nouveau au *${prop.name}* 💛\n\nPour réservations :\n📞 ${prop.phone}\n— L'équipe *${prop.name}* 🌊`}
     },
     de:{
       confirm:{title:'✅ Buchungsbestätigung',body:`Liebe/r *${b.name}*, 🌊\n\nWir freuen uns, Ihre Buchung im *${prop.name}* zu bestätigen:\n\n🏨 Zimmer: ${b.room} (${b.type||''})\n📅 Check-in: ${fmtD(b.ci)}\n📅 Check-out: ${fmtD(b.co)}\n🌙 Nächte: ${nights_}\n💰 Gesamt: ${sym}${b.total}\n💳 Status: ${payLbl}\n\nWir freuen uns auf Ihre Ankunft! Bitte teilen Sie uns Ihre Ankunftszeit mit.\n📞 ${prop.phone}`},
@@ -13073,7 +13382,9 @@ function loadWATemplate(){
       review:{title:'⭐ Bewertungsanfrage',body:`Liebe/r *${b.name}* 🌊\n\nVielen Dank für Ihren Aufenthalt im *${prop.name}* vom ${fmtD(b.ci)} bis ${fmtD(b.co)}.\n\nIhr Feedback ist uns sehr wichtig und hilft uns, uns zu verbessern.\nWir würden uns sehr über Ihre Bewertung auf Google Maps oder TripAdvisor freuen 🙏\n\nVielen herzlichen Dank! 💛\n— Team *${prop.name}*`},
       late_pay:{title:'⚠️ Zahlungserinnerung',body:`Liebe/r *${b.name}* 🌊\n\nBezüglich Ihrer Buchung im *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Zimmer: ${b.room}\n💰 Gesamt: ${sym}${b.total}\n\n⚠️ Wir haben Ihre Zahlung noch nicht erhalten.\nBitte kontaktieren Sie uns so bald wie möglich.\n📞 ${prop.phone}\n\nVielen Dank für Ihre Mitarbeit 🙏`},
       rebook:{title:'🔄 Kommen Sie wieder',body:`Liebe/r *${b.name}* 🌊\n\nWir hoffen, dass Ihr Aufenthalt im *${prop.name}* angenehm war!\n\n🎁 Wir haben exklusive Angebote für unsere Stammgäste bei Direktbuchung.\n\nFür Buchungen und Anfragen:\n📞 ${prop.phone}\n\nWir freuen uns, Sie wiederzusehen! 💛`},
-      upgrade:{title:'🏖️ Sonderangebot',body:`Hallo *${b.name}* 🌊\n\nSie haben einen bevorstehenden Aufenthalt im *${prop.name}* am ${fmtD(b.ci)}.\n\n🌟 Sonderangebot: kostenloses Zimmer-Upgrade (je nach Verfügbarkeit) oder Rabatt auf Touren & Restaurant.\n\nFür Anfragen und Bestätigung:\n📞 ${prop.phone}\n\nWir freuen uns auf Ihren Besuch! 💛`}
+      upgrade:{title:'🏖️ Sonderangebot',body:`Hallo *${b.name}* 🌊\n\nSie haben einen bevorstehenden Aufenthalt im *${prop.name}* am ${fmtD(b.ci)}.\n\n🌟 Sonderangebot: kostenloses Zimmer-Upgrade (je nach Verfügbarkeit) oder Rabatt auf Touren & Restaurant.\n\nFür Anfragen und Bestätigung:\n📞 ${prop.phone}\n\nWir freuen uns auf Ihren Besuch! 💛`},
+      pay_thanks:{title:'💚 Zahlung erhalten — Vielen Dank!',body:`Hallo *${b.name}* 💚\n\nIhre Zahlung ist erfolgreich eingegangen! Vielen herzlichen Dank 🙏\n\n✅ Quittung:\n🏨 *${prop.name}*\n📋 Buchungs-Nr.: ${b.invNo||b.id}\n🏠 Zimmer: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} Nächte)\n💰 Bezahlter Betrag: *${sym}${b.total}*\n\nIhre Buchung ist bestätigt — wir freuen uns auf Ihre Ankunft! 💛\n— Team *${prop.name}* 🌊\n📞 ${prop.phone}`},
+      review_thanks:{title:'🌟 Danke für Ihre Bewertung!',body:`Liebe/r *${b.name}* 🌊\n\nWir haben Ihre wunderbare Bewertung erhalten und sind sehr gerührt! 🌟✨\n\nVielen Dank, dass Sie sich die Zeit genommen haben, Ihre Erfahrung zu teilen — Ihre Worte motivieren uns, immer besser zu werden.\n\nWir würden uns freuen, Sie erneut im *${prop.name}* willkommen zu heißen 💛\n\nFür Buchungen:\n📞 ${prop.phone}\n— Team *${prop.name}* 🌊`}
     },
     ru:{
       confirm:{title:'✅ Подтверждение бронирования',body:`Уважаемый/ая *${b.name}*, 🌊\n\nМы рады подтвердить Ваше бронирование в *${prop.name}*:\n\n🏨 Номер: ${b.room} (${b.type||''})\n📅 Заезд: ${fmtD(b.ci)}\n📅 Выезд: ${fmtD(b.co)}\n🌙 Ночей: ${nights_}\n💰 Итого: ${sym}${b.total}\n💳 Статус: ${payLbl}\n\nМы с нетерпением ждём Вас! Пожалуйста, сообщите нам время Вашего прибытия.\n📞 ${prop.phone}`},
@@ -13086,7 +13397,9 @@ function loadWATemplate(){
       review:{title:'⭐ Просьба об отзыве',body:`Уважаемый/ая *${b.name}* 🌊\n\nСпасибо за Ваше пребывание в *${prop.name}* с ${fmtD(b.ci)} по ${fmtD(b.co)}.\n\nВаш отзыв очень важен для нас и помогает нам совершенствоваться.\nБудем признательны за Ваш отзыв на Google Maps или TripAdvisor 🙏\n\nБольшое спасибо! 💛\n— Команда *${prop.name}*`},
       late_pay:{title:'⚠️ Напоминание об оплате',body:`Уважаемый/ая *${b.name}* 🌊\n\nОтносительно Вашего бронирования в *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Номер: ${b.room}\n💰 Итого: ${sym}${b.total}\n\n⚠️ Мы ещё не получили Вашу оплату.\nПожалуйста, свяжитесь с нами как можно скорее.\n📞 ${prop.phone}\n\nСпасибо за понимание 🙏`},
       rebook:{title:'🔄 Приходите снова',body:`Уважаемый/ая *${b.name}* 🌊\n\nНадеемся, что Ваше пребывание в *${prop.name}* было приятным!\n\n🎁 У нас есть эксклюзивные предложения для постоянных гостей при прямом бронировании.\n\nДля бронирования и вопросов:\n📞 ${prop.phone}\n\nБудем рады снова видеть Вас! 💛`},
-      upgrade:{title:'🏖️ Специальное предложение',body:`Здравствуйте, *${b.name}* 🌊\n\nВас ждёт предстоящее пребывание в *${prop.name}* ${fmtD(b.ci)}.\n\n🌟 Специальное предложение: бесплатный апгрейд номера (при наличии) или скидка на экскурсии и ресторан.\n\nДля уточнений и подтверждения:\n📞 ${prop.phone}\n\nС нетерпением ждём Вас! 💛`}
+      upgrade:{title:'🏖️ Специальное предложение',body:`Здравствуйте, *${b.name}* 🌊\n\nВас ждёт предстоящее пребывание в *${prop.name}* ${fmtD(b.ci)}.\n\n🌟 Специальное предложение: бесплатный апгрейд номера (при наличии) или скидка на экскурсии и ресторан.\n\nДля уточнений и подтверждения:\n📞 ${prop.phone}\n\nС нетерпением ждём Вас! 💛`},
+      pay_thanks:{title:'💚 Оплата получена — Спасибо!',body:`Здравствуйте, *${b.name}* 💚\n\nВаш платёж успешно получен! Большое спасибо 🙏\n\n✅ Квитанция:\n🏨 *${prop.name}*\n📋 Номер бронирования: ${b.invNo||b.id}\n🏠 Номер: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} ночей)\n💰 Оплаченная сумма: *${sym}${b.total}*\n\nВаше бронирование подтверждено — ждём Вас с нетерпением! 💛\n— Команда *${prop.name}* 🌊\n📞 ${prop.phone}`},
+      review_thanks:{title:'🌟 Спасибо за Ваш отзыв!',body:`Уважаемый/ая *${b.name}* 🌊\n\nМы получили Ваш замечательный отзыв и это нас очень обрадовало! 🌟✨\n\nБольшое спасибо за то, что нашли время поделиться своими впечатлениями — Ваши слова вдохновляют нас становиться лучше.\n\nБудем рады снова принять Вас в *${prop.name}* 💛\n\nДля бронирования:\n📞 ${prop.phone}\n— Команда *${prop.name}* 🌊`}
     }
   };
   const templates=allTemplates[_watLang]||allTemplates.en;
