@@ -3757,6 +3757,16 @@ function toDay(){return new Date().toISOString().split("T")[0];}
 function fmtD(s){if(!s)return"—";return new Date(s).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});}
 function nts(a,b){if(!a||!b)return 0;return Math.max(0,Math.round((new Date(b)-new Date(a))/86400000));}
 function sv(key,val){LSS(key,val);showToast();scheduleDriveSync();}
+// ✅ حساب المبالغ المدفوعة فعلاً من الضيف (بدون خصومات الإلغاء)
+function calcPaid(b){
+  if(!b||!b.payments||!b.payments.length) return b?( b.prepay||0):0;
+  return b.payments.filter(p=>p.amount>0 && !p.isDeduction).reduce((s,p)=>s+p.amount,0);
+}
+// ✅ حساب إيرادات خصومات الإلغاء فقط
+function calcDeductions(b){
+  if(!b||!b.payments||!b.payments.length) return 0;
+  return b.payments.filter(p=>p.amount>0 && p.isDeduction).reduce((s,p)=>s+p.amount,0);
+}
 function showToast(m="✓ Saved!"){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2000);}
 function closeM(id){document.getElementById(id).classList.remove("on");}
 function fillRoomSel(id){
@@ -4288,7 +4298,7 @@ const totalCommEGP_db=bookings.filter(b=>b.status!=="Cancelled"&&(b.commissionAm
 },0);
 const netRevAfterCommEGP = revEGP - totalCommEGP_db;
 const collectedEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{
-const paid=b.payments?b.payments.reduce((ps,p)=>ps+p.amount,0):(b.prepay||0);
+const paid=calcPaid(b);
 const paidEGP=b.cur==="EGP"?paid:paid*exRate;
 return s+paidEGP;
 },0);
@@ -4604,7 +4614,7 @@ return "<tr style='"+rowStyle+"'>"+
   :"<span style='color:rgba(255,255,255,0.15);font-size:10px;'>—</span>")+
 "</td>"+
 "<td><span class='bdg "+bc+"'>"+b.status+"</span>"+
-(b.prepay>0?"<div style='font-size:10px;color:var(--muted);'>Pre: "+(b.cur==="USD"?"$":"£")+b.prepay+"</div>":"")+
+(()=>{const _pre=calcPaid(b);return _pre>0?"<div style='font-size:10px;color:var(--muted);'>Pre: "+(b.cur==="USD"?"$":b.cur==="EUR"?"€":"£")+_pre.toFixed(0)+"</div>":"";})()+
 (b.roomCharges&&b.roomCharges.length?"<div style='margin-top:3px;background:rgba(230,126,34,0.12);border:1px solid rgba(230,126,34,0.35);border-radius:5px;padding:2px 6px;font-size:9px;color:#e67e22;font-weight:700;'>🍽️ £"+(b.roomCharges.reduce((s,r)=>s+(r.amount||0),0)).toFixed(0)+" مطعم"+(b.roomCharges.some(r=>(r.status||"pending")==="pending")?" ⏳":"")+"</div>":"")+
 (b.tourCharges&&b.tourCharges.length?"<div style='margin-top:3px;background:rgba(52,152,219,0.12);border:1px solid rgba(52,152,219,0.35);border-radius:5px;padding:2px 6px;font-size:9px;color:#7ab8f5;font-weight:700;'>🏔️ £"+(b.tourCharges.reduce((s,t)=>s+(t.price||0),0)).toLocaleString()+" رحلات"+(b.tourCharges.some(t=>(t.status||"pending")==="pending")?" ⏳":"")+"</div>":"")+
 "</td>"+
@@ -4613,7 +4623,7 @@ return "<tr style='"+rowStyle+"'>"+
 "<button class='btn bg bsm' onclick='loadInv("+i+")' title='Invoice'>📄</button>"+
 "<button class='btn bsm' style='background:#3498db;color:#fff;' onclick='printAirportSign("+i+")' title='Airport Sign'>✈️</button>"+
 "<button class='btn bsm' style='background:#25D366;color:#fff;' onclick='openPay("+i+")' title='Add Payment'>"+
-(()=>{const ps=b.payments&&b.payments.length?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);const rem=Math.max(0,b.total-ps);return rem>0?"💳 +Pay":"💳";})()
+(()=>{const ps=b.payments&&b.payments.length?calcPaid(b):(b.prepay||0);const rem=Math.max(0,b.total-ps);return rem>0?"💳 +Pay":"💳";})()
 +"</button>"+
 "<button class='btn bb bsm' onclick='openBM("+i+")'>✏️</button>"+
 "<button class='btn br bsm' onclick='delBK("+i+")' title='Delete'>🗑</button>"+
@@ -5076,7 +5086,7 @@ document.getElementById("bm-pickup-sign").value=b.pickupSign||b.name||"";
 toggleTransfer();
 toggleDayUse();
 // Prepaid
-const existPaid=b.payments?b.payments.reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+const existPaid=calcPaid(b);
 document.getElementById("bm-prepay-input").value=existPaid||0;
 document.getElementById("bm-prepay").value=existPaid||0;
 document.getElementById("bm-psym").textContent=b.cur==="EGP"?"£":b.cur==="EUR"?"€":"$";
@@ -5312,7 +5322,7 @@ document.getElementById("cancel-sent-status").style.display="none";
 const sym=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
 document.getElementById("cancel-sym").textContent=sym;
 // Show booking info
-const paidSum=b.payments?b.payments.reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+const paidSum=calcPaid(b);
 document.getElementById("cancel-info").innerHTML=
 "<div style='display:grid;grid-template-columns:1fr 1fr;gap:6px;'>"+
 "<div>👤 <strong>"+b.name+"</strong></div>"+
@@ -5325,7 +5335,7 @@ document.getElementById("cancel-info").innerHTML=
 "<div>📋 "+b.invNo+"</div>"+
 "</div>";
 // حساب العربون الفعلي (مدفوعات موجبة فقط)
-const depositSum=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+const depositSum=calcPaid(b);
 const sym2=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
 document.getElementById("cancel-notes").value="";
 document.getElementById("cancel-reason").value="Guest Request";
@@ -5372,7 +5382,7 @@ function setCancelDepOpt(opt){
     // ضبط مبلغ الرد بالكامل
     if(cancelIdx!==null){
       const b=bookings[cancelIdx];
-      const dep=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+      const dep=calcPaid(b);
       document.getElementById("cancel-refund").value=dep.toFixed(2);
     }
   } else {
@@ -5389,7 +5399,7 @@ function calcCancelDeductRemainder(){
   if(cancelIdx===null) return;
   const b=bookings[cancelIdx];
   const sym=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
-  const dep=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+  const dep=calcPaid(b);
   const deduct=parseFloat(document.getElementById("cancel-deduct-amount").value)||0;
   const remainder=dep-deduct;
   const box=document.getElementById("cancel-deduct-remainder-box");
@@ -5419,7 +5429,7 @@ function getCancelMsg(){
 if(cancelIdx===null) return "";
 const b=bookings[cancelIdx];
 const sym=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
-const paidSum=b.payments?b.payments.reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+const paidSum=calcPaid(b);
 const refund=parseFloat(document.getElementById("cancel-refund").value)||0;
 const reason=document.getElementById("cancel-reason").value;
 const notes=document.getElementById("cancel-notes").value;
@@ -5467,7 +5477,7 @@ const refund=parseFloat(document.getElementById("cancel-refund").value)||0;
 const reason=document.getElementById("cancel-reason").value;
 const notes=document.getElementById("cancel-notes").value;
 const sym=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
-const paidSum=b.payments?b.payments.reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+const paidSum=calcPaid(b);
 const refundVia=document.getElementById("cancel-refund-method").value;
 const today=new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
 const subject=encodeURIComponent("Booking Cancellation - "+b.invNo+" | "+PROP.name);
@@ -5517,7 +5527,7 @@ const sym=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
 const reason=document.getElementById("cancel-reason").value;
 const notes=document.getElementById("cancel-notes").value;
 const depOpt=document.getElementById("cancel-dep-opt").value;
-const depositSum=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+const depositSum=calcPaid(b);
 // تحقق: لو في عربون لازم يختار خيار
 if(depositSum>0 && !depOpt){
   alert("⚠️ الرجاء اختيار طريقة تسوية العربون أولاً (رد أو خصم)");
@@ -5602,7 +5612,7 @@ document.getElementById("earlyco-time").value="10:00";
 document.getElementById("earlyco-summary").style.display="none";
 document.getElementById("earlyco-refund-box").style.display="none";
 document.getElementById("earlyco-refund").value="0";
-const paidSum=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+const paidSum=calcPaid(b);
 document.getElementById("earlyco-info").innerHTML=
 "<div style='display:grid;grid-template-columns:1fr 1fr;gap:4px;'>"+
 "<div>👤 <strong>"+b.name+"</strong></div>"+
@@ -5624,7 +5634,7 @@ function renderEarlyCOPayList(){
     document.getElementById("earlyco-pay-list").innerHTML="<div style='color:var(--muted);font-size:11px;text-align:center;padding:8px;'>No payments recorded.</div>";
     return;
   }
-  const paidSum=b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0);
+  const paidSum=calcPaid(b);
   document.getElementById("earlyco-pay-list").innerHTML=
     "<div style='font-size:10px;color:var(--muted);margin-bottom:6px;'>Total paid: <strong style='color:#4cda7a;'>"+sym+paidSum.toFixed(0)+"</strong> / "+sym+b.total.toFixed(0)+"</div>"+
     b.payments.map((p,i)=>{
@@ -5643,7 +5653,7 @@ function delEarlyCOPayment(pidx){
   if(!confirm("Delete this payment?")) return;
   const b=bookings[earlyCOIdx];
   b.payments.splice(pidx,1);
-  const paidSum=b.payments.reduce((s,p)=>s+p.amount,0);
+  const paidSum=calcPaid(b);
   b.prepay=Math.max(0,paidSum);
   if(paidSum<=0) b.status="Pending";
   else if(paidSum>=b.total) b.status="Paid";
@@ -5802,7 +5812,7 @@ document.getElementById("earlyci-new-date").value=b.ci;
 document.getElementById("earlyci-fee").value="0";
 document.getElementById("earlyci-time").value="08:00";
 document.getElementById("earlyci-summary").style.display="none";
-const paidSum=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+const paidSum=calcPaid(b);
 document.getElementById("earlyci-info").innerHTML=
 "<div style='display:grid;grid-template-columns:1fr 1fr;gap:4px;'>"+
 "<div>👤 <strong>"+b.name+"</strong></div>"+
@@ -6110,7 +6120,7 @@ note:"🌙 تمديد "+amount+" ليلة (جزئي) / Extension Partial"
 }
 }
 // Update booking status based on total paid
-const paidSum=bookings[adjustIdx].payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0);
+const paidSum=calcPaid(bookings[adjustIdx]);
 if(paidSum>=newTotal) bookings[adjustIdx].status="Paid";
 else if(paidSum>0) bookings[adjustIdx].status="Partial";
 else bookings[adjustIdx].status="Unpaid";
@@ -6143,7 +6153,7 @@ function restoreBK(i){
   const b=bookings[i];
   if(!confirm("Restore this booking for "+b.name+"?")) return;
   // Determine correct status based on payments
-  const paidSum=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+  const paidSum=calcPaid(b);
   if(paidSum>=b.total) b.status="Paid";
   else if(paidSum>0) b.status="Partial";
   else b.status="Standby";
@@ -6335,7 +6345,7 @@ function openEditCO(i) {
   document.querySelectorAll(".editco-sym").forEach(el => el.textContent = sym);
   const n = nts(b.ci, b.co);
   const rateN = n > 0 ? b.total / n : 0;
-  const paidSum = b.payments ? b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0) : (b.prepay||0);
+  const paidSum = calcPaid(b);
   document.getElementById("editco-info").innerHTML =
     "<div style='display:grid;grid-template-columns:1fr 1fr;gap:5px;'>" +
     "<div>👤 <strong>" + b.name + "</strong></div>" +
@@ -6567,7 +6577,7 @@ function saveEditCO() {
     }
   }
   // Update payment status
-  const paidSum = bookings[editCOIdx].payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount, 0);
+  const paidSum = calcPaid(bookings[editCOIdx]);
   if (bookings[editCOIdx].status !== "Cancelled") {
     if (paidSum >= newTotal) bookings[editCOIdx].status = "Paid";
     else if (paidSum > 0) bookings[editCOIdx].status = "Partial";
@@ -6759,7 +6769,7 @@ if(b.clientName && b.clientType && b.clientType !== "individual"){
 }
 document.getElementById("iv-status").value=b.status;
 document.getElementById("iv-method").value=b.method;
-const actualPaid=b.payments?b.payments.reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+const actualPaid=calcPaid(b);
 document.getElementById("iv-prepay").value=actualPaid;
 document.getElementById("iv-bf").checked=b.bf;
 document.getElementById("iv-notes").value=b.notes||"";
@@ -7105,7 +7115,7 @@ const totUSD=list.reduce((s,e)=>s+e.usd,0);
 const mthEGP=list.filter(e=>e.date&&e.date.substring(0,7)===toDay().substring(0,7)).reduce((s,e)=>s+e.egp,0);
 const revEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
 const collectedEGP2=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{
-const paid=b.payments?b.payments.reduce((ps,p)=>ps+p.amount,0):(b.prepay||0);
+const paid=calcPaid(b);
 return s+(b.cur==="EGP"?paid:paid*exRate);
 },0);
 const net=collectedEGP2-expenses.reduce((s,e)=>s+e.egp,0);
@@ -8294,7 +8304,7 @@ if(payEdit===null) return;
 const b=bookings[payEdit];
 const sym=b.cur==="USD"?"$":"EGP ";
 if(!b.payments) b.payments=[];
-const paidSum=b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0);
+const paidSum=calcPaid(b);
 const refundSum=b.payments.filter(p=>p.amount<0).reduce((s,p)=>s+Math.abs(p.amount),0);
 const rcTotal=(b.roomCharges&&b.roomCharges.length)?b.roomCharges.reduce((s,r)=>s+(r.amount||0),0):0;
 const remain=Math.max(0,b.total+rcTotal-paidSum);
@@ -8352,7 +8362,7 @@ function deleteRoomCharge(bIdx, ri){
   bookings[bIdx].roomCharges.splice(ri,1);
   // Recalc status
   const b=bookings[bIdx];
-  const paidSum=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+  const paidSum=calcPaid(b);
   const rcPending=(b.roomCharges||[]).filter(r=>(r.status||"pending")!=="paid").reduce((s,r)=>s+(r.amount||0),0);
   if(paidSum>=b.total && rcPending===0 && paidSum>0) b.status="Paid";
   else if(paidSum>0) b.status="Partial";
@@ -8383,7 +8393,7 @@ if(!b.roomCharges||!b.roomCharges[ri]) return;
 const cur=b.roomCharges[ri].status||"pending";
 b.roomCharges[ri].status=cur==="paid"?"pending":"paid";
 // Recalc booking status
-const paidSum=b.payments?b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0):(b.prepay||0);
+const paidSum=calcPaid(b);
 const rcPending=(b.roomCharges||[]).filter(r=>r.status!=="paid").reduce((s,r)=>s+(r.amount||0),0);
 const totalDue=b.total+rcPending;
 if(paidSum>=b.total && rcPending===0) b.status="Paid";
@@ -8407,7 +8417,7 @@ method:document.getElementById("pay-method").value,
 note:document.getElementById("pay-note").value,
 });
 // Update prepay and status automatically
-const paidSum=b.payments.reduce((s,p)=>s+p.amount,0);
+const paidSum=calcPaid(b);
 b.prepay=paidSum;
 if(paidSum>=b.total) b.status="Paid";
 else if(paidSum>0) b.status="Partial";
@@ -8422,7 +8432,7 @@ if(payEdit===null) return;
 if(!confirm("Delete this payment?")) return;
 const b=bookings[payEdit];
 b.payments.splice(pidx,1);
-const paidSum=b.payments.reduce((s,p)=>s+p.amount,0);
+const paidSum=calcPaid(b);
 b.prepay=paidSum;
 if(paidSum<=0) b.status="Pending";
 else if(paidSum>=b.total) b.status="Paid";
@@ -10025,7 +10035,7 @@ document.getElementById("move-pricemode").value = "same";
 setPriceMode("same");
 }
 // Fill guest info
-const paidSum = b.payments ? b.payments.reduce((s,p)=>s+p.amount,0) : (b.prepay||0);
+const paidSum = calcPaid(b);
 const n = nts(b.ci, b.co);
 const rateN = n > 0 ? b.total / n : 0;
 document.getElementById("move-info").innerHTML =
@@ -10464,7 +10474,7 @@ if(calFinEl){
   },0);
   const calNetRevEGP = calRevEGP - calCommEGP;
   const calCollectedEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{
-    const paid=b.payments?b.payments.reduce((ps,p)=>ps+p.amount,0):(b.prepay||0);
+    const paid=calcPaid(b);
     const paidEGP=b.cur==="EGP"?paid:(b.cur==="USD"?paid*(exRate||50):paid*(eurRate||55));
     return s+paidEGP;
   },0);
@@ -10797,7 +10807,7 @@ msg:buildCIReminder(b)
 }
 // Pending payment
 if(b.status==="Pending"||b.status==="Partial"){
-const paid=(b.payments||[]).reduce((s,p)=>s+p.amount,0);
+const paid=calcPaid(b);
 const balance=b.total-paid;
 if(balance>0&&daysToCI>=0&&daysToCI<=5){
 items.push({
@@ -11422,7 +11432,7 @@ function shareReportWhatsApp(){
     return ci >= from && ci <= to;
   });
   const totalRev = bks.reduce((s,b)=>{
-    const paid = (b.payments||[]).filter(p=>p.amount>0).reduce((a,p)=>a+p.amount,0);
+    const paid = calcPaid(b);
     return s + paid;
   },0);
   const totalGuests = bks.reduce((s,b)=>s+(b.rooms||[]).reduce((a,r)=>a+(r.adults||1)+(r.children||0),0),0);
@@ -14710,7 +14720,7 @@ function submitPOSOrder(){
     if(!bookings[bIdx].roomCharges) bookings[bIdx].roomCharges = [];
     bookings[bIdx].roomCharges.push({date:toDay(), amount:total, desc:orderDesc, id:tx.id, status:"pending"});
     // Update booking pay status to Partial if currently Pending/Paid
-    const rc_paidSum = bookings[bIdx].payments ? bookings[bIdx].payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0) : (bookings[bIdx].prepay||0);
+    const rc_paidSum = calcPaid(bookings[bIdx]);
     if(bookings[bIdx].status==="Paid") bookings[bIdx].status="Partial";
     else if(bookings[bIdx].status==="Pending"||!bookings[bIdx].status) bookings[bIdx].status="Partial";
     sv("dta_bk", bookings);
@@ -15694,7 +15704,7 @@ function fabClose(){
 function getDebtData(){
   return bookings.filter(b => {
     if(b.status === 'Cancelled') return false;
-    const paidSum = b.payments ? b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0) : (b.prepay||0);
+    const paidSum = calcPaid(b);
     return paidSum < b.total;
   });
 }
@@ -15708,7 +15718,7 @@ function renderDebt(){
 
   // Compute debt for each
   list = list.map(b => {
-    const paidSum = b.payments ? b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0) : (b.prepay||0);
+    const paidSum = calcPaid(b);
     const remaining = Math.max(0, b.total - paidSum);
     const pct = b.total > 0 ? Math.min(100, Math.round(paidSum/b.total*100)) : 100;
     const isOverdue = remaining > 0 && b.co < td;
@@ -15730,7 +15740,7 @@ function renderDebt(){
   // Summary strip
   const allDebt = getDebtData();
   const totalOwe = allDebt.reduce((s,b) => {
-    const paid = b.payments ? b.payments.filter(p=>p.amount>0).reduce((s2,p)=>s2+p.amount,0) : (b.prepay||0);
+    const paid = calcPaid(b);
     const rem = Math.max(0, b.total - paid);
     const sym = b.cur==='USD' ? 1 : b.cur==='EUR' ? usdEurRate : (1/exRate);
     return s + rem * sym;
@@ -15778,7 +15788,7 @@ function renderDebt(){
 
     // Payment history summary
     const lastPay = b.payments && b.payments.length ?
-      b.payments.filter(p=>p.amount>0).slice(-1)[0] : null;
+      b.payments.filter(p=>p.amount>0 && !p.isDeduction).slice(-1)[0] : null;
 
     return `<div class="debt-card ${statusClass}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
@@ -15816,7 +15826,7 @@ function sendDebtReminder(bi){
   const b = bookings[bi];
   if(!b) return;
   const sym = b.cur==='USD'?'$':b.cur==='EUR'?'€':'EGP ';
-  const paidSum = b.payments ? b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0) : (b.prepay||0);
+  const paidSum = calcPaid(b);
   const remaining = Math.max(0, b.total - paidSum);
   const msg = encodeURIComponent(
     `السلام عليكم ${b.name} 🌊\n\n` +
@@ -15840,7 +15850,7 @@ function exportDebtCSV(){
   if(!list.length){ alert('لا توجد مديونيات للتصدير'); return; }
   const headers = ['الاسم','الغرفة','النوع','الوصول','المغادرة','الإجمالي','المدفوع','المتبقي','العملة','الهاتف'];
   const rows = list.map(b => {
-    const paidSum = b.payments ? b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0) : (b.prepay||0);
+    const paidSum = calcPaid(b);
     const remaining = Math.max(0, b.total - paidSum);
     return [b.name, b.room, b.type, b.ci, b.co, b.total.toFixed(2), paidSum.toFixed(2), remaining.toFixed(2), b.cur, b.phone||''];
   });
@@ -15865,7 +15875,7 @@ function renderMobileBookingCards(bookingsList){
   container.innerHTML = bookingsList.map((b,idx) => {
     const i = bookings.indexOf(b);
     const sym = b.cur==='USD'?'$':b.cur==='EUR'?'€':'EGP ';
-    const paidSum = b.payments ? b.payments.filter(p=>p.amount>0).reduce((s,p)=>s+p.amount,0) : (b.prepay||0);
+    const paidSum = calcPaid(b);
     const remaining = Math.max(0, b.total - paidSum);
     const pct = b.total > 0 ? Math.min(100,Math.round(paidSum/b.total*100)) : 100;
     const stClass = 'status-'+(b.status||'pending').toLowerCase();
