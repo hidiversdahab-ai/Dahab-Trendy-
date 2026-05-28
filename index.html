@@ -1100,7 +1100,7 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
 <div class="fld" style="flex:1;margin-bottom:0;">
 <label>مبلغ العربون المطلوب (<span id="inv-dep-sym">$</span>)</label>
-<input id="inv-deposit-amount" type="number" min="0" step="0.01" placeholder="0 = 50% تلقائي" oninput="buildPreview()">
+<input id="inv-deposit-amount" type="number" min="0" step="0.01" placeholder="0 = نسبة الإعدادات تلقائياً" oninput="buildPreview()">
 </div>
 <div class="fld" style="flex:1;margin-bottom:0;">
 <label>الموعد النهائي للعربون</label>
@@ -1907,7 +1907,7 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <div class="ctitle">💳 Prepayment Policy</div>
 <div class="fld"><label>Prepayment Required</label>
 <select id="st-prepay" onchange="savePolicies()">
-<option value="none">No Prepayment</option><option value="10pct">10% Deposit</option>
+<option value="none">No Prepayment</option><option value="1night">1 Night Deposit</option><option value="10pct">10% Deposit</option>
 <option value="25pct">25% Deposit</option><option value="50pct">50% Deposit</option>
 <option value="100pct">Full Payment in Advance</option>
 </select>
@@ -7002,9 +7002,12 @@ document.getElementById("deposit-info").innerHTML =
 "📅 "+fmtD(b.ci)+" → "+fmtD(b.co)+" &nbsp;|&nbsp; 🌙 "+n+" nights<br>"+
 "💰 Total: <strong style='color:var(--gold);'>"+sym+b.total.toFixed(2)+"</strong>"+
 "<br><span class='bdg bg-purple' style='margin-top:4px;'>⏳ Standby — Awaiting Deposit Confirmation</span>";
-// Auto-set 50% as default
-document.getElementById("dep-type").value = "percent50";
-document.getElementById("dep-amount").value = (b.total*0.5).toFixed(2);
+// Auto-set deposit from policies
+const polPrepay = policies && policies.prepay ? policies.prepay : "50pct";
+const defDepType = polPrepay==="1night"?"1night":polPrepay==="10pct"?"percent25":polPrepay==="25pct"?"percent25":polPrepay==="50pct"?"percent50":polPrepay==="100pct"?"percent50":"percent50";
+const defDepAmt  = polPrepay==="1night"?rateN:polPrepay==="10pct"?b.total*0.10:polPrepay==="25pct"?b.total*0.25:polPrepay==="100pct"?b.total:b.total*0.5;
+document.getElementById("dep-type").value = defDepType;
+document.getElementById("dep-amount").value = defDepAmt.toFixed(2);
 document.getElementById("dep-notes").value = "";
 document.getElementById("dep-deadline").value = "";
 setPFType("deposit");
@@ -7162,7 +7165,7 @@ const css = [
 ".invp-tr.grd{border-top:2px solid "+badgeColor+";padding-top:5px;margin-top:3px;font-size:13px;font-weight:700;color:#1a1a2e;}",
 ".invp-ftr{text-align:center;padding-top:12px;border-top:2px solid #c9a84c;color:#444;font-size:9px;line-height:1.9;}",
 ".warn-box{background:#fdf3f8;border:2px dashed "+badgeColor+";border-radius:7px;padding:9px 12px;margin-bottom:12px;font-size:10px;color:"+badgeColor+";font-weight:700;text-align:center;}",
-"@media print{.no-print{display:none;}}"
+"@media print{.no-print{display:none;}.holiday-banner,#bm-birthday-banner,#birthday-popup,#bday-badge,#holiday-alarm-popup{display:none!important;}}"
 ].join("");
 const tentativeNote = pftype==="full"
 ? "<div class='warn-box'>⚠️ هذه فاتورة مبدئية / PROFORMA — NOT A FINAL INVOICE<br>غير نهائية حتى استلام العربون وتأكيد الحجز<br>Valid only after deposit receipt and booking confirmation</div>"
@@ -7186,10 +7189,20 @@ watermark+
 "<span class='invp-badge'>"+badge+"</span></div>"+
 tentativeNote+
 "<div class='invp-sec'>Bill To</div>"+
-"<div class='invp-gbox'>"+
-"<div><strong>"+b.name+"</strong></div><div>"+(b.nat||"—")+"</div>"+
-"<div>"+(b.phone||"—")+"</div><div>"+(b.email||"—")+"</div>"+
-"</div>"+
+(()=>{
+  const dpics = (roomPhotos[b.type]&&roomPhotos[b.type].length)?roomPhotos[b.type]:
+                (roomPhotos['room_'+b.room]&&roomPhotos['room_'+b.room].length)?roomPhotos['room_'+b.room]:[];
+  const dpicsHtml = dpics.length
+    ? "<div style='flex-shrink:0;text-align:center;'><div style='font-size:9px;color:#888;margin-bottom:4px;'>🏨 Room</div><div style='display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;'>"+
+      dpics.slice(0,2).map(p=>"<img src='"+p+"' style='width:110px;height:74px;object-fit:cover;border-radius:6px;border:1px solid #ddd;'>").join('')+
+      "</div></div>"
+    : "";
+  return "<div class='invp-gbox' style='display:flex;gap:12px;align-items:flex-start;'>"+
+    "<div style='flex:1;'><div><strong>"+b.name+"</strong></div><div>"+(b.nat||"—")+"</div>"+
+    "<div>"+(b.phone||"—")+"</div><div>"+(b.email||"—")+"</div></div>"+
+    dpicsHtml+
+    "</div>";
+})()+
 "<div class='invp-sec'>Stay Details</div>"+
 "<table class='invp-tbl'><thead><tr><th>Description</th><th>Nts</th><th>Rate</th><th>Amount</th></tr></thead><tbody>"+
 "<tr><td>Room "+b.room+" — "+b.type+"<br><span style='color:#888;font-size:9px;'>"+fmtD(b.ci)+" → "+fmtD(b.co)+"</span></td>"+
@@ -7549,7 +7562,7 @@ const invTypeVal = (document.getElementById("inv-type")||{value:"official"}).val
 const isProforma = invTypeVal !== "official";
 const isDepositPF = invTypeVal === "proforma-deposit";
 const isFullPF = invTypeVal === "proforma-full";
-const depAmtPF = isDepositPF ? (parseFloat((document.getElementById("inv-deposit-amount")||{value:"0"}).value)||0) || d.total*0.5 : 0;
+const _polP=policies&&policies.prepay;const _rN=d.nights>0?d.total/d.nights:0;const _defDep=_polP==="1night"?_rN:_polP==="10pct"?d.total*0.10:_polP==="25pct"?d.total*0.25:_polP==="100pct"?d.total:d.total*0.5;const depAmtPF = isDepositPF ? (parseFloat((document.getElementById("inv-deposit-amount")||{value:"0"}).value)||0) || _defDep : 0;
 const deadlinePF = (document.getElementById("inv-deposit-deadline")||{value:""}).value;
 const badgeText = isDepositPF ? "PROFORMA — DEPOSIT" : isFullPF ? "PROFORMA (TENTATIVE)" : "INVOICE";
 const badgeColor = isDepositPF ? "#8e44ad" : isFullPF ? "#2471a3" : "#1a1a2e";
@@ -7662,8 +7675,12 @@ proformaBanner+
 (()=>{
   const roomNums = [...new Set((d.lines||[]).map(l=>l.room).filter(Boolean))];
   const pics = roomNums.flatMap(r=>{
-    const key='room_'+r;
-    return (roomPhotos[key]&&roomPhotos[key].length)?roomPhotos[key]:[];
+    // البحث أولاً بنوع الغرفة (الطريقة الصحيحة) ثم بـ room_رقم كـ fallback
+    const line = (d.lines||[]).find(l=>l.room===r);
+    const rtype = line ? line.type : null;
+    if(rtype && roomPhotos[rtype] && roomPhotos[rtype].length) return roomPhotos[rtype];
+    const keyByNum='room_'+r;
+    return (roomPhotos[keyByNum]&&roomPhotos[keyByNum].length)?roomPhotos[keyByNum]:[];
   }).filter(Boolean);
   const roomPicsHtml = pics.length
     ? "<div style='display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;'>"+
@@ -7772,7 +7789,7 @@ const css=[
 ".invp-pol{background:#f8f6f0;padding:7px 10px;border-radius:5px;margin-bottom:9px;font-size:9px;color:#666;border-left:3px solid #c9a84c;}",
 ".invp-ftr{text-align:center;padding-top:9px;border-top:1px solid #eee;color:#aaa;font-size:9px;line-height:1.7;}",
 ".tip{background:#fffbe6;border:1px solid #f0c040;border-radius:7px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#7a5c00;line-height:1.7;}",
-"@media print{.tip{display:none;}}"
+"@media print{.tip{display:none;}.holiday-banner,#bm-birthday-banner,#birthday-popup,#bday-badge,#holiday-alarm-popup{display:none!important;}}"
 ].join("");
 const tip="<div class='tip'>"+
 "📸 <strong>طريقة الإرسال على واتساب:</strong><br>"+
@@ -7856,7 +7873,7 @@ const fullHtml = "<!DOCTYPE html><html><head><meta charset='utf-8'>"
   + "<style>"
   + allCss
   + "body{background:#fff!important;padding:20px;max-width:720px;margin:0 auto;}"
-  + "@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}button{display:none!important;}}"
+  + "@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}button{display:none!important;}.holiday-banner,#bm-birthday-banner,#birthday-popup,#bday-badge,#holiday-alarm-popup{display:none!important;}}"
   + "</style></head><body>"
   + "<div class='invp' style='background:#fff;color:#1a1a2e;font-size:11px;'>"
   + previewHTML
