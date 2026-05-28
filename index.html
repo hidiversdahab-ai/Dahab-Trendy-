@@ -4292,7 +4292,16 @@ const reserved=bookings.filter(b=>b.ci>td&&b.status!=="Cancelled"&&b.status!=="S
 const reservedStandby=bookings.filter(b=>b.ci>td&&b.status==="Standby");
 const ciTd=bookings.filter(b=>b.ci===td&&b.status!=="Cancelled");
 const coTd=bookings.filter(b=>b.co===td&&b.status!=="Cancelled"&&!b.coConfirmed);
-const revEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
+// إيرادات الحجوزات العادية
+const revEGP_normal=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
+// إيرادات خصومات الإلغاء (isDeduction)
+const cancelRevEGP=bookings.filter(b=>b.status==="Cancelled").reduce((s,b)=>{
+  const ded=calcDeductions(b);
+  const dedEGP=b.cur==="USD"?ded*exRate:b.cur==="EUR"?ded*eurRate:ded;
+  return s+dedEGP;
+},0);
+// الإجمالي شاملاً خصومات الإلغاء
+const revEGP=revEGP_normal+cancelRevEGP;
 const totalCommEGP_db=bookings.filter(b=>b.status!=="Cancelled"&&(b.commissionAmt||0)>0).reduce((s,b)=>{
   return s+(b.cur==="USD"?(b.commissionAmt*exRate):b.cur==="EUR"?(b.commissionAmt*eurRate):(b.commissionAmt||0));
 },0);
@@ -4301,7 +4310,7 @@ const collectedEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{
 const paid=calcPaid(b);
 const paidEGP=b.cur==="EGP"?paid:paid*exRate;
 return s+paidEGP;
-},0);
+},0)+cancelRevEGP;
 const unpaidEGP=revEGP-collectedEGP;
 const expEGP=expenses.reduce((s,e)=>s+e.egp,0);
 const netEGP=collectedEGP-expEGP;
@@ -4322,6 +4331,7 @@ mkStat(Math.max(0,availableCount), ar?"متاحة":"Available")+
 mkStat(ciTd.length, ar?"وصول اليوم":"Check-ins Today");
 document.getElementById("db-finance").innerHTML=
 mkFin("£"+revEGP.toFixed(0), ar?"إجمالي الإيرادات":"Total Revenue","rgba(201,168,76,0.1)","rgba(201,168,76,0.25)","var(--gold)")+
+(cancelRevEGP>0?mkFin("↩️ £"+cancelRevEGP.toFixed(0), ar?"رسوم الإلغاء":"Cancellation Fees","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c"):"")+
 (totalCommEGP_db>0?mkFin("−£"+totalCommEGP_db.toFixed(0), ar?"عمولات الشركات":"Agency Commissions","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c")+
 mkFin("£"+netRevAfterCommEGP.toFixed(0), ar?"صافي الإيرادات (بعد العمولة)":"Net Revenue (After Commission)","rgba(155,89,182,0.1)","rgba(155,89,182,0.3)","#c39bd3"):"")+
 mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
