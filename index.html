@@ -7136,11 +7136,16 @@ function openDepositProforma() {
 if(depositIdx===null) return;
 const b = bookings[depositIdx];
 const pftype = document.getElementById("dep-pftype").value;
-const depAmt = getDepositAmount();
-const remaining = b.total - depAmt;
-const sym = b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
 const n = nts(b.ci, b.co);
 const rateN = n>0 ? b.total/n : 0;
+const dtype = document.getElementById("dep-type").value;
+let depAmt = 0;
+if(dtype==="percent50") { depAmt = b.total*0.5; }
+else if(dtype==="percent25") { depAmt = b.total*0.25; }
+else if(dtype==="1night") { depAmt = rateN; }
+else { depAmt = parseFloat(document.getElementById("dep-amount").value)||0; }
+const remaining = b.total - depAmt;
+const sym = b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
 const deadline = document.getElementById("dep-deadline").value;
 const notes = document.getElementById("dep-notes").value;
 const td = toDay();
