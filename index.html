@@ -5570,18 +5570,36 @@ if(depositSum>0){
       toastExtra=" · رد: "+sym+refund.toFixed(2);
     }
   } else if(depOpt==="deduct"){
-    // خصم
+    // خصم — نعدل الـ payments الموجودة بدل ما نضيف جديدة
     const deduct=parseFloat(document.getElementById("cancel-deduct-amount").value)||0;
     const deductNote=document.getElementById("cancel-deduct-note").value||"رسوم إلغاء / Cancellation Fee";
     const remainder=depositSum-deduct;
     const refundRemainder=parseFloat(document.getElementById("cancel-deduct-refund").value)||0;
     const refundMethod=document.getElementById("cancel-deduct-refund-method").value;
-    // تسجيل الخصم كإيراد (payment موجب بعلامة خاصة)
-    if(deduct>0){
-      bookings[cancelIdx].payments.push({
-        date:toDay(), amount:deduct, method:"Revenue",
-        note:"✂️ "+deductNote, isDeduction:true
+    // نحول الـ payments الموجبة (العربون) لـ isDeduction بدل إضافة payment جديد
+    let deductLeft=deduct;
+    if(bookings[cancelIdx].payments){
+      bookings[cancelIdx].payments=bookings[cancelIdx].payments.map(p=>{
+        if(p.amount>0 && !p.isDeduction && deductLeft>0){
+          const toMark=Math.min(p.amount, deductLeft);
+          deductLeft-=toMark;
+          if(toMark===p.amount){
+            // الـ payment كله خصم
+            return {...p, isDeduction:true, note:"✂️ "+deductNote, method:"Revenue"};
+          } else {
+            // جزء منه خصم — نقسمه
+            return {...p, amount:p.amount-toMark};
+          }
+        }
+        return p;
       });
+      // لو في جزء مش اتغطاش (نادر) نضيفه
+      if(deductLeft>0){
+        bookings[cancelIdx].payments.push({
+          date:toDay(), amount:deductLeft, method:"Revenue",
+          note:"✂️ "+deductNote, isDeduction:true
+        });
+      }
     }
     // تسجيل رد الباقي لو في
     if(remainder>0 && refundRemainder>0){
