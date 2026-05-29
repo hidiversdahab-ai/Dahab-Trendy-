@@ -4046,7 +4046,7 @@ const bIdx=bookings.indexOf(b);
 alerts.push({type:"checkin",days:daysToCI,name:b.name,room:b.room,date:b.ci,note,status:b.status,total:b.total,cur:b.cur,idx:bIdx,ciConfirmed:b.ciConfirmed||false,ciTime:b.ciTime||null});
 }
 // All future & today check-outs
-if(daysToCO>=0&&daysToCI<0&&!b.coConfirmed){
+if(daysToCO>=0&&daysToCI<=0&&!b.coConfirmed){
 let note="";
 if(daysToCO===0) note=currentLang==="ar"?"اليوم":"Today";
 else if(daysToCO===1) note=currentLang==="ar"?"غداً":"Tomorrow";
