@@ -927,7 +927,7 @@ select option{background:#1a1a2e;color:var(--text)}
 <div class="g4" id="db-stats" style="margin-bottom:12px;"></div>
 <div class="card" style="margin-bottom:12px;">
 <div class="ctitle">💰 <span class="t" data-ar="ملخص مالي" data-en="Financial Summary">Financial Summary</span></div>
-<div id="db-finance" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;"></div>
+<div id="db-finance" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;"></div>
 </div>
 <div class="g2">
 <div class="card"><div class="ctitle">🏨 <span class="t" data-ar="حالة الغرف" data-en="Room Status">Room Status</span></div><div id="db-rooms"></div></div>
@@ -3153,22 +3153,6 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 <div class="mdl" style="max-width:500px;">
 <div class="mtitle">❌ إلغاء الحجز / Cancel Booking</div>
 <div id="cancel-info" style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;line-height:1.9;"></div>
-<div class="g2">
-<div class="fld s2">
-<label>سبب الإلغاء / Cancellation Reason *</label>
-<select id="cancel-reason">
-<option value="Guest Request">🙋 طلب الضيف / Guest Request</option>
-<option value="No Show">🚫 عدم الحضور / No Show</option>
-<option value="Force Majeure">⚡ قوة قاهرة / Force Majeure</option>
-<option value="Double Booking">📋 تعارض حجز / Double Booking</option>
-<option value="Other">📝 أخرى / Other</option>
-</select>
-</div>
-<div class="fld s2">
-<label>ملاحظات الإلغاء / Notes</label>
-<textarea id="cancel-notes" rows="2" placeholder="تفاصيل إضافية..."></textarea>
-</div>
-</div>
 <!-- ══ قسم العربون المعلق ══ -->
 <div id="cancel-deposit-section" style="display:none;margin-bottom:14px;">
   <div class="sdiv">💰 العربون المدفوع / Deposit Paid</div>
@@ -3261,6 +3245,23 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
       </select>
     </div>
   </div>
+</div>
+
+<div class="g2">
+<div class="fld s2">
+<label>سبب الإلغاء / Cancellation Reason *</label>
+<select id="cancel-reason">
+<option value="Guest Request">🙋 طلب الضيف / Guest Request</option>
+<option value="No Show">🚫 عدم الحضور / No Show</option>
+<option value="Force Majeure">⚡ قوة قاهرة / Force Majeure</option>
+<option value="Double Booking">📋 تعارض حجز / Double Booking</option>
+<option value="Other">📝 أخرى / Other</option>
+</select>
+</div>
+<div class="fld s2">
+<label>ملاحظات الإلغاء / Notes</label>
+<textarea id="cancel-notes" rows="2" placeholder="تفاصيل إضافية..."></textarea>
+</div>
 </div>
 <div class="sdiv">📤 إرسال إشعار الإلغاء / Send Cancellation Notice</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
