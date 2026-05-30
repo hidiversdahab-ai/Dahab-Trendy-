@@ -797,6 +797,7 @@ select option{background:#1a1a2e;color:var(--text)}
     <div class="bn-more-item" onclick="openAIChat();closeBnMore()"><span class="bm-icon">🤖</span><span>AI Chat</span></div>
     <div class="bn-more-item" onclick="openWATemplates();closeBnMore()"><span class="bm-icon">💬</span><span>WA Templates</span></div>
     <div class="bn-more-item" onclick="openBlacklist();closeBnMore()" style="border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.07);"><span class="bm-icon">🚫</span><span style="color:#e74c3c;">Blacklist</span></div>
+    <div class="bn-more-item" onclick="bnGo('guesthistory',null);closeBnMore()"><span class="bm-icon">👥</span><span class="t" data-ar="سجل الضيوف" data-en="Guest History">Guest History</span></div>
     <div class="bn-more-item" onclick="bnGo('groupbooking',null);closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon">🏢</span><span class="t" data-ar="حجز جروب" data-en="Group Booking">Group Booking</span></div>
     <div class="bn-more-item" onclick="exportAll();closeBnMore()"><span class="bm-icon">💾</span><span class="t" data-ar="تصدير" data-en="Export">تصدير</span></div>
     <div class="bn-more-item" onclick="document.getElementById('impfile').click();closeBnMore()"><span class="bm-icon">📂</span><span class="t" data-ar="استيراد" data-en="Import">استيراد</span></div>
@@ -1166,6 +1167,38 @@ select option{background:#1a1a2e;color:var(--text)}
 
 <!-- Invoice Print Area -->
 <div id="grp-invoice-print" style="display:none;"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 👥 GUEST HISTORY PAGE -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="page-guesthistory" class="page">
+<div class="page-header">
+  <div class="ptitle">👥 <span class="t" data-ar="سجل الضيوف" data-en="Guest History">سجل الضيوف</span></div>
+</div>
+<div class="card" style="margin-bottom:12px;">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <input id="gh-search" placeholder="🔍 ابحث باسم الضيف أو رقم الهاتف..." oninput="renderGuestHistory()" style="flex:1;min-width:180px;padding:7px 10px;font-size:13px;">
+    <select id="gh-sort" onchange="renderGuestHistory()" style="padding:7px 10px;font-size:12px;">
+      <option value="recent">الأحدث أولاً</option>
+      <option value="name">الاسم أبجدياً</option>
+      <option value="visits">الأكثر زيارة</option>
+    </select>
+  </div>
+</div>
+<div id="gh-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:12px;"></div>
+<div id="gh-list"></div>
+<div id="gh-empty" class="empty" style="display:none;">👥 لا يوجد ضيوف في السجل</div>
+
+<!-- Guest Detail Modal -->
+<div id="gh-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;overflow-y:auto;">
+  <div style="max-width:500px;margin:20px auto;padding:16px;">
+    <div class="card" style="position:relative;">
+      <button onclick="document.getElementById('gh-modal').style.display='none'" style="position:absolute;top:10px;left:10px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;">✕</button>
+      <div id="gh-modal-content"></div>
+    </div>
+  </div>
+</div>
 </div>
 
 <div id="page-invoice" class="page">
@@ -3875,7 +3908,7 @@ document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
 document.querySelectorAll(".nb").forEach(b=>b.classList.remove("act"));
 document.getElementById("page-"+id).classList.add("on");
 if(btn) btn.classList.add("act");
-const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,groupbooking:renderGroupBooking};
+const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage};
 if(map[id]) map[id]();
 if(id==="invoice"){renderInvRooms();buildPreview();}
 }
@@ -6834,18 +6867,31 @@ function openReviewModal(b){
   const ar=currentLang==="ar";
   const gmLink="https://maps.app.goo.gl/Mcwxstz449hBRvVt5?g_st=ac";
   const taLink="https://www.tripadvisor.com/Hotel_Review-g297547-d34223219-Reviews-Dahab_Trendy_Accommodation-Dahab_South_Sinai_Red_Sea_and_Sinai.html";
-  const waMsg=
-    "🌟 شكراً "+b.name+" على إقامتك معنا في Dahab Trendy!\n"+
-    "🌟 Dear "+b.name+", thank you for staying with us at Dahab Trendy!\n\n"+
-    "سعدنا باستضافتك، ونأمل أن تكون إقامتك كانت مميزة 🙏\n"+
-    "We truly enjoyed having you as our guest 🙏\n\n"+
-    "يسعدنا كثيراً لو شاركت تجربتك | We'd love it if you could share your experience:\n\n"+
-    "📍 Google Maps:\n"+gmLink+"\n\n"+
-    "✈️ TripAdvisor:\n"+taLink+"\n\n"+
-    "رأيك يهمنا ويساعد ضيوفنا القادمين 💙\n"+
-    "Your feedback means the world to us 💙";
-  const waUrlAr=phone?"https://wa.me/"+phone+"?text="+encodeURIComponent(waMsg):"https://wa.me/?text="+encodeURIComponent(waMsg);
-  const waUrlEn=waUrlAr;
+  const phone=(b.phone||"").replace(/[^0-9]/g,"");
+
+  const msgs = {
+    ar: `🌟 عزيزنا *${b.name}*\n\nشكراً جزيلاً على إقامتك معنا في *Dahab Trendy* 🙏\nسعدنا باستضافتك وكان من دواعي سرورنا خدمتك.\n\nفضلاً وليس أمراً، نرجو منك مشاركة تجربتك:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nرأيك يهمنا ويساعد ضيوفنا القادمين 💛\n— فريق *Dahab Trendy*`,
+    en: `🌟 Dear *${b.name}*\n\nThank you so much for staying with us at *Dahab Trendy* 🙏\nIt was truly a pleasure having you as our guest.\n\nIf you don't mind, we'd love to hear about your experience:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nYour feedback means the world to us 💛\n— Team *Dahab Trendy*`,
+    de: `🌟 Liebe/r *${b.name}*\n\nVielen herzlichen Dank für Ihren Aufenthalt bei *Dahab Trendy* 🙏\nEs war uns eine große Freude, Sie bei uns begrüßen zu dürfen.\n\nWir würden uns sehr freuen, wenn Sie Ihre Erfahrung teilen möchten:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nIhr Feedback ist uns sehr wichtig 💛\n— Team *Dahab Trendy*`,
+    fr: `🌟 Cher(e) *${b.name}*\n\nMerci infiniment pour votre séjour chez *Dahab Trendy* 🙏\nNous avons eu le grand plaisir de vous accueillir parmi nous.\n\nSi vous le souhaitez, nous vous invitons à partager votre expérience:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nVotre avis nous tient à cœur 💛\n— Équipe *Dahab Trendy*`,
+    ru: `🌟 Уважаемый(ая) *${b.name}*\n\nБольшое спасибо за то, что остановились в *Dahab Trendy* 🙏\nДля нас было настоящим удовольствием принимать вас у себя.\n\nЕсли вы не против, мы будем рады услышать ваше мнение:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nВаш отзыв очень важен для нас 💛\n— Команда *Dahab Trendy*`,
+    it: `🌟 Caro/a *${b.name}*\n\nGrazie mille per aver soggiornato presso *Dahab Trendy* 🙏\nÈ stato un vero piacere averti come nostro ospite.\n\nSe ti va, ci farebbe molto piacere leggere la tua esperienza:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nLa tua opinione è preziosa per noi 💛\n— Team *Dahab Trendy*`
+  };
+
+  const langs = [
+    {code:'ar', flag:'🇸🇦', label:'عربي'},
+    {code:'en', flag:'🇬🇧', label:'English'},
+    {code:'de', flag:'🇩🇪', label:'Deutsch'},
+    {code:'fr', flag:'🇫🇷', label:'Français'},
+    {code:'ru', flag:'🇷🇺', label:'Русский'},
+    {code:'it', flag:'🇮🇹', label:'Italiano'},
+  ];
+
+  const btns = langs.map(l => {
+    const msg = msgs[l.code];
+    const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    return `<a href="${url}" target="_blank" class="btn" style="flex:1;min-width:80px;background:#25D366;color:#fff;text-decoration:none;padding:9px 4px;border-radius:10px;font-size:12px;font-weight:700;text-align:center;">${l.flag} ${l.label}</a>`;
+  }).join('');
 
   let m=document.getElementById("review-request-modal");
   if(!m){
@@ -6860,23 +6906,14 @@ function openReviewModal(b){
       <h3 style="color:var(--gold);margin:0 0 4px;">${ar?"اطلب Review من الضيف":"Request a Guest Review"}</h3>
       <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">${b.name} · ${ar?"غرفة":"Room"} ${b.room}</p>
       <p style="color:var(--muted);font-size:12px;margin:0 0 12px;opacity:0.8;">${ar?"اختر لغة رسالة الواتساب:":"Choose WhatsApp message language:"}</p>
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <a href="${waUrlAr}" target="_blank" class="btn" style="flex:1;background:#25D366;color:#fff;text-decoration:none;padding:11px 6px;border-radius:10px;font-size:14px;font-weight:700;">
-          📱 عربي
-        </a>
-        <a href="${waUrlEn}" target="_blank" class="btn" style="flex:1;background:#25D366;color:#fff;text-decoration:none;padding:11px 6px;border-radius:10px;font-size:14px;font-weight:700;">
-          📱 English
-        </a>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;justify-content:center;">
+        ${btns}
       </div>
       <div style="display:flex;gap:8px;margin-bottom:18px;">
-        <a href="${gmLink}" target="_blank" class="btn" style="flex:1;background:#4285F4;color:#fff;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">
-          📍 Google Maps
-        </a>
-        <a href="${taLink}" target="_blank" class="btn" style="flex:1;background:#34E0A1;color:#000;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">
-          ✈️ TripAdvisor
-        </a>
+        <a href="${gmLink}" target="_blank" class="btn" style="flex:1;background:#4285F4;color:#fff;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">📍 Google Maps</a>
+        <a href="${taLink}" target="_blank" class="btn" style="flex:1;background:#34E0A1;color:#000;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">✈️ TripAdvisor</a>
       </div>
-      <button class="btn bb" onclick="closeM('review-request-modal')" style="width:100%;">${ar?"تخطي":"Skip"}</button>
+      <button class="btn bb" onclick="closeM('review-request-modal')" style="width:100%;">${ar?"إغلاق":"Close"}</button>
     </div>`;
   m.classList.add("on");
 }
@@ -8807,7 +8844,7 @@ function renderGrpRooms(){
   el.innerHTML = grpRooms.map((r,i) => `
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.18);border-radius:8px;">
       <span style="font-size:11px;color:var(--muted);min-width:20px;">${i+1}</span>
-      <select onchange="grpRooms[${i}].type=this.value;calcGrpTotal()" style="flex:2;min-width:110px;padding:5px 8px;font-size:12px;">
+      <select onchange="grpRooms[${i}].type=this.value;calcGrpTotal();" style="flex:2;min-width:110px;padding:5px 8px;font-size:12px;">
         ${['Single','Double','Triple','Suite (غرفتين)','Quad (رباعي)'].map(t=>`<option value="${t}" ${r.type===t?'selected':''}>${t}</option>`).join('')}
       </select>
       <div style="display:flex;align-items:center;gap:4px;">
@@ -9053,6 +9090,155 @@ function saveGrpBooking(){
 function renderGroupBooking(){
   initGroupBooking();
   renderGrpRooms();
+}
+
+// ═══════════════════════════════════════════════
+// 👥 GUEST HISTORY
+// ═══════════════════════════════════════════════
+function buildGuestMap(){
+  const map = {};
+  bookings.filter(b => b.status !== 'Cancelled').forEach(b => {
+    if(!b.name) return;
+    const key = b.name.trim().toLowerCase();
+    if(!map[key]){
+      map[key] = {
+        name: b.name,
+        phone: b.phone||'',
+        nationality: b.nationality||'',
+        visits: [],
+        lastRoom: '',
+        lastDate: ''
+      };
+    }
+    map[key].visits.push(b);
+    if(!map[key].lastDate || b.ci > map[key].lastDate){
+      map[key].lastDate = b.ci;
+      map[key].lastRoom = b.room;
+    }
+  });
+  return Object.values(map);
+}
+
+function renderGuestHistory(){
+  const search = ((document.getElementById('gh-search')||{}).value||'').toLowerCase();
+  const sort   = (document.getElementById('gh-sort')||{}).value || 'recent';
+  let guests   = buildGuestMap();
+
+  // Search
+  if(search) guests = guests.filter(g =>
+    g.name.toLowerCase().includes(search) ||
+    (g.phone && g.phone.toLowerCase().includes(search))
+  );
+
+  // Sort
+  if(sort === 'recent') guests.sort((a,b) => b.lastDate.localeCompare(a.lastDate));
+  else if(sort === 'name') guests.sort((a,b) => a.name.localeCompare(b.name));
+  else if(sort === 'visits') guests.sort((a,b) => b.visits.length - a.visits.length);
+
+  // Stats
+  const statsEl = document.getElementById('gh-stats');
+  const allGuests = buildGuestMap();
+  const returning = allGuests.filter(g => g.visits.length > 1).length;
+  if(statsEl){
+    statsEl.innerHTML = `
+      <div class="live-stat-card"><div class="live-stat-num">${allGuests.length}</div><div class="live-stat-lbl">إجمالي الضيوف</div></div>
+      <div class="live-stat-card blue"><div class="live-stat-num">${returning}</div><div class="live-stat-lbl">ضيوف متكررون</div></div>
+      <div class="live-stat-card"><div class="live-stat-num">${bookings.filter(b=>b.status!=='Cancelled').length}</div><div class="live-stat-lbl">إجمالي الحجوزات</div></div>
+    `;
+  }
+
+  const listEl  = document.getElementById('gh-list');
+  const emptyEl = document.getElementById('gh-empty');
+  if(!listEl) return;
+
+  if(!guests.length){
+    listEl.innerHTML = '';
+    if(emptyEl) emptyEl.style.display = '';
+    return;
+  }
+  if(emptyEl) emptyEl.style.display = 'none';
+
+  listEl.innerHTML = guests.map(g => {
+    const lastVisit = g.visits.sort((a,b) => b.ci.localeCompare(a.ci))[0];
+    const sym = lastVisit.cur==='USD'?'$':lastVisit.cur==='EUR'?'€':'£';
+    const totalSpent = g.visits.reduce((s,v) => s + (v.total||0), 0);
+    const rooms = [...new Set(g.visits.map(v => v.room))].join(', ');
+    return `
+    <div class="debt-card" style="cursor:pointer;" onclick="openGuestHistory('${g.name.replace(/'/g,"\\'")}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#f0e6cc;">👤 ${g.name}</div>
+          ${g.phone?`<div style="font-size:11px;color:var(--muted);">📞 ${g.phone}</div>`:''}
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">🏨 الغرف: ${rooms}</div>
+        </div>
+        <div style="text-align:left;">
+          <div style="font-size:12px;color:var(--gold);font-weight:700;">${g.visits.length} ${g.visits.length===1?'زيارة':'زيارات'}</div>
+          <div style="font-size:11px;color:var(--muted);">آخر زيارة: ${fmtD(g.lastDate)}</div>
+          <div style="font-size:11px;color:#2ecc71;">إجمالي: ${sym}${totalSpent.toFixed(0)}</div>
+        </div>
+      </div>
+      ${g.visits.length > 1 ? `<div style="margin-top:6px;font-size:10px;background:rgba(52,152,219,0.12);color:#7ab8f5;border-radius:4px;padding:3px 8px;display:inline-block;">🔄 ضيف متكرر</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function openGuestHistory(name){
+  const key = name.trim().toLowerCase();
+  const gVisits = bookings.filter(b => b.name && b.name.trim().toLowerCase() === key && b.status !== 'Cancelled')
+    .sort((a,b) => b.ci.localeCompare(a.ci));
+  if(!gVisits.length) return;
+
+  const g = gVisits[0];
+  const sym = g.cur==='USD'?'$':g.cur==='EUR'?'€':'£';
+  const totalSpent = gVisits.reduce((s,v) => s+(v.total||0), 0);
+  const totalNights = gVisits.reduce((s,v) => s+nts(v.ci,v.co), 0);
+
+  const visitsHtml = gVisits.map(v => {
+    const vs = v.cur==='USD'?'$':v.cur==='EUR'?'€':'£';
+    const paid = calcPaid(v);
+    const rem = Math.max(0, v.total - paid);
+    return `<div style="padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <span style="font-weight:700;color:var(--gold);">🏨 غرفة ${v.room}</span>
+          <span style="font-size:11px;color:var(--muted);margin-right:8px;">${v.type||''}</span>
+        </div>
+        <span style="font-size:11px;color:${rem>0?'#e74c3c':'#2ecc71'}">${rem>0?'⚠️ متبقي '+vs+rem.toFixed(0):'✅ مسدد'}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 ${fmtD(v.ci)} ← ${fmtD(v.co)} · ${nts(v.ci,v.co)} ليلة · ${vs}${v.total||0}</div>
+      ${v.notes?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">📝 ${v.notes}</div>`:''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('gh-modal-content').innerHTML = `
+    <div style="padding-top:8px;">
+      <div style="font-size:18px;font-weight:900;color:#f0e6cc;margin-bottom:4px;">👤 ${name}</div>
+      ${g.phone?`<div style="font-size:12px;color:var(--muted);margin-bottom:2px;">📞 ${g.phone}</div>`:''}
+      ${g.nationality?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">🌍 ${g.nationality}</div>`:''}
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+        <div style="background:rgba(201,168,76,0.1);border-radius:8px;padding:8px 12px;text-align:center;">
+          <div style="font-size:18px;font-weight:700;color:var(--gold);">${gVisits.length}</div>
+          <div style="font-size:10px;color:var(--muted);">زيارة</div>
+        </div>
+        <div style="background:rgba(46,204,113,0.1);border-radius:8px;padding:8px 12px;text-align:center;">
+          <div style="font-size:18px;font-weight:700;color:#2ecc71;">${sym}${totalSpent.toFixed(0)}</div>
+          <div style="font-size:10px;color:var(--muted);">إجمالي</div>
+        </div>
+        <div style="background:rgba(52,152,219,0.1);border-radius:8px;padding:8px 12px;text-align:center;">
+          <div style="font-size:18px;font-weight:700;color:#7ab8f5;">${totalNights}</div>
+          <div style="font-size:10px;color:var(--muted);">ليلة</div>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px;">📋 سجل الزيارات:</div>
+      ${visitsHtml}
+      <button class="btn bg" style="width:100%;margin-top:8px;" onclick="document.getElementById('gh-modal').style.display='none';bnGo('bookings',null);setTimeout(()=>{document.getElementById('bm-name').value='${name}';},300);">➕ حجز جديد لهذا الضيف</button>
+    </div>
+  `;
+  document.getElementById('gh-modal').style.display = 'block';
+}
+
+function renderGuestHistoryPage(){
+  renderGuestHistory();
 }
 
 function renderRoomPhotosGrid(){
@@ -13884,6 +14070,7 @@ function applyScanData(){
       <button class="btn bb bsm" onclick="setWAType('upgrade')">🏖️ عرض خاص</button>
       <button class="btn bsm" style="background:rgba(37,211,102,0.2);color:#25D366;border:1px solid rgba(37,211,102,0.5);font-weight:700;" onclick="setWAType('pay_thanks')">💚 شكر على الدفع</button>
       <button class="btn bsm" style="background:rgba(255,193,7,0.2);color:#f5c518;border:1px solid rgba(255,193,7,0.5);font-weight:700;" onclick="setWAType('review_thanks')">🌟 شكر على التقييم</button>
+      <button class="btn bsm" style="background:rgba(52,152,219,0.2);color:#7ab8f5;border:1px solid rgba(52,152,219,0.5);font-weight:700;" onclick="setWAType('comfort_check')">🏨 راحتك أولويتنا</button>
     </div>
   </div>
   <div class="wa-tpl-card">
@@ -14098,7 +14285,8 @@ function loadWATemplate(){
       rebook:{title:'🔄 عرض إعادة الحجز',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتكم في *${prop.name}* كانت ممتعة!\n\n🎁 لدينا عروض خاصة لضيوفنا الكرام عند إعادة الحجز مباشرة معنا.\n\nللحجز والاستفسار:\n📞 ${prop.phone}\n\nنتطلع لاستقبالكم مجدداً! 💛`},
       upgrade:{title:'🏖️ عرض خاص',body:`مرحباً *${b.name}* 🌊\n\nلديكم حجز قادم في *${prop.name}* بتاريخ ${fmtD(b.ci)}.\n\n🌟 عرض خاص لكم: ترقية مجانية للغرفة أو خصم على خدمات الرحلات والمطعم.\n\nللاستفسار والتأكيد:\n📞 ${prop.phone}\n\nنتطلع لاستقبالكم! 💛`},
       pay_thanks:{title:'💚 شكر على الدفع',body:`السلام عليكم *${b.name}* 💚\n\nتم استلام دفعتكم بنجاح! شكراً جزيلاً لكم 🙏\n\n✅ الإيصال:\n🏨 *${prop.name}*\n📋 رقم الحجز: ${b.invNo||b.id}\n🏠 الغرفة: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} ← ${fmtD(b.co)} (${nights_} ليالي)\n💰 المبلغ المُسدَّد: *${sym}${b.total}*\n\nحجزكم مؤكد ومرحباً بكم دائماً 💛\n— فريق *${prop.name}* 🌊\n📞 ${prop.phone}`},
-      review_thanks:{title:'🌟 شكر على التقييم',body:`عزيزنا *${b.name}* 🌊\n\nوصلنا تقييمكم الرائع وأسعدنا كثيراً! 🌟✨\n\nشكراً من القلب على وقتكم وكلماتكم الجميلة — أنتم تحفّزوننا على تقديم الأفضل دائماً.\n\nيشرّفنا استقبالكم من جديد في *${prop.name}* 💛\n\nللحجز والاستفسار:\n📞 ${prop.phone}\n— فريق *${prop.name}* 🌊`}
+      review_thanks:{title:'🌟 شكر على التقييم',body:`عزيزنا *${b.name}* 🌊\n\nوصلنا تقييمكم الرائع وأسعدنا كثيراً! 🌟✨\n\nشكراً من القلب على وقتكم وكلماتكم الجميلة — أنتم تحفّزوننا على تقديم الأفضل دائماً.\n\nيشرّفنا استقبالكم من جديد في *${prop.name}* 💛\n\nللحجز والاستفسار:\n📞 ${prop.phone}\n— فريق *${prop.name}* 🌊`},
+      comfort_check:{title:'🏨 راحتك أولويتنا',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتك في *${prop.name}* مريحة ومميزة 😊\n\n🏨 راحتك أولويتنا — إذا كان لديك أي طلب أو استفسار، فريقنا في خدمتك على مدار الساعة.\n\nفضلاً لا تتردد في التواصل معنا في أي وقت 🙏\n\n📞 ${prop.phone}\n\nأهلاً بك دائماً 💛\n— فريق *${prop.name}*`}
     },
     en:{
       confirm:{title:'✅ Booking Confirmation',body:`Dear *${b.name}*, 🌊\n\nWe are pleased to confirm your booking at *${prop.name}*:\n\n🏨 Room: ${b.room} (${b.type||''})\n📅 Check-in: ${fmtD(b.ci)}\n📅 Check-out: ${fmtD(b.co)}\n🌙 Nights: ${nights_}\n💰 Total: ${sym}${b.total}\n💳 Status: ${payLbl}\n\nWe look forward to welcoming you! Please let us know your arrival time.\n📞 ${prop.phone}`},
@@ -14113,7 +14301,8 @@ function loadWATemplate(){
       rebook:{title:'🔄 Come Back Soon',body:`Dear *${b.name}* 🌊\n\nWe hope you enjoyed your stay at *${prop.name}*!\n\n🎁 We have exclusive offers for returning guests when booking directly with us.\n\nFor reservations & inquiries:\n📞 ${prop.phone}\n\nWe look forward to welcoming you back! 💛`},
       upgrade:{title:'🏖️ Special Offer',body:`Hello *${b.name}* 🌊\n\nYou have an upcoming stay at *${prop.name}* on ${fmtD(b.ci)}.\n\n🌟 Special offer for you: free room upgrade (subject to availability) or discounts on tours & restaurant.\n\nFor inquiries & confirmation:\n📞 ${prop.phone}\n\nLooking forward to your visit! 💛`},
       pay_thanks:{title:'💚 Payment Received — Thank You!',body:`Hello *${b.name}* 💚\n\nYour payment has been successfully received! Thank you so much 🙏\n\n✅ Receipt:\n🏨 *${prop.name}*\n📋 Booking Ref: ${b.invNo||b.id}\n🏠 Room: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} nights)\n💰 Amount Paid: *${sym}${b.total}*\n\nYour booking is confirmed — we look forward to welcoming you! 💛\n— Team *${prop.name}* 🌊\n📞 ${prop.phone}`},
-      review_thanks:{title:'🌟 Thank You for Your Review!',body:`Dear *${b.name}* 🌊\n\nWe received your wonderful review and it truly made our day! 🌟✨\n\nThank you so much for taking the time to share your experience — your kind words inspire us to keep delivering the best.\n\nWe'd be honoured to welcome you back to *${prop.name}* 💛\n\nFor reservations & inquiries:\n📞 ${prop.phone}\n— Team *${prop.name}* 🌊`}
+      review_thanks:{title:'🌟 Thank You for Your Review!',body:`Dear *${b.name}* 🌊\n\nWe received your wonderful review and it truly made our day! 🌟✨\n\nThank you so much for taking the time to share your experience — your kind words inspire us to keep delivering the best.\n\nWe'd be honoured to welcome you back to *${prop.name}* 💛\n\nFor reservations & inquiries:\n📞 ${prop.phone}\n— Team *${prop.name}* 🌊`},
+      comfort_check:{title:'🏨 Your Comfort is Our Priority',body:`Dear *${b.name}* 🌊\n\nWe hope your stay at *${prop.name}* is comfortable and enjoyable 😊\n\n🏨 Your comfort is our priority — if you have any request or question, our team is at your service around the clock.\n\nPlease don't hesitate to reach out to us at any time 🙏\n\n📞 ${prop.phone}\n\nIt's always a pleasure having you 💛\n— Team *${prop.name}*`}
     },
     fr:{
       confirm:{title:'✅ Confirmation de réservation',body:`Cher/Chère *${b.name}*, 🌊\n\nNous avons le plaisir de confirmer votre réservation à *${prop.name}* :\n\n🏨 Chambre : ${b.room} (${b.type||''})\n📅 Arrivée : ${fmtD(b.ci)}\n📅 Départ : ${fmtD(b.co)}\n🌙 Nuits : ${nights_}\n💰 Total : ${sym}${b.total}\n💳 Statut : ${payLbl}\n\nNous avons hâte de vous accueillir ! Merci de nous informer de votre heure d'arrivée.\n📞 ${prop.phone}`},
@@ -14128,7 +14317,8 @@ function loadWATemplate(){
       rebook:{title:'🔄 Revenez nous voir',body:`Cher/Chère *${b.name}* 🌊\n\nNous espérons que votre séjour à *${prop.name}* a été agréable !\n\n🎁 Nous avons des offres exclusives pour nos clients fidèles lors d'une réservation directe.\n\nPour réservations et renseignements :\n📞 ${prop.phone}\n\nNous avons hâte de vous revoir ! 💛`},
       upgrade:{title:'🏖️ Offre spéciale',body:`Bonjour *${b.name}* 🌊\n\nVous avez un séjour prévu à *${prop.name}* le ${fmtD(b.ci)}.\n\n🌟 Offre spéciale : surclassement gratuit (sous réserve de disponibilité) ou remise sur les excursions et le restaurant.\n\nPour renseignements et confirmation :\n📞 ${prop.phone}\n\nNous vous attendons avec plaisir ! 💛`},
       pay_thanks:{title:'💚 Paiement reçu — Merci !',body:`Bonjour *${b.name}* 💚\n\nVotre paiement a bien été reçu ! Merci beaucoup 🙏\n\n✅ Reçu :\n🏨 *${prop.name}*\n📋 Réf. réservation : ${b.invNo||b.id}\n🏠 Chambre : ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} nuits)\n💰 Montant payé : *${sym}${b.total}*\n\nVotre réservation est confirmée — nous avons hâte de vous accueillir ! 💛\n— L'équipe *${prop.name}* 🌊\n📞 ${prop.phone}`},
-      review_thanks:{title:'🌟 Merci pour votre avis !',body:`Cher/Chère *${b.name}* 🌊\n\nNous avons reçu votre magnifique avis et cela nous a beaucoup touché ! 🌟✨\n\nMerci infiniment d'avoir pris le temps de partager votre expérience — vos mots nous motivent à toujours faire mieux.\n\nNous serions honorés de vous accueillir à nouveau au *${prop.name}* 💛\n\nPour réservations :\n📞 ${prop.phone}\n— L'équipe *${prop.name}* 🌊`}
+      review_thanks:{title:'🌟 Merci pour votre avis !',body:`Cher/Chère *${b.name}* 🌊\n\nNous avons reçu votre magnifique avis et cela nous a beaucoup touché ! 🌟✨\n\nMerci infiniment d'avoir pris le temps de partager votre expérience — vos mots nous motivent à toujours faire mieux.\n\nNous serions honorés de vous accueillir à nouveau au *${prop.name}* 💛\n\nPour réservations :\n📞 ${prop.phone}\n— L'équipe *${prop.name}* 🌊`},
+      comfort_check:{title:'🏨 Votre confort est notre priorité',body:`Cher/Chère *${b.name}* 🌊\n\nNous espérons que votre séjour à *${prop.name}* est confortable et agréable 😊\n\n🏨 Votre confort est notre priorité — si vous avez une demande ou une question, notre équipe est à votre disposition 24h/24.\n\nN'hésitez pas à nous contacter à tout moment 🙏\n\n📞 ${prop.phone}\n\nC'est toujours un plaisir de vous accueillir 💛\n— L'équipe *${prop.name}*`}
     },
     de:{
       confirm:{title:'✅ Buchungsbestätigung',body:`Liebe/r *${b.name}*, 🌊\n\nWir freuen uns, Ihre Buchung im *${prop.name}* zu bestätigen:\n\n🏨 Zimmer: ${b.room} (${b.type||''})\n📅 Check-in: ${fmtD(b.ci)}\n📅 Check-out: ${fmtD(b.co)}\n🌙 Nächte: ${nights_}\n💰 Gesamt: ${sym}${b.total}\n💳 Status: ${payLbl}\n\nWir freuen uns auf Ihre Ankunft! Bitte teilen Sie uns Ihre Ankunftszeit mit.\n📞 ${prop.phone}`},
@@ -14143,7 +14333,8 @@ function loadWATemplate(){
       rebook:{title:'🔄 Kommen Sie wieder',body:`Liebe/r *${b.name}* 🌊\n\nWir hoffen, dass Ihr Aufenthalt im *${prop.name}* angenehm war!\n\n🎁 Wir haben exklusive Angebote für unsere Stammgäste bei Direktbuchung.\n\nFür Buchungen und Anfragen:\n📞 ${prop.phone}\n\nWir freuen uns, Sie wiederzusehen! 💛`},
       upgrade:{title:'🏖️ Sonderangebot',body:`Hallo *${b.name}* 🌊\n\nSie haben einen bevorstehenden Aufenthalt im *${prop.name}* am ${fmtD(b.ci)}.\n\n🌟 Sonderangebot: kostenloses Zimmer-Upgrade (je nach Verfügbarkeit) oder Rabatt auf Touren & Restaurant.\n\nFür Anfragen und Bestätigung:\n📞 ${prop.phone}\n\nWir freuen uns auf Ihren Besuch! 💛`},
       pay_thanks:{title:'💚 Zahlung erhalten — Vielen Dank!',body:`Hallo *${b.name}* 💚\n\nIhre Zahlung ist erfolgreich eingegangen! Vielen herzlichen Dank 🙏\n\n✅ Quittung:\n🏨 *${prop.name}*\n📋 Buchungs-Nr.: ${b.invNo||b.id}\n🏠 Zimmer: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} Nächte)\n💰 Bezahlter Betrag: *${sym}${b.total}*\n\nIhre Buchung ist bestätigt — wir freuen uns auf Ihre Ankunft! 💛\n— Team *${prop.name}* 🌊\n📞 ${prop.phone}`},
-      review_thanks:{title:'🌟 Danke für Ihre Bewertung!',body:`Liebe/r *${b.name}* 🌊\n\nWir haben Ihre wunderbare Bewertung erhalten und sind sehr gerührt! 🌟✨\n\nVielen Dank, dass Sie sich die Zeit genommen haben, Ihre Erfahrung zu teilen — Ihre Worte motivieren uns, immer besser zu werden.\n\nWir würden uns freuen, Sie erneut im *${prop.name}* willkommen zu heißen 💛\n\nFür Buchungen:\n📞 ${prop.phone}\n— Team *${prop.name}* 🌊`}
+      review_thanks:{title:'🌟 Danke für Ihre Bewertung!',body:`Liebe/r *${b.name}* 🌊\n\nWir haben Ihre wunderbare Bewertung erhalten und sind sehr gerührt! 🌟✨\n\nVielen Dank, dass Sie sich die Zeit genommen haben, Ihre Erfahrung zu teilen — Ihre Worte motivieren uns, immer besser zu werden.\n\nWir würden uns freuen, Sie erneut im *${prop.name}* willkommen zu heißen 💛\n\nFür Buchungen:\n📞 ${prop.phone}\n— Team *${prop.name}* 🌊`},
+      comfort_check:{title:'🏨 Ihr Wohlbefinden ist unsere Priorität',body:`Liebe/r *${b.name}* 🌊\n\nWir hoffen, dass Ihr Aufenthalt im *${prop.name}* angenehm und komfortabel ist 😊\n\n🏨 Ihr Wohlbefinden ist unsere Priorität — wenn Sie eine Frage oder einen Wunsch haben, steht Ihnen unser Team rund um die Uhr zur Verfügung.\n\nZögern Sie nicht, uns jederzeit zu kontaktieren 🙏\n\n📞 ${prop.phone}\n\nEs ist uns immer eine Freude, Sie zu empfangen 💛\n— Team *${prop.name}*`}
     },
     ru:{
       confirm:{title:'✅ Подтверждение бронирования',body:`Уважаемый/ая *${b.name}*, 🌊\n\nМы рады подтвердить Ваше бронирование в *${prop.name}*:\n\n🏨 Номер: ${b.room} (${b.type||''})\n📅 Заезд: ${fmtD(b.ci)}\n📅 Выезд: ${fmtD(b.co)}\n🌙 Ночей: ${nights_}\n💰 Итого: ${sym}${b.total}\n💳 Статус: ${payLbl}\n\nМы с нетерпением ждём Вас! Пожалуйста, сообщите нам время Вашего прибытия.\n📞 ${prop.phone}`},
@@ -14158,7 +14349,8 @@ function loadWATemplate(){
       rebook:{title:'🔄 Приходите снова',body:`Уважаемый/ая *${b.name}* 🌊\n\nНадеемся, что Ваше пребывание в *${prop.name}* было приятным!\n\n🎁 У нас есть эксклюзивные предложения для постоянных гостей при прямом бронировании.\n\nДля бронирования и вопросов:\n📞 ${prop.phone}\n\nБудем рады снова видеть Вас! 💛`},
       upgrade:{title:'🏖️ Специальное предложение',body:`Здравствуйте, *${b.name}* 🌊\n\nВас ждёт предстоящее пребывание в *${prop.name}* ${fmtD(b.ci)}.\n\n🌟 Специальное предложение: бесплатный апгрейд номера (при наличии) или скидка на экскурсии и ресторан.\n\nДля уточнений и подтверждения:\n📞 ${prop.phone}\n\nС нетерпением ждём Вас! 💛`},
       pay_thanks:{title:'💚 Оплата получена — Спасибо!',body:`Здравствуйте, *${b.name}* 💚\n\nВаш платёж успешно получен! Большое спасибо 🙏\n\n✅ Квитанция:\n🏨 *${prop.name}*\n📋 Номер бронирования: ${b.invNo||b.id}\n🏠 Номер: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} ночей)\n💰 Оплаченная сумма: *${sym}${b.total}*\n\nВаше бронирование подтверждено — ждём Вас с нетерпением! 💛\n— Команда *${prop.name}* 🌊\n📞 ${prop.phone}`},
-      review_thanks:{title:'🌟 Спасибо за Ваш отзыв!',body:`Уважаемый/ая *${b.name}* 🌊\n\nМы получили Ваш замечательный отзыв и это нас очень обрадовало! 🌟✨\n\nБольшое спасибо за то, что нашли время поделиться своими впечатлениями — Ваши слова вдохновляют нас становиться лучше.\n\nБудем рады снова принять Вас в *${prop.name}* 💛\n\nДля бронирования:\n📞 ${prop.phone}\n— Команда *${prop.name}* 🌊`}
+      review_thanks:{title:'🌟 Спасибо за Ваш отзыв!',body:`Уважаемый/ая *${b.name}* 🌊\n\nМы получили Ваш замечательный отзыв и это нас очень обрадовало! 🌟✨\n\nБольшое спасибо за то, что нашли время поделиться своими впечатлениями — Ваши слова вдохновляют нас становиться лучше.\n\nБудем рады снова принять Вас в *${prop.name}* 💛\n\nДля бронирования:\n📞 ${prop.phone}\n— Команда *${prop.name}* 🌊`},
+      comfort_check:{title:'🏨 Ваш комфорт — наш приоритет',body:`Уважаемый/ая *${b.name}* 🌊\n\nНадеемся, что Ваше пребывание в *${prop.name}* проходит комфортно и приятно 😊\n\n🏨 Ваш комфорт — наш приоритет — если у Вас есть какой-либо запрос или вопрос, наша команда к Вашим услугам круглосуточно.\n\nПожалуйста, не стесняйтесь обращаться к нам в любое время 🙏\n\n📞 ${prop.phone}\n\nНам всегда приятно видеть Вас у нас 💛\n— Команда *${prop.name}*`}
     }
   };
   const templates=allTemplates[_watLang]||allTemplates.en;
