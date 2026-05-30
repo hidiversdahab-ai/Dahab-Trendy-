@@ -712,7 +712,7 @@ select option{background:#1a1a2e;color:var(--text)}
 <div id="pwa-install-bar">
   <span>📱 ثبّت Dahab Trendy على هاتفك للوصول السريع!</span>
   <button class="btn bg bsm" onclick="installPWA()">تثبيت الآن</button>
-  <button class="btn bb bsm" onclick="document.getElementById('pwa-install-bar').classList.remove('show');localStorage.setItem('pwa-dismissed','1')">لاحقاً</button>
+  <button class="btn bb bsm" onclick="document.getElementById('pwa-install-bar').classList.remove('show')">لاحقاً</button>
 </div>
 
 <!-- PIN Lock Overlay -->
@@ -11752,20 +11752,18 @@ window.addEventListener('beforeinstallprompt', (e)=>{
 (function(){
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const isInStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-  if(!isInStandalone && !localStorage.getItem('pwa-dismissed')){
-    setTimeout(()=>{
-      const bar = document.getElementById('pwa-install-bar');
-      if(bar){
-        if(isIOS){
-          const span = bar.querySelector('span');
-          if(span) span.textContent = '📱 أضف التطبيق لشاشتك الرئيسية: اضغط Share ثم "Add to Home Screen"';
-          const installBtn = bar.querySelector('button.bg');
-          if(installBtn) installBtn.style.display = 'none';
-        }
-        bar.classList.add('show');
-      }
-    }, 3000);
-  }
+  if(isInStandalone) return; // مش بيظهر لو التطبيق متثبت بالفعل
+  setTimeout(()=>{
+    const bar = document.getElementById('pwa-install-bar');
+    if(!bar) return;
+    if(isIOS){
+      const span = bar.querySelector('span');
+      if(span) span.textContent = '📱 أضف التطبيق لشاشتك الرئيسية: اضغط Share ثم "Add to Home Screen"';
+      const installBtn = bar.querySelector('button.bg');
+      if(installBtn) installBtn.style.display = 'none';
+    }
+    bar.classList.add('show');
+  }, 3000);
 })();
 
 function installPWA(){
