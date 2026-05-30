@@ -11748,16 +11748,14 @@ window.addEventListener('beforeinstallprompt', (e)=>{
   }
 });
 
-// Show banner on iOS Safari (no beforeinstallprompt support)
+// Show banner on all devices if not installed and not dismissed
 (function(){
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isInStandalone = window.navigator.standalone === true;
-  const isMobile = window.innerWidth <= 768;
-  if((isIOS || isMobile) && !isInStandalone && !localStorage.getItem('pwa-dismissed')){
+  const isInStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  if(!isInStandalone && !localStorage.getItem('pwa-dismissed')){
     setTimeout(()=>{
       const bar = document.getElementById('pwa-install-bar');
       if(bar){
-        // Update text for iOS
         if(isIOS){
           const span = bar.querySelector('span');
           if(span) span.textContent = '📱 أضف التطبيق لشاشتك الرئيسية: اضغط Share ثم "Add to Home Screen"';
