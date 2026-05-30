@@ -8613,7 +8613,7 @@ function sendAvailableRoomsWA(){
       bk.ci <= td && bk.co > td &&
       bk.status !== 'Cancelled' && bk.status !== 'Standby'
     );
-    const st = (_DATA.roomSt||{})[r];
+    const st = roomSt[r] || 'available';
     return !hasActive && st !== 'maintenance';
   });
 
