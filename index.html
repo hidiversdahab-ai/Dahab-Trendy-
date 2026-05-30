@@ -8803,7 +8803,7 @@ function removeGrpRoom(id){
 function renderGrpRooms(){
   const el = document.getElementById('grp-rooms-list');
   if(!el) return;
-  const sym = getCurrSym();
+  const sym = ((typeof PROP!=="undefined"&&PROP.currency)?PROP.currency==="USD"?"$":PROP.currency==="EUR"?"€":"£":"£");
   el.innerHTML = grpRooms.map((r,i) => `
     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.18);border-radius:8px;">
       <span style="font-size:11px;color:var(--muted);min-width:20px;">${i+1}</span>
@@ -8828,7 +8828,7 @@ function calcGrpTotal(){
   const co = document.getElementById('grp-co').value;
   if(!ci || !co || co <= ci) return;
   const nights = nts(ci, co);
-  const sym = getCurrSym();
+  const sym = ((typeof PROP!=="undefined"&&PROP.currency)?PROP.currency==="USD"?"$":PROP.currency==="EUR"?"€":"£":"£");
 
   // حساب إجمالي الغرف
   let roomsTotal = 0;
@@ -8898,7 +8898,7 @@ function getGrpData(){
   const ci = document.getElementById('grp-ci').value;
   const co = document.getElementById('grp-co').value;
   const nights = (ci&&co&&co>ci)?nts(ci,co):0;
-  const sym = getCurrSym();
+  const sym = ((typeof PROP!=="undefined"&&PROP.currency)?PROP.currency==="USD"?"$":PROP.currency==="EUR"?"€":"£":"£");
   const company = document.getElementById('grp-company').value||'—';
   const phone   = document.getElementById('grp-company-phone').value||'';
   const contact = document.getElementById('grp-contact').value||'';
@@ -8919,6 +8919,7 @@ function getGrpData(){
 }
 
 function sendGrpWA(){
+  const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy",phone:""};
   const d = getGrpData();
   if(!d.ci||!d.co){sNotify('⚠️','أدخل تواريخ الإقامة أولاً','warning',2000);return;}
   const roomLines = grpRooms.map(r=>`  • ${r.qty}× ${r.type} — ${d.sym}${r.pricePerNight}/ليلة = ${d.sym}${(r.qty*r.pricePerNight*d.nights).toFixed(2)}`).join('\n');
@@ -8948,6 +8949,7 @@ ${d.remaining>0?'⚠️ المتبقي: '+d.sym+d.remaining.toFixed(2):'✅ مس
 }
 
 function printGrpInvoice(){
+  const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy",phone:"",address:""};
   const d = getGrpData();
   if(!d.ci||!d.co){sNotify('⚠️','أدخل تواريخ الإقامة أولاً','warning',2000);return;}
   const sym = d.sym;
