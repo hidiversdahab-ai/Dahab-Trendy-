@@ -4338,7 +4338,7 @@ const ar=currentLang==="ar";
 // ── Waiting List Alert ──
 const wlAlertEl=document.getElementById("db-wl-alert");
 if(wlAlertEl){
-  const wlWaiting=waitlist.filter(w=>w.status==="waiting");
+  const wlWaiting=(typeof waitlist!=='undefined'?waitlist:[]).filter(w=>w.status==="waiting");
   if(wlWaiting.length){
     const wlWithRooms=wlWaiting.filter(w=>ROOMS.some(room=>{
       if((roomSt[room]||"")===("maintenance")) return false;
@@ -11751,7 +11751,7 @@ window.addEventListener('beforeinstallprompt', (e)=>{
 // Show banner on all devices if not installed and not dismissed
 (function(){
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isInStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  const isInStandalone = window.navigator.standalone === true;
   if(isInStandalone) return; // مش بيظهر لو التطبيق متثبت بالفعل
   setTimeout(()=>{
     const bar = document.getElementById('pwa-install-bar');
