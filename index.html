@@ -16349,6 +16349,7 @@ function renderWL(){
 
     // Check available rooms for this request
     const availRooms = (w.status==="waiting"||w.status==="notified") ? ROOMS.filter(room => {
+      if((roomSt[room]||"")==="maintenance") return false;
       const conflicts = bookings.filter(bk =>
         bk.room === room && bk.status !== "Cancelled" &&
         bk.ci < w.co && bk.co > w.ci
@@ -16546,6 +16547,7 @@ function openWLNotify(idx){
   // Populate available rooms
   const roomSel = document.getElementById("wl-notify-room");
   const avail = ROOMS.filter(room => {
+    if((roomSt[room]||"")==="maintenance") return false;
     const conflicts = bookings.filter(bk =>
       bk.room === room && bk.status !== "Cancelled" &&
       bk.ci < w.co && bk.co > w.ci
