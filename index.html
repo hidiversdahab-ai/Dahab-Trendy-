@@ -924,6 +924,7 @@ select option{background:#1a1a2e;color:var(--text)}
 </div>
 
 <div id="db-alerts" style="margin-bottom:12px;"></div>
+<div id="db-wl-alert" style="margin-bottom:12px;"></div>
 <div class="g4" id="db-stats" style="margin-bottom:12px;"></div>
 <div class="card" style="margin-bottom:12px;">
 <div class="ctitle">💰 <span class="t" data-ar="ملخص مالي" data-en="Financial Summary">Financial Summary</span></div>
@@ -4334,8 +4335,31 @@ const allBookedRooms=new Set([...activeRoomSet,...reservedRooms,...standbyRooms]
 const maintenanceCount=Object.entries(roomSt).filter(([r,s])=>s==="maintenance"&&!allBookedRooms.has(String(r))).length;
 const availableCount=14-allBookedRooms.size-maintenanceCount;
 const ar=currentLang==="ar";
+// ── Waiting List Alert ──
+const wlAlertEl=document.getElementById("db-wl-alert");
+if(wlAlertEl){
+  const wlWaiting=waitlist.filter(w=>w.status==="waiting");
+  if(wlWaiting.length){
+    const wlWithRooms=wlWaiting.filter(w=>ROOMS.some(room=>{
+      const conflicts=bookings.filter(bk=>bk.room===String(room)&&bk.status!=="Cancelled"&&bk.ci<w.co&&bk.co>w.ci);
+      return conflicts.length===0;
+    }));
+    if(wlWithRooms.length){
+      wlAlertEl.innerHTML=`<div style="background:rgba(230,126,34,0.1);border:1px solid rgba(230,126,34,0.4);border-radius:10px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div><span style="font-weight:700;color:#e67e22;font-size:13px;">⏳ قائمة الانتظار</span>
+        <span style="color:var(--muted);font-size:12px;margin-left:8px;">${wlWithRooms.length} طلب يوجد له غرف متاحة الآن</span></div>
+        <button class="btn bsm" style="background:#e67e22;color:#fff;" onclick="goPage('waitlist',null);setTimeout(checkWLMatches,300);">🔍 فحص وتحويل</button>
+      </div>`;
+    } else {
+      wlAlertEl.innerHTML=`<div style="background:rgba(230,126,34,0.06);border:1px solid rgba(230,126,34,0.2);border-radius:10px;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div><span style="font-weight:700;color:#e67e22;font-size:12px;">⏳ قائمة الانتظار</span>
+        <span style="color:var(--muted);font-size:11px;margin-left:8px;">${wlWaiting.length} طلب في الانتظار — لا توجد غرف متاحة حالياً</span></div>
+        <button class="btn bsm bb" onclick="goPage('waitlist',null);">👁️ عرض</button>
+      </div>`;
+    }
+  } else { wlAlertEl.innerHTML=""; }
+}
 document.getElementById("db-stats").innerHTML=
-mkStat(occupiedCount, ar?"مشغولة":"Occupied")+
 mkStat(reservedCount, ar?"محجوزة":"Reserved")+
 mkStat(Math.max(0,availableCount), ar?"متاحة":"Available")+
 mkStat(ciTd.length, ar?"وصول اليوم":"Check-ins Today");
@@ -16428,29 +16452,81 @@ function checkSingleWLMatch(w){
 
 // ── CHECK ALL WAITING LIST MATCHES ──
 function checkWLMatches(){
-  const matches = waitlist.filter(w => w.status==="waiting" && checkSingleWLMatch(w));
   const alertEl = document.getElementById("wl-availability-alert");
   if(!alertEl) return;
 
-  if(!matches.length){
-    alertEl.innerHTML = `<div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.25);border-radius:8px;padding:10px 14px;font-size:12px;color:#e74c3c;">
-      😔 ${currentLang==="ar"?"لا توجد غرف متاحة تطابق أي طلب في قائمة الانتظار حالياً":"No available rooms match any waiting list request right now"}
+  const waiting = waitlist.filter(w => w.status==="waiting");
+  if(!waiting.length){
+    alertEl.innerHTML = `<div style="background:rgba(230,126,34,0.08);border:1px solid rgba(230,126,34,0.25);border-radius:8px;padding:10px 14px;font-size:12px;color:#e67e22;">
+      📭 قائمة الانتظار فارغة — لا يوجد طلبات بانتظار
     </div>`;
     return;
   }
 
-  alertEl.innerHTML = `<div style="background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.35);border-radius:8px;padding:12px 16px;font-size:12px;color:#4cda7a;">
-    <div style="font-weight:700;margin-bottom:8px;">✅ ${matches.length} ${currentLang==="ar"?"طلب يوجد له غرفة متاحة الآن:":"requests have available rooms now:"}</div>
-    ${matches.map(w=>{
-      const idx = waitlist.indexOf(w);
-      return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(37,211,102,0.15);">
-        <span style="flex:1;">👤 <strong>${w.name}</strong> · ${fmtD(w.ci)} → ${fmtD(w.co)}</span>
-        <button class="btn bsm" style="background:#4cda7a;color:#1a1a2e;" onclick="openWLNotify(${idx})">🔔 ${currentLang==="ar"?"إبلاغ":"Notify"}</button>
-      </div>`;
-    }).join("")}
-  </div>`;
+  // لكل طلب نجيب الغرف المتاحة في فترته
+  const results = waiting.map(w => {
+    const idx = waitlist.indexOf(w);
+    const availRooms = ROOMS.filter(room => {
+      const conflicts = bookings.filter(bk =>
+        bk.room === String(room) && bk.status !== "Cancelled" &&
+        bk.ci < w.co && bk.co > w.ci
+      );
+      return conflicts.length === 0;
+    });
+    return { w, idx, availRooms };
+  });
 
-  sNotify("✅ غرف متاحة!", `${matches.length} ${currentLang==="ar"?"طلب يوجد له غرفة":"requests have a room"}`, "success", 4000);
+  const withRooms = results.filter(r => r.availRooms.length > 0);
+  const noRooms   = results.filter(r => r.availRooms.length === 0);
+
+  let html = `<div style="border:1px solid rgba(37,211,102,0.35);border-radius:10px;overflow:hidden;">
+    <div style="background:rgba(37,211,102,0.12);padding:10px 14px;font-size:12px;font-weight:700;color:#4cda7a;">
+      🔍 نتيجة الفحص — ${waiting.length} طلب في الانتظار
+    </div>`;
+
+  if(withRooms.length){
+    html += `<div style="padding:10px 14px;">
+      <div style="font-size:11px;color:#4cda7a;font-weight:700;margin-bottom:8px;">✅ ${withRooms.length} طلب يوجد له غرف متاحة:</div>`;
+    withRooms.forEach(({w, idx, availRooms}) => {
+      html += `<div style="background:rgba(37,211,102,0.07);border:1px solid rgba(37,211,102,0.2);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+          <div>
+            <span style="font-weight:700;color:#f0e6cc;">👤 ${w.name}</span>
+            <span style="color:var(--muted);font-size:11px;margin-left:8px;">📅 ${fmtD(w.ci)} → ${fmtD(w.co)} · ${nts(w.ci,w.co)} ليلة</span>
+          </div>
+          <button class="btn bsm" style="background:#3498db;color:#fff;" onclick="openWLNotify(${idx})">🔔 إبلاغ</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${availRooms.map(r => {
+            const info = roomTypes['room_'+r] || {type:'Double'};
+            return `<button class="btn bsm" style="background:#25D366;color:#fff;font-size:11px;" onclick="quickConvertWL(${idx},${r})">
+              🏨 ${r} · ${info.type} → حول لحجز
+            </button>`;
+          }).join('')}
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if(noRooms.length){
+    html += `<div style="padding:8px 14px;border-top:1px solid rgba(255,255,255,0.05);">
+      <div style="font-size:11px;color:#e74c3c;font-weight:700;margin-bottom:6px;">❌ ${noRooms.length} طلب لا توجد له غرف متاحة:</div>`;
+    noRooms.forEach(({w}) => {
+      html += `<div style="font-size:11px;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+        👤 ${w.name} · ${fmtD(w.ci)} → ${fmtD(w.co)}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  alertEl.innerHTML = html;
+
+  if(withRooms.length)
+    sNotify("✅ غرف متاحة!", `${withRooms.length} طلب يوجد له غرف — اضغط "حول لحجز"`, "success", 4000);
+  else
+    sNotify("😔 لا توجد غرف", "كل الطلبات لا توجد لها غرف متاحة الآن", "info", 3000);
 }
 
 // ── OPEN NOTIFY MODAL ──
