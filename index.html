@@ -1030,6 +1030,7 @@ select option{background:#1a1a2e;color:var(--text)}
 <div class="flex" style="margin-bottom:8px;">
 <h2 style="color:var(--gold);font-size:18px;">🏨 <span class="t" data-ar="الغرف" data-en="Rooms">Rooms</span></h2>
 <button class="btn bg" onclick="autoUpdateRooms(true)">🔄 <span class="t" data-ar="تحديث الغرف" data-en="Update Rooms">Update Rooms</span></button>
+<button class="btn bgr" onclick="sendAvailableRoomsWA()" title="إرسال الغرف المتاحة واتساب">📱 <span class="t" data-ar="الغرف المتاحة" data-en="Available Rooms">الغرف المتاحة</span></button>
 <div class="flex" style="gap:5px;">
 <span class="bdg bg-green">Available</span><span class="bdg bg-red">Occupied</span>
 <span class="bdg bg-yellow">Reserved</span><span class="bdg bg-blue">Check-in</span>
@@ -1856,6 +1857,14 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <div class="flex mt">
 <button class="btn bg" onclick="saveDUPrices()">💾 Save Day Use Prices</button>
 <button class="btn bb" onclick="resetDUPrices()">↺ Reset</button>
+</div>
+</div>
+<div class="card">
+<div class="ctitle">🏷️ أنواع الغرف / Room Types</div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">حدد نوع وسعة كل غرفة — تُستخدم في رسالة الغرف المتاحة</div>
+<div id="room-types-grid" style="display:flex;flex-direction:column;gap:6px;"></div>
+<div class="flex mt">
+<button class="btn bg" onclick="saveRoomTypes()">💾 حفظ أنواع الغرف</button>
 </div>
 </div>
 <div class="card">
@@ -8486,6 +8495,7 @@ function renderSettings(){
 const symMap={USD:"$",EGP:"£",EUR:"€"};
 const sym=symMap[sCur]||"$";
 setTimeout(renderRoomPhotosGrid, 50);
+setTimeout(renderRoomTypesGrid, 50);
 document.getElementById("price-fields").innerHTML=RTYPES.map(t=>"<div class='fld'>"+
 "<label>"+t+"</label>"+
 "<div style='display:flex;align-items:center;gap:5px;'>"+
@@ -8542,6 +8552,102 @@ function resetDUPrices(){duPrices=JSON.parse(JSON.stringify(DEF_DU_PRICES));sv("
 // ═══════════════════════════════════════════════
 // 📸 ROOM TYPE PHOTOS
 // ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// 🏷️ ROOM TYPES CONFIG
+// ═══════════════════════════════════════════════
+let roomTypes = LS('dta_room_types', {});
+const ROOM_TYPE_OPTIONS = ['Single','Double','Triple','Suite (غرفتين)','Quad (رباعي)'];
+const ROOM_TYPE_CAPACITY = {'Single':1,'Double':2,'Triple':3,'Suite (غرفتين)':4,'Quad (رباعي)':4};
+
+function renderRoomTypesGrid(){
+  const grid = document.getElementById('room-types-grid');
+  if(!grid) return;
+  grid.innerHTML = ROOMS.map(r => {
+    const info = roomTypes['room_'+r] || {type:'Double', capacity:2};
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.18);border-radius:8px;">
+      <div style="font-weight:700;color:var(--gold);font-size:13px;min-width:36px;">🏨 ${r}</div>
+      <select id="rt-type-${r}" style="flex:2;padding:5px 8px;font-size:12px;" onchange="updateRoomTypeCapacity(${r})">
+        ${ROOM_TYPE_OPTIONS.map(t=>`<option value="${t}" ${info.type===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+      <div style="display:flex;align-items:center;gap:4px;min-width:80px;">
+        <span style="font-size:11px;color:var(--muted);">👤</span>
+        <input id="rt-cap-${r}" type="number" min="1" max="10" value="${info.capacity}" style="width:50px;padding:4px 6px;font-size:12px;text-align:center;">
+        <span style="font-size:10px;color:var(--muted);">نفر</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateRoomTypeCapacity(r){
+  const typeEl = document.getElementById('rt-type-'+r);
+  const capEl = document.getElementById('rt-cap-'+r);
+  if(typeEl && capEl){
+    const autoCapacity = ROOM_TYPE_CAPACITY[typeEl.value];
+    if(autoCapacity) capEl.value = autoCapacity;
+  }
+}
+
+function saveRoomTypes(){
+  ROOMS.forEach(r => {
+    const typeEl = document.getElementById('rt-type-'+r);
+    const capEl = document.getElementById('rt-cap-'+r);
+    if(typeEl && capEl){
+      roomTypes['room_'+r] = {type: typeEl.value, capacity: parseInt(capEl.value)||1};
+    }
+  });
+  sv('dta_room_types', roomTypes);
+  sNotify('✅ تم الحفظ','تم حفظ أنواع الغرف بنجاح','success',2000);
+}
+
+// ═══════════════════════════════════════════════
+// 📱 WHATSAPP AVAILABLE ROOMS
+// ═══════════════════════════════════════════════
+function sendAvailableRoomsWA(){
+  const td = toDay();
+  const dateStr = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
+  const dateFmt = td.split('-').reverse().join('/');
+
+  const availableRooms = ROOMS.filter(r => {
+    const hasActive = bookings.some(bk =>
+      bk.room === String(r) &&
+      bk.ci <= td && bk.co > td &&
+      bk.status !== 'Cancelled' && bk.status !== 'Standby'
+    );
+    const st = (_DATA.roomSt||{})[r];
+    return !hasActive && st !== 'maintenance';
+  });
+
+  if(!availableRooms.length){
+    sNotify('ℹ️ لا توجد غرف متاحة','كل الغرف مشغولة حالياً','info',3000);
+    return;
+  }
+
+  const lines = availableRooms.map(r => {
+    const info = roomTypes['room_'+r] || {type:'Double', capacity:2};
+    const typeAr = info.type.includes('Suite')?'جناح (غرفتين)':
+                   info.type.includes('Quad')?'غرفة رباعي':
+                   info.type==='Single'?'غرفة سنجل':
+                   info.type==='Double'?'غرفة دبل':
+                   info.type==='Triple'?'غرفة تريبل':info.type;
+    const cap = info.capacity;
+    return `✅ غرفة ${r} | Room ${r}\n   ${typeAr} — ${cap} ${cap===1?'نفر':'أفراد'} | ${info.type} — ${cap} ${cap===1?'Guest':'Guests'}`;
+  }).join('\n\n');
+
+  const msg =
+`🏨 *Dahab Trendy*
+━━━━━━━━━━━━━━━━━━
+🛏️ *الغرف المتاحة | Available Rooms*
+📅 ${dateStr} | ${dateFmt}
+━━━━━━━━━━━━━━━━━━
+
+${lines}
+
+━━━━━━━━━━━━━━━━━━
+للحجز تواصل معنا | For Booking Contact Us 📞`;
+
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
 function renderRoomPhotosGrid(){
   const grid = document.getElementById('room-photos-grid');
   if(!grid) return;
