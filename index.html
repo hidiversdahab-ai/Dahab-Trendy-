@@ -4341,6 +4341,7 @@ if(wlAlertEl){
   const wlWaiting=waitlist.filter(w=>w.status==="waiting");
   if(wlWaiting.length){
     const wlWithRooms=wlWaiting.filter(w=>ROOMS.some(room=>{
+      if((roomSt[room]||"")===("maintenance")) return false;
       const conflicts=bookings.filter(bk=>bk.room===String(room)&&bk.status!=="Cancelled"&&bk.ci<w.co&&bk.co>w.ci);
       return conflicts.length===0;
     }));
@@ -13592,10 +13593,8 @@ function openMorningBriefing(){
   // Pending = any active booking not fully paid (Pending or Partial), currently in-house or future
   const pending=(bookings||[]).filter(b=>b.status!=='Cancelled'&&(b.payStatus==='Pending'||b.payStatus==='Partial'||b.status==='Pending'||b.status==='Partial')&&b.co>=td);
   const todayRevEGP=(bookings||[]).filter(b=>b.ci===td&&b.status!=='Cancelled').reduce((s,b)=>s+(b.cur==='USD'?b.total*(exRate||50):b.cur==='EUR'?b.total*(eurRate||55):b.total),0);
-  // Count total rooms from roomSt or prices object, fallback to occupied unique rooms
-  const totalRooms = Object.keys(typeof roomSt!=='undefined'&&roomSt?roomSt:{}).length ||
-                     Object.keys(typeof prices==='object'&&prices?prices:{}).length ||
-                     [...new Set((bookings||[]).map(b=>b.room).filter(Boolean))].length || 1;
+  // Count total rooms from ROOMS array (always accurate)
+  const totalRooms = ROOMS.length;
   // Occupancy = unique rooms occupied today / total rooms
   const occupiedRooms = [...new Set(activeGuests.map(b=>b.room).filter(Boolean))].length;
   const occPct = totalRooms>0 ? Math.round((occupiedRooms/totalRooms)*100) : 0;
@@ -16467,6 +16466,7 @@ function checkWLMatches(){
   const results = waiting.map(w => {
     const idx = waitlist.indexOf(w);
     const availRooms = ROOMS.filter(room => {
+      if((roomSt[room]||"")==="maintenance") return false;
       const conflicts = bookings.filter(bk =>
         bk.room === String(room) && bk.status !== "Cancelled" &&
         bk.ci < w.co && bk.co > w.ci
