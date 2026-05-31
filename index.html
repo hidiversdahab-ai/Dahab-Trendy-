@@ -9082,7 +9082,7 @@ function printGrpInvoice(){
       <div class="hotel-block">
         <div class="hotel-emoji">🏨</div>
         <div class="hotel-name">${prop.name}</div>
-        <div class="hotel-sub">${prop.address||''}<br>${prop.phone||''} &nbsp;·&nbsp; ${prop.email||''}</div>
+        <div class="hotel-sub"><div>${prop.address||''}</div><div style="unicode-bidi:plaintext;direction:ltr;">${prop.phone||''} &nbsp;·&nbsp; ${prop.email||''}</div></div>
       </div>
       <div class="inv-block">
         <div class="inv-badge">GROUP INVOICE</div>
@@ -9160,7 +9160,7 @@ function printGrpInvoice(){
 
     <!-- FOOTER -->
     <div class="inv-footer">
-      <span class="footer-gold">${prop.name}</span> &nbsp;·&nbsp; ${prop.phone||''} &nbsp;·&nbsp; ${prop.email||''}<br>
+      <span class="footer-gold">${prop.name}</span> &nbsp;·&nbsp; <span dir="ltr">${prop.phone||''}</span> &nbsp;·&nbsp; ${prop.email||''}<br>
       ${prop.address||''}<br>
       <span style="font-size:10px;opacity:0.7;">شكراً لثقتكم بنا — هذه الفاتورة وثيقة رسمية معتمدة</span>
     </div>
