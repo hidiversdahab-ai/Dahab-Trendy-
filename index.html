@@ -1342,7 +1342,7 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
 <button class="btn bgr" onclick="openShare('wa')">📱 WhatsApp نص</button>
-<button class="btn" style="background:#075E54;color:#fff;" onclick="screenshotAndWA()">📸 WhatsApp صورة</button>
+<button class="btn" style="background:#075E54;color:#fff;" onclick="screenshotAndWA()">📱 واتساب فاتورة كاملة</button>
 <button class="btn bbl" onclick="openShare('email')">✉️ Email</button>
 <button class="btn bg" onclick="doPrint()">🖨️ PDF</button>
 <button class="btn" style="background:#6c3483;color:#fff;" onclick="openQRCode()">📱 QR Code</button>
@@ -8347,47 +8347,37 @@ roomLines+"\n"+
 "〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️";
 }
 function screenshotAndWA(){
-const preview=document.getElementById("iv-preview");
-if(!preview||!preview.innerHTML.trim()){alert("الرجاء ملء بيانات الفاتورة أولاً.");return;}
 const d=getIV();
-const css=[
-"*{box-sizing:border-box;margin:0;padding:0;}",
-"body{background:#fff;font-family:Arial,sans-serif;padding:20px;}",
-".invp{background:#fff;color:#1a1a2e;font-size:11px;}",
-".invp-hdr{display:flex;justify-content:space-between;border-bottom:3px solid #c9a84c;padding-bottom:12px;margin-bottom:14px;}",
-".invp-badge{background:#1a1a2e;color:#c9a84c;padding:4px 11px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:2px;}",
-".invp-sec{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#b8860b;margin-bottom:5px;font-weight:700;}",
-".invp-gbox{background:#f8f6f0;padding:8px 12px;border-radius:5px;margin-bottom:11px;display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:10px;color:#555;}",
-".invp-tbl{width:100%;border-collapse:collapse;margin-bottom:11px;}",
-".invp-tbl th{background:#1a1a2e;color:#c9a84c;padding:5px 7px;font-size:9px;text-align:left;}",
-".invp-tbl td{padding:6px 7px;font-size:10px;border-bottom:1px solid #eee;color:#333;}",
-".invp-totbox{min-width:160px;}",
-".invp-tr{display:flex;justify-content:space-between;font-size:10px;padding:2px 0;color:#666;}",
-".invp-tr.grd{border-top:2px solid #c9a84c;padding-top:5px;margin-top:3px;font-size:13px;font-weight:700;color:#1a1a2e;}",
-".invp-pol{background:#f8f6f0;padding:7px 10px;border-radius:5px;margin-bottom:9px;font-size:9px;color:#666;border-left:3px solid #c9a84c;}",
-".invp-ftr{text-align:center;padding-top:9px;border-top:1px solid #eee;color:#aaa;font-size:9px;line-height:1.7;}",
-".tip{background:#fffbe6;border:1px solid #f0c040;border-radius:7px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#7a5c00;line-height:1.7;}",
-"@media print{.tip{display:none;}.holiday-banner,#bm-birthday-banner,#birthday-popup,#bday-badge,#holiday-alarm-popup{display:none!important;}}"
-].join("");
-const tip="<div class='tip'>"+
-"📸 <strong>طريقة الإرسال على واتساب:</strong><br>"+
-"1. اضغط <strong>Ctrl+P</strong> واختار <strong>Save as PDF</strong> أو خذ Screenshot<br>"+
-"2. افتح واتساب وأرسل الملف أو الصورة للضيف<br>"+
-"<button onclick='window.print()' style='margin-top:8px;background:#c9a84c;color:#fff;border:none;padding:5px 14px;border-radius:5px;cursor:pointer;font-weight:700;'>🖨️ طباعة / حفظ PDF</button>"+
-"</div>";
-const win=window.open("","_blank","width=640,height=900");
-if(!win){alert("الرجاء السماح بالنوافذ المنبثقة في المتصفح.");return;}
-win.document.open();
-win.document.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Invoice - "+d.name+"</title><style>"+css+"</style></head><body>"+tip+"<div class='invp'>"+preview.innerHTML+"</div></body></html>");
-win.document.close();
-// Open WhatsApp with short message
-const phone=d.phone.replace(/\D/g,"");
-const msg="🌊 *Dahab Trendy Accommodation*\nمرحباً "+d.name+"،\nمرفق فاتورة حجزك:\n🏨 غرفة "+d.room+" · "+fmtD(d.ci)+" ← "+fmtD(d.co)+"\n💰 الإجمالي: "+d.sym+d.total.toFixed(2);
-setTimeout(()=>{
-const waUrl=phone?"https://wa.me/"+phone+"?text="+encodeURIComponent(msg):"https://wa.me/?text="+encodeURIComponent(msg);
+if(!d.name){alert("الرجاء ملء بيانات الفاتورة أولاً.");return;}
+const phone=(d.phone||"").replace(/\D/g,"");
+const statusTxt=d.status==="Paid"?"✅ مسدد":d.status==="Partial"?"🔶 مسدد جزئياً":"🔴 غير مسدد";
+const extLines=(ivExtensions&&ivExtensions.length>0)
+  ?"\n"+ivExtensions.map(e=>"🌙 تمديد: "+e.nights+" ليلة · "+d.sym+(e.amount||0).toFixed(2)+" · "+(e.payStatus||"Unpaid")).join("\n")
+  :"";
+const msg=
+`🏨 *${PROP.name}*
+━━━━━━━━━━━━━━━━━━
+📄 *فاتورة رقم: ${curInvNo}*
+━━━━━━━━━━━━━━━━━━
+👤 الضيف: *${d.name}*${d.nat&&d.nat!=="—"?"\n🌍 الجنسية: "+d.nat:""}${d.phone?"\n📞 "+d.phone:""}
+
+🏨 الغرفة: *${d.room}* (${d.type})
+📅 الوصول: *${fmtD(d.ci)}*
+📅 المغادرة: *${fmtD(d.co)}*
+🌙 الليالي: *${d.n}*
+🍳 الإفطار: ${d.bf?"مشمول ✅":"غير مشمول"}
+━━━━━━━━━━━━━━━━━━
+💰 الإجمالي: *${d.sym}${d.total.toFixed(2)}*${d.prepay>0?"\n⬇️ مدفوع مسبقاً: "+d.sym+d.prepay.toFixed(2)+"\n🔴 المتبقي: "+d.sym+d.balance.toFixed(2):""}${extLines}
+💳 طريقة الدفع: ${d.method}
+📊 الحالة: ${statusTxt}${d.notes?"\n📝 ملاحظات: "+d.notes:""}
+━━━━━━━━━━━━━━━━━━
+📞 ${PROP.phone}
+📍 ${PROP.address||""}`;
+
+const waUrl=phone
+  ?"https://wa.me/"+phone+"?text="+encodeURIComponent(msg)
+  :"https://wa.me/?text="+encodeURIComponent(msg);
 window.open(waUrl,"_blank");
-showToast("✅ افتح النافذة الجديدة واحفظ الفاتورة وأرسلها!");
-},700);
 }
 function copyMsgText(){
 const txt=getShareText();
@@ -14285,6 +14275,8 @@ function loadWATemplate(){
   };
   const pl=payLabels[_watLang]||payLabels.en;
   const payLbl=b.status==='Paid'?pl.Paid:b.status==='Partial'?pl.Partial:pl.def;
+  const paidSum_wat=(typeof calcPaid==='function')?calcPaid(b):(b.prepay||0);
+  const remAmt_wat=Math.max(0,b.total-paidSum_wat);
   const allTemplates={
     ar:{
       confirm:{title:'✅ تأكيد الحجز',body:`السلام عليكم ورحمة الله وبركاته 🌊\nعزيزنا *${b.name}*،\n\nيسعدنا تأكيد حجزكم في *${prop.name}*:\n\n🏨 الغرفة: ${b.room} (${b.type||''})\n📅 الوصول: ${fmtD(b.ci)}\n📅 المغادرة: ${fmtD(b.co)}\n🌙 عدد الليالي: ${nights_}\n💰 الإجمالي: ${sym}${b.total}\n💳 الحالة: ${payLbl}\n\nنتطلع لاستقبالكم! يرجى إبلاغنا بوقت الوصول.\n📞 ${prop.phone}`},
@@ -14295,7 +14287,7 @@ function loadWATemplate(){
       welcome:{title:'🎉 مرحباً بكم!',body:`أهلاً وسهلاً *${b.name}* 🌊\n\nيسعدنا استقبالكم في *${prop.name}*! نتمنى أن تكون إقامتكم مريحة ومميزة.\n\n🏨 غرفتكم: *${b.room}*\n📅 المغادرة: ${fmtD(b.co)}\n\nنحن هنا لخدمتكم على مدار الساعة.\nلا تترددوا في التواصل معنا لأي طلب 🙏\n📞 ${prop.phone}\n\nأهلاً بكم 💛`},
       checkin_info:{title:'🔑 تعليمات الوصول',body:`مرحباً *${b.name}* 🌊\n\nنرحب بكم في *${prop.name}*! إليكم تفاصيل إقامتكم:\n\n🏨 الغرفة: *${b.room}*\n📅 الوصول: ${fmtD(b.ci)} من الساعة 2:00 PM\n📅 المغادرة: ${fmtD(b.co)} قبل 12:00 PM\n\nلأي استفسار نحن على تواصل:\n📞 ${prop.phone}\n\nنتمنى لكم إقامة رائعة! 💛`},
       review:{title:'⭐ طلب تقييم',body:`عزيزنا *${b.name}* 🌊\n\nشكراً على إقامتكم معنا في *${prop.name}* من ${fmtD(b.ci)} إلى ${fmtD(b.co)}.\n\nرأيكم يهمنا ويساعدنا على تحسين خدماتنا.\nنقدّر تقييمكم على Google Maps أو TripAdvisor 🙏\n\nشكراً جزيلاً لكم 💛\n— فريق *${prop.name}*`},
-      late_pay:{title:'⚠️ تذكير دفع',body:`السلام عليكم *${b.name}* 🌊\n\nبالإشارة إلى حجزكم في *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 الغرفة: ${b.room}\n💰 الإجمالي: ${sym}${b.total}\n\n⚠️ لم يتم استلام الدفعة حتى الآن.\nيرجى التواصل معنا لترتيب الدفع في أقرب وقت.\n📞 ${prop.phone}\n\nشكراً لتعاونكم 🙏`},
+      late_pay:{title:'⚠️ تذكير دفع',body:`السلام عليكم *${b.name}* 🌊\n\nبالإشارة إلى حجزكم في *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 الغرفة: ${b.room}\n💰 الإجمالي: ${sym}${b.total}${paidSum_wat>0?'\n✅ المدفوع: '+sym+paidSum_wat.toFixed(2):''}\n⚠️ *المبلغ المتبقي: ${sym}${remAmt_wat.toFixed(2)}*\n\n⚠️ يرجى التواصل معنا لتسديد المبلغ المتبقي في أقرب وقت.\n📞 ${prop.phone}\n\nشكراً لتعاونكم 🙏`},
       rebook:{title:'🔄 عرض إعادة الحجز',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتكم في *${prop.name}* كانت ممتعة!\n\n🎁 لدينا عروض خاصة لضيوفنا الكرام عند إعادة الحجز مباشرة معنا.\n\nللحجز والاستفسار:\n📞 ${prop.phone}\n\nنتطلع لاستقبالكم مجدداً! 💛`},
       upgrade:{title:'🏖️ عرض خاص',body:`مرحباً *${b.name}* 🌊\n\nلديكم حجز قادم في *${prop.name}* بتاريخ ${fmtD(b.ci)}.\n\n🌟 عرض خاص لكم: ترقية مجانية للغرفة أو خصم على خدمات الرحلات والمطعم.\n\nللاستفسار والتأكيد:\n📞 ${prop.phone}\n\nنتطلع لاستقبالكم! 💛`},
       pay_thanks:{title:'💚 شكر على الدفع',body:`السلام عليكم *${b.name}* 💚\n\nتم استلام دفعتكم بنجاح! شكراً جزيلاً لكم 🙏\n\n✅ الإيصال:\n🏨 *${prop.name}*\n📋 رقم الحجز: ${b.invNo||b.id}\n🏠 الغرفة: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} ← ${fmtD(b.co)} (${nights_} ليالي)\n💰 المبلغ المُسدَّد: *${sym}${b.total}*\n\nحجزكم مؤكد ومرحباً بكم دائماً 💛\n— فريق *${prop.name}* 🌊\n📞 ${prop.phone}`},
@@ -14311,7 +14303,7 @@ function loadWATemplate(){
       welcome:{title:'🎉 Welcome!',body:`Welcome *${b.name}*! 🌊\n\nWe are so happy to have you at *${prop.name}*! We hope your stay will be comfortable and memorable.\n\n🏨 Your Room: *${b.room}*\n📅 Check-out: ${fmtD(b.co)}\n\nWe are here for you around the clock.\nDon't hesitate to reach out for anything you need 🙏\n📞 ${prop.phone}\n\nEnjoy your stay! 💛`},
       checkin_info:{title:'🔑 Check-in Instructions',body:`Hello *${b.name}* 🌊\n\nWelcome to *${prop.name}*! Here are your stay details:\n\n🏨 Room: *${b.room}*\n📅 Check-in: ${fmtD(b.ci)} from 2:00 PM\n📅 Check-out: ${fmtD(b.co)} before 12:00 PM\n\nFor any assistance, we're here for you:\n📞 ${prop.phone}\n\nWishing you a wonderful stay! 💛`},
       review:{title:'⭐ Review Request',body:`Dear *${b.name}* 🌊\n\nThank you for staying at *${prop.name}* from ${fmtD(b.ci)} to ${fmtD(b.co)}.\n\nYour feedback means a lot to us and helps us improve.\nWe'd really appreciate your review on Google Maps or TripAdvisor 🙏\n\nThank you so much! 💛\n— Team *${prop.name}*`},
-      late_pay:{title:'⚠️ Payment Reminder',body:`Dear *${b.name}* 🌊\n\nRegarding your booking at *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Room: ${b.room}\n💰 Total: ${sym}${b.total}\n\n⚠️ We have not received your payment yet.\nKindly contact us to arrange payment at your earliest convenience.\n📞 ${prop.phone}\n\nThank you for your cooperation 🙏`},
+      late_pay:{title:'⚠️ Payment Reminder',body:`Dear *${b.name}* 🌊\n\nRegarding your booking at *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Room: ${b.room}\n💰 Total: ${sym}${b.total}${paidSum_wat>0?'\n✅ Paid: '+sym+paidSum_wat.toFixed(2):''}\n⚠️ *Balance Due: ${sym}${remAmt_wat.toFixed(2)}*\n\n⚠️ Kindly contact us to arrange the remaining payment at your earliest convenience.\n📞 ${prop.phone}\n\nThank you for your cooperation 🙏`},
       rebook:{title:'🔄 Come Back Soon',body:`Dear *${b.name}* 🌊\n\nWe hope you enjoyed your stay at *${prop.name}*!\n\n🎁 We have exclusive offers for returning guests when booking directly with us.\n\nFor reservations & inquiries:\n📞 ${prop.phone}\n\nWe look forward to welcoming you back! 💛`},
       upgrade:{title:'🏖️ Special Offer',body:`Hello *${b.name}* 🌊\n\nYou have an upcoming stay at *${prop.name}* on ${fmtD(b.ci)}.\n\n🌟 Special offer for you: free room upgrade (subject to availability) or discounts on tours & restaurant.\n\nFor inquiries & confirmation:\n📞 ${prop.phone}\n\nLooking forward to your visit! 💛`},
       pay_thanks:{title:'💚 Payment Received — Thank You!',body:`Hello *${b.name}* 💚\n\nYour payment has been successfully received! Thank you so much 🙏\n\n✅ Receipt:\n🏨 *${prop.name}*\n📋 Booking Ref: ${b.invNo||b.id}\n🏠 Room: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} nights)\n💰 Amount Paid: *${sym}${b.total}*\n\nYour booking is confirmed — we look forward to welcoming you! 💛\n— Team *${prop.name}* 🌊\n📞 ${prop.phone}`},
@@ -14327,7 +14319,7 @@ function loadWATemplate(){
       welcome:{title:'🎉 Bienvenue !',body:`Bienvenue *${b.name}* ! 🌊\n\nNous sommes ravis de vous accueillir à *${prop.name}* ! Nous espérons que votre séjour sera confortable et inoubliable.\n\n🏨 Votre chambre : *${b.room}*\n📅 Départ : ${fmtD(b.co)}\n\nNous sommes à votre disposition 24h/24.\nN'hésitez pas à nous contacter pour tout besoin 🙏\n📞 ${prop.phone}\n\nBon séjour ! 💛`},
       checkin_info:{title:'🔑 Instructions d\'arrivée',body:`Bonjour *${b.name}* 🌊\n\nBienvenue à *${prop.name}* ! Voici les détails de votre séjour :\n\n🏨 Chambre : *${b.room}*\n📅 Arrivée : ${fmtD(b.ci)} à partir de 14h00\n📅 Départ : ${fmtD(b.co)} avant 12h00\n\nPour toute assistance :\n📞 ${prop.phone}\n\nNous vous souhaitons un excellent séjour ! 💛`},
       review:{title:'⭐ Demande d\'avis',body:`Cher/Chère *${b.name}* 🌊\n\nMerci de votre séjour à *${prop.name}* du ${fmtD(b.ci)} au ${fmtD(b.co)}.\n\nVotre avis compte beaucoup pour nous et nous aide à nous améliorer.\nNous apprécierions votre avis sur Google Maps ou TripAdvisor 🙏\n\nMerci infiniment ! 💛\n— L'équipe *${prop.name}*`},
-      late_pay:{title:'⚠️ Rappel de paiement',body:`Bonjour *${b.name}* 🌊\n\nConcernant votre réservation à *${prop.name}* :\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Chambre : ${b.room}\n💰 Total : ${sym}${b.total}\n\n⚠️ Nous n'avons pas encore reçu votre paiement.\nMerci de nous contacter pour régler ce montant dès que possible.\n📞 ${prop.phone}\n\nMerci pour votre coopération 🙏`},
+      late_pay:{title:'⚠️ Rappel de paiement',body:`Bonjour *${b.name}* 🌊\n\nConcernant votre réservation à *${prop.name}* :\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Chambre : ${b.room}\n💰 Total : ${sym}${b.total}${paidSum_wat>0?'\n✅ Payé : '+sym+paidSum_wat.toFixed(2):''}\n⚠️ *Solde restant : ${sym}${remAmt_wat.toFixed(2)}*\n\n⚠️ Merci de nous contacter pour régler le montant restant dès que possible.\n📞 ${prop.phone}\n\nMerci pour votre coopération 🙏`},
       rebook:{title:'🔄 Revenez nous voir',body:`Cher/Chère *${b.name}* 🌊\n\nNous espérons que votre séjour à *${prop.name}* a été agréable !\n\n🎁 Nous avons des offres exclusives pour nos clients fidèles lors d'une réservation directe.\n\nPour réservations et renseignements :\n📞 ${prop.phone}\n\nNous avons hâte de vous revoir ! 💛`},
       upgrade:{title:'🏖️ Offre spéciale',body:`Bonjour *${b.name}* 🌊\n\nVous avez un séjour prévu à *${prop.name}* le ${fmtD(b.ci)}.\n\n🌟 Offre spéciale : surclassement gratuit (sous réserve de disponibilité) ou remise sur les excursions et le restaurant.\n\nPour renseignements et confirmation :\n📞 ${prop.phone}\n\nNous vous attendons avec plaisir ! 💛`},
       pay_thanks:{title:'💚 Paiement reçu — Merci !',body:`Bonjour *${b.name}* 💚\n\nVotre paiement a bien été reçu ! Merci beaucoup 🙏\n\n✅ Reçu :\n🏨 *${prop.name}*\n📋 Réf. réservation : ${b.invNo||b.id}\n🏠 Chambre : ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} nuits)\n💰 Montant payé : *${sym}${b.total}*\n\nVotre réservation est confirmée — nous avons hâte de vous accueillir ! 💛\n— L'équipe *${prop.name}* 🌊\n📞 ${prop.phone}`},
@@ -14343,7 +14335,7 @@ function loadWATemplate(){
       welcome:{title:'🎉 Willkommen!',body:`Herzlich Willkommen, *${b.name}*! 🌊\n\nWir freuen uns sehr, Sie in *${prop.name}* begrüßen zu dürfen! Wir wünschen Ihnen einen angenehmen und unvergesslichen Aufenthalt.\n\n🏨 Ihr Zimmer: *${b.room}*\n📅 Check-out: ${fmtD(b.co)}\n\nWir sind rund um die Uhr für Sie da.\nZögern Sie nicht, uns bei jedem Wunsch zu kontaktieren 🙏\n📞 ${prop.phone}\n\nViel Spaß bei Ihrem Aufenthalt! 💛`},
       checkin_info:{title:'🔑 Check-in Anweisungen',body:`Hallo *${b.name}* 🌊\n\nWillkommen im *${prop.name}*! Hier sind Ihre Aufenthaltsinformationen:\n\n🏨 Zimmer: *${b.room}*\n📅 Check-in: ${fmtD(b.ci)} ab 14:00 Uhr\n📅 Check-out: ${fmtD(b.co)} bis 12:00 Uhr\n\nFür jede Hilfe sind wir da:\n📞 ${prop.phone}\n\nWir wünschen Ihnen einen schönen Aufenthalt! 💛`},
       review:{title:'⭐ Bewertungsanfrage',body:`Liebe/r *${b.name}* 🌊\n\nVielen Dank für Ihren Aufenthalt im *${prop.name}* vom ${fmtD(b.ci)} bis ${fmtD(b.co)}.\n\nIhr Feedback ist uns sehr wichtig und hilft uns, uns zu verbessern.\nWir würden uns sehr über Ihre Bewertung auf Google Maps oder TripAdvisor freuen 🙏\n\nVielen herzlichen Dank! 💛\n— Team *${prop.name}*`},
-      late_pay:{title:'⚠️ Zahlungserinnerung',body:`Liebe/r *${b.name}* 🌊\n\nBezüglich Ihrer Buchung im *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Zimmer: ${b.room}\n💰 Gesamt: ${sym}${b.total}\n\n⚠️ Wir haben Ihre Zahlung noch nicht erhalten.\nBitte kontaktieren Sie uns so bald wie möglich.\n📞 ${prop.phone}\n\nVielen Dank für Ihre Mitarbeit 🙏`},
+      late_pay:{title:'⚠️ Zahlungserinnerung',body:`Liebe/r *${b.name}* 🌊\n\nBezüglich Ihrer Buchung im *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Zimmer: ${b.room}\n💰 Gesamt: ${sym}${b.total}${paidSum_wat>0?'\n✅ Bezahlt: '+sym+paidSum_wat.toFixed(2):''}\n⚠️ *Offener Betrag: ${sym}${remAmt_wat.toFixed(2)}*\n\n⚠️ Bitte kontaktieren Sie uns, um den Restbetrag so bald wie möglich zu begleichen.\n📞 ${prop.phone}\n\nVielen Dank für Ihre Mitarbeit 🙏`},
       rebook:{title:'🔄 Kommen Sie wieder',body:`Liebe/r *${b.name}* 🌊\n\nWir hoffen, dass Ihr Aufenthalt im *${prop.name}* angenehm war!\n\n🎁 Wir haben exklusive Angebote für unsere Stammgäste bei Direktbuchung.\n\nFür Buchungen und Anfragen:\n📞 ${prop.phone}\n\nWir freuen uns, Sie wiederzusehen! 💛`},
       upgrade:{title:'🏖️ Sonderangebot',body:`Hallo *${b.name}* 🌊\n\nSie haben einen bevorstehenden Aufenthalt im *${prop.name}* am ${fmtD(b.ci)}.\n\n🌟 Sonderangebot: kostenloses Zimmer-Upgrade (je nach Verfügbarkeit) oder Rabatt auf Touren & Restaurant.\n\nFür Anfragen und Bestätigung:\n📞 ${prop.phone}\n\nWir freuen uns auf Ihren Besuch! 💛`},
       pay_thanks:{title:'💚 Zahlung erhalten — Vielen Dank!',body:`Hallo *${b.name}* 💚\n\nIhre Zahlung ist erfolgreich eingegangen! Vielen herzlichen Dank 🙏\n\n✅ Quittung:\n🏨 *${prop.name}*\n📋 Buchungs-Nr.: ${b.invNo||b.id}\n🏠 Zimmer: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} Nächte)\n💰 Bezahlter Betrag: *${sym}${b.total}*\n\nIhre Buchung ist bestätigt — wir freuen uns auf Ihre Ankunft! 💛\n— Team *${prop.name}* 🌊\n📞 ${prop.phone}`},
@@ -14359,7 +14351,7 @@ function loadWATemplate(){
       welcome:{title:'🎉 Добро пожаловать!',body:`Добро пожаловать, *${b.name}*! 🌊\n\nМы очень рады приветствовать Вас в *${prop.name}*! Желаем Вам комфортного и незабываемого пребывания.\n\n🏨 Ваш номер: *${b.room}*\n📅 Выезд: ${fmtD(b.co)}\n\nМы к Вашим услугам круглосуточно.\nНе стесняйтесь обращаться к нам по любому вопросу 🙏\n📞 ${prop.phone}\n\nПриятного отдыха! 💛`},
       checkin_info:{title:'🔑 Инструкции по заезду',body:`Здравствуйте, *${b.name}* 🌊\n\nДобро пожаловать в *${prop.name}*! Вот детали Вашего пребывания:\n\n🏨 Номер: *${b.room}*\n📅 Заезд: ${fmtD(b.ci)} с 14:00\n📅 Выезд: ${fmtD(b.co)} до 12:00\n\nМы всегда готовы помочь:\n📞 ${prop.phone}\n\nЖелаем Вам прекрасного отдыха! 💛`},
       review:{title:'⭐ Просьба об отзыве',body:`Уважаемый/ая *${b.name}* 🌊\n\nСпасибо за Ваше пребывание в *${prop.name}* с ${fmtD(b.ci)} по ${fmtD(b.co)}.\n\nВаш отзыв очень важен для нас и помогает нам совершенствоваться.\nБудем признательны за Ваш отзыв на Google Maps или TripAdvisor 🙏\n\nБольшое спасибо! 💛\n— Команда *${prop.name}*`},
-      late_pay:{title:'⚠️ Напоминание об оплате',body:`Уважаемый/ая *${b.name}* 🌊\n\nОтносительно Вашего бронирования в *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Номер: ${b.room}\n💰 Итого: ${sym}${b.total}\n\n⚠️ Мы ещё не получили Вашу оплату.\nПожалуйста, свяжитесь с нами как можно скорее.\n📞 ${prop.phone}\n\nСпасибо за понимание 🙏`},
+      late_pay:{title:'⚠️ Напоминание об оплате',body:`Уважаемый/ая *${b.name}* 🌊\n\nОтносительно Вашего бронирования в *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 Номер: ${b.room}\n💰 Итого: ${sym}${b.total}${paidSum_wat>0?'\n✅ Оплачено: '+sym+paidSum_wat.toFixed(2):''}\n⚠️ *Остаток к оплате: ${sym}${remAmt_wat.toFixed(2)}*\n\n⚠️ Пожалуйста, свяжитесь с нами для оплаты остатка как можно скорее.\n📞 ${prop.phone}\n\nСпасибо за понимание 🙏`},
       rebook:{title:'🔄 Приходите снова',body:`Уважаемый/ая *${b.name}* 🌊\n\nНадеемся, что Ваше пребывание в *${prop.name}* было приятным!\n\n🎁 У нас есть эксклюзивные предложения для постоянных гостей при прямом бронировании.\n\nДля бронирования и вопросов:\n📞 ${prop.phone}\n\nБудем рады снова видеть Вас! 💛`},
       upgrade:{title:'🏖️ Специальное предложение',body:`Здравствуйте, *${b.name}* 🌊\n\nВас ждёт предстоящее пребывание в *${prop.name}* ${fmtD(b.ci)}.\n\n🌟 Специальное предложение: бесплатный апгрейд номера (при наличии) или скидка на экскурсии и ресторан.\n\nДля уточнений и подтверждения:\n📞 ${prop.phone}\n\nС нетерпением ждём Вас! 💛`},
       pay_thanks:{title:'💚 Оплата получена — Спасибо!',body:`Здравствуйте, *${b.name}* 💚\n\nВаш платёж успешно получен! Большое спасибо 🙏\n\n✅ Квитанция:\n🏨 *${prop.name}*\n📋 Номер бронирования: ${b.invNo||b.id}\n🏠 Номер: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} ночей)\n💰 Оплаченная сумма: *${sym}${b.total}*\n\nВаше бронирование подтверждено — ждём Вас с нетерпением! 💛\n— Команда *${prop.name}* 🌊\n📞 ${prop.phone}`},
