@@ -1697,6 +1697,9 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
     <button class="btn" style="background:#f1c40f;color:#1a1a2e;flex:2;font-weight:700;" onclick="saveReview()">✅ حفظ التقييم</button>
     <button class="btn bb" onclick="closeM('review-modal')" style="flex:1;">إلغاء</button>
   </div>
+  <div class="flex mt" style="margin-top:8px;">
+    <button id="rv-wa-btn" class="btn" style="background:#25D366;color:#fff;width:100%;font-weight:700;">📱 طلب تقييم واتساب — اختر لغة الضيف</button>
+  </div>
 </div>
 </div>
 
@@ -16188,6 +16191,11 @@ function openReview(i){
   document.getElementById('rv-location').value = rv ? (rv.location||"") : "";
   document.getElementById('rv-value').value = rv ? (rv.value||"") : "";
   document.getElementById('review-modal').classList.add('on');
+  // Add WA review request button
+  const waBtn = document.getElementById('rv-wa-btn');
+  if(waBtn){
+    waBtn.onclick = () => openReviewModal(b);
+  }
 }
 
 function saveReview(){
