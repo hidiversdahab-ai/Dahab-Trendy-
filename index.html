@@ -7063,12 +7063,10 @@ function renderRooms(){
 const td=toDay();
 renderAlerts();
 document.getElementById("rm-grid").innerHTML=ROOMS.map(r=>{
-const b=bookings.filter(bk=>bk.room===String(r)&&bk.ci<=td&&bk.co>td&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.dayuse&&!bk.coConfirmed).sort((a,b)=>b.ci.localeCompare(a.ci))[0];
-const du=bookings.find(bk=>bk.room===String(r)&&bk.ci===td&&bk.dayuse&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.coConfirmed);
-const ci=bookings.filter(bk=>bk.room===String(r)&&bk.ci===td&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.dayuse&&!bk.coConfirmed).sort((a,b)=>b.ci.localeCompare(a.ci))[0];
-const co=bookings.filter(bk=>bk.room===String(r)&&bk.co===td&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.dayuse&&!bk.coConfirmed)
-  .filter(bk=>!bookings.some(bk2=>bk2.room===String(r)&&bk2.status!=="Cancelled"&&bk2.ci>=td&&bk2.id!==bk.id))
-  .sort((a,b)=>b.ci.localeCompare(a.ci))[0];
+const b=bookings.filter(bk=>bk.room===String(r)&&bk.ci<=td&&bk.co>td&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.dayuse&&!bk.coConfirmed).sort((a,z)=>z.ci.localeCompare(a.ci))[0];
+const du=bookings.filter(bk=>bk.room===String(r)&&bk.ci===td&&bk.dayuse&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.coConfirmed).sort((a,z)=>z.ci.localeCompare(a.ci))[0];
+const ci=bookings.filter(bk=>bk.room===String(r)&&bk.ci===td&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.dayuse&&!bk.coConfirmed&&bk.co>td).sort((a,z)=>z.ci.localeCompare(a.ci))[0];
+const co=bookings.filter(bk=>bk.room===String(r)&&bk.co===td&&bk.ci<=td&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.dayuse&&!bk.coConfirmed).sort((a,z)=>z.ci.localeCompare(a.ci))[0];
 // Check if reserved (future booking exists) — exclude Standby
 const res=bookings.find(bk=>bk.room===String(r)&&bk.ci>td&&bk.status!=="Cancelled"&&bk.status!=="Standby");
 // Check if standby (future booking with Standby status)
