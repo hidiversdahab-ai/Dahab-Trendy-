@@ -7058,7 +7058,7 @@ document.getElementById("rm-grid").innerHTML=ROOMS.map(r=>{
 const b=bookings.find(bk=>bk.room===String(r)&&bk.ci<=td&&bk.co>td&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.dayuse&&!bk.coConfirmed);
 const du=bookings.find(bk=>bk.room===String(r)&&bk.ci===td&&bk.dayuse&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.coConfirmed);
 const ci=bookings.find(bk=>bk.room===String(r)&&bk.ci===td&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.dayuse&&!bk.coConfirmed);
-const co=bookings.find(bk=>bk.room===String(r)&&bk.co===td&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.dayuse&&!bk.coConfirmed);
+const co=bookings.filter(bk=>bk.room===String(r)&&bk.co===td&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.dayuse&&!bk.coConfirmed).sort((a,b)=>b.ci.localeCompare(a.ci))[0];
 // Check if reserved (future booking exists) — exclude Standby
 const res=bookings.find(bk=>bk.room===String(r)&&bk.ci>td&&bk.status!=="Cancelled"&&bk.status!=="Standby");
 // Check if standby (future booking with Standby status)
