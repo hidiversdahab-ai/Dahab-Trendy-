@@ -7074,14 +7074,14 @@ const resStandby=bookings.find(bk=>bk.room===String(r)&&bk.ci>td&&bk.status==="S
 // Recently checked-out (within 14 days) — for edit CO button
 const twoWeeksAgo=new Date(); twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
 const twoWeeksAgoStr=twoWeeksAgo.toISOString().slice(0,10);
-const recentCO=bookings.find(bk=>
+const recentCO=bookings.filter(bk=>
   bk.room===String(r) &&
   bk.status!=="Cancelled" &&
   bk.status!=="Standby" &&
   (bk.coConfirmed || bk.co<=td) &&
   bk.co>=twoWeeksAgoStr &&
   !b && !du && !ci && !co
-);
+).sort((a,z)=>z.ci.localeCompare(a.ci))[0];
 const manualSt=roomSt[r]||"available";
 const manualOverrideRooms=["maintenance","checkin","checkout","dayuse","occupied","reserved"];
 let st;
