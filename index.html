@@ -9077,6 +9077,9 @@ function saveGrpBooking(){
     for(let i=0;i<r.qty;i++){
       const avail = ROOMS.find(room=>{
         if((roomSt[room]||'')==='maintenance') return false;
+        // تطابق النوع من إعدادات أنواع الغرف
+        const rInfo = roomTypes['room_'+room]||{type:'Double'};
+        if(rInfo.type !== r.type) return false;
         return !bookings.some(bk=>bk.room===String(room)&&bk.status!=='Cancelled'&&bk.ci<d.co&&bk.co>d.ci);
       });
       if(avail){
