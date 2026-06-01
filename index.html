@@ -1183,7 +1183,10 @@ select option{background:#1a1a2e;color:var(--text)}
     <div><label class="lbl">تاريخ الوصول</label><input id="grp-ci" type="date" class="inp" oninput="calcGrpNights()"></div>
     <div><label class="lbl">تاريخ المغادرة</label><input id="grp-co" type="date" class="inp" oninput="calcGrpNights()"></div>
   </div>
-  <div id="grp-nights-display" style="margin-top:8px;font-size:13px;color:var(--gold);font-weight:700;"></div>
+  <div id="grp-nights-display" style="margin-top:12px;display:none;background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.08));border:2px solid rgba(201,168,76,0.5);border-radius:10px;padding:14px 20px;text-align:center;">
+    <span style="font-size:36px;font-weight:900;color:var(--gold);" id="grp-nights-num">0</span>
+    <span style="font-size:18px;font-weight:700;color:var(--gold);margin-right:8px;">🌙 ليلة</span>
+  </div>
 </div>
 
 <!-- الغرف -->
@@ -9328,8 +9331,27 @@ function renderGrpGuests(){
           oninput="grpGuests[${i}].phone=this.value">
         <!-- رقم الغرفة -->
         <input type="text" placeholder="🔑 غرفة" value="${g.room||''}"
-          style="width:60px;padding:5px 8px;font-size:12px;text-align:center;"
-          oninput="grpGuests[${i}].room=this.value">
+          style="width:60px;padding:5px 8px;font-size:12px;text-align:center;${
+            (()=>{
+              if(!g.room||!ci||!co||co<=ci) return '';
+              const conflict = bookings.find(bk=>
+                String(bk.room)===String(g.room) &&
+                bk.status!=='Cancelled' && bk.status!=='Standby' &&
+                bk.ci < co && bk.co > ci
+              );
+              return conflict ? 'border:2px solid #e74c3c;background:rgba(231,76,60,0.12);' : 'border:2px solid #2ecc71;background:rgba(46,204,113,0.08);';
+            })()
+          }"
+          oninput="grpGuests[${i}].room=this.value;renderGrpGuests();"
+          title="${(()=>{
+            if(!g.room||!ci||!co||co<=ci) return 'أدخل رقم الغرفة';
+            const conflict = bookings.find(bk=>
+              String(bk.room)===String(g.room) &&
+              bk.status!=='Cancelled' && bk.status!=='Standby' &&
+              bk.ci < co && bk.co > ci
+            );
+            return conflict ? '⚠️ تعارض مع: '+conflict.name+' ('+conflict.ci+' → '+conflict.co+')' : '✅ الغرفة متاحة';
+          })()}">
         <!-- نوع الغرفة -->
         <select style="flex:1;min-width:100px;padding:5px 8px;font-size:12px;"
           onchange="grpGuests[${i}].type=this.value;renderGrpGuests();">
@@ -9337,6 +9359,19 @@ function renderGrpGuests(){
         </select>
         <button class="btn bsm" style="background:rgba(231,76,60,0.15);color:#e74c3c;" onclick="removeGrpGuest(${g.id})">🗑️</button>
       </div>
+      <!-- تحذير التعارض -->
+      ${(()=>{
+        if(!g.room||!ci||!co||co<=ci) return '';
+        const conflict = bookings.find(bk=>
+          String(bk.room)===String(g.room) &&
+          bk.status!=='Cancelled' && bk.status!=='Standby' &&
+          bk.ci < co && bk.co > ci
+        );
+        if(!conflict) return '';
+        return `<div style="background:rgba(231,76,60,0.15);border:1.5px solid #e74c3c;border-radius:7px;padding:8px 12px;font-size:12px;color:#e74c3c;font-weight:700;">
+          ⚠️ تعارض! غرفة ${g.room} محجوزة لـ <b>${conflict.name}</b> من ${fmtD(conflict.ci)} إلى ${fmtD(conflict.co)}
+        </div>`;
+      })()}
       <!-- السعر المخصص والخصم الإضافي والسعر النهائي -->
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
         <span style="font-size:11px;color:var(--muted);">${sym}/ليلة</span>
@@ -9382,6 +9417,23 @@ function convertGrpToBookings(){
   const grpId  = 'GRP-'+Date.now().toString().slice(-6);
   let added=0, skipped=0;
 
+  // ── فحص كل التعارضات أولاً قبل الحفظ ──
+  const conflicts = grpGuests.map(g=>{
+    const roomNo = String(g.room).trim();
+    const conflict = bookings.find(bk=>
+      bk.room===roomNo &&
+      bk.status!=='Cancelled' && bk.status!=='Standby' &&
+      bk.ci<d.co && bk.co>d.ci
+    );
+    return conflict ? {guest:g.name, room:roomNo, with:conflict.name, ci:conflict.ci, co:conflict.co} : null;
+  }).filter(Boolean);
+
+  if(conflicts.length){
+    const lines = conflicts.map(c=>`• غرفة ${c.room} (${c.guest}) ← محجوزة لـ ${c.with} (${fmtD(c.ci)} → ${fmtD(c.co)})`).join('\n');
+    const proceed = confirm(`⚠️ تعارض في ${conflicts.length} غرفة:\n\n${lines}\n\nهل تريد تخطي الغرف المتعارضة وحفظ الباقي؟`);
+    if(!proceed) return;
+  }
+
   // خصم الجروب
   const discType = document.getElementById('grp-disc-type').value;
   const discVal  = parseFloat(document.getElementById('grp-disc-val').value)||0;
@@ -9391,7 +9443,7 @@ function convertGrpToBookings(){
     // التحقق من تعارض الحجز
     const conflict = bookings.some(bk=>
       bk.room===roomNo &&
-      bk.status!=='Cancelled' &&
+      bk.status!=='Cancelled' && bk.status!=='Standby' &&
       bk.ci<d.co && bk.co>d.ci
     );
     if(conflict){
@@ -9456,11 +9508,13 @@ function calcGrpNights(){
   const ci = document.getElementById('grp-ci').value;
   const co = document.getElementById('grp-co').value;
   const el = document.getElementById('grp-nights-display');
+  const numEl = document.getElementById('grp-nights-num');
   if(ci && co && co > ci){
     const nights = nts(ci, co);
-    el.textContent = `🌙 ${nights} ليلة`;
+    numEl.textContent = nights;
+    el.style.display = 'block';
   } else {
-    el.textContent = '';
+    el.style.display = 'none';
   }
   calcGrpTotal();
 }
@@ -9482,20 +9536,25 @@ function renderGrpRooms(){
   if(!el) return;
   const sym = ((typeof PROP!=="undefined"&&PROP.currency)?PROP.currency==="USD"?"$":PROP.currency==="EUR"?"€":"£":"£");
   el.innerHTML = grpRooms.map((r,i) => `
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.18);border-radius:8px;">
-      <span style="font-size:11px;color:var(--muted);min-width:20px;">${i+1}</span>
-      <select onchange="grpRooms[${i}].type=this.value;calcGrpTotal();" style="flex:2;min-width:110px;padding:5px 8px;font-size:12px;">
-        ${['Single','Double','Triple','Suite (غرفتين)','Quad (رباعي)'].map(t=>`<option value="${t}" ${r.type===t?'selected':''}>${t}</option>`).join('')}
-      </select>
-      <div style="display:flex;align-items:center;gap:4px;">
-        <span style="font-size:11px;color:var(--muted);">عدد</span>
-        <input type="number" min="1" max="20" value="${r.qty}" style="width:50px;padding:4px 6px;font-size:12px;text-align:center;" onchange="grpRooms[${i}].qty=parseInt(this.value)||1;calcGrpTotal()">
+    <div style="padding:12px 14px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.22);border-radius:10px;margin-bottom:6px;">
+      <!-- Row 1: رقم + نوع + عدد + حذف -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:13px;color:var(--gold);font-weight:800;min-width:22px;">${i+1}</span>
+        <select onchange="grpRooms[${i}].type=this.value;calcGrpTotal();" style="flex:1;padding:7px 10px;font-size:13px;background:var(--inp);border:1px solid var(--bdr);border-radius:7px;color:var(--text);">
+          ${['Single','Double','Triple','Suite (غرفتين)','Quad (رباعي)'].map(t=>`<option value="${t}" ${r.type===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+        <div style="display:flex;align-items:center;gap:6px;background:var(--inp);border:1px solid var(--bdr);border-radius:7px;padding:6px 10px;">
+          <span style="font-size:11px;color:var(--muted);white-space:nowrap;">🛏️ عدد</span>
+          <input type="number" min="1" max="20" value="${r.qty}" style="width:46px;font-size:14px;font-weight:700;text-align:center;background:transparent;border:none;color:var(--text);outline:none;" onchange="grpRooms[${i}].qty=parseInt(this.value)||1;calcGrpTotal()">
+        </div>
+        <button class="btn bsm" style="background:rgba(231,76,60,0.15);color:#e74c3c;padding:6px 10px;flex-shrink:0;" onclick="removeGrpRoom(${r.id})">🗑️</button>
       </div>
-      <div style="display:flex;align-items:center;gap:4px;">
-        <span style="font-size:11px;color:var(--muted);">${sym}/ليلة</span>
-        <input type="number" min="0" value="${r.pricePerNight}" style="width:70px;padding:4px 6px;font-size:12px;text-align:center;" onchange="grpRooms[${i}].pricePerNight=parseFloat(this.value)||0;calcGrpTotal()">
+      <!-- Row 2: السعر / ليلة -->
+      <div style="display:flex;align-items:center;gap:10px;background:rgba(201,168,76,0.12);border:1.5px solid rgba(201,168,76,0.35);border-radius:8px;padding:10px 14px;">
+        <span style="font-size:13px;color:var(--gold);font-weight:700;white-space:nowrap;">💰 سعر الليلة</span>
+        <input type="number" min="0" value="${r.pricePerNight||''}" placeholder="أدخل السعر..." style="flex:1;padding:7px 12px;font-size:16px;font-weight:800;text-align:center;background:var(--inp);border:1.5px solid var(--bdr);border-radius:7px;color:var(--gold);outline:none;" oninput="grpRooms[${i}].pricePerNight=parseFloat(this.value)||0;calcGrpTotal()">
+        <span style="font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap;">${sym} / ليلة</span>
       </div>
-      <button class="btn bsm" style="background:rgba(231,76,60,0.15);color:#e74c3c;" onclick="removeGrpRoom(${r.id})">🗑️</button>
     </div>
   `).join('');
 }
@@ -9578,6 +9637,19 @@ function calcGrpTotal(){
       <div style="display:flex;justify-content:space-between;padding:8px 0;">
         <span style="font-weight:700;font-size:13px;">${remaining>0?'⚠️ المتبقي':'✅ مسدد بالكامل'}</span>
         <span style="font-weight:700;font-size:14px;color:${remaining>0?'#e74c3c':'#2ecc71'};">${remaining>0?sym+remaining.toFixed(2):'✅'}</span>
+      </div>
+      <!-- Payment Status Badge -->
+      <div style="margin-top:6px;padding:12px 16px;border-radius:10px;text-align:center;font-size:15px;font-weight:800;letter-spacing:1px;
+        ${totalPaid<=0
+          ? 'background:rgba(231,76,60,0.15);border:2px solid #e74c3c;color:#e74c3c;'
+          : remaining<=0
+            ? 'background:rgba(46,204,113,0.15);border:2px solid #2ecc71;color:#2ecc71;'
+            : 'background:rgba(230,126,34,0.15);border:2px solid #e67e22;color:#e67e22;'}">
+        ${totalPaid<=0
+          ? '🔴 Pending — لم يُسدَّد'
+          : remaining<=0
+            ? '✅ Paid — مسدد بالكامل'
+            : `⏳ Partial — مدفوع ${sym}${totalPaid.toFixed(2)} من ${sym}${grandTotal.toFixed(2)}`}
       </div>
     </div>
   `;
