@@ -800,6 +800,7 @@ select option{background:#1a1a2e;color:var(--text)}
     <div class="bn-more-item" onclick="openBlacklist();closeBnMore()" style="border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.07);"><span class="bm-icon">🚫</span><span style="color:#e74c3c;">Blacklist</span></div>
     <div class="bn-more-item" onclick="bnGo('guesthistory',null);closeBnMore()"><span class="bm-icon">👥</span><span class="t" data-ar="سجل الضيوف" data-en="Guest History">Guest History</span></div>
     <div class="bn-more-item" onclick="bnGo('groupbooking',null);closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon">🏢</span><span class="t" data-ar="حجز جروب" data-en="Group Booking">Group Booking</span></div>
+    <div class="bn-more-item" onclick="bnGo('pricelist',null);closeBnMore()" style="border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);"><span class="bm-icon">💰</span><span class="t" data-ar="قائمة الأسعار" data-en="Price List">قائمة الأسعار</span></div>
     <div class="bn-more-item" onclick="exportAll();closeBnMore()"><span class="bm-icon">💾</span><span class="t" data-ar="تصدير" data-en="Export">تصدير</span></div>
     <div class="bn-more-item" onclick="document.getElementById('impfile').click();closeBnMore()"><span class="bm-icon">📂</span><span class="t" data-ar="استيراد" data-en="Import">استيراد</span></div>
     <div class="bn-more-item" onclick="toggleTheme();closeBnMore()"><span class="bm-icon" id="bn-theme-icon">🌙</span><span class="t" data-ar="الوضع" data-en="Theme">الوضع</span></div>
@@ -8772,30 +8773,44 @@ function renderPLPage(){
 
 function renderPLTable(){
   const d = getPLData();
-  const sym = '£';
-  let html = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+  // Currency tabs
+  const curTab = window._plCur||'gbp';
+  const CURRENCIES = {gbp:{sym:'£',label:'GBP £'},egp:{sym:'E£',label:'EGP £'},usd:{sym:'$',label:'USD $'},eur:{sym:'€',label:'EUR €'}};
+  const sym = CURRENCIES[curTab].sym;
+
+  let html = `<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">`;
+  Object.entries(CURRENCIES).forEach(([k,v])=>{
+    html += `<button onclick="window._plCur='${k}';renderPLTable()" style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid ${k===curTab?'#c9a84c':'var(--border)'};background:${k===curTab?'rgba(201,168,76,0.2)':'var(--bg)'};color:${k===curTab?'#c9a84c':'var(--text)'};">${v.label}</button>`;
+  });
+  html += `</div>`;
+
+  html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
     <thead><tr style="background:linear-gradient(135deg,#1a1a2e,#16213e);">
       <th style="color:#c9a84c;padding:10px 12px;text-align:right;font-size:11px;">نوع الغرفة</th>
-      <th style="color:#a0b4c8;padding:10px 8px;text-align:center;font-size:10px;">Low</th>
-      <th style="color:#a0b4c8;padding:10px 8px;text-align:center;font-size:10px;">Mid</th>
-      <th style="color:#a0b4c8;padding:10px 8px;text-align:center;font-size:10px;">High</th>
-      <th style="color:#f1c40f;padding:10px 8px;text-align:center;font-size:10px;">Peak</th>
+      <th style="color:${plSeason==='low'?'#f1c40f':'#a0b4c8'};padding:10px 8px;text-align:center;font-size:10px;">🌥️ Low</th>
+      <th style="color:${plSeason==='mid'?'#f1c40f':'#a0b4c8'};padding:10px 8px;text-align:center;font-size:10px;">⛅ Mid</th>
+      <th style="color:${plSeason==='high'?'#f1c40f':'#a0b4c8'};padding:10px 8px;text-align:center;font-size:10px;">☀️ High</th>
+      <th style="color:${plSeason==='peak'?'#f1c40f':'#a0b4c8'};padding:10px 8px;text-align:center;font-size:10px;">🎉 Peak</th>
     </tr></thead><tbody>`;
+
   PL_ROOM_TYPES.forEach((t,i)=>{
-    const row = d[t]||{low:0,mid:0,high:0,peak:0};
+    const row = d[t]||{};
     html += `<tr style="border-bottom:1px solid var(--border);${i%2===0?'background:rgba(255,255,255,0.02)':''}">
-      <td style="padding:9px 12px;font-weight:700;color:var(--text);">${t}</td>
-      ${['low','mid','high','peak'].map(s=>`
-      <td style="padding:6px 4px;text-align:center;">
-        <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
-          <span style="color:#888;font-size:11px;">${sym}</span>
-          <input type="number" id="pl-inp-${t.replace(/[^a-zA-Z]/g,'')}-${s}" value="${row[s]||0}"
-            style="width:70px;background:${s===plSeason?'rgba(201,168,76,0.15)':'var(--bg)'};color:${s===plSeason?'#c9a84c':'var(--text)'};
-            border:1px solid ${s===plSeason?'#c9a84c':'var(--border)'};border-radius:6px;padding:4px 6px;
-            font-size:12px;font-weight:${s===plSeason?'700':'400'};text-align:center;"
-            oninput="updatePLVal('${t}','${s}',this.value)">
-        </div>
-      </td>`).join('')}
+      <td style="padding:9px 12px;font-weight:700;color:var(--text);font-size:12px;">${t}</td>
+      ${['low','mid','high','peak'].map(s=>{
+        const key = s+'_'+curTab;
+        const val = row[key]!==undefined ? row[key] : (s==='low'?row[s]||0:0);
+        return `<td style="padding:6px 4px;text-align:center;">
+          <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+            <span style="color:#888;font-size:10px;">${sym}</span>
+            <input type="number" id="pl-inp-${t.replace(/[^a-zA-Z]/g,'')}-${s}-${curTab}" value="${val}"
+              style="width:68px;background:${s===plSeason?'rgba(201,168,76,0.15)':'var(--bg)'};color:${s===plSeason?'#c9a84c':'var(--text)'};
+              border:1px solid ${s===plSeason?'#c9a84c':'var(--border)'};border-radius:6px;padding:4px 5px;
+              font-size:12px;font-weight:${s===plSeason?'700':'400'};text-align:center;"
+              oninput="updatePLVal('${t}','${s}_${curTab}',this.value)">
+          </div>
+        </td>`;
+      }).join('')}
     </tr>`;
   });
   html += '</tbody></table></div>';
@@ -8811,10 +8826,15 @@ function updatePLVal(type, season, val){
 
 function savePriceListData(){
   getPLData();
+  const curTab = window._plCur||'gbp';
   PL_ROOM_TYPES.forEach(t=>{
     ['low','mid','high','peak'].forEach(s=>{
-      const inp = document.getElementById('pl-inp-'+t.replace(/[^a-zA-Z]/g,'')+'-'+s);
-      if(inp){ if(!plData[t]) plData[t]={low:0,mid:0,high:0,peak:0}; plData[t][s]=parseFloat(inp.value)||0; }
+      const inp = document.getElementById('pl-inp-'+t.replace(/[^a-zA-Z]/g,'')+'-'+s+'-'+curTab);
+      if(inp){
+        if(!plData[t]) plData[t]={};
+        plData[t][s+'_'+curTab]=parseFloat(inp.value)||0;
+        if(curTab==='gbp') plData[t][s]=parseFloat(inp.value)||0; // keep legacy key
+      }
     });
   });
   const notes = document.getElementById('pl-notes');
@@ -8830,24 +8850,29 @@ function resetPriceListToDefaults(){
 }
 
 function buildPLContent(forWA=false){
-  const prop = (typeof PROP!=='undefined')?PROP:{name:'',phone:''};
+  const prop = (typeof PROP!=='undefined')?PROP:{name:'',phone:'',email:''};
   const d = getPLData();
-  const sym = '£';
+  const curTab = window._plCur||'gbp';
+  const CURRENCIES = {gbp:{sym:'£',label:'GBP £'},egp:{sym:'E£',label:'EGP جنيه'},usd:{sym:'$',label:'USD $'},eur:{sym:'€',label:'EUR €'}};
+  const sym = CURRENCIES[curTab].sym;
+  const curLabel = CURRENCIES[curTab].label;
   const seasonLabel = PL_SEASONS[plSeason]||plSeason;
   const notes = LS('dta_pl_notes','');
   const today = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
   if(forWA){
-    let msg = `🏨 *${prop.name}*\n💰 *قائمة الأسعار — ${seasonLabel}*\n📅 ${today}\n\n`;
+    let msg = `🏨 *${prop.name}*\n💰 *قائمة الأسعار — ${seasonLabel}*\n💱 العملة: ${curLabel}\n📅 ${today}\n\n`;
     PL_ROOM_TYPES.forEach(t=>{
       const row = d[t]||{};
-      const price = row[plSeason]||0;
+      const key = plSeason+'_'+curTab;
+      const price = row[key]!==undefined ? row[key] : (row[plSeason]||0);
       if(price>0) msg += `🛏️ *${t}*: ${sym}${price.toLocaleString()}/ليلة\n`;
     });
     if(notes) msg += `\n📝 ${notes}`;
     msg += `\n\n📞 ${prop.phone||''}`;
+    if(prop.email) msg += `\n✉️ ${prop.email}`;
     return msg;
   }
-  return {prop, d, sym, seasonLabel, notes, today};
+  return {prop, d, sym, curTab, curLabel, seasonLabel, notes, today};
 }
 
 function sendPriceListWA(){
@@ -8859,12 +8884,16 @@ function sendPriceListWA(){
 
 function printPriceList(){
   savePriceListData();
-  const {prop, d, sym, seasonLabel, notes, today} = buildPLContent(false);
+  const {prop, d, sym, curTab, curLabel, seasonLabel, notes, today} = buildPLContent(false);
   const rows = PL_ROOM_TYPES.map((t,i)=>{
-    const row = d[t]||{low:0,mid:0,high:0,peak:0};
+    const row = d[t]||{};
     return `<tr style="${i%2===0?'background:#fdfbf5':''}">
       <td style="padding:10px 14px;font-weight:700;">${t}</td>
-      ${['low','mid','high','peak'].map(s=>`<td style="text-align:center;padding:10px 8px;${s===plSeason?'font-weight:800;color:#c9a84c;':'color:#555;'}">${row[s]?sym+row[s].toLocaleString():'—'}</td>`).join('')}
+      ${['low','mid','high','peak'].map(s=>{
+        const key=s+'_'+curTab;
+        const price=row[key]!==undefined?row[key]:(row[s]||0);
+        return `<td style="text-align:center;padding:10px 8px;${s===plSeason?'font-weight:800;color:#c9a84c;':'color:#555;'}">${price?sym+price.toLocaleString():'—'}</td>`;
+      }).join('')}
     </tr>`;
   }).join('');
 
@@ -8898,7 +8927,7 @@ function printPriceList(){
     </div>
     <div class="gold-bar"></div>
     <div class="body">
-      <div class="season-badge">🌊 ${seasonLabel} — الأسعار الحالية</div>
+      <div class="season-badge">🌊 ${seasonLabel} — ${curLabel}</div>
       <table>
         <thead><tr>
           <th>نوع الغرفة</th>
@@ -8910,9 +8939,9 @@ function printPriceList(){
         <tbody>${rows}</tbody>
       </table>
       ${notes?`<div class="notes">📝 ${notes}</div>`:''}
-      <div style="margin-top:16px;font-size:11px;color:#aaa;text-align:center;">الأسعار لليلة الواحدة بالجنيه الإسترليني (£)</div>
+      <div style="margin-top:16px;font-size:11px;color:#aaa;text-align:center;">الأسعار لليلة الواحدة — ${curLabel}</div>
     </div>
-    <div class="footer"><span class="fgold">${prop.name}</span> &nbsp;·&nbsp; <span style="direction:ltr;unicode-bidi:plaintext;">${prop.phone||''}</span><br><span style="font-size:10px;opacity:0.7;">الأسعار قابلة للتغيير — للحجز والاستفسار تواصل معنا</span></div>
+    <div class="footer"><span class="fgold">${prop.name}</span> &nbsp;·&nbsp; <span style="direction:ltr;unicode-bidi:plaintext;">${prop.phone||''}</span>${prop.email?' &nbsp;·&nbsp; '+prop.email:''}<br><span style="font-size:10px;opacity:0.7;">الأسعار قابلة للتغيير — للحجز والاستفسار تواصل معنا</span></div>
   </div>
   <script>window.onload=()=>window.print();<\/script>
   </body></html>`;
