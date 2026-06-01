@@ -9278,13 +9278,10 @@ function getGrpGuestFinalPrice(g, nights){
   const ci = document.getElementById('grp-ci').value;
   const co = document.getElementById('grp-co').value;
   const n = nights || (ci&&co&&co>ci ? nts(ci,co) : 1);
-  // السعر الأساسي من الضيف أو من نوع الغرفة
-  let base = (parseFloat(g.customPrice)||0) * n;
-  if(!g.customPrice){
-    // ابحث عن السعر من grpRooms بنفس النوع
-    const rm = grpRooms.find(r=>r.type===g.type);
-    base = (rm ? rm.pricePerNight : 0) * n;
-  }
+  // السعر المخصص للضيف أو سعر نوع الغرفة
+  const rm = grpRooms.find(r=>r.type===g.type);
+  const pricePerNight = (g.customPrice && g.customPrice>0) ? g.customPrice : (rm ? rm.pricePerNight : 0);
+  const base = pricePerNight * n;
   // خصم الجروب
   const discType = document.getElementById('grp-disc-type')?document.getElementById('grp-disc-type').value:'none';
   const discVal  = parseFloat(document.getElementById('grp-disc-val')?document.getElementById('grp-disc-val').value:0)||0;
@@ -9335,33 +9332,29 @@ function renderGrpGuests(){
           oninput="grpGuests[${i}].room=this.value">
         <!-- نوع الغرفة -->
         <select style="flex:1;min-width:100px;padding:5px 8px;font-size:12px;"
-          onchange="grpGuests[${i}].type=this.value;grpGuests[${i}].customPrice=0;renderGrpGuests();">
+          onchange="grpGuests[${i}].type=this.value;renderGrpGuests();">
           ${roomTypes_avail.map(t=>`<option value="${t}" ${g.type===t?'selected':''}>${t}</option>`).join('')}
         </select>
         <button class="btn bsm" style="background:rgba(231,76,60,0.15);color:#e74c3c;" onclick="removeGrpGuest(${g.id})">🗑️</button>
       </div>
-      <!-- السعر والخصم الإضافي -->
+      <!-- السعر المخصص والخصم الإضافي والسعر النهائي -->
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:4px;">
-          <span style="font-size:11px;color:var(--muted);">${sym}/ليلة</span>
-          <input type="number" min="0" placeholder="${autoPrice||'سعر'}" value="${g.customPrice||''}"
-            style="width:70px;padding:4px 6px;font-size:12px;text-align:center;"
-            oninput="grpGuests[${i}].customPrice=parseFloat(this.value)||0;renderGrpGuests();"
-            title="اتركه فارغاً لاستخدام سعر الجروب تلقائياً">
-        </div>
-        <div style="display:flex;align-items:center;gap:4px;">
-          <span style="font-size:11px;color:#e67e22;">خصم ضيف</span>
-          <input type="number" min="0" value="${g.extraDisc||''}" placeholder="0"
-            style="width:55px;padding:4px 6px;font-size:12px;text-align:center;"
-            oninput="grpGuests[${i}].extraDisc=parseFloat(this.value)||0;renderGrpGuests();">
-          <select style="padding:4px 6px;font-size:11px;"
-            onchange="grpGuests[${i}].extraDiscType=this.value;renderGrpGuests();">
-            <option value="percent" ${g.extraDiscType==='percent'?'selected':''}>%</option>
-            <option value="fixed"   ${g.extraDiscType==='fixed'?'selected':''}>مبلغ</option>
-          </select>
-        </div>
-        <!-- ملخص السعر -->
-        <div style="margin-right:auto;font-size:11px;color:var(--gold);font-weight:700;text-align:left;">
+        <span style="font-size:11px;color:var(--muted);">${sym}/ليلة</span>
+        <input type="number" min="0" step="0.01" placeholder="${autoPrice||'0'}" value="${g.customPrice||''}"
+          style="width:72px;padding:4px 6px;font-size:12px;text-align:center;"
+          oninput="grpGuests[${i}].customPrice=parseFloat(this.value)||0;renderGrpGuests();"
+          title="اتركه فارغاً لاستخدام سعر نوع الغرفة (${sym}${autoPrice})">
+        <span style="font-size:11px;color:#e67e22;margin-right:6px;">خصم إضافي</span>
+        <input type="number" min="0" value="${g.extraDisc||''}" placeholder="0"
+          style="width:55px;padding:4px 6px;font-size:12px;text-align:center;"
+          oninput="grpGuests[${i}].extraDisc=parseFloat(this.value)||0;renderGrpGuests();">
+        <select style="padding:4px 6px;font-size:11px;"
+          onchange="grpGuests[${i}].extraDiscType=this.value;renderGrpGuests();">
+          <option value="percent" ${g.extraDiscType==='percent'?'selected':''}>%</option>
+          <option value="fixed"   ${g.extraDiscType==='fixed'?'selected':''}>مبلغ</option>
+        </select>
+        <!-- السعر النهائي -->
+        <div style="margin-right:auto;font-size:11px;color:var(--gold);font-weight:700;">
           ${prices.grpDiscAmt>0||prices.extraDiscAmt>0
             ? `<span style="color:var(--muted);text-decoration:line-through;">${sym}${prices.base.toFixed(2)}</span> → `
             : ''}
@@ -9422,6 +9415,8 @@ function convertGrpToBookings(){
       adults: ROOM_TYPE_CAPACITY[g.type]||2,
       children: 0,
       total: prices.final,
+      customPrice: prices.final / (nights||1),
+      customPriceSet: true,
       discountAmt: prices.grpDiscAmt + prices.extraDiscAmt,
       discountPct: prices.base>0 ? ((prices.grpDiscAmt+prices.extraDiscAmt)/prices.base*100) : 0,
       commissionAmt: commPerGuest,
@@ -9786,6 +9781,39 @@ function printGrpInvoice(){
           <tbody>${roomRows}</tbody>
         </table>
       </div>
+
+      ${grpGuests.length ? `
+      <!-- GUESTS TABLE -->
+      <div class="sec">
+        <div class="sec-title">👤 تفاصيل الضيوف</div>
+        <table>
+          <thead><tr>
+            <th>#</th>
+            <th>اسم الضيف</th>
+            <th style="text-align:center;">رقم الغرفة</th>
+            <th>نوع الغرفة</th>
+            <th style="text-align:right;">سعر/ليلة</th>
+            <th style="text-align:right;">خصم</th>
+            <th style="text-align:right;">الإجمالي</th>
+          </tr></thead>
+          <tbody>
+            ${grpGuests.map((g,i)=>{
+              const prices = getGrpGuestFinalPrice(g, d.nights);
+              const pricePN = g.customPrice>0 ? g.customPrice : (grpRooms.find(r=>r.type===g.type)||{pricePerNight:0}).pricePerNight;
+              const totalDisc = prices.grpDiscAmt + prices.extraDiscAmt;
+              return `<tr>
+                <td>${i+1}</td>
+                <td style="font-weight:700;">${g.name||'—'}</td>
+                <td style="text-align:center;font-weight:700;color:#1a1a2e;">${g.room||'—'}</td>
+                <td>${g.type}</td>
+                <td style="text-align:right;">${sym}${pricePN.toFixed(2)}</td>
+                <td style="text-align:right;color:#e67e22;">${totalDisc>0?'− '+sym+totalDisc.toFixed(2):'—'}</td>
+                <td style="text-align:right;font-weight:700;color:#1a1a2e;">${sym}${prices.final.toFixed(2)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>` : ''}
 
       <!-- TOTALS -->
       <div class="sec">
