@@ -44,6 +44,7 @@ select option{background:#1a1a2e;color:var(--text)}
 .btn{border:none;cursor:pointer;border-radius:7px;padding:8px 14px;font-size:13px;font-weight:700;font-family:Arial,"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
 .btn:hover{filter:brightness(1.1)}
 .act-season{background:rgba(201,168,76,0.25)!important;color:#c9a84c!important;border-color:#c9a84c!important;font-weight:800!important;}
+.act-bf{background:rgba(201,168,76,0.25)!important;color:#c9a84c!important;border-color:#c9a84c!important;font-weight:800!important;}
 .bg{background:var(--gold);color:#1a1a2e}
 :root.light-mode .bg{color:#fff}
 .bb{background:rgba(255,255,255,0.07);color:var(--muted);border:1px solid var(--bdr)}
@@ -1121,10 +1122,27 @@ select option{background:#1a1a2e;color:var(--text)}
       </div>
     </div>
 
+    <!-- Breakfast Option -->
+    <div style="background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
+      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:12px;">🍳 خيار الإفطار</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button id="pl-bf-no"  class="btn bsm pl-bf-btn act-bf" onclick="setPLBreakfast('none')"  style="font-size:12px;">🚫 بدون إفطار</button>
+        <button id="pl-bf-inc" class="btn bsm pl-bf-btn"        onclick="setPLBreakfast('included')" style="font-size:12px;">✅ إفطار مشمول</button>
+        <button id="pl-bf-opt" class="btn bsm pl-bf-btn"        onclick="setPLBreakfast('optional')" style="font-size:12px;">➕ إفطار اختياري</button>
+      </div>
+      <div id="pl-bf-price-wrap" style="display:none;">
+        <label style="font-size:12px;color:#888;margin-bottom:4px;display:block;">سعر الإفطار للفرد / Breakfast price per person</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input id="pl-bf-price" type="number" placeholder="0" style="width:100px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;">
+          <span style="font-size:12px;color:#888;">£ لليلة / per person</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Notes -->
     <div style="background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
       <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:8px;">📝 ملاحظات (تظهر في القائمة)</div>
-      <textarea id="pl-notes" rows="2" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;resize:vertical;" placeholder="مثال: الأسعار تشمل الإفطار — السعر لليلة الواحدة — قابل للتفاوض للجروب"></textarea>
+      <textarea id="pl-notes" rows="2" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;resize:vertical;" placeholder="مثال: الأسعار قابلة للتفاوض للجروب — يشمل مناشف ومستلزمات استحمام"></textarea>
     </div>
 
     <!-- Price Table -->
@@ -8758,6 +8776,15 @@ function setPLSeason(s){
   renderPLTable();
 }
 
+function setPLBreakfast(val){
+  sv('dta_pl_breakfast', val);
+  document.querySelectorAll('.pl-bf-btn').forEach(b=>b.classList.remove('act-bf'));
+  const btn = document.getElementById('pl-bf-'+{none:'no',included:'inc',optional:'opt'}[val]);
+  if(btn) btn.classList.add('act-bf');
+  const wrap = document.getElementById('pl-bf-price-wrap');
+  if(wrap) wrap.style.display = (val==='included'||val==='optional') ? 'block' : 'none';
+}
+
 function renderPLPage(){
   const prop = (typeof PROP!=='undefined')?PROP:{name:'',address:''};
   const el = document.getElementById('pl-prop-name');
@@ -8769,6 +8796,12 @@ function renderPLPage(){
   const notes = LS('dta_pl_notes','');
   const nt = document.getElementById('pl-notes');
   if(nt) nt.value = notes;
+  // init breakfast
+  const bf = LS('dta_pl_breakfast','none');
+  const bfPrice = LS('dta_pl_bf_price',0);
+  setPLBreakfast(bf);
+  const bfInp = document.getElementById('pl-bf-price');
+  if(bfInp) bfInp.value = bfPrice||'';
 }
 
 function renderPLTable(){
@@ -8839,6 +8872,8 @@ function savePriceListData(){
   });
   const notes = document.getElementById('pl-notes');
   if(notes) sv('dta_pl_notes', notes.value);
+  const bfInp = document.getElementById('pl-bf-price');
+  if(bfInp) sv('dta_pl_bf_price', parseFloat(bfInp.value)||0);
   sv('dta_pl_data', plData);
   sNotify('✅ تم الحفظ','تم حفظ قائمة الأسعار','success',2000);
 }
@@ -8859,6 +8894,10 @@ function buildPLContent(forWA=false){
   const seasonLabel = PL_SEASONS[plSeason]||plSeason;
   const notes = LS('dta_pl_notes','');
   const today = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
+  const bfMode = LS('dta_pl_breakfast','none');
+  const bfPrice = LS('dta_pl_bf_price',0);
+  const bfLabel = bfMode==='included' ? `✅ إفطار مشمول / Breakfast Included${bfPrice?` (${sym}${bfPrice}/فرد)`:''}` :
+                  bfMode==='optional' ? `➕ إفطار اختياري / Breakfast Optional (${sym}${bfPrice}/فرد)` : '';
   if(forWA){
     let msg = `🏨 *${prop.name}*\n💰 *قائمة الأسعار — ${seasonLabel}*\n💱 العملة: ${curLabel}\n📅 ${today}\n\n`;
     PL_ROOM_TYPES.forEach(t=>{
@@ -8867,12 +8906,13 @@ function buildPLContent(forWA=false){
       const price = row[key]!==undefined ? row[key] : (row[plSeason]||0);
       if(price>0) msg += `🛏️ *${t}*: ${sym}${price.toLocaleString()}/ليلة\n`;
     });
+    if(bfLabel) msg += `\n🍳 ${bfLabel}`;
     if(notes) msg += `\n📝 ${notes}`;
     msg += `\n\n📞 ${prop.phone||''}`;
     if(prop.email) msg += `\n✉️ ${prop.email}`;
     return msg;
   }
-  return {prop, d, sym, curTab, curLabel, seasonLabel, notes, today};
+  return {prop, d, sym, curTab, curLabel, seasonLabel, notes, today, bfMode, bfPrice, bfLabel};
 }
 
 function sendPriceListWA(){
@@ -8884,23 +8924,23 @@ function sendPriceListWA(){
 
 function printPriceList(){
   savePriceListData();
-  const {prop, d, sym, curTab, curLabel, seasonLabel, notes, today} = buildPLContent(false);
+  const {prop, d, sym, curTab, curLabel, seasonLabel, notes, today, bfMode, bfPrice, bfLabel} = buildPLContent(false);
 
   const SEASON_META = {
-    low:  {icon:'🌥️', ar:'الموسم المنخفض',  en:'Low Season',  color:'#74b9ff', bg:'rgba(116,185,255,0.12)'},
-    mid:  {icon:'⛅', ar:'الموسم المتوسط',  en:'Mid Season',  color:'#fdcb6e', bg:'rgba(253,203,110,0.12)'},
-    high: {icon:'☀️', ar:'الموسم المرتفع', en:'High Season', color:'#e17055', bg:'rgba(225,112,85,0.12)'},
-    peak: {icon:'🎉', ar:'موسم الذروة',    en:'Peak Season', color:'#c9a84c', bg:'rgba(201,168,76,0.15)'}
+    low:  {icon:'🌥️', ar:'الموسم المنخفض',  en:'Low Season',  color:'#74b9ff', bg:'rgba(116,185,255,0.1)'},
+    mid:  {icon:'⛅', ar:'الموسم المتوسط',  en:'Mid Season',  color:'#fdcb6e', bg:'rgba(253,203,110,0.1)'},
+    high: {icon:'☀️', ar:'الموسم المرتفع', en:'High Season', color:'#e17055', bg:'rgba(225,112,85,0.1)'},
+    peak: {icon:'🎉', ar:'موسم الذروة',    en:'Peak Season', color:'#c9a84c', bg:'rgba(201,168,76,0.12)'}
   };
   const sm = SEASON_META[plSeason]||SEASON_META.low;
 
   const ROOM_META = {
-    'Single':          {icon:'🛏️',  ar:'غرفة سينجل',      en:'Single Room',       guests:'1 فرد / 1 Guest'},
-    'Double':          {icon:'🛏️',  ar:'غرفة دبل',         en:'Double Room',       guests:'2 أفراد / 2 Guests'},
-    'Triple':          {icon:'🛏️',  ar:'غرفة تريبل',       en:'Triple Room',       guests:'3 أفراد / 3 Guests'},
-    'Suite (غرفتين)':  {icon:'🏡',  ar:'جناح (غرفتين)',    en:'Suite (2 Rooms)',   guests:'4 أفراد / 4 Guests'},
-    'Quad (رباعي)':    {icon:'👨‍👩‍👧‍👦', ar:'غرفة رباعية',      en:'Quad Room',         guests:'4 أفراد / 4 Guests'},
-    'Dorm Bed':        {icon:'🏕️',  ar:'سرير دورم',        en:'Dorm Bed',          guests:'مشترك / Shared'}
+    'Single':         {icon:'🛏️', ar:'غرفة سينجل',   en:'Single Room',     guests:'1 فرد / 1 Guest'},
+    'Double':         {icon:'🛏️', ar:'غرفة دبل',      en:'Double Room',     guests:'2 أفراد / 2 Guests'},
+    'Triple':         {icon:'🛏️', ar:'غرفة تريبل',    en:'Triple Room',     guests:'3 أفراد / 3 Guests'},
+    'Suite (غرفتين)':{icon:'🏡', ar:'جناح (غرفتين)', en:'Suite (2 Rooms)', guests:'4 أفراد / 4 Guests'},
+    'Quad (رباعي)':  {icon:'👨‍👩‍👧‍👦', ar:'غرفة رباعية',   en:'Quad Room',       guests:'4 أفراد / 4 Guests'},
+    'Dorm Bed':       {icon:'🏕️', ar:'سرير دورم',     en:'Dorm Bed',        guests:'مشترك / Shared'}
   };
 
   const rows = PL_ROOM_TYPES.map((t,i)=>{
@@ -8910,126 +8950,108 @@ function printPriceList(){
     if(!price) return '';
     const meta = ROOM_META[t]||{icon:'🛏️',ar:t,en:t,guests:''};
     return `<tr>
-      <td style="padding:14px 16px;border-bottom:1px solid #f0ead8;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:20px;">${meta.icon}</span>
+      <td style="padding:7px 12px;border-bottom:1px solid #f0ead8;${i%2===0?'background:#fdfbf5':''}">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px;">${meta.icon}</span>
           <div>
-            <div style="font-weight:800;color:#1a1a2e;font-size:13px;">${meta.ar}</div>
-            <div style="font-size:11px;color:#888;font-style:italic;">${meta.en}</div>
-            <div style="font-size:10px;color:#aaa;margin-top:2px;">👥 ${meta.guests}</div>
+            <div style="font-weight:800;color:#1a1a2e;font-size:12px;">${meta.ar} <span style="font-weight:400;color:#888;font-size:10px;font-style:italic;">/ ${meta.en}</span></div>
+            <div style="font-size:10px;color:#aaa;">👥 ${meta.guests}</div>
           </div>
         </div>
       </td>
-      <td style="padding:14px 16px;border-bottom:1px solid #f0ead8;text-align:center;vertical-align:middle;">
-        <div style="font-size:20px;font-weight:900;color:#c9a84c;">${sym}${price.toLocaleString()}</div>
-        <div style="font-size:10px;color:#aaa;margin-top:2px;">لليلة / per night</div>
+      <td style="padding:7px 12px;border-bottom:1px solid #f0ead8;text-align:center;${i%2===0?'background:#fdfbf5':''}">
+        <span style="font-size:16px;font-weight:900;color:#c9a84c;">${sym}${price.toLocaleString()}</span>
+        <div style="font-size:9px;color:#aaa;">/ ليلة · night</div>
       </td>
     </tr>`;
   }).filter(Boolean).join('');
+
+  const bfItem = bfMode==='included'
+    ? `<div class="inc-item" style="border-color:#27ae60;background:#f0fff4;">🍳 إفطار مشمول <span style="color:#aaa;font-size:9px;">/ Included${bfPrice?' ('+sym+bfPrice+'/فرد)':''}</span></div>`
+    : bfMode==='optional'
+    ? `<div class="inc-item" style="border-color:#e67e22;background:#fff8f0;">🍳 إفطار اختياري <span style="color:#aaa;font-size:9px;">/ Optional (${sym}${bfPrice}/فرد)</span></div>`
+    : `<div class="inc-item" style="border-color:#e74c3c;background:#fff5f5;">🚫 بدون إفطار <span style="color:#aaa;font-size:9px;">/ Room Only</span></div>`;
 
   const html = `<!DOCTYPE html><html lang="ar"><head><meta charset="UTF-8">
   <title>قائمة الأسعار — ${prop.name}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Cairo',Arial,sans-serif;background:#eef0f3;min-height:100vh;padding:24px;}
-    .page{background:#fff;max-width:680px;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.15);}
+    body{font-family:'Cairo',Arial,sans-serif;background:#eef0f3;padding:16px;}
+    .page{background:#fff;max-width:640px;margin:0 auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.12);}
 
-    /* ── HERO HEADER ── */
-    .hero{background:linear-gradient(145deg,#0d1b2a 0%,#1a1a2e 50%,#0f3460 100%);padding:36px 32px 28px;position:relative;overflow:hidden;}
-    .hero::before{content:'';position:absolute;top:-40px;left:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(201,168,76,0.12),transparent 70%);border-radius:50%;}
-    .hero::after{content:'';position:absolute;bottom:-30px;right:-30px;width:140px;height:140px;background:radial-gradient(circle,rgba(201,168,76,0.08),transparent 70%);border-radius:50%;}
-    .hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
-    .hotel-logo{font-size:38px;line-height:1;}
-    .hotel-name{font-size:17px;font-weight:900;color:#c9a84c;letter-spacing:.5px;margin-top:6px;}
-    .hotel-tagline-ar{font-size:12px;color:rgba(255,255,255,0.7);margin-top:3px;font-weight:600;}
-    .hotel-tagline-en{font-size:11px;color:rgba(201,168,76,0.7);font-style:italic;margin-top:1px;}
-    .hotel-contact{font-size:11px;color:#a0b4c8;margin-top:6px;line-height:1.8;}
-    .pl-badge{background:#c9a84c;color:#1a1a2e;font-size:9px;font-weight:900;padding:5px 12px;border-radius:4px;letter-spacing:2px;text-align:center;}
-    .pl-badge-sub{color:#a0b4c8;font-size:10px;margin-top:6px;text-align:right;}
-    .pl-badge-date{color:rgba(201,168,76,0.8);font-size:10px;margin-top:3px;text-align:right;}
+    .hero{background:linear-gradient(145deg,#0d1b2a 0%,#1a1a2e 55%,#0f3460 100%);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+    .hotel-name{font-size:15px;font-weight:900;color:#c9a84c;}
+    .hotel-tagline{font-size:10px;color:rgba(255,255,255,0.65);margin-top:2px;}
+    .hotel-tagline-en{font-size:9px;color:rgba(201,168,76,0.65);font-style:italic;}
+    .hotel-contact{font-size:10px;color:#a0b4c8;margin-top:4px;direction:ltr;text-align:right;line-height:1.6;}
+    .pl-badge{background:#c9a84c;color:#1a1a2e;font-size:9px;font-weight:900;padding:4px 10px;border-radius:4px;letter-spacing:2px;white-space:nowrap;}
+    .pl-date{color:rgba(201,168,76,0.75);font-size:9px;margin-top:4px;text-align:left;}
 
-    /* ── SEASON BANNER ── */
-    .season-banner{background:${sm.bg};border-bottom:3px solid ${sm.color};padding:12px 32px;display:flex;align-items:center;gap:12px;}
-    .season-icon{font-size:24px;}
-    .season-ar{font-size:14px;font-weight:800;color:${sm.color};}
-    .season-en{font-size:11px;color:#888;font-style:italic;}
-    .cur-pill{margin-right:auto;background:rgba(201,168,76,0.15);border:1px solid #c9a84c;color:#c9a84c;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;}
+    .season-bar{background:${sm.bg};border-bottom:2px solid ${sm.color};padding:7px 24px;display:flex;align-items:center;gap:8px;}
+    .season-ar{font-size:12px;font-weight:800;color:${sm.color};}
+    .season-en{font-size:10px;color:#888;font-style:italic;}
+    .cur-pill{margin-right:auto;background:rgba(201,168,76,0.12);border:1px solid #c9a84c;color:#c9a84c;font-size:10px;font-weight:700;padding:2px 10px;border-radius:12px;}
 
-    /* ── GOLD BAR ── */
-    .gold-bar{height:3px;background:linear-gradient(90deg,#c9a84c,#f5e6a3,#c9a84c);}
+    .gold-bar{height:2px;background:linear-gradient(90deg,#c9a84c,#f5e6a3,#c9a84c);}
+    .body{padding:14px 24px;}
 
-    /* ── BODY ── */
-    .pl-body{padding:24px 32px;}
-    .section-title{font-size:11px;font-weight:800;color:#c9a84c;letter-spacing:2px;border-right:3px solid #c9a84c;padding-right:8px;margin-bottom:14px;direction:rtl;}
+    .sec-title{font-size:10px;font-weight:800;color:#c9a84c;letter-spacing:2px;border-right:2px solid #c9a84c;padding-right:6px;margin-bottom:8px;direction:rtl;}
 
-    /* ── TABLE ── */
     table{width:100%;border-collapse:collapse;}
     thead tr{background:linear-gradient(135deg,#1a1a2e,#16213e);}
-    th{padding:10px 16px;font-size:10px;letter-spacing:1px;font-weight:700;}
-    th:first-child{color:#c9a84c;text-align:right;}
-    th:last-child{color:#c9a84c;text-align:center;}
-    tr:nth-child(even) td{background:#fdfbf5;}
+    th{padding:7px 12px;font-size:9px;letter-spacing:1px;font-weight:700;color:#c9a84c;}
+    th:first-child{text-align:right;}
+    th:last-child{text-align:center;}
 
-    /* ── INCLUDES BOX ── */
-    .includes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;}
-    .inc-item{background:#fdfbf5;border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:11px;color:#555;border-right:2px solid #c9a84c;}
+    .includes{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px;}
+    .inc-item{background:#fdfbf5;border-radius:6px;padding:5px 8px;display:flex;align-items:center;gap:6px;font-size:10px;color:#555;border-right:2px solid #c9a84c;}
 
-    /* ── NOTES ── */
-    .notes-box{margin-top:16px;background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.3);border-radius:10px;padding:12px 16px;}
-    .notes-title{font-size:10px;color:#c9a84c;font-weight:800;letter-spacing:1px;margin-bottom:6px;}
-    .notes-text{font-size:12px;color:#555;line-height:1.7;}
+    .notes-box{margin-top:10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:8px 12px;}
+    .notes-title{font-size:9px;color:#c9a84c;font-weight:800;letter-spacing:1px;margin-bottom:3px;}
+    .notes-text{font-size:11px;color:#555;line-height:1.6;}
 
-    /* ── CTA ── */
-    .cta{margin-top:20px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:10px;padding:14px 20px;text-align:center;}
-    .cta-ar{font-size:14px;font-weight:800;color:#c9a84c;margin-bottom:3px;}
-    .cta-en{font-size:11px;color:#a0b4c8;font-style:italic;}
-    .cta-contact{margin-top:8px;font-size:12px;color:#fff;display:flex;justify-content:center;gap:20px;flex-wrap:wrap;}
+    .cta{margin-top:10px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:8px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+    .cta-text{font-size:12px;font-weight:800;color:#c9a84c;}
+    .cta-en{font-size:9px;color:#a0b4c8;font-style:italic;margin-top:1px;}
+    .cta-contact{font-size:10px;color:#fff;display:flex;gap:14px;flex-wrap:wrap;direction:ltr;}
 
-    /* ── FOOTER ── */
-    .pl-footer{background:linear-gradient(135deg,#0d1b2a,#1a1a2e);padding:14px 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
-    .footer-brand{font-size:12px;font-weight:700;color:#c9a84c;}
-    .footer-legal{font-size:10px;color:rgba(160,180,200,0.6);text-align:left;}
+    .pl-footer{background:linear-gradient(135deg,#0d1b2a,#1a1a2e);padding:8px 24px;display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
+    .footer-brand{font-size:11px;font-weight:700;color:#c9a84c;}
+    .footer-legal{font-size:9px;color:rgba(160,180,200,0.55);text-align:left;line-height:1.5;}
 
-    @media print{body{background:#fff;padding:0;}.page{box-shadow:none;border-radius:0;}}
+    @media print{
+      body{background:#fff;padding:0;}
+      .page{box-shadow:none;border-radius:0;max-width:100%;}
+      @page{margin:8mm;size:A4;}
+    }
   </style></head><body>
   <div class="page">
 
-    <!-- HERO -->
     <div class="hero">
-      <div class="hero-top">
-        <div>
-          <div class="hotel-logo">🏨</div>
-          <div class="hotel-name">${prop.name}</div>
-          <div class="hotel-tagline-ar">نُقدّم لك تجربة إقامة لا تُنسى في قلب دهب</div>
-          <div class="hotel-tagline-en">An unforgettable stay in the heart of Dahab</div>
-          <div class="hotel-contact" style="direction:ltr;text-align:right;">
-            ${prop.phone||''}<br>${prop.email||''}
-          </div>
-        </div>
-        <div>
-          <div class="pl-badge">PRICE LIST</div>
-          <div class="pl-badge-sub">قائمة الأسعار</div>
-          <div class="pl-badge-date">📅 ${today}</div>
-        </div>
+      <div>
+        <div style="font-size:22px;line-height:1;margin-bottom:4px;">🏨</div>
+        <div class="hotel-name">${prop.name}</div>
+        <div class="hotel-tagline">نُقدّم لك تجربة إقامة لا تُنسى في قلب دهب</div>
+        <div class="hotel-tagline-en">An unforgettable stay in the heart of Dahab</div>
+        <div class="hotel-contact">${prop.phone||''}<br>${prop.email||''}</div>
+      </div>
+      <div style="text-align:left;">
+        <div class="pl-badge">PRICE LIST</div>
+        <div style="color:#a0b4c8;font-size:9px;margin-top:4px;text-align:right;">قائمة الأسعار</div>
+        <div class="pl-date">📅 ${today}</div>
       </div>
     </div>
 
-    <!-- SEASON BANNER -->
-    <div class="season-banner">
-      <span class="season-icon">${sm.icon}</span>
-      <div>
-        <div class="season-ar">${sm.ar}</div>
-        <div class="season-en">${sm.en}</div>
-      </div>
+    <div class="season-bar">
+      <span style="font-size:16px;">${sm.icon}</span>
+      <div><div class="season-ar">${sm.ar}</div><div class="season-en">${sm.en}</div></div>
       <div class="cur-pill">💱 ${curLabel}</div>
     </div>
     <div class="gold-bar"></div>
 
-    <div class="pl-body">
-
-      <!-- ROOMS TABLE -->
-      <div class="section-title">🛏️ ROOM RATES &nbsp;·&nbsp; أسعار الغرف</div>
+    <div class="body">
+      <div class="sec-title" style="margin-top:8px;">🛏️ ROOM RATES · أسعار الغرف</div>
       <table>
         <thead><tr>
           <th style="text-align:right;">نوع الغرفة / Room Type</th>
@@ -9038,40 +9060,28 @@ function printPriceList(){
         <tbody>${rows}</tbody>
       </table>
 
-      <!-- INCLUDES -->
-      <div style="margin-top:18px;">
-        <div class="section-title">✨ INCLUDES &nbsp;·&nbsp; يشمل</div>
+      <div style="margin-top:10px;">
+        <div class="sec-title">✨ INCLUDES · يشمل</div>
         <div class="includes">
-          <div class="inc-item">🌅 إطلالة رائعة<span style="color:#aaa;font-size:10px;"> / Amazing View</span></div>
-          <div class="inc-item">📶 واي فاي مجاني<span style="color:#aaa;font-size:10px;"> / Free WiFi</span></div>
-          <div class="inc-item">🧹 تنظيف يومي<span style="color:#aaa;font-size:10px;"> / Daily Cleaning</span></div>
-          <div class="inc-item">🔑 تسجيل مرن<span style="color:#aaa;font-size:10px;"> / Flexible Check-in</span></div>
+          <div class="inc-item">🌅 إطلالة رائعة <span style="color:#aaa;font-size:9px;">/ Amazing View</span></div>
+          <div class="inc-item">📶 واي فاي مجاني <span style="color:#aaa;font-size:9px;">/ Free WiFi</span></div>
+          <div class="inc-item">🧹 تنظيف يومي <span style="color:#aaa;font-size:9px;">/ Daily Cleaning</span></div>
+          <div class="inc-item">🔑 تسجيل مرن <span style="color:#aaa;font-size:9px;">/ Flexible Check-in</span></div>
+          ${bfItem}
         </div>
       </div>
 
-      ${notes?`
-      <!-- NOTES -->
-      <div class="notes-box">
-        <div class="notes-title">📝 NOTES &nbsp;·&nbsp; ملاحظات</div>
-        <div class="notes-text">${notes}</div>
-      </div>`:''}
+      ${notes?`<div class="notes-box"><div class="notes-title">📝 NOTES · ملاحظات</div><div class="notes-text">${notes}</div></div>`:''}
 
-      <!-- CTA -->
       <div class="cta">
-        <div class="cta-ar">احجز الآن واستمتع بإقامتك</div>
-        <div class="cta-en">Book now and enjoy your stay with us</div>
-        <div class="cta-contact">
-          <span>📞 <span style="direction:ltr;unicode-bidi:plaintext;">${prop.phone||''}</span></span>
-          <span>✉️ ${prop.email||''}</span>
-        </div>
+        <div><div class="cta-text">احجز الآن واستمتع بإقامتك</div><div class="cta-en">Book now and enjoy your stay</div></div>
+        <div class="cta-contact"><span>📞 ${prop.phone||''}</span><span>✉️ ${prop.email||''}</span></div>
       </div>
-
     </div>
 
-    <!-- FOOTER -->
     <div class="pl-footer">
       <div class="footer-brand">🏨 ${prop.name}</div>
-      <div class="footer-legal">الأسعار قابلة للتغيير بدون إشعار<br>Prices subject to change without notice</div>
+      <div class="footer-legal">الأسعار قابلة للتغيير · Prices subject to change</div>
     </div>
 
   </div>
