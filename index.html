@@ -7485,8 +7485,8 @@ if(tc && !tagShownSubtotal.has(tk)){
     "<span style='color:"+tc.text+";font-weight:700;font-size:11px;'>🔗 "+tot.label+"</span>"+
     "<span style='color:var(--muted);font-size:10px;margin-left:8px;'>"+tot.count+" مصروفات مرتبطة</span>"+
     "</td>"+
-    "<td style='color:"+tc.text+";font-weight:700;border-top:1px solid "+tc.border+";border-bottom:1px solid "+tc.border+";'>£"+tot.egp.toFixed(0)+" total</td>"+
-    "<td class='col-hide-sm' style='color:"+tc.text+";border-top:1px solid "+tc.border+";border-bottom:1px solid "+tc.border+";'>$"+tot.usd.toFixed(0)+"</td>"+
+    "<td style='color:"+tc.text+";font-weight:700;border-top:1px solid "+tc.border+";border-bottom:1px solid "+tc.border+";'>−£"+tot.egp.toFixed(0)+" total</td>"+
+    "<td class='col-hide-sm' style='color:"+tc.text+";border-top:1px solid "+tc.border+";border-bottom:1px solid "+tc.border+";'>−$"+tot.usd.toFixed(0)+"</td>"+
     "<td class='col-hide-sm' colspan='4' style='border-top:1px solid "+tc.border+";border-bottom:1px solid "+tc.border+";'></td>"+
     "</tr>";
 }
@@ -7503,9 +7503,9 @@ return subtotalRow+
     "</div>"+
     "<div style='font-size:12px;color:var(--text);margin-bottom:4px;'>"+e.desc+tagBadge+"</div>"+
     "<div style='display:flex;gap:10px;flex-wrap:wrap;'>"+
-      "<span style='color:#e74c3c;font-weight:700;font-size:13px;'>£"+e.egp.toFixed(0)+"</span>"+
-      "<span style='color:#e67e22;font-size:11px;'>$"+e.usd.toFixed(0)+"</span>"+
-      "<span style='color:#a8d8a8;font-size:11px;'>€"+(e.eur||+(e.egp/eurRate).toFixed(0))+"</span>"+
+      "<span style='color:#e74c3c;font-weight:700;font-size:13px;'>−£"+e.egp.toFixed(0)+"</span>"+
+      "<span style='color:#e67e22;font-size:11px;'>−$"+e.usd.toFixed(0)+"</span>"+
+      "<span style='color:#a8d8a8;font-size:11px;'>−€"+(e.eur||+(e.egp/eurRate).toFixed(0))+"</span>"+
     "</div>"+
     (e.notes?"<div style='font-size:10px;color:var(--muted);margin-top:3px;'>📝 "+e.notes+"</div>":"")+
   "</div>"+
