@@ -43,6 +43,7 @@ select option{background:#1a1a2e;color:var(--text)}
 /* BUTTONS */
 .btn{border:none;cursor:pointer;border-radius:7px;padding:8px 14px;font-size:13px;font-weight:700;font-family:Arial,"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif;display:inline-flex;align-items:center;gap:5px;transition:all .15s}
 .btn:hover{filter:brightness(1.1)}
+.act-season{background:rgba(201,168,76,0.25)!important;color:#c9a84c!important;border-color:#c9a84c!important;font-weight:800!important;}
 .bg{background:var(--gold);color:#1a1a2e}
 :root.light-mode .bg{color:#fff}
 .bb{background:rgba(255,255,255,0.07);color:var(--muted);border:1px solid var(--bdr)}
@@ -858,6 +859,7 @@ select option{background:#1a1a2e;color:var(--text)}
 <button class="nb" onclick="goPage('expenses',this)">💸 <span class="t" data-ar="المصروفات" data-en="Expenses">Expenses</span></button>
 <button class="nb" onclick="goPage('debt',this)" style="background:rgba(231,76,60,0.12);color:#e74c3c;border-color:rgba(231,76,60,0.4);font-weight:700;">💳 <span class="t" data-ar="مديونيات" data-en="Debt">مديونيات</span></button>
 <button class="nb" onclick="goPage('groupbooking',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;">🏢 <span class="t" data-ar="حجز جروب" data-en="Group Booking">حجز جروب</span></button>
+<button class="nb" onclick="goPage('pricelist',this)" style="background:rgba(201,168,76,0.12);color:#c9a84c;border-color:rgba(201,168,76,0.4);font-weight:700;">💰 <span class="t" data-ar="قائمة الأسعار" data-en="Price List">قائمة الأسعار</span></button>
 <button class="nb" onclick="goPage('invoice',this)">📄 <span class="t" data-ar="الفاتورة" data-en="Invoice">Invoice</span></button>
 <button class="nb" onclick="goPage('restaurant',this)">🍽️ <span class="t" data-ar="المطعم" data-en="Restaurant">Restaurant</span></button>
 <button class="nb" onclick="goPage('tours',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;">🏔️ <span class="t" data-ar="رحلات" data-en="Tours">رحلات</span></button>
@@ -1089,6 +1091,56 @@ select option{background:#1a1a2e;color:var(--text)}
 <!-- ═══════════════════════════════════════════ -->
 <!-- 🏢 GROUP BOOKING PAGE -->
 <!-- ═══════════════════════════════════════════ -->
+<div id="page-pricelist" class="page">
+  <div class="ptitle">💰 <span class="t" data-ar="قائمة الأسعار" data-en="Price List">قائمة الأسعار</span></div>
+
+  <div style="max-width:700px;margin:0 auto;">
+
+    <!-- Header Card -->
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:14px;padding:20px 24px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="color:#c9a84c;font-size:16px;font-weight:800;" id="pl-prop-name">—</div>
+        <div style="color:#a0b4c8;font-size:12px;margin-top:4px;" id="pl-prop-addr">—</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn" style="background:#25D366;color:#fff;font-size:12px;" onclick="sendPriceListWA()">📲 واتساب</button>
+        <button class="btn" style="background:#c9a84c;color:#1a1a2e;font-size:12px;" onclick="printPriceList()">🖨️ PDF / طباعة</button>
+        <button class="btn" style="background:#3498db;color:#fff;font-size:12px;" onclick="resetPriceListToDefaults()">🔄 إعادة تعيين</button>
+      </div>
+    </div>
+
+    <!-- Season Selector -->
+    <div style="background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
+      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:10px;">🌊 الموسم</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button id="pl-season-low"   class="btn bsm pl-season-btn act-season" onclick="setPLSeason('low')"   style="font-size:12px;">🌥️ Low Season</button>
+        <button id="pl-season-mid"   class="btn bsm pl-season-btn"            onclick="setPLSeason('mid')"   style="font-size:12px;">⛅ Mid Season</button>
+        <button id="pl-season-high"  class="btn bsm pl-season-btn"            onclick="setPLSeason('high')"  style="font-size:12px;">☀️ High Season</button>
+        <button id="pl-season-peak"  class="btn bsm pl-season-btn"            onclick="setPLSeason('peak')"  style="font-size:12px;">🎉 Peak Season</button>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div style="background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
+      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:8px;">📝 ملاحظات (تظهر في القائمة)</div>
+      <textarea id="pl-notes" rows="2" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;resize:vertical;" placeholder="مثال: الأسعار تشمل الإفطار — السعر لليلة الواحدة — قابل للتفاوض للجروب"></textarea>
+    </div>
+
+    <!-- Price Table -->
+    <div style="background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
+      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:14px;">🛏️ الأسعار (قابلة للتعديل)</div>
+      <div id="pl-table"></div>
+      <button class="btn" style="margin-top:12px;background:#27ae60;color:#fff;font-size:13px;width:100%;" onclick="savePriceListData()">💾 حفظ الأسعار</button>
+    </div>
+
+    <!-- Currency Note -->
+    <div style="background:var(--card);border-radius:12px;padding:14px 20px;font-size:12px;color:#888;">
+      💡 الأسعار بالجنيه الإسترليني (£) — عدّلها حسب الموسم وبعتها للعميل مباشرةً
+    </div>
+
+  </div>
+</div>
+
 <div id="page-groupbooking" class="page">
 <div class="page-header">
   <div class="ptitle">🏢 <span class="t" data-ar="حجز جروب / شركات" data-en="Group & Corporate Booking">حجز جروب / شركات</span></div>
@@ -3911,7 +3963,7 @@ document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
 document.querySelectorAll(".nb").forEach(b=>b.classList.remove("act"));
 document.getElementById("page-"+id).classList.add("on");
 if(btn) btn.classList.add("act");
-const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage};
+const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage};
 if(map[id]) map[id]();
 if(id==="invoice"){renderInvRooms();buildPreview();}
 }
@@ -8675,6 +8727,200 @@ renderDUPrices();
 function updPrice(t,v){if(prices[t])prices[t][sCur.toLowerCase()]=Number(v);renderSettings();}
 function savePrices(){sv("dta_pr",prices);renderSettings();}
 function resetPrices(){prices=JSON.parse(JSON.stringify(DEF_PRICES));sv("dta_pr",prices);renderSettings();}
+
+// ==================== PRICE LIST ====================
+const PL_ROOM_TYPES = ['Single','Double','Triple','Suite (غرفتين)','Quad (رباعي)','Dorm Bed'];
+const PL_SEASONS = {low:'Low Season',mid:'Mid Season',high:'High Season',peak:'Peak Season'};
+let plSeason = LS('dta_pl_season','low');
+let plData   = LS('dta_pl_data', null);
+
+function getPLData(){
+  // Build from current prices as defaults if no custom plData
+  if(!plData){
+    plData = {};
+    PL_ROOM_TYPES.forEach(t=>{
+      const key = t.includes('Suite')?'Suite':t.includes('Quad')?'Suite':t==='Dorm Bed'?'Dorm Bed':t;
+      const base = (prices[key]||{egp:0});
+      plData[t] = {low: base.egp||0, mid: Math.round((base.egp||0)*1.2), high: Math.round((base.egp||0)*1.4), peak: Math.round((base.egp||0)*1.6)};
+    });
+    sv('dta_pl_data', plData);
+  }
+  return plData;
+}
+
+function setPLSeason(s){
+  plSeason = s;
+  sv('dta_pl_season', s);
+  document.querySelectorAll('.pl-season-btn').forEach(b=>b.classList.remove('act-season'));
+  const btn = document.getElementById('pl-season-'+s);
+  if(btn) btn.classList.add('act-season');
+  renderPLTable();
+}
+
+function renderPLPage(){
+  const prop = (typeof PROP!=='undefined')?PROP:{name:'',address:''};
+  const el = document.getElementById('pl-prop-name');
+  const ea = document.getElementById('pl-prop-addr');
+  if(el) el.textContent = '🏨 '+prop.name;
+  if(ea) ea.textContent = prop.address||'';
+  getPLData();
+  setPLSeason(plSeason);
+  const notes = LS('dta_pl_notes','');
+  const nt = document.getElementById('pl-notes');
+  if(nt) nt.value = notes;
+}
+
+function renderPLTable(){
+  const d = getPLData();
+  const sym = '£';
+  let html = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead><tr style="background:linear-gradient(135deg,#1a1a2e,#16213e);">
+      <th style="color:#c9a84c;padding:10px 12px;text-align:right;font-size:11px;">نوع الغرفة</th>
+      <th style="color:#a0b4c8;padding:10px 8px;text-align:center;font-size:10px;">Low</th>
+      <th style="color:#a0b4c8;padding:10px 8px;text-align:center;font-size:10px;">Mid</th>
+      <th style="color:#a0b4c8;padding:10px 8px;text-align:center;font-size:10px;">High</th>
+      <th style="color:#f1c40f;padding:10px 8px;text-align:center;font-size:10px;">Peak</th>
+    </tr></thead><tbody>`;
+  PL_ROOM_TYPES.forEach((t,i)=>{
+    const row = d[t]||{low:0,mid:0,high:0,peak:0};
+    html += `<tr style="border-bottom:1px solid var(--border);${i%2===0?'background:rgba(255,255,255,0.02)':''}">
+      <td style="padding:9px 12px;font-weight:700;color:var(--text);">${t}</td>
+      ${['low','mid','high','peak'].map(s=>`
+      <td style="padding:6px 4px;text-align:center;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
+          <span style="color:#888;font-size:11px;">${sym}</span>
+          <input type="number" id="pl-inp-${t.replace(/[^a-zA-Z]/g,'')}-${s}" value="${row[s]||0}"
+            style="width:70px;background:${s===plSeason?'rgba(201,168,76,0.15)':'var(--bg)'};color:${s===plSeason?'#c9a84c':'var(--text)'};
+            border:1px solid ${s===plSeason?'#c9a84c':'var(--border)'};border-radius:6px;padding:4px 6px;
+            font-size:12px;font-weight:${s===plSeason?'700':'400'};text-align:center;"
+            oninput="updatePLVal('${t}','${s}',this.value)">
+        </div>
+      </td>`).join('')}
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  const el = document.getElementById('pl-table');
+  if(el) el.innerHTML = html;
+}
+
+function updatePLVal(type, season, val){
+  getPLData();
+  if(!plData[type]) plData[type]={low:0,mid:0,high:0,peak:0};
+  plData[type][season] = parseFloat(val)||0;
+}
+
+function savePriceListData(){
+  getPLData();
+  PL_ROOM_TYPES.forEach(t=>{
+    ['low','mid','high','peak'].forEach(s=>{
+      const inp = document.getElementById('pl-inp-'+t.replace(/[^a-zA-Z]/g,'')+'-'+s);
+      if(inp){ if(!plData[t]) plData[t]={low:0,mid:0,high:0,peak:0}; plData[t][s]=parseFloat(inp.value)||0; }
+    });
+  });
+  const notes = document.getElementById('pl-notes');
+  if(notes) sv('dta_pl_notes', notes.value);
+  sv('dta_pl_data', plData);
+  sNotify('✅ تم الحفظ','تم حفظ قائمة الأسعار','success',2000);
+}
+
+function resetPriceListToDefaults(){
+  plData = null; sv('dta_pl_data', null);
+  getPLData(); renderPLTable();
+  sNotify('🔄','تم إعادة تعيين الأسعار من الإعدادات','info',2000);
+}
+
+function buildPLContent(forWA=false){
+  const prop = (typeof PROP!=='undefined')?PROP:{name:'',phone:''};
+  const d = getPLData();
+  const sym = '£';
+  const seasonLabel = PL_SEASONS[plSeason]||plSeason;
+  const notes = LS('dta_pl_notes','');
+  const today = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
+  if(forWA){
+    let msg = `🏨 *${prop.name}*\n💰 *قائمة الأسعار — ${seasonLabel}*\n📅 ${today}\n\n`;
+    PL_ROOM_TYPES.forEach(t=>{
+      const row = d[t]||{};
+      const price = row[plSeason]||0;
+      if(price>0) msg += `🛏️ *${t}*: ${sym}${price.toLocaleString()}/ليلة\n`;
+    });
+    if(notes) msg += `\n📝 ${notes}`;
+    msg += `\n\n📞 ${prop.phone||''}`;
+    return msg;
+  }
+  return {prop, d, sym, seasonLabel, notes, today};
+}
+
+function sendPriceListWA(){
+  savePriceListData();
+  const msg = buildPLContent(true);
+  const url = 'https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
+
+function printPriceList(){
+  savePriceListData();
+  const {prop, d, sym, seasonLabel, notes, today} = buildPLContent(false);
+  const rows = PL_ROOM_TYPES.map((t,i)=>{
+    const row = d[t]||{low:0,mid:0,high:0,peak:0};
+    return `<tr style="${i%2===0?'background:#fdfbf5':''}">
+      <td style="padding:10px 14px;font-weight:700;">${t}</td>
+      ${['low','mid','high','peak'].map(s=>`<td style="text-align:center;padding:10px 8px;${s===plSeason?'font-weight:800;color:#c9a84c;':'color:#555;'}">${row[s]?sym+row[s].toLocaleString():'—'}</td>`).join('')}
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
+  <title>قائمة الأسعار — ${prop.name}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:Arial,sans-serif;background:#f4f4f4;padding:30px;}
+    .page{background:#fff;max-width:700px;margin:0 auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.13);}
+    .hdr{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:28px 32px;display:flex;justify-content:space-between;align-items:center;}
+    .hname{font-size:18px;font-weight:900;color:#c9a84c;}
+    .hsub{font-size:11px;color:#a0b4c8;margin-top:4px;line-height:1.6;}
+    .hbadge{background:#c9a84c;color:#1a1a2e;font-size:10px;font-weight:900;padding:4px 10px;border-radius:4px;letter-spacing:1px;}
+    .gold-bar{height:4px;background:linear-gradient(90deg,#c9a84c,#f0e0a0,#c9a84c);}
+    .body{padding:24px 32px;}
+    .season-badge{display:inline-block;background:rgba(201,168,76,0.15);color:#c9a84c;border:1px solid #c9a84c;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:16px;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    thead tr{background:linear-gradient(135deg,#1a1a2e,#16213e);}
+    th{color:#c9a84c;padding:10px 12px;text-align:right;font-size:11px;letter-spacing:1px;}
+    th.active{color:#f1c40f;}
+    td{padding:10px 12px;border-bottom:1px solid #f0ead8;}
+    .notes{background:#fdfbf5;border-right:3px solid #c9a84c;padding:10px 14px;font-size:12px;color:#555;margin-top:16px;border-radius:0 8px 8px 0;}
+    .footer{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:14px 32px;text-align:center;font-size:11px;color:#a0b4c8;}
+    .fgold{color:#c9a84c;font-weight:700;}
+    @media print{body{background:#fff;padding:0;}.page{box-shadow:none;border-radius:0;}}
+  </style></head><body>
+  <div class="page">
+    <div class="hdr">
+      <div><div class="hotel-emoji" style="font-size:28px;margin-bottom:4px;">🏨</div><div class="hname">${prop.name}</div><div class="hsub" style="direction:ltr;">${prop.phone||''}</div></div>
+      <div style="text-align:left;"><div class="hbadge">PRICE LIST</div><div style="color:#a0b4c8;font-size:11px;margin-top:8px;">📅 ${today}</div></div>
+    </div>
+    <div class="gold-bar"></div>
+    <div class="body">
+      <div class="season-badge">🌊 ${seasonLabel} — الأسعار الحالية</div>
+      <table>
+        <thead><tr>
+          <th>نوع الغرفة</th>
+          <th style="text-align:center;${plSeason==='low'?'color:#f1c40f;':''}">Low</th>
+          <th style="text-align:center;${plSeason==='mid'?'color:#f1c40f;':''}">Mid</th>
+          <th style="text-align:center;${plSeason==='high'?'color:#f1c40f;':''}">High</th>
+          <th style="text-align:center;${plSeason==='peak'?'color:#f1c40f;':''}">Peak</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${notes?`<div class="notes">📝 ${notes}</div>`:''}
+      <div style="margin-top:16px;font-size:11px;color:#aaa;text-align:center;">الأسعار لليلة الواحدة بالجنيه الإسترليني (£)</div>
+    </div>
+    <div class="footer"><span class="fgold">${prop.name}</span> &nbsp;·&nbsp; <span style="direction:ltr;unicode-bidi:plaintext;">${prop.phone||''}</span><br><span style="font-size:10px;opacity:0.7;">الأسعار قابلة للتغيير — للحجز والاستفسار تواصل معنا</span></div>
+  </div>
+  <script>window.onload=()=>window.print();<\/script>
+  </body></html>`;
+  const w = window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else sNotify('⚠️','السماح بالنوافذ المنبثقة','warning',2500);
+}
+// ==================== END PRICE LIST ====================
 let sDUCur="USD";
 function setDUSCur(c){
 sDUCur=c;
