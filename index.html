@@ -4552,7 +4552,12 @@ const paid=calcPaid(b);
 const paidEGP=b.cur==="EGP"?paid:paid*exRate;
 return s+paidEGP;
 },0)+cancelRevEGP;
-const unpaidEGP=revEGP-collectedEGP;
+const unpaidEGP=bookings.filter(b=>b.status!=='Cancelled').reduce((s,b)=>{
+  const paid=calcPaid(b);
+  const rem=Math.max(0,b.total-paid);
+  const remEGP=b.cur==='USD'?rem*exRate:b.cur==='EUR'?rem*eurRate:rem;
+  return s+remEGP;
+},0);
 const expEGP=expenses.reduce((s,e)=>s+e.egp,0);
 const netEGP=collectedEGP-expEGP;
 const occupiedCount=[...new Set(active.map(b=>String(b.room)))].length;
