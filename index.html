@@ -491,10 +491,39 @@ select option{background:#1a1a2e;color:var(--text)}
 .mb-stat-lbl{color:var(--muted);}
 .mb-stat-val{font-weight:700;color:var(--text);}
 
-/* ══ FEATURE N2: WhatsApp Templates ══ */
+/* ══ FEATURE N2: WhatsApp Templates ENHANCED ══ */
 .wa-tpl-card{background:rgba(37,211,102,0.05);border:1px solid rgba(37,211,102,0.2);border-radius:10px;padding:12px;margin-bottom:10px;}
 .wa-tpl-title{font-size:11px;font-weight:700;color:#4cda7a;margin-bottom:6px;letter-spacing:1px;}
 .wa-tpl-body{font-size:11px;color:var(--text);line-height:1.7;background:rgba(0,0,0,0.2);padding:8px 10px;border-radius:6px;white-space:pre-wrap;max-height:120px;overflow-y:auto;margin-bottom:8px;}
+/* WA Bubble preview */
+.wa-bubble-wrap{background:#0b1418;border-radius:10px;padding:12px;margin-bottom:10px;min-height:80px;max-height:220px;overflow-y:auto;}
+.wa-bubble{background:#005c4b;border-radius:12px 12px 3px 12px;padding:9px 12px;display:inline-block;max-width:92%;font-size:12px;color:#e9edef;line-height:1.65;white-space:pre-wrap;word-break:break-word;position:relative;box-shadow:0 1px 2px rgba(0,0,0,0.4);}
+.wa-bubble-time{font-size:10px;color:rgba(255,255,255,0.45);text-align:left;margin-top:4px;padding-left:2px;}
+/* WA send log badge */
+.wa-sent-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);border-radius:20px;padding:2px 8px;font-size:10px;color:#4cda7a;margin-top:4px;}
+/* WA custom template editor */
+.wa-custom-tpl{background:rgba(255,255,255,0.04);border:1px solid var(--bdr);border-radius:9px;padding:10px;margin-bottom:8px;}
+.wa-custom-tpl-name{font-size:11px;font-weight:700;color:var(--gold);margin-bottom:6px;}
+/* WA search input */
+#wat-search{background:rgba(37,211,102,0.07);border:1px solid rgba(37,211,102,0.25);border-radius:7px;padding:7px 10px;color:var(--text);font-size:12px;width:100%;outline:none;margin-bottom:8px;}
+#wat-search:focus{border-color:#25D366;}
+/* WA bulk checkboxes */
+.wat-bk-row{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:6px;cursor:pointer;transition:.12s;}
+.wat-bk-row:hover{background:rgba(37,211,102,0.07);}
+.wat-bk-row input[type=checkbox]{width:14px;height:14px;accent-color:#25D366;cursor:pointer;}
+.wat-bk-label{font-size:12px;color:var(--text);flex:1;}
+.wat-bk-meta{font-size:10px;color:var(--muted);}
+/* WA tabs */
+.wa-tab-bar{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid var(--bdr);padding-bottom:8px;flex-wrap:wrap;}
+.wa-tab{background:transparent;border:none;color:var(--muted);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:600;font-family:Arial,sans-serif;}
+.wa-tab.act{background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.3);}
+/* WA sent history */
+.wa-hist-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;}
+.wa-hist-icon{font-size:16px;line-height:1;}
+.wa-hist-info{flex:1;}
+.wa-hist-name{font-weight:700;color:var(--text);}
+.wa-hist-type{color:var(--muted);font-size:10px;}
+.wa-hist-date{font-size:10px;color:var(--muted);white-space:nowrap;}
 
 /* ══ FEATURE N3: iCal Export ══ */
 /* Uses existing btn styles */
@@ -14700,54 +14729,160 @@ function applyScanData(){
   </div>
 </div>
 
-<!-- ══ WA TEMPLATES MODAL ══ -->
+<!-- ══ WA TEMPLATES MODAL ENHANCED ══ -->
 <div class="ovl" id="wa-templates-modal">
-<div class="mdl" style="max-width:560px;">
-  <div class="flex" style="justify-content:space-between;margin-bottom:14px;">
+<div class="mdl" style="max-width:600px;max-height:92vh;overflow-y:auto;">
+  <div class="flex" style="justify-content:space-between;margin-bottom:10px;">
     <div class="mtitle" style="margin-bottom:0;">💬 قوالب رسائل واتساب</div>
     <button onclick="closeM('wa-templates-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
   </div>
-  <div class="fld" style="margin-bottom:14px;">
-    <label>اختر الضيف / الحجز</label>
-    <select id="wat-booking-sel" onchange="loadWATemplate()" style="width:100%;"></select>
+
+  <!-- TABS -->
+  <div class="wa-tab-bar">
+    <button class="wa-tab act" id="watab-single" onclick="watSwitchTab('single')">📩 إرسال فردي</button>
+    <button class="wa-tab" id="watab-bulk" onclick="watSwitchTab('bulk')">📨 إرسال جماعي</button>
+    <button class="wa-tab" id="watab-custom" onclick="watSwitchTab('custom')">✏️ قوالب مخصصة</button>
+    <button class="wa-tab" id="watab-history" onclick="watSwitchTab('history')">📋 سجل الإرسال</button>
   </div>
-  <div class="fld" style="margin-bottom:10px;">
-    <label>لغة الرسالة / Message Language</label>
-    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;" id="wat-lang-btns">
-      <button class="btn bg bsm" id="wat-lang-ar" onclick="setWALang('ar')">🇸🇦 عربي</button>
-      <button class="btn bb bsm" id="wat-lang-en" onclick="setWALang('en')">🇬🇧 English</button>
-      <button class="btn bb bsm" id="wat-lang-fr" onclick="setWALang('fr')">🇫🇷 Français</button>
-      <button class="btn bb bsm" id="wat-lang-de" onclick="setWALang('de')">🇩🇪 Deutsch</button>
-      <button class="btn bb bsm" id="wat-lang-ru" onclick="setWALang('ru')">🇷🇺 Русский</button>
+
+  <!-- TAB: SINGLE -->
+  <div id="watab-pane-single">
+    <!-- Search + Select -->
+    <input id="wat-search" placeholder="🔍 ابحث باسم الضيف أو رقم الغرفة..." oninput="watFilterGuests()" autocomplete="off">
+    <div class="fld" style="margin-bottom:10px;">
+      <select id="wat-booking-sel" onchange="loadWATemplate()" style="width:100%;"></select>
+    </div>
+
+    <!-- Language -->
+    <div class="fld" style="margin-bottom:10px;">
+      <label>لغة الرسالة</label>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;" id="wat-lang-btns">
+        <button class="btn bg bsm" id="wat-lang-ar" onclick="setWALang('ar')">🇸🇦 عربي</button>
+        <button class="btn bb bsm" id="wat-lang-en" onclick="setWALang('en')">🇬🇧 English</button>
+        <button class="btn bb bsm" id="wat-lang-fr" onclick="setWALang('fr')">🇫🇷 Français</button>
+        <button class="btn bb bsm" id="wat-lang-de" onclick="setWALang('de')">🇩🇪 Deutsch</button>
+        <button class="btn bb bsm" id="wat-lang-ru" onclick="setWALang('ru')">🇷🇺 Русский</button>
+      </div>
+    </div>
+
+    <!-- Message Type -->
+    <div class="fld" style="margin-bottom:10px;">
+      <label>نوع الرسالة</label>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;" id="wat-type-btns">
+        <button class="btn bg bsm" onclick="setWAType('confirm')">✅ تأكيد حجز</button>
+        <button class="btn bb bsm" onclick="setWAType('reminder')">⏰ تذكير وصول</button>
+        <button class="btn bb bsm" onclick="setWAType('thanks')">🙏 شكر مغادرة</button>
+        <button class="btn bb bsm" onclick="setWAType('deposit')">💰 طلب عربون</button>
+        <button class="btn bb bsm" onclick="setWAType('bday')">🎂 عيد ميلاد</button>
+        <button class="btn bb bsm" onclick="setWAType('welcome')">🎉 ترحيب وصول</button>
+        <button class="btn bb bsm" onclick="setWAType('checkin_info')">🔑 تعليمات وصول</button>
+        <button class="btn bb bsm" onclick="setWAType('review')">⭐ طلب تقييم</button>
+        <button class="btn bb bsm" onclick="setWAType('late_pay')">⚠️ تذكير دفع</button>
+        <button class="btn bb bsm" onclick="setWAType('rebook')">🔄 إعادة حجز</button>
+        <button class="btn bb bsm" onclick="setWAType('upgrade')">🏖️ عرض خاص</button>
+        <button class="btn bb bsm" onclick="setWAType('pay_thanks')">💚 شكر دفع</button>
+        <button class="btn bb bsm" onclick="setWAType('review_thanks')">🌟 شكر تقييم</button>
+        <button class="btn bb bsm" onclick="setWAType('comfort_check')">🏨 راحتك أولويتنا</button>
+        <button class="btn bb bsm" onclick="setWAType('extend')">🌙 تمديد إقامة</button>
+        <button class="btn bb bsm" onclick="setWAType('stay_summary')">📋 ملخص إقامة</button>
+      </div>
+    </div>
+
+    <!-- Bubble Preview -->
+    <div class="wa-tpl-title" id="wat-tpl-title" style="margin-bottom:6px;">✅ تأكيد الحجز</div>
+    <div class="wa-bubble-wrap" id="wat-bubble-wrap">
+      <div class="wa-bubble" id="wat-tpl-body">اختر حجزاً ونوع الرسالة</div>
+      <div class="wa-bubble-time" id="wat-bubble-time"></div>
+    </div>
+    <!-- sent badge -->
+    <div id="wat-sent-info" style="margin-bottom:8px;min-height:18px;"></div>
+
+    <!-- Edit toggle -->
+    <div style="margin-bottom:8px;">
+      <button class="btn bb bsm" onclick="watToggleEdit()" id="wat-edit-btn">✏️ تعديل الرسالة</button>
+      <button class="btn bb bsm" onclick="watResetTpl()" id="wat-reset-btn" style="display:none;">↩️ استعادة الأصلي</button>
+    </div>
+    <textarea id="wat-edit-area" style="display:none;width:100%;min-height:120px;font-size:12px;line-height:1.65;background:rgba(0,0,0,0.25);border:1px solid rgba(37,211,102,0.3);border-radius:7px;padding:9px;color:var(--text);resize:vertical;" oninput="watSyncEdit()"></textarea>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="btn bgr bsm" onclick="sendWATemplate()" style="flex:2;min-width:130px;">📱 إرسال واتساب</button>
+      <button class="btn bb bsm" onclick="copyWATemplate()" style="flex:1;">📋 نسخ</button>
+      <button class="btn bsm" style="flex:1;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--bdr);" onclick="watSaveCustomFromCurrent()">💾 حفظ كقالب</button>
     </div>
   </div>
-  <div class="fld" style="margin-bottom:10px;">
-    <label>نوع الرسالة</label>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;" id="wat-type-btns">
-      <button class="btn bg bsm" onclick="setWAType('confirm')">✅ تأكيد حجز</button>
-      <button class="btn bb bsm" onclick="setWAType('reminder')">⏰ تذكير وصول</button>
-      <button class="btn bb bsm" onclick="setWAType('thanks')">🙏 شكر بعد المغادرة</button>
-      <button class="btn bb bsm" onclick="setWAType('deposit')">💰 طلب عربون</button>
-      <button class="btn bb bsm" onclick="setWAType('bday')">🎂 تهنئة عيد ميلاد</button>
-      <button class="btn bb bsm" onclick="setWAType('welcome')">🎉 ترحيب بالوصول</button>
-      <button class="btn bb bsm" onclick="setWAType('checkin_info')">🔑 تعليمات الوصول</button>
-      <button class="btn bb bsm" onclick="setWAType('review')">⭐ طلب تقييم</button>
-      <button class="btn bb bsm" onclick="setWAType('late_pay')">⚠️ تذكير دفع</button>
-      <button class="btn bb bsm" onclick="setWAType('rebook')">🔄 إعادة الحجز</button>
-      <button class="btn bb bsm" onclick="setWAType('upgrade')">🏖️ عرض خاص</button>
-      <button class="btn bsm" style="background:rgba(37,211,102,0.2);color:#25D366;border:1px solid rgba(37,211,102,0.5);font-weight:700;" onclick="setWAType('pay_thanks')">💚 شكر على الدفع</button>
-      <button class="btn bsm" style="background:rgba(255,193,7,0.2);color:#f5c518;border:1px solid rgba(255,193,7,0.5);font-weight:700;" onclick="setWAType('review_thanks')">🌟 شكر على التقييم</button>
-      <button class="btn bsm" style="background:rgba(52,152,219,0.2);color:#7ab8f5;border:1px solid rgba(52,152,219,0.5);font-weight:700;" onclick="setWAType('comfort_check')">🏨 راحتك أولويتنا</button>
+
+  <!-- TAB: BULK -->
+  <div id="watab-pane-bulk" style="display:none;">
+    <div style="margin-bottom:10px;">
+      <label style="font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;">فلتر الحجوزات</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+        <button class="btn bb bsm" onclick="watBulkFilter('all')">الكل</button>
+        <button class="btn bb bsm" onclick="watBulkFilter('checkin_today')">وصول اليوم</button>
+        <button class="btn bb bsm" onclick="watBulkFilter('checkout_today')">مغادرة اليوم</button>
+        <button class="btn bb bsm" onclick="watBulkFilter('inhouse')">في الفندق الآن</button>
+        <button class="btn bb bsm" onclick="watBulkFilter('unpaid')">غير مدفوعين</button>
+        <button class="btn bb bsm" onclick="watBulkFilter('future')">حجوزات قادمة</button>
+      </div>
+    </div>
+    <div style="margin-bottom:8px;display:flex;gap:8px;align-items:center;">
+      <input type="checkbox" id="wat-bulk-all" onchange="watBulkToggleAll(this.checked)" style="accent-color:#25D366;width:14px;height:14px;">
+      <label for="wat-bulk-all" style="font-size:11px;color:var(--muted);cursor:pointer;">تحديد الكل</label>
+      <span id="wat-bulk-count" style="font-size:10px;color:#4cda7a;margin-right:auto;">0 محدد</span>
+    </div>
+    <div id="wat-bulk-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--bdr);border-radius:7px;padding:4px;margin-bottom:10px;"></div>
+    <div class="fld" style="margin-bottom:8px;">
+      <label>نوع الرسالة للإرسال الجماعي</label>
+      <select id="wat-bulk-type" style="width:100%;">
+        <option value="confirm">✅ تأكيد حجز</option>
+        <option value="reminder">⏰ تذكير وصول</option>
+        <option value="thanks">🙏 شكر مغادرة</option>
+        <option value="deposit">💰 طلب عربون</option>
+        <option value="late_pay">⚠️ تذكير دفع</option>
+        <option value="welcome">🎉 ترحيب وصول</option>
+        <option value="checkin_info">🔑 تعليمات وصول</option>
+        <option value="review">⭐ طلب تقييم</option>
+        <option value="rebook">🔄 إعادة حجز</option>
+        <option value="comfort_check">🏨 راحتك أولويتنا</option>
+      </select>
+    </div>
+    <div class="fld" style="margin-bottom:10px;">
+      <label>لغة الرسالة</label>
+      <select id="wat-bulk-lang" style="width:100%;">
+        <option value="ar">🇸🇦 عربي</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="ru">🇷🇺 Русский</option>
+      </select>
+    </div>
+    <button class="btn bgr" onclick="watSendBulk()" style="width:100%;font-size:13px;">📨 إرسال للمحددين</button>
+    <div id="wat-bulk-result" style="margin-top:8px;font-size:11px;color:#4cda7a;"></div>
+  </div>
+
+  <!-- TAB: CUSTOM TEMPLATES -->
+  <div id="watab-pane-custom" style="display:none;">
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">أضف قوالب رسائل خاصة بك — يمكنك استخدام المتغيرات: <span style="color:#4cda7a;">{name} {room} {ci} {co} {total} {phone}</span></div>
+      <div id="wat-custom-list" style="max-height:220px;overflow-y:auto;margin-bottom:12px;"></div>
+      <div style="background:rgba(201,168,76,0.06);border:1px solid var(--bdr);border-radius:9px;padding:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:8px;">➕ قالب جديد</div>
+        <div class="fld"><label>اسم القالب</label><input id="wat-new-tpl-name" placeholder="مثال: ترحيب خاص..."></div>
+        <div class="fld"><label>نص الرسالة</label><textarea id="wat-new-tpl-body" style="width:100%;min-height:90px;font-size:12px;background:rgba(0,0,0,0.2);border:1px solid var(--bdr);border-radius:6px;padding:8px;color:var(--text);resize:vertical;" placeholder="مرحباً {name}، إقامتكم في الغرفة {room}..."></textarea></div>
+        <button class="btn bg bsm" onclick="watAddCustomTpl()" style="width:100%;">💾 حفظ القالب</button>
+      </div>
     </div>
   </div>
-  <div class="wa-tpl-card">
-    <div class="wa-tpl-title" id="wat-tpl-title">✅ تأكيد الحجز</div>
-    <div class="wa-tpl-body" id="wat-tpl-body">اختر حجزاً ونوع الرسالة</div>
-    <div style="display:flex;gap:6px;">
-      <button class="btn bgr bsm" onclick="sendWATemplate()" style="flex:1;">📱 إرسال واتساب</button>
-      <button class="btn bb bsm" onclick="copyWATemplate()">📋 نسخ</button>
+
+  <!-- TAB: HISTORY -->
+  <div id="watab-pane-history" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--muted);">آخر الرسائل المُرسلة</div>
+      <button class="btn br bsm" onclick="watClearHistory()">🗑️ مسح السجل</button>
     </div>
+    <div id="wat-history-list" style="max-height:400px;overflow-y:auto;"></div>
   </div>
+
 </div>
 </div>
 
@@ -14889,24 +15024,63 @@ function closeMorningBriefing(){
 }
 
 // ══════════════════════════════════════════════
-// FEATURE N2: WHATSAPP TEMPLATES
+// FEATURE N2: WHATSAPP TEMPLATES ENHANCED
 // ══════════════════════════════════════════════
 let _watCurrentType='confirm';
 let _watCurrentBk=null;
 let _watLang='ar';
+let _watTab='single';
+let _watEditMode=false;
+let _watAllActive=[];
+let _watBulkSelected=new Set();
+let _watCustomTpls=JSON.parse(localStorage.getItem('dta_wat_custom')||'[]');
+let _watSentLog=JSON.parse(localStorage.getItem('dta_wat_log')||'[]');
+
+function _watSaveCustom(){localStorage.setItem('dta_wat_custom',JSON.stringify(_watCustomTpls));}
+function _watSaveLog(){localStorage.setItem('dta_wat_log',JSON.stringify(_watSentLog.slice(-200)));}
+
+function watSwitchTab(tab){
+  _watTab=tab;
+  ['single','bulk','custom','history'].forEach(t=>{
+    const pane=document.getElementById('watab-pane-'+t);
+    const btn=document.getElementById('watab-'+t);
+    if(pane)pane.style.display=t===tab?'':'none';
+    if(btn)btn.className='wa-tab'+(t===tab?' act':'');
+  });
+  if(tab==='bulk')watRenderBulkList('all');
+  if(tab==='custom')watRenderCustomList();
+  if(tab==='history')watRenderHistory();
+}
+
 function openWATemplates(){
-  const sel=document.getElementById('wat-booking-sel');
-  const active=(bookings||[]).filter(b=>b.status!=='Cancelled').sort((a,b)=>b.ci.localeCompare(a.ci));
-  sel.innerHTML=active.length
-    ?active.map(b=>`<option value="${(bookings||[]).indexOf(b)}">${b.name} · غرفة ${b.room} · ${b.ci}</option>`).join('')
-    :'<option value="">لا توجد حجوزات</option>';
-  _watLang = currentLang==='ar'?'ar':'en';
+  _watAllActive=(bookings||[]).filter(b=>b.status!=='Cancelled').sort((a,b)=>b.ci.localeCompare(a.ci));
+  _watBulkSelected=new Set();
+  _watEditMode=false;
+  _watLang=currentLang==='ar'?'ar':'en';
+  _watFillSelect(_watAllActive);
   _updateWALangBtns();
   document.getElementById('wa-templates-modal').classList.add('on');
+  watSwitchTab('single');
   loadWATemplate();
 }
+
+function _watFillSelect(list){
+  const sel=document.getElementById('wat-booking-sel');
+  sel.innerHTML=list.length
+    ?list.map(b=>`<option value="${(bookings||[]).indexOf(b)}">${b.name} · غرفة ${b.room} · ${b.ci}</option>`).join('')
+    :'<option value="">لا توجد حجوزات</option>';
+}
+
+function watFilterGuests(){
+  const q=(document.getElementById('wat-search').value||'').toLowerCase().trim();
+  const filtered=q?_watAllActive.filter(b=>(b.name||'').toLowerCase().includes(q)||(b.room||'').toLowerCase().includes(q)):_watAllActive;
+  _watFillSelect(filtered);
+  loadWATemplate();
+}
+
 function setWALang(lang){
   _watLang=lang;
+  _watEditMode=false;
   _updateWALangBtns();
   loadWATemplate();
 }
@@ -14918,8 +15092,61 @@ function _updateWALangBtns(){
 }
 function setWAType(type){
   _watCurrentType=type;
+  _watEditMode=false;
+  // update type buttons active state
+  const container=document.getElementById('wat-type-btns');
+  if(container){container.querySelectorAll('.btn').forEach(btn=>{
+    const match=btn.getAttribute('onclick')||'';
+    btn.className=match.includes("'"+type+"'")?'btn bg bsm':'btn bb bsm';
+  });}
   loadWATemplate();
 }
+
+// ── Toggle edit mode ──
+function watToggleEdit(){
+  _watEditMode=!_watEditMode;
+  const area=document.getElementById('wat-edit-area');
+  const btn=document.getElementById('wat-edit-btn');
+  const resetBtn=document.getElementById('wat-reset-btn');
+  if(_watEditMode){
+    area.style.display='';
+    area.value=document.getElementById('wat-tpl-body').textContent;
+    btn.textContent='✅ تطبيق التعديل';
+    if(resetBtn)resetBtn.style.display='';
+  } else {
+    // apply edit to bubble
+    const newText=area.value;
+    document.getElementById('wat-tpl-body').textContent=newText;
+    area.style.display='none';
+    btn.textContent='✏️ تعديل الرسالة';
+    if(resetBtn)resetBtn.style.display='none';
+  }
+}
+function watSyncEdit(){
+  if(_watEditMode){
+    document.getElementById('wat-tpl-body').textContent=document.getElementById('wat-edit-area').value;
+  }
+}
+function watResetTpl(){
+  _watEditMode=false;
+  document.getElementById('wat-edit-area').style.display='none';
+  document.getElementById('wat-edit-btn').textContent='✏️ تعديل الرسالة';
+  const rb=document.getElementById('wat-reset-btn');if(rb)rb.style.display='none';
+  loadWATemplate();
+}
+
+// ── Save current message as custom template ──
+function watSaveCustomFromCurrent(){
+  const msg=document.getElementById('wat-tpl-body').textContent;
+  const title=document.getElementById('wat-tpl-title').textContent;
+  if(!msg||msg==='اختر حجزاً ونوع الرسالة')return;
+  const name=prompt('اسم القالب المخصص:',title)||title;
+  // strip booking-specific data to make it reusable with {placeholders}
+  _watCustomTpls.push({id:Date.now(),name,body:msg});
+  _watSaveCustom();
+  if(typeof sNotify==='function')sNotify('💾 تم الحفظ','تم حفظ القالب المخصص','success',2500);
+}
+
 function loadWATemplate(){
   const sel=document.getElementById('wat-booking-sel');
   const idx=parseInt(sel.value);
@@ -15041,18 +15268,216 @@ function loadWATemplate(){
   const tpl=templates[_watCurrentType]||templates.confirm;
   document.getElementById('wat-tpl-title').textContent=tpl.title;
   document.getElementById('wat-tpl-body').textContent=tpl.body;
+  // update bubble time
+  const now=new Date();
+  const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const timeEl=document.getElementById('wat-bubble-time');
+  if(timeEl)timeEl.textContent=timeStr+' ✓✓';
+  // show last sent badge
+  const sentEl=document.getElementById('wat-sent-info');
+  if(sentEl){
+    const lastSent=_watSentLog.filter(l=>l.guestName===b.name&&l.type===_watCurrentType).slice(-1)[0];
+    sentEl.innerHTML=lastSent
+      ?`<span class="wa-sent-badge">✅ آخر إرسال: ${lastSent.type} — ${lastSent.date}</span>`
+      :'';
+  }
+  // reset edit UI
+  if(!_watEditMode){
+    const area=document.getElementById('wat-edit-area');
+    if(area)area.style.display='none';
+    const editBtn=document.getElementById('wat-edit-btn');
+    if(editBtn)editBtn.textContent='✏️ تعديل الرسالة';
+    const rb=document.getElementById('wat-reset-btn');if(rb)rb.style.display='none';
+  }
 }
+
 function sendWATemplate(){
   if(!_watCurrentBk){alert('اختر حجزاً أولاً');return;}
   const msg=document.getElementById('wat-tpl-body').textContent;
   const phone=(_watCurrentBk.whatsapp||_watCurrentBk.phone||'').replace(/[^0-9]/g,'');
   const url=phone?'https://wa.me/'+phone+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
+  // log it
+  const now=new Date();
+  _watSentLog.push({
+    guestName:_watCurrentBk.name,
+    room:_watCurrentBk.room,
+    type:_watCurrentType,
+    lang:_watLang,
+    date:now.toLocaleDateString('ar-EG')+' '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+    ts:now.getTime()
+  });
+  _watSaveLog();
+  if(typeof sNotify==='function')sNotify('📱 تم الإرسال','فُتح واتساب لـ '+_watCurrentBk.name,'success',2500);
+  // refresh sent badge
+  loadWATemplate();
 }
+
 function copyWATemplate(){
   const msg=document.getElementById('wat-tpl-body').textContent;
   navigator.clipboard.writeText(msg).catch(()=>{const ta=document.createElement('textarea');ta.value=msg;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);});
   if(typeof sNotify==='function')sNotify('📋 تم النسخ','تم نسخ الرسالة','success',2500);
+}
+
+// ══ BULK SEND ══
+function watRenderBulkList(filter){
+  const td=toDay();
+  let list=_watAllActive;
+  if(filter==='checkin_today')list=list.filter(b=>b.ci===td);
+  else if(filter==='checkout_today')list=list.filter(b=>b.co===td&&b.ci!==td);
+  else if(filter==='inhouse')list=list.filter(b=>b.ci<=td&&b.co>td);
+  else if(filter==='unpaid')list=list.filter(b=>b.payStatus!=='Paid'&&b.status!=='Paid');
+  else if(filter==='future')list=list.filter(b=>b.ci>td);
+  const container=document.getElementById('wat-bulk-list');
+  if(!container)return;
+  if(!list.length){container.innerHTML='<div style="padding:12px;text-align:center;color:var(--muted);font-size:12px;">لا توجد حجوزات</div>';return;}
+  container.innerHTML=list.map(b=>{
+    const idx=(bookings||[]).indexOf(b);
+    const checked=_watBulkSelected.has(idx)?'checked':'';
+    return `<label class="wat-bk-row"><input type="checkbox" ${checked} onchange="watBulkToggle(${idx},this.checked)"><div class="wat-bk-label">${b.name}</div><div class="wat-bk-meta">غرفة ${b.room} · ${b.ci}</div></label>`;
+  }).join('');
+  watBulkUpdateCount();
+}
+function watBulkFilter(f){
+  // highlight button
+  document.querySelectorAll('#watab-pane-bulk .btn').forEach(btn=>{
+    const oc=btn.getAttribute('onclick')||'';
+    btn.className=oc.includes("'"+f+"'")?'btn bg bsm':'btn bb bsm';
+  });
+  watRenderBulkList(f);
+}
+function watBulkToggle(idx,checked){
+  if(checked)_watBulkSelected.add(idx);else _watBulkSelected.delete(idx);
+  watBulkUpdateCount();
+}
+function watBulkToggleAll(checked){
+  const items=document.querySelectorAll('#wat-bulk-list input[type=checkbox]');
+  items.forEach(cb=>{
+    cb.checked=checked;
+    const match=cb.closest('label')?.getAttribute('onchange');
+  });
+  // simpler: re-select from list
+  const list=document.querySelectorAll('#wat-bulk-list .wat-bk-row');
+  list.forEach(row=>{
+    const cb=row.querySelector('input');
+    if(cb){
+      cb.checked=checked;
+      // extract idx from onchange
+      const m=(cb.getAttribute('onchange')||'').match(/\d+/);
+      if(m){const idx=parseInt(m[0]);if(checked)_watBulkSelected.add(idx);else _watBulkSelected.delete(idx);}
+    }
+  });
+  watBulkUpdateCount();
+}
+function watBulkUpdateCount(){
+  const el=document.getElementById('wat-bulk-count');
+  if(el)el.textContent=_watBulkSelected.size+' محدد';
+}
+function watSendBulk(){
+  if(!_watBulkSelected.size){alert('اختر ضيفاً واحداً على الأقل');return;}
+  const type=document.getElementById('wat-bulk-type').value;
+  const lang=document.getElementById('wat-bulk-lang').value;
+  const origType=_watCurrentType,origLang=_watLang;
+  _watCurrentType=type;_watLang=lang;
+  let sent=0;
+  _watBulkSelected.forEach(idx=>{
+    const b=(bookings||[])[idx];
+    if(!b)return;
+    _watCurrentBk=b;
+    loadWATemplate();
+    const msg=document.getElementById('wat-tpl-body').textContent;
+    const phone=(b.whatsapp||b.phone||'').replace(/[^0-9]/g,'');
+    const url=phone?'https://wa.me/'+phone+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
+    setTimeout(()=>window.open(url,'_blank'),sent*700);
+    const now=new Date();
+    _watSentLog.push({guestName:b.name,room:b.room,type,lang,date:now.toLocaleDateString('ar-EG')+' '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),ts:now.getTime()});
+    sent++;
+  });
+  _watSaveLog();
+  _watCurrentType=origType;_watLang=origLang;
+  const res=document.getElementById('wat-bulk-result');
+  if(res)res.textContent='✅ تم فتح واتساب لـ '+sent+' ضيف';
+  if(typeof sNotify==='function')sNotify('📨 إرسال جماعي','تم الإرسال لـ '+sent+' ضيف','success',3000);
+}
+
+// ══ CUSTOM TEMPLATES ══
+function watRenderCustomList(){
+  const container=document.getElementById('wat-custom-list');
+  if(!container)return;
+  if(!_watCustomTpls.length){
+    container.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:14px;">لا توجد قوالب مخصصة بعد</div>';
+    return;
+  }
+  container.innerHTML=_watCustomTpls.map((tpl,i)=>`
+    <div class="wa-custom-tpl">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div class="wa-custom-tpl-name">📝 ${tpl.name}</div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn bb bsm" onclick="watUseCustomTpl(${i})">استخدام</button>
+          <button class="btn br bsm" onclick="watDeleteCustomTpl(${i})">🗑️</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px;white-space:pre-wrap;max-height:70px;overflow:hidden;">${(tpl.body||'').slice(0,150)}${tpl.body&&tpl.body.length>150?'...':''}</div>
+    </div>`).join('');
+}
+function watAddCustomTpl(){
+  const name=(document.getElementById('wat-new-tpl-name').value||'').trim();
+  const body=(document.getElementById('wat-new-tpl-body').value||'').trim();
+  if(!name||!body){alert('أدخل اسم ونص القالب');return;}
+  _watCustomTpls.push({id:Date.now(),name,body});
+  _watSaveCustom();
+  document.getElementById('wat-new-tpl-name').value='';
+  document.getElementById('wat-new-tpl-body').value='';
+  watRenderCustomList();
+  if(typeof sNotify==='function')sNotify('💾 تم الحفظ','تم حفظ القالب','success',2000);
+}
+function watDeleteCustomTpl(i){
+  if(!confirm('حذف هذا القالب؟'))return;
+  _watCustomTpls.splice(i,1);
+  _watSaveCustom();
+  watRenderCustomList();
+}
+function watUseCustomTpl(i){
+  const tpl=_watCustomTpls[i];
+  if(!tpl)return;
+  // fill placeholders if booking selected
+  const sel=document.getElementById('wat-booking-sel');
+  const idx=parseInt(sel.value);
+  const b=(bookings||[])[idx];
+  let body=tpl.body;
+  if(b){
+    const prop=(typeof PROP!=='undefined'?PROP:{name:'Dahab Trendy',phone:''});
+    body=body.replace(/\{name\}/g,b.name||'').replace(/\{room\}/g,b.room||'').replace(/\{ci\}/g,b.ci||'').replace(/\{co\}/g,b.co||'').replace(/\{total\}/g,b.total||'').replace(/\{phone\}/g,prop.phone||'');
+  }
+  document.getElementById('wat-tpl-title').textContent='📝 '+tpl.name;
+  document.getElementById('wat-tpl-body').textContent=body;
+  const timeEl=document.getElementById('wat-bubble-time');
+  if(timeEl)timeEl.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+' ✓✓';
+  watSwitchTab('single');
+}
+
+// ══ SEND HISTORY ══
+function watRenderHistory(){
+  const container=document.getElementById('wat-history-list');
+  if(!container)return;
+  const log=[..._watSentLog].reverse().slice(0,100);
+  if(!log.length){container.innerHTML='<div style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">لا يوجد سجل إرسال بعد</div>';return;}
+  const typeIcons={confirm:'✅',reminder:'⏰',thanks:'🙏',deposit:'💰',bday:'🎂',welcome:'🎉',checkin_info:'🔑',review:'⭐',late_pay:'⚠️',rebook:'🔄',upgrade:'🏖️',pay_thanks:'💚',review_thanks:'🌟',comfort_check:'🏨',extend:'🌙',stay_summary:'📋'};
+  container.innerHTML=log.map(l=>`
+    <div class="wa-hist-row">
+      <div class="wa-hist-icon">${typeIcons[l.type]||'💬'}</div>
+      <div class="wa-hist-info">
+        <div class="wa-hist-name">${l.guestName||'—'}</div>
+        <div class="wa-hist-type">غرفة ${l.room||'—'} · ${l.type||''} · ${(l.lang||'').toUpperCase()}</div>
+      </div>
+      <div class="wa-hist-date">${l.date||''}</div>
+    </div>`).join('');
+}
+function watClearHistory(){
+  if(!confirm('مسح كل سجل الإرسال؟'))return;
+  _watSentLog=[];
+  _watSaveLog();
+  watRenderHistory();
 }
 
 // ══════════════════════════════════════════════
@@ -19460,6 +19885,782 @@ window.addEventListener('load',()=>{
       showAlarmPopup([{name:'🔔 تجربة التنبيه — لا توجد مناسبات قريبة حالياً',diff:99}]);
     }
   };
+})();
+
+// ═══════════════════════════════════════════════════════════
+// ══ TECH 1: IndexedDB — قاعدة بيانات حقيقية بدل localStorage ══
+// ═══════════════════════════════════════════════════════════
+const DTA_IDB = (function(){
+  const DB_NAME = 'DahabTrendyDB';
+  const DB_VER  = 1;
+  const STORES  = ['bookings','expenses','roomSt','restaurantTx','tours','blacklist',
+                   'reviews','waitlist','hkData','pricelist','settings','snapshots'];
+  let _db = null;
+
+  function open(){
+    return new Promise((resolve, reject)=>{
+      if(_db){ resolve(_db); return; }
+      const req = indexedDB.open(DB_NAME, DB_VER);
+      req.onupgradeneeded = e=>{
+        const db = e.target.result;
+        STORES.forEach(s=>{
+          if(!db.objectStoreNames.contains(s)){
+            db.createObjectStore(s, {keyPath:'_id', autoIncrement:true});
+          }
+        });
+        // bookings store with name+date index for fast search
+        if(!db.objectStoreNames.contains('bookings_idx')){
+          const bStore = db.createObjectStore('bookings_meta', {keyPath:'id'});
+          bStore.createIndex('byDate','ci',{unique:false});
+          bStore.createIndex('byName','name',{unique:false});
+        }
+      };
+      req.onsuccess = e=>{ _db = e.target.result; resolve(_db); };
+      req.onerror   = e=>{ console.warn('[IDB] open error:', e.target.error); reject(e.target.error); };
+    });
+  }
+
+  // حفظ كائن كامل (JSON) تحت مفتاح في store
+  function set(store, key, value){
+    return open().then(db=>{
+      return new Promise((resolve, reject)=>{
+        const tx  = db.transaction(store,'readwrite');
+        const obj = Object.assign({}, typeof value==='object'?value:{_val:value}, {_id: key, _ts: Date.now()});
+        const req = tx.objectStore(store).put(obj);
+        req.onsuccess = ()=> resolve(true);
+        req.onerror   = e=> { console.warn('[IDB] set error:',e.target.error); reject(e.target.error); };
+      });
+    }).catch(()=> false);
+  }
+
+  // جلب بيانات
+  function get(store, key){
+    return open().then(db=>{
+      return new Promise((resolve, reject)=>{
+        const req = db.transaction(store,'readonly').objectStore(store).get(key);
+        req.onsuccess = e=>{
+          const r = e.target.result;
+          if(!r){ resolve(null); return; }
+          const {_id,_ts,...rest} = r;
+          resolve('_val' in rest ? rest._val : rest);
+        };
+        req.onerror = e=>{ resolve(null); };
+      });
+    }).catch(()=> null);
+  }
+
+  // حفظ مصفوفة الحجوزات الكاملة دفعة واحدة
+  function saveAll(key, arr){
+    return set('settings', key, {data: arr});
+  }
+
+  // جلب مصفوفة
+  function getAll(key, fallback=[]){
+    return open().then(db=>{
+      return new Promise(resolve=>{
+        const req = db.transaction('settings','readonly').objectStore('settings').get(key);
+        req.onsuccess = e=>{
+          const r = e.target.result;
+          resolve(r && Array.isArray(r.data) ? r.data : fallback);
+        };
+        req.onerror = ()=> resolve(fallback);
+      });
+    }).catch(()=> fallback);
+  }
+
+  // snapshot للـ undo
+  function saveSnapshot(label, data){
+    return open().then(db=>{
+      return new Promise(resolve=>{
+        const tx  = db.transaction('snapshots','readwrite');
+        const store = tx.objectStore('snapshots');
+        const snap = {_id: Date.now(), label, ts: new Date().toISOString(), data};
+        store.put(snap);
+        // احتفظ بآخر 30 snapshot فقط
+        store.openCursor().onsuccess = e=>{
+          const cursor = e.target.result;
+          if(cursor){ store.count().onsuccess = ce=>{
+            if(ce.target.result > 30) cursor.delete();
+          };}
+        };
+        tx.oncomplete = ()=> resolve(true);
+        tx.onerror    = ()=> resolve(false);
+      });
+    }).catch(()=>false);
+  }
+
+  // مزامنة: ننسخ كل localStorage إلى IDB عند أول تشغيل
+  function migrateFromLS(){
+    get('settings','_idb_migrated').then(done=>{
+      if(done) return;
+      const keysToMigrate = [
+        'dta_bk','dta_ex','dta_rs','dta_rest','dta_tours',
+        'dta_blacklist','dta_reviews','dta_wl','dta_hk',
+        'dta_pr','dta_du','dta_pol'
+      ];
+      keysToMigrate.forEach(k=>{
+        try{
+          const raw = localStorage.getItem(k);
+          if(raw) set('settings', k+'_idb', JSON.parse(raw));
+        }catch(e){}
+      });
+      set('settings','_idb_migrated', true);
+      console.log('[IDB] Migration from localStorage complete ✓');
+    });
+  }
+
+  // حساب المساحة المستخدمة
+  function getUsage(){
+    if(navigator.storage && navigator.storage.estimate){
+      return navigator.storage.estimate().then(est=>{
+        const usedMB = (est.usage/1024/1024).toFixed(1);
+        const quotaMB = (est.quota/1024/1024/1024).toFixed(1);
+        return {usedMB, quotaGB: quotaMB, pct: Math.round(est.usage/est.quota*100)};
+      });
+    }
+    return Promise.resolve({usedMB:'?', quotaGB:'?', pct:0});
+  }
+
+  // تصدير كل البيانات من IDB كـ JSON
+  function exportAll(){
+    return open().then(db=>{
+      return new Promise(resolve=>{
+        const result = {};
+        const stores = ['settings','snapshots'];
+        let pending = stores.length;
+        stores.forEach(sName=>{
+          const req = db.transaction(sName,'readonly').objectStore(sName).getAll();
+          req.onsuccess = e=>{
+            result[sName] = e.target.result;
+            if(--pending===0) resolve(result);
+          };
+          req.onerror = ()=>{ if(--pending===0) resolve(result); };
+        });
+      });
+    });
+  }
+
+  // init
+  open().then(()=>{ migrateFromLS(); console.log('[IDB] IndexedDB ready ✓'); }).catch(()=>{});
+
+  return { open, set, get, saveAll, getAll, saveSnapshot, getUsage, exportAll, migrateFromLS };
+})();
+
+// ── تحديث sv() لتحفظ في IDB بالتوازي مع localStorage ──
+const _sv_original = sv;
+function sv(key, val){
+  _sv_original(key, val);
+  // حفظ موازٍ في IndexedDB
+  DTA_IDB.saveAll(key, val).catch(()=>{});
+}
+
+// ── تحديث autoBackup() ليشمل IDB ──
+const _autoBackup_original = autoBackup;
+function autoBackup(){
+  _autoBackup_original();
+  // حفظ snapshot في IDB
+  DTA_IDB.saveSnapshot('auto', {
+    bk: bookings, ex: expenses, rs: roomSt,
+    rest: restaurantTx, tours, ts: new Date().toISOString()
+  }).catch(()=>{});
+}
+
+// ── تحديث checkStorageUsage() ليعرض مساحة IDB الحقيقية ──
+const _checkStorage_original = checkStorageUsage;
+function checkStorageUsage(){
+  const ls = _checkStorage_original();
+  DTA_IDB.getUsage().then(({usedMB, quotaGB, pct})=>{
+    if(pct > 80){
+      sNotify('⚠️ مساحة IDB','استخدمت '+usedMB+'MB من '+quotaGB+'GB — صدّر بياناتك','urgent',6000);
+    }
+    // عرض في console للمطوّر
+    console.log('[Storage] IDB: '+usedMB+'MB / '+quotaGB+'GB ('+pct+'%) | LS: '+(ls?.usedKB||0)+'KB');
+  });
+  return ls;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// ══ TECH 2: Web Worker — معالجة Analytics في الخلفية ══
+// ═══════════════════════════════════════════════════════════
+const DTA_WORKER = (function(){
+  const workerCode = `
+self.onmessage = function(e){
+  const {type, payload} = e.data;
+
+  if(type === 'CALC_ANALYTICS'){
+    const {bookings, expenses, exRate, eurRate} = payload;
+    const today = new Date().toISOString().split('T')[0];
+
+    // إجمالي إيرادات بالـ EGP
+    let totalRevEGP = 0, totalNights = 0, totalGuests = 0;
+    const monthlyRev = {};
+    const roomRevMap = {};
+    const natMap = {};
+    const payMethodMap = {};
+
+    bookings.forEach(b=>{
+      if(b.status === 'Cancelled') return;
+      const rate = b.cur==='USD' ? exRate : b.cur==='EUR' ? eurRate : 1;
+      const revEGP = (b.total||0) * rate;
+      totalRevEGP += revEGP;
+
+      // ليالي
+      const ci = new Date(b.ci), co = new Date(b.co);
+      const nights = Math.max(0, Math.round((co-ci)/86400000));
+      totalNights += nights;
+
+      // ضيوف
+      totalGuests += (parseInt(b.adults)||1) + (parseInt(b.children)||0);
+
+      // شهري
+      const mon = (b.ci||'').slice(0,7);
+      if(mon){ monthlyRev[mon] = (monthlyRev[mon]||0) + revEGP; }
+
+      // غرف
+      if(b.room){ roomRevMap[b.room] = (roomRevMap[b.room]||0) + revEGP; }
+
+      // جنسيات
+      if(b.nat){ natMap[b.nat] = (natMap[b.nat]||0) + 1; }
+
+      // طرق دفع
+      const method = b.method||'Cash';
+      payMethodMap[method] = (payMethodMap[method]||0) + revEGP;
+    });
+
+    // مصروفات
+    let totalExpEGP = expenses.reduce((s,e)=>s+(e.egp||0),0);
+
+    // ADR & RevPAR
+    const adr = totalNights > 0 ? totalRevEGP / totalNights : 0;
+
+    // أفضل 5 غرف
+    const topRooms = Object.entries(roomRevMap)
+      .sort((a,b)=>b[1]-a[1]).slice(0,5)
+      .map(([room,rev])=>({room, rev: Math.round(rev)}));
+
+    // أعلى 5 جنسيات
+    const topNats = Object.entries(natMap)
+      .sort((a,b)=>b[1]-a[1]).slice(0,5)
+      .map(([nat,cnt])=>({nat,cnt}));
+
+    // الشهور المرتبة
+    const monthsSorted = Object.entries(monthlyRev)
+      .sort((a,b)=>a[0].localeCompare(b[0]))
+      .map(([mon,rev])=>({mon, rev: Math.round(rev)}));
+
+    self.postMessage({
+      type: 'ANALYTICS_RESULT',
+      result: {
+        totalRevEGP: Math.round(totalRevEGP),
+        totalExpEGP: Math.round(totalExpEGP),
+        netProfit: Math.round(totalRevEGP - totalExpEGP),
+        totalNights, totalGuests, adr: Math.round(adr),
+        topRooms, topNats, monthsSorted, payMethodMap,
+        bookingsCount: bookings.filter(b=>b.status!=='Cancelled').length,
+        cancelledCount: bookings.filter(b=>b.status==='Cancelled').length
+      }
+    });
+  }
+
+  if(type === 'SEARCH_BOOKINGS'){
+    const {bookings, query} = payload;
+    const q = (query||'').toLowerCase().trim();
+    if(!q){ self.postMessage({type:'SEARCH_RESULT', results:[]}); return; }
+    const results = bookings.filter(b=>
+      (b.name||'').toLowerCase().includes(q) ||
+      (b.room||'').toString().includes(q) ||
+      (b.nat||'').toLowerCase().includes(q) ||
+      (b.invNo||'').toLowerCase().includes(q) ||
+      (b.ci||'').includes(q) || (b.co||'').includes(q)
+    ).slice(0,50);
+    self.postMessage({type:'SEARCH_RESULT', results});
+  }
+
+  if(type === 'FORECAST'){
+    const {bookings, months} = payload;
+    const monthly = {};
+    bookings.forEach(b=>{
+      if(b.status==='Cancelled') return;
+      const m = (b.ci||'').slice(0,7);
+      if(m) monthly[m] = (monthly[m]||0) + (b.total||0);
+    });
+    const sorted = Object.entries(monthly).sort((a,b)=>a[0].localeCompare(b[0]));
+    // simple moving average forecast
+    const vals = sorted.map(([,v])=>v);
+    const avg = vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : 0;
+    const lastMon = sorted.length ? sorted[sorted.length-1][0] : new Date().toISOString().slice(0,7);
+    const forecast = [];
+    for(let i=1;i<=(months||3);i++){
+      const d = new Date(lastMon+'-01');
+      d.setMonth(d.getMonth()+i);
+      const mon = d.toISOString().slice(0,7);
+      const trend = vals.length>=2 ? (vals[vals.length-1]-vals[0])/(vals.length-1) : 0;
+      forecast.push({mon, rev: Math.round(Math.max(0, avg + trend*i))});
+    }
+    self.postMessage({type:'FORECAST_RESULT', forecast, historical: sorted.map(([mon,rev])=>({mon,rev:Math.round(rev)}))});
+  }
+};
+`;
+  let _worker = null;
+  const _callbacks = {};
+
+  function _getWorker(){
+    if(_worker) return _worker;
+    try{
+      const blob = new Blob([workerCode], {type:'application/javascript'});
+      const url  = URL.createObjectURL(blob);
+      _worker = new Worker(url);
+      _worker.onmessage = e=>{
+        const {type, ...rest} = e.data;
+        if(_callbacks[type]){
+          _callbacks[type].forEach(fn=> fn(rest));
+          delete _callbacks[type];
+        }
+      };
+      _worker.onerror = err=>{ console.warn('[Worker] error:', err); _worker=null; };
+      console.log('[Worker] Web Worker ready ✓');
+    }catch(e){ console.warn('[Worker] not supported:', e); }
+    return _worker;
+  }
+
+  function on(type, fn){
+    if(!_callbacks[type]) _callbacks[type]=[];
+    _callbacks[type].push(fn);
+  }
+
+  function calcAnalytics(cb){
+    const w = _getWorker(); if(!w){ if(cb)cb(null); return; }
+    on('ANALYTICS_RESULT', ({result})=>{ if(cb)cb(result); });
+    w.postMessage({type:'CALC_ANALYTICS', payload:{bookings, expenses, exRate, eurRate}});
+  }
+
+  function searchBookings(query, cb){
+    const w = _getWorker(); if(!w){ if(cb)cb([]); return; }
+    on('SEARCH_RESULT', ({results})=>{ if(cb)cb(results); });
+    w.postMessage({type:'SEARCH_BOOKINGS', payload:{bookings, query}});
+  }
+
+  function forecast(months, cb){
+    const w = _getWorker(); if(!w){ if(cb)cb(null); return; }
+    on('FORECAST_RESULT', (data)=>{ if(cb)cb(data); });
+    w.postMessage({type:'FORECAST', payload:{bookings, months}});
+  }
+
+  return { calcAnalytics, searchBookings, forecast };
+})();
+
+// ── ربط Web Worker بصفحة الـ Analytics ──
+const _renderLiveDash_orig = typeof renderLiveDash==='function' ? renderLiveDash : null;
+function renderLiveDash(){
+  if(_renderLiveDash_orig) _renderLiveDash_orig();
+  // حساب analytics في الخلفية وتحديث الـ DOM عند الانتهاء
+  DTA_WORKER.calcAnalytics(result=>{
+    if(!result) return;
+    const el = document.getElementById('idb-analytics-strip');
+    if(!el) return;
+    el.innerHTML = `
+      <div class="live-stat-card" style="border-color:rgba(201,168,76,.3);">
+        <div class="live-stat-num" style="font-size:16px;">£${result.totalRevEGP.toLocaleString()}</div>
+        <div class="live-stat-lbl">إجمالي الإيرادات (EGP)</div>
+      </div>
+      <div class="live-stat-card" style="border-color:rgba(37,211,102,.3);">
+        <div class="live-stat-num" style="font-size:16px;">£${result.netProfit.toLocaleString()}</div>
+        <div class="live-stat-lbl">صافي الربح</div>
+      </div>
+      <div class="live-stat-card" style="border-color:rgba(74,144,217,.3);">
+        <div class="live-stat-num" style="font-size:16px;">${result.bookingsCount}</div>
+        <div class="live-stat-lbl">حجوزات نشطة</div>
+      </div>
+      <div class="live-stat-card" style="border-color:rgba(255,193,7,.3);">
+        <div class="live-stat-num" style="font-size:16px;">${result.totalNights}</div>
+        <div class="live-stat-lbl">ليالي مباعة</div>
+      </div>
+      <div class="live-stat-card" style="border-color:rgba(155,89,182,.3);">
+        <div class="live-stat-num" style="font-size:16px;">£${result.adr.toLocaleString()}</div>
+        <div class="live-stat-lbl">ADR متوسط سعر الليلة</div>
+      </div>`;
+    // أفضل الغرف
+    if(result.topRooms.length){
+      const topEl = document.getElementById('idb-top-rooms');
+      if(topEl) topEl.innerHTML = result.topRooms.map(r=>
+        `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;">
+          <span>🏨 غرفة ${r.room}</span><span style="color:var(--gold);">£${r.rev.toLocaleString()}</span>
+        </div>`).join('');
+    }
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// ══ TECH 3: Notification API — إشعارات المتصفح الحقيقية ══
+// ═══════════════════════════════════════════════════════════
+const DTA_NOTIFY = (function(){
+  let _permitted = false;
+
+  function request(){
+    if(!('Notification' in window)) return Promise.resolve(false);
+    if(Notification.permission === 'granted'){ _permitted=true; return Promise.resolve(true); }
+    if(Notification.permission === 'denied') return Promise.resolve(false);
+    return Notification.requestPermission().then(p=>{
+      _permitted = p==='granted';
+      if(_permitted) sNotify('🔔 إشعارات','تم تفعيل إشعارات المتصفح بنجاح ✓','success',3000);
+      return _permitted;
+    });
+  }
+
+  function send(title, body, opts={}){
+    if(!_permitted || Notification.permission!=='granted') return;
+    try{
+      const n = new Notification(title, {
+        body, icon: opts.icon||'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230f0f1a" rx="20"/><text y=".9em" font-size="80">🏨</text></svg>',
+        badge: opts.badge||'', tag: opts.tag||'dahab-'+Date.now(),
+        requireInteraction: opts.sticky||false,
+        silent: opts.silent||false
+      });
+      if(opts.onClick) n.onclick = opts.onClick;
+      if(!opts.sticky) setTimeout(()=>n.close(), opts.duration||6000);
+      return n;
+    }catch(e){ console.warn('[Notify] error:', e); }
+  }
+
+  // إشعارات تلقائية للوصول والمغادرة
+  function scheduleDailyAlerts(){
+    if(!_permitted) return;
+    const td = toDay();
+    const arrivals  = (bookings||[]).filter(b=>b.ci===td && b.status!=='Cancelled' && !b.ciConfirmed);
+    const departures= (bookings||[]).filter(b=>b.co===td && b.status!=='Cancelled' && !b.coConfirmed && b.ci!==td);
+    const unpaid    = (bookings||[]).filter(b=>b.status!=='Cancelled' && b.status!=='Paid' && b.co>=td && calcPaid(b)<(b.total||0));
+
+    if(arrivals.length)
+      send('🛬 وصول اليوم — Dahab Trendy',
+           arrivals.map(b=>b.name+' · غرفة '+b.room).join('\n'),
+           {tag:'arrivals-'+td, sticky:true,
+            onClick:()=>{ window.focus(); goPage('bookings',null); }});
+
+    if(departures.length)
+      send('🛫 مغادرة اليوم — Dahab Trendy',
+           departures.map(b=>b.name+' · غرفة '+b.room).join('\n'),
+           {tag:'departures-'+td});
+
+    if(unpaid.length)
+      send('⚠️ '+unpaid.length+' حجز غير مدفوع',
+           unpaid.slice(0,3).map(b=>b.name+' — '+b.cur+' '+Math.round(b.total-calcPaid(b))+' متبقي').join('\n'),
+           {tag:'unpaid-'+td});
+  }
+
+  // جدولة الإشعارات كل يوم الساعة 8 صباحاً
+  function scheduleDaily(){
+    if(!_permitted) return;
+    const now  = new Date();
+    const next8 = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0);
+    if(now >= next8) next8.setDate(next8.getDate()+1);
+    const msUntil = next8 - now;
+    setTimeout(()=>{
+      scheduleDailyAlerts();
+      setInterval(scheduleDailyAlerts, 24*60*60*1000);
+    }, msUntil);
+    console.log('[Notify] Daily alerts scheduled — next:', next8.toLocaleTimeString());
+  }
+
+  // تهيئة تلقائية
+  if(Notification.permission === 'granted'){
+    _permitted = true;
+    scheduleDaily();
+    // إشعار فوري عند فتح التطبيق لو في حجوزات اليوم
+    setTimeout(scheduleDailyAlerts, 3000);
+  }
+
+  return { request, send, scheduleDailyAlerts, scheduleDaily, get permitted(){ return _permitted; } };
+})();
+
+// ── زر تفعيل الإشعارات في الـ nav ──
+(function addNotifyBtn(){
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const nav = document.querySelector('.nav');
+    if(!nav || Notification.permission==='granted') return;
+    if(!('Notification' in window)) return;
+    const btn = document.createElement('button');
+    btn.className='nb';
+    btn.innerHTML='🔔 إشعارات';
+    btn.title='تفعيل إشعارات المتصفح';
+    btn.style.cssText='background:rgba(255,193,7,0.1);color:#f5c518;border-color:rgba(255,193,7,0.4);';
+    btn.onclick = ()=>{
+      DTA_NOTIFY.request().then(ok=>{
+        if(ok){ btn.remove(); DTA_NOTIFY.scheduleDaily(); }
+      });
+    };
+    nav.appendChild(btn);
+  });
+})();
+
+
+// ═══════════════════════════════════════════════════════════
+// ══ TECH 4: IntersectionObserver — Lazy Load للجداول ══
+// ═══════════════════════════════════════════════════════════
+const DTA_LAZY = (function(){
+  const _observed = new WeakMap();
+  let _observer = null;
+
+  function _getObserver(){
+    if(_observer) return _observer;
+    if(!('IntersectionObserver' in window)) return null;
+    _observer = new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){
+          const el = entry.target;
+          const cb = _observed.get(el);
+          if(cb){ cb(el); _observer.unobserve(el); _observed.delete(el); }
+        }
+      });
+    }, {rootMargin:'100px', threshold:0.01});
+    return _observer;
+  }
+
+  // راقب عنصر — لما يظهر في الشاشة نفّذ الـ callback
+  function observe(el, callback){
+    const obs = _getObserver();
+    if(!obs){ callback(el); return; } // fallback لو مش مدعوم
+    _observed.set(el, callback);
+    obs.observe(el);
+  }
+
+  // تحميل كسول لصور غرف (src=data-src)
+  function lazyImages(){
+    document.querySelectorAll('img[data-src]').forEach(img=>{
+      observe(img, el=>{
+        el.src = el.dataset.src;
+        el.removeAttribute('data-src');
+        el.classList.add('img-loaded');
+      });
+    });
+  }
+
+  // تحميل كسول لأي قسم بـ data-lazy-render
+  function lazySection(id, renderFn){
+    const el = document.getElementById(id);
+    if(!el){ renderFn(); return; }
+    observe(el, ()=> requestIdleCallback ? requestIdleCallback(renderFn) : setTimeout(renderFn, 50));
+  }
+
+  // تهيئة تلقائية عند تغيير الصفحة
+  document.addEventListener('click', ()=> setTimeout(lazyImages, 100));
+
+  return { observe, lazyImages, lazySection };
+})();
+
+
+// ═══════════════════════════════════════════════════════════
+// ══ TECH 5: CompressionStream + Share API — Backup محسّن ══
+// ═══════════════════════════════════════════════════════════
+const DTA_BACKUP = (function(){
+
+  // ضغط نص باستخدام CompressionStream
+  async function compress(text){
+    if(!('CompressionStream' in window)) return null;
+    const encoder = new TextEncoder();
+    const stream  = new CompressionStream('gzip');
+    const writer  = stream.writable.getWriter();
+    writer.write(encoder.encode(text));
+    writer.close();
+    const chunks = [];
+    const reader = stream.readable.getReader();
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      chunks.push(value);
+    }
+    const compressed = new Uint8Array(chunks.reduce((acc,c)=>[...acc,...c],[]));
+    return compressed;
+  }
+
+  // فك ضغط
+  async function decompress(uint8){
+    if(!('DecompressionStream' in window)) return null;
+    const stream = new DecompressionStream('gzip');
+    const writer = stream.writable.getWriter();
+    writer.write(uint8);
+    writer.close();
+    const chunks = [];
+    const reader = stream.readable.getReader();
+    const decoder = new TextDecoder();
+    while(true){
+      const {done, value} = await reader.read();
+      if(done) break;
+      chunks.push(decoder.decode(value, {stream:true}));
+    }
+    return chunks.join('');
+  }
+
+  // تصدير backup مضغوط (.gz) أو JSON عادي
+  async function exportBackup(compressed=true){
+    const data = {
+      ts: new Date().toISOString(),
+      version: 'DahabTrendy-v10',
+      bookings, expenses, roomSt, restaurantTx, tours,
+      blacklist, prices, duPrices, policies,
+      reviews: typeof reviews!=='undefined'?reviews:[],
+      waitlist: typeof waitList!=='undefined'?waitList:[]
+    };
+    const json = JSON.stringify(data, null, 2);
+    const date = new Date().toISOString().slice(0,10);
+
+    if(compressed && 'CompressionStream' in window){
+      try{
+        const gz = await compress(json);
+        const blob = new Blob([gz], {type:'application/gzip'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'DahabTrendy_Backup_'+date+'.json.gz';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        const origKB = Math.round(json.length/1024);
+        const compKB = Math.round(gz.length/1024);
+        sNotify('💾 Backup مضغوط','تم الحفظ: '+compKB+'KB (كان '+origKB+'KB) — ضغط '+Math.round((1-compKB/origKB)*100)+'%','success',5000);
+        return;
+      }catch(e){ console.warn('[Backup] compress failed, fallback to JSON:', e); }
+    }
+    // fallback: JSON عادي
+    const blob = new Blob([json], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'DahabTrendy_Backup_'+date+'.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    sNotify('💾 Backup','تم حفظ '+Math.round(json.length/1024)+'KB','success',3000);
+  }
+
+  // مشاركة ملخص تقرير عبر Share API (موبايل)
+  async function shareReport(text, title='تقرير Dahab Trendy'){
+    if(navigator.share){
+      try{
+        await navigator.share({ title, text, url: window.location.href });
+        return true;
+      }catch(e){ if(e.name!=='AbortError') console.warn('[Share]',e); }
+    }
+    // fallback: نسخ للحافظة
+    try{
+      await navigator.clipboard.writeText(text);
+      sNotify('📋 تم النسخ','نسخ التقرير للحافظة','success',2500);
+    }catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      sNotify('📋 تم النسخ','نسخ التقرير','success',2500);
+    }
+    return false;
+  }
+
+  // استيراد backup (JSON أو .gz)
+  async function importBackup(file){
+    if(!file) return;
+    let text = '';
+    if(file.name.endsWith('.gz')){
+      const buf = await file.arrayBuffer();
+      const uint8 = new Uint8Array(buf);
+      try{
+        text = await decompress(uint8);
+        if(!text) throw new Error('decompress returned null');
+      }catch(e){
+        sNotify('❌ خطأ','فشل فك ضغط الملف — جرب ملف JSON عادي','urgent',4000);
+        return;
+      }
+    } else {
+      text = await file.text();
+    }
+    try{
+      const data = JSON.parse(text);
+      if(!data.bookings) throw new Error('invalid format');
+      if(!confirm('سيتم استبدال كل البيانات الحالية بالبيانات المستوردة. هل أنت متأكد؟')) return;
+      // حفظ snapshot للـ undo أولاً
+      pushUndo('قبل الاستيراد', getUndoSnapshot());
+      if(data.bookings)   { bookings=data.bookings;   sv('dta_bk',bookings); }
+      if(data.expenses)   { expenses=data.expenses;   sv('dta_ex',expenses); }
+      if(data.roomSt)     { roomSt=data.roomSt;       sv('dta_rs',roomSt); }
+      if(data.restaurantTx){ restaurantTx=data.restaurantTx; sv('dta_rest',restaurantTx); }
+      if(data.tours)      { tours=data.tours;         sv('dta_tours',tours); }
+      if(data.prices)     { prices=data.prices;       sv('dta_pr',prices); }
+      renderDashboard(); renderBookings();
+      sNotify('✅ استيراد ناجح','تم استيراد '+bookings.length+' حجز بنجاح','success',4000);
+    }catch(e){
+      sNotify('❌ خطأ','ملف غير صحيح: '+e.message,'urgent',4000);
+    }
+  }
+
+  return { exportBackup, shareReport, importBackup, compress, decompress };
+})();
+
+// ── تحديث زر Export الموجود ليستخدم الـ backup المضغوط ──
+const _exportData_orig = typeof exportData==='function' ? exportData : null;
+function exportData(){
+  DTA_BACKUP.exportBackup(true);
+}
+// ── تحديث زر Import ──
+const _importData_orig = typeof importData==='function' ? importData : null;
+function importData(file){
+  if(file) DTA_BACKUP.importBackup(file);
+  else{
+    const inp = document.createElement('input');
+    inp.type='file'; inp.accept='.json,.gz';
+    inp.onchange = e=> DTA_BACKUP.importBackup(e.target.files[0]);
+    inp.click();
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// ══ TECH INIT — تهيئة كل التقنيات عند التحميل ══
+// ═══════════════════════════════════════════════════════════
+(function initAdvancedTech(){
+  document.addEventListener('DOMContentLoaded', ()=>{
+
+    // 1. IndexedDB: اعرض مساحة التخزين في الـ console
+    DTA_IDB.getUsage().then(({usedMB, quotaGB})=>{
+      console.log('[Dahab Trendy v10] Storage: IDB '+usedMB+'MB / '+quotaGB+'GB');
+    });
+
+    // 2. Web Worker: حسب الـ analytics في الخلفية بعد ثانيتين
+    setTimeout(()=> DTA_WORKER.calcAnalytics(r=>{
+      if(r) console.log('[Worker] Analytics ready — Rev EGP:', r.totalRevEGP);
+    }), 2000);
+
+    // 3. Lazy Images: فعّل التحميل الكسول للصور
+    DTA_LAZY.lazyImages();
+
+    // 4. Inject IDB analytics strip in dashboard
+    const dash = document.getElementById('page-dashboard');
+    if(dash && !document.getElementById('idb-analytics-strip')){
+      const strip = document.createElement('div');
+      strip.id = 'idb-analytics-strip';
+      strip.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0;';
+      const firstCard = dash.querySelector('.card,.sbox');
+      if(firstCard) firstCard.parentNode.insertBefore(strip, firstCard);
+      else dash.prepend(strip);
+
+      const roomsDiv = document.createElement('div');
+      roomsDiv.style.cssText='margin:10px 0;';
+      roomsDiv.innerHTML='<div style="font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">🏆 أعلى الغرف إيراداً</div><div id="idb-top-rooms"></div>';
+      strip.after(roomsDiv);
+    }
+
+    // 5. requestIdleCallback: حفظ IDB في وقت الفراغ
+    const saveToIDBIdle = ()=>{
+      const idleTask = ()=>{
+        DTA_IDB.saveAll('dta_bk', bookings);
+        DTA_IDB.saveAll('dta_ex', expenses);
+      };
+      if(typeof requestIdleCallback!=='undefined'){
+        requestIdleCallback(idleTask, {timeout:5000});
+      } else {
+        setTimeout(idleTask, 2000);
+      }
+    };
+    // حفظ كل 5 دقائق في وقت الفراغ
+    setInterval(saveToIDBIdle, 5*60*1000);
+    saveToIDBIdle();
+
+    console.log('[Dahab Trendy v10] ✅ Advanced Tech Stack ready: IndexedDB + Web Worker + Notifications + IntersectionObserver + CompressionStream');
+  });
 })();
 
 </script>
