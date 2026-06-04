@@ -5457,6 +5457,16 @@ const p=isDU?(duPrices[type]||{usd:0,egp:0,eur:0}):(prices[type]||{usd:0,egp:0,e
 const baseRate=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
 const customP=parseFloat(document.getElementById("bm-customprice").value)||0;
 const rate=customP>0?customP:baseRate;
+// ══ فحص سعر مشبوه ══
+if(customP>0 && baseRate>0 && customP > baseRate*2){
+  const sym2=cur==="USD"?"$":cur==="EUR"?"€":"£";
+  alert("⚠️ تنبيه: سعر مشبوه!\n\nالسعر الافتراضي للغرفة: "+sym2+baseRate+"\nالسعر المدخل: "+sym2+customP+"\n\nالسعر المدخل أعلى من الضعف! يرجى التحقق قبل الحفظ.");
+  return;
+}
+if(customP>0 && baseRate>0 && customP > baseRate*1.5){
+  const sym2=cur==="USD"?"$":cur==="EUR"?"€":"£";
+  if(!confirm("⚠️ تحذير: السعر المدخل أعلى من المعتاد!\n\nالسعر الافتراضي: "+sym2+baseRate+"\nالسعر المدخل: "+sym2+customP+"\n\nهل أنت متأكد؟")) return;
+}
 const duIn=isDU?document.getElementById("bm-du-in").value:"";
 const duOut=isDU?document.getElementById("bm-du-out").value:"";
 // Total: use nightPrices sum if available, else rate*n
@@ -6985,7 +6995,10 @@ function openReviewModal(b){
     document.body.appendChild(m);
   }
   m.innerHTML=`
-    <div class="modal" style="max-width:420px;text-align:center;">
+    <div class="mdl" style="max-width:420px;text-align:center;">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+        <button onclick="closeM('review-request-modal')" style="background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.5);color:#e74c3c;font-size:20px;font-weight:700;cursor:pointer;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+      </div>
       <div style="font-size:36px;margin-bottom:8px;">⭐</div>
       <h3 style="color:var(--gold);margin:0 0 4px;">${ar?"اطلب Review من الضيف":"Request a Guest Review"}</h3>
       <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">${b.name} · ${ar?"غرفة":"Room"} ${b.room}</p>
@@ -6993,11 +7006,11 @@ function openReviewModal(b){
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;justify-content:center;">
         ${btns}
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:18px;">
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
         <a href="${gmLink}" target="_blank" class="btn" style="flex:1;background:#4285F4;color:#fff;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">📍 Google Maps</a>
         <a href="${taLink}" target="_blank" class="btn" style="flex:1;background:#34E0A1;color:#000;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">✈️ TripAdvisor</a>
       </div>
-      <button class="btn bb" onclick="closeM('review-request-modal')" style="width:100%;">${ar?"إغلاق":"Close"}</button>
+      <button class="btn br" onclick="closeM('review-request-modal')" style="width:100%;padding:12px;font-size:15px;font-weight:700;">✕ ${ar?"إغلاق":"Close"}</button>
     </div>`;
   m.classList.add("on");
 }
@@ -8559,7 +8572,6 @@ document.getElementById("pay-sym").textContent=sym;
 document.getElementById("pay-date").value=toDay();
 document.getElementById("pay-amount").value="";
 document.getElementById("pay-note").value="";
-const pw=document.getElementById("pay-amount-warn");if(pw)pw.style.display="none";
 renderPayList();
 document.getElementById("pay-modal").classList.add("on");
 }
@@ -8679,22 +8691,17 @@ function checkPayAmountWarn(){
   const alreadyPaid=calcPaid(b);
   const remaining=Math.max(0,b.total-alreadyPaid);
   if(amt>b.total){
-    warn.style.display="";
-    warn.innerHTML="⛔ المبلغ ("+sym+amt.toFixed(0)+") أعلى من إجمالي الحجز ("+sym+b.total.toFixed(0)+")! — سيتم منع الحفظ";
-    warn.style.background="rgba(231,76,60,0.25)";
-    warn.style.borderColor="rgba(231,76,60,0.8)";
+    warn.style.display="";warn.style.color="#e74c3c";
+    warn.style.background="rgba(231,76,60,0.2)";warn.style.borderColor="rgba(231,76,60,0.7)";
+    warn.innerHTML="⛔ المبلغ ("+sym+amt.toFixed(0)+") أعلى من إجمالي الحجز ("+sym+b.total.toFixed(0)+") — سيتم منع الحفظ";
   } else if(remaining>0 && amt>remaining){
-    warn.style.display="";
-    warn.innerHTML="⚠️ المبلغ ("+sym+amt.toFixed(0)+") أعلى من المتبقي ("+sym+remaining.toFixed(0)+") — هل دفعة سلفة؟";
-    warn.style.background="rgba(243,156,18,0.15)";
-    warn.style.borderColor="rgba(243,156,18,0.5)";
-    warn.style.color="#f39c12";
-  } else if(remaining===0){
-    warn.style.display="";
+    warn.style.display="";warn.style.color="#f39c12";
+    warn.style.background="rgba(243,156,18,0.12)";warn.style.borderColor="rgba(243,156,18,0.5)";
+    warn.innerHTML="⚠️ أعلى من المتبقي ("+sym+remaining.toFixed(0)+") — هل دفعة زيادة؟";
+  } else if(remaining===0 && alreadyPaid>=b.total){
+    warn.style.display="";warn.style.color="#25D366";
+    warn.style.background="rgba(37,211,102,0.1)";warn.style.borderColor="rgba(37,211,102,0.4)";
     warn.innerHTML="✅ الحجز مدفوع بالكامل بالفعل";
-    warn.style.background="rgba(37,211,102,0.1)";
-    warn.style.borderColor="rgba(37,211,102,0.4)";
-    warn.style.color="#25D366";
   } else {
     warn.style.display="none";
   }
@@ -8707,14 +8714,12 @@ const b=bookings[payEdit];
 const sym=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
 const alreadyPaid=calcPaid(b);
 const remaining=Math.max(0,b.total-alreadyPaid);
-// ══ منع الحفظ لو المبلغ أعلى من الإجمالي ══
 if(amt>b.total){
-  alert("⛔ منع الحفظ!\n\nالمبلغ المدخل: "+sym+amt.toFixed(2)+"\nإجمالي الحجز: "+sym+b.total.toFixed(2)+"\n\nالمبلغ أعلى من الإجمالي — يرجى التحقق.");
+  alert("⛔ منع الحفظ!\n\nالمبلغ المدخل: "+sym+amt.toFixed(2)+"\nإجمالي الحجز: "+sym+b.total.toFixed(2)+"\n\nالمبلغ أعلى من الإجمالي.");
   return;
 }
-// ══ تحذير لو المبلغ أعلى من المتبقي ══
 if(remaining>0 && amt>remaining){
-  if(!confirm("⚠️ تحذير: المبلغ أعلى من المتبقي!\n\nالمتبقي: "+sym+remaining.toFixed(2)+"\nالمبلغ المدخل: "+sym+amt.toFixed(2)+"\n\nهل أنت متأكد؟")) return;
+  if(!confirm("⚠️ تحذير: المبلغ أعلى من المتبقي!\n\nالمتبقي: "+sym+remaining.toFixed(2)+"\nالمبلغ: "+sym+amt.toFixed(2)+"\n\nهل أنت متأكد؟")) return;
 }
 if(!b.payments) b.payments=[];
 b.payments.push({
@@ -8723,7 +8728,6 @@ amount:amt,
 method:document.getElementById("pay-method").value,
 note:document.getElementById("pay-note").value,
 });
-// Update prepay and status automatically
 const paidSum=calcPaid(b);
 b.prepay=paidSum;
 if(paidSum>=b.total) b.status="Paid";
@@ -8731,8 +8735,7 @@ else if(paidSum>0) b.status="Partial";
 sv("dta_bk",bookings);
 document.getElementById("pay-amount").value="";
 document.getElementById("pay-note").value="";
-const w=document.getElementById("pay-amount-warn");
-if(w) w.style.display="none";
+const pw=document.getElementById("pay-amount-warn");if(pw)pw.style.display="none";
 renderPayList();
 renderBookings();
 }
@@ -14952,7 +14955,10 @@ function loadWATemplate(){
       upgrade:{title:'🏖️ عرض خاص',body:`مرحباً *${b.name}* 🌊\n\nلديكم حجز قادم في *${prop.name}* بتاريخ ${fmtD(b.ci)}.\n\n🌟 عرض خاص لكم: ترقية مجانية للغرفة أو خصم على خدمات الرحلات والمطعم.\n\nللاستفسار والتأكيد:\n📞 ${prop.phone}\n\nنتطلع لاستقبالكم! 💛`},
       pay_thanks:{title:'💚 شكر على الدفع',body:`السلام عليكم *${b.name}* 💚\n\nتم استلام دفعتكم بنجاح! شكراً جزيلاً لكم 🙏\n\n✅ الإيصال:\n🏨 *${prop.name}*\n📋 رقم الحجز: ${b.invNo||b.id}\n🏠 الغرفة: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} ← ${fmtD(b.co)} (${nights_} ليالي)\n💰 المبلغ المُسدَّد: *${sym}${b.total}*\n\nحجزكم مؤكد ومرحباً بكم دائماً 💛\n— فريق *${prop.name}* 🌊\n📞 ${prop.phone}`},
       review_thanks:{title:'🌟 شكر على التقييم',body:`عزيزنا *${b.name}* 🌊\n\nوصلنا تقييمكم الرائع وأسعدنا كثيراً! 🌟✨\n\nشكراً من القلب على وقتكم وكلماتكم الجميلة — أنتم تحفّزوننا على تقديم الأفضل دائماً.\n\nيشرّفنا استقبالكم من جديد في *${prop.name}* 💛\n\nللحجز والاستفسار:\n📞 ${prop.phone}\n— فريق *${prop.name}* 🌊`},
-      comfort_check:{title:'🏨 راحتك أولويتنا',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتك في *${prop.name}* مريحة ومميزة 😊\n\n🏨 راحتك أولويتنا — إذا كان لديك أي طلب أو استفسار، فريقنا في خدمتك على مدار الساعة.\n\nفضلاً لا تتردد في التواصل معنا في أي وقت 🙏\n\n📞 ${prop.phone}\n\nأهلاً بك دائماً 💛\n— فريق *${prop.name}*`}
+      comfort_check:{title:'🏨 راحتك أولويتنا',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتك في *${prop.name}* مريحة ومميزة 😊\n\n🏨 راحتك أولويتنا — إذا كان لديك أي طلب أو استفسار، فريقنا في خدمتك على مدار الساعة.\n\nفضلاً لا تتردد في التواصل معنا في أي وقت 🙏\n\n📞 ${prop.phone}\n\nأهلاً بك دائماً 💛\n— فريق *${prop.name}*`},
+      extend:{title:'🌙 طلب تمديد الإقامة',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتكم في *${prop.name}* مريحة وممتعة.\n\nللتذكير، موعد مغادرتكم الحالي:\n🏨 الغرفة: *${b.room}*\n📅 المغادرة: *${fmtD(b.co)}*\n💰 سعر الليلة: ${sym}${nights_>0?(b.total/nights_).toFixed(0):b.total}\n\n🌙 *هل تودّون تمديد إقامتكم ليلة أو أكثر؟*\nيسعدنا الترتيب لكم — يرجى إبلاغنا في أقرب وقت للتحقق من التوافر.\n\n📞 ${prop.phone}\n\nشكراً لاختياركم *${prop.name}* 💛`},
+      discount:{title:'🎁 عرض خصم خاص لكم',body:`عزيزنا *${b.name}* 🌊\n\nيسعدنا تقديم عرض حصري خاص بكم في *${prop.name}*:\n\n🎁 *خصم 15% على إقامتكم القادمة* عند الحجز المباشر معنا!\n\n🏨 أنواع الغرف المتاحة:\n• Single — ${sym}${(prices.Single?prices.Single[b.cur.toLowerCase()]||prices.Single.egp:0)}/ليلة\n• Double — ${sym}${(prices.Double?prices.Double[b.cur.toLowerCase()]||prices.Double.egp:0)}/ليلة\n• Triple — ${sym}${(prices.Triple?prices.Triple[b.cur.toLowerCase()]||prices.Triple.egp:0)}/ليلة\n\n✅ العرض ساري لفترة محدودة\n\n📞 ${prop.phone}\n\nننتظر حجزكم! 💛\n— فريق *${prop.name}* 🌊`},
+      stay_summary:{title:'📋 ملخص إقامتكم',body:`عزيزنا *${b.name}* 🌊\n\nإليكم ملخص إقامتكم في *${prop.name}*:\n\n🏨 الغرفة: *${b.room}* (${b.type||''})\n📅 الوصول: ${fmtD(b.ci)}\n📅 المغادرة: ${fmtD(b.co)}\n🌙 عدد الليالي: ${nights_}\n\n💰 الإجمالي: *${sym}${b.total}*\n${paidSum_wat>0?'✅ المدفوع: '+sym+paidSum_wat.toFixed(2)+'\n':''}${remAmt_wat>0?'⏳ المتبقي: *'+sym+remAmt_wat.toFixed(2)+'*\n':''}\nلأي استفسار نحن في خدمتكم:\n📞 ${prop.phone}\n\nشكراً لاختياركم *${prop.name}* 💛`}
     },
     en:{
       confirm:{title:'✅ Booking Confirmation',body:`Dear *${b.name}*, 🌊\n\nWe are pleased to confirm your booking at *${prop.name}*:\n\n🏨 Room: ${b.room} (${b.type||''})\n📅 Check-in: ${fmtD(b.ci)}\n📅 Check-out: ${fmtD(b.co)}\n🌙 Nights: ${nights_}\n💰 Total: ${sym}${b.total}\n💳 Status: ${payLbl}\n\nWe look forward to welcoming you! Please let us know your arrival time.\n📞 ${prop.phone}`},
@@ -14968,7 +14974,10 @@ function loadWATemplate(){
       upgrade:{title:'🏖️ Special Offer',body:`Hello *${b.name}* 🌊\n\nYou have an upcoming stay at *${prop.name}* on ${fmtD(b.ci)}.\n\n🌟 Special offer for you: free room upgrade (subject to availability) or discounts on tours & restaurant.\n\nFor inquiries & confirmation:\n📞 ${prop.phone}\n\nLooking forward to your visit! 💛`},
       pay_thanks:{title:'💚 Payment Received — Thank You!',body:`Hello *${b.name}* 💚\n\nYour payment has been successfully received! Thank you so much 🙏\n\n✅ Receipt:\n🏨 *${prop.name}*\n📋 Booking Ref: ${b.invNo||b.id}\n🏠 Room: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} nights)\n💰 Amount Paid: *${sym}${b.total}*\n\nYour booking is confirmed — we look forward to welcoming you! 💛\n— Team *${prop.name}* 🌊\n📞 ${prop.phone}`},
       review_thanks:{title:'🌟 Thank You for Your Review!',body:`Dear *${b.name}* 🌊\n\nWe received your wonderful review and it truly made our day! 🌟✨\n\nThank you so much for taking the time to share your experience — your kind words inspire us to keep delivering the best.\n\nWe'd be honoured to welcome you back to *${prop.name}* 💛\n\nFor reservations & inquiries:\n📞 ${prop.phone}\n— Team *${prop.name}* 🌊`},
-      comfort_check:{title:'🏨 Your Comfort is Our Priority',body:`Dear *${b.name}* 🌊\n\nWe hope your stay at *${prop.name}* is comfortable and enjoyable 😊\n\n🏨 Your comfort is our priority — if you have any request or question, our team is at your service around the clock.\n\nPlease don't hesitate to reach out to us at any time 🙏\n\n📞 ${prop.phone}\n\nIt's always a pleasure having you 💛\n— Team *${prop.name}*`}
+      comfort_check:{title:'🏨 Your Comfort is Our Priority',body:`Dear *${b.name}* 🌊\n\nWe hope your stay at *${prop.name}* is comfortable and enjoyable 😊\n\n🏨 Your comfort is our priority — if you have any request or question, our team is at your service around the clock.\n\nPlease don't hesitate to reach out to us at any time 🙏\n\n📞 ${prop.phone}\n\nIt's always a pleasure having you 💛\n— Team *${prop.name}*`},
+      extend:{title:'🌙 Extend Your Stay?',body:`Dear *${b.name}* 🌊\n\nWe hope you're enjoying your stay at *${prop.name}*!\n\nYour current check-out is:\n🏨 Room: *${b.room}*\n📅 Check-out: *${fmtD(b.co)}*\n💰 Rate per night: ${sym}${nights_>0?(b.total/nights_).toFixed(0):b.total}\n\n🌙 *Would you like to extend your stay for one more night or longer?*\nWe'd be happy to arrange it — please let us know soon so we can check availability.\n\n📞 ${prop.phone}\n\nThank you for choosing *${prop.name}* 💛`},
+      discount:{title:'🎁 Exclusive Offer Just for You',body:`Dear *${b.name}* 🌊\n\nWe have an exclusive offer especially for you at *${prop.name}*:\n\n🎁 *15% discount on your next stay* when booking directly with us!\n\n🏨 Available room types:\n• Single — ${sym}${(prices.Single?prices.Single[b.cur.toLowerCase()]||prices.Single.egp:0)}/night\n• Double — ${sym}${(prices.Double?prices.Double[b.cur.toLowerCase()]||prices.Double.egp:0)}/night\n• Triple — ${sym}${(prices.Triple?prices.Triple[b.cur.toLowerCase()]||prices.Triple.egp:0)}/night\n\n✅ Limited time offer\n\n📞 ${prop.phone}\n\nWe look forward to your booking! 💛\n— Team *${prop.name}* 🌊`},
+      stay_summary:{title:'📋 Your Stay Summary',body:`Dear *${b.name}* 🌊\n\nHere is a summary of your stay at *${prop.name}*:\n\n🏨 Room: *${b.room}* (${b.type||''})\n📅 Check-in: ${fmtD(b.ci)}\n📅 Check-out: ${fmtD(b.co)}\n🌙 Nights: ${nights_}\n\n💰 Total: *${sym}${b.total}*\n${paidSum_wat>0?'✅ Paid: '+sym+paidSum_wat.toFixed(2)+'\n':''}${remAmt_wat>0?'⏳ Balance Due: *'+sym+remAmt_wat.toFixed(2)+'*\n':''}\nFor any questions, we're here for you:\n📞 ${prop.phone}\n\nThank you for choosing *${prop.name}* 💛`}
     },
     fr:{
       confirm:{title:'✅ Confirmation de réservation',body:`Cher/Chère *${b.name}*, 🌊\n\nNous avons le plaisir de confirmer votre réservation à *${prop.name}* :\n\n🏨 Chambre : ${b.room} (${b.type||''})\n📅 Arrivée : ${fmtD(b.ci)}\n📅 Départ : ${fmtD(b.co)}\n🌙 Nuits : ${nights_}\n💰 Total : ${sym}${b.total}\n💳 Statut : ${payLbl}\n\nNous avons hâte de vous accueillir ! Merci de nous informer de votre heure d'arrivée.\n📞 ${prop.phone}`},
@@ -14984,7 +14993,10 @@ function loadWATemplate(){
       upgrade:{title:'🏖️ Offre spéciale',body:`Bonjour *${b.name}* 🌊\n\nVous avez un séjour prévu à *${prop.name}* le ${fmtD(b.ci)}.\n\n🌟 Offre spéciale : surclassement gratuit (sous réserve de disponibilité) ou remise sur les excursions et le restaurant.\n\nPour renseignements et confirmation :\n📞 ${prop.phone}\n\nNous vous attendons avec plaisir ! 💛`},
       pay_thanks:{title:'💚 Paiement reçu — Merci !',body:`Bonjour *${b.name}* 💚\n\nVotre paiement a bien été reçu ! Merci beaucoup 🙏\n\n✅ Reçu :\n🏨 *${prop.name}*\n📋 Réf. réservation : ${b.invNo||b.id}\n🏠 Chambre : ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} nuits)\n💰 Montant payé : *${sym}${b.total}*\n\nVotre réservation est confirmée — nous avons hâte de vous accueillir ! 💛\n— L'équipe *${prop.name}* 🌊\n📞 ${prop.phone}`},
       review_thanks:{title:'🌟 Merci pour votre avis !',body:`Cher/Chère *${b.name}* 🌊\n\nNous avons reçu votre magnifique avis et cela nous a beaucoup touché ! 🌟✨\n\nMerci infiniment d'avoir pris le temps de partager votre expérience — vos mots nous motivent à toujours faire mieux.\n\nNous serions honorés de vous accueillir à nouveau au *${prop.name}* 💛\n\nPour réservations :\n📞 ${prop.phone}\n— L'équipe *${prop.name}* 🌊`},
-      comfort_check:{title:'🏨 Votre confort est notre priorité',body:`Cher/Chère *${b.name}* 🌊\n\nNous espérons que votre séjour à *${prop.name}* est confortable et agréable 😊\n\n🏨 Votre confort est notre priorité — si vous avez une demande ou une question, notre équipe est à votre disposition 24h/24.\n\nN'hésitez pas à nous contacter à tout moment 🙏\n\n📞 ${prop.phone}\n\nC'est toujours un plaisir de vous accueillir 💛\n— L'équipe *${prop.name}*`}
+      comfort_check:{title:'🏨 Votre confort est notre priorité',body:`Cher/Chère *${b.name}* 🌊\n\nNous espérons que votre séjour à *${prop.name}* est confortable et agréable 😊\n\n🏨 Votre confort est notre priorité — si vous avez une demande ou une question, notre équipe est à votre disposition 24h/24.\n\nN'hésitez pas à nous contacter à tout moment 🙏\n\n📞 ${prop.phone}\n\nC'est toujours un plaisir de vous accueillir 💛\n— L'équipe *${prop.name}*`},
+      extend:{title:'🌙 Prolonger votre séjour ?',body:`Cher/Chère *${b.name}* 🌊\n\nNous espérons que vous profitez de votre séjour à *${prop.name}* !\n\nRappel, votre date de départ actuelle :\n🏨 Chambre : *${b.room}*\n📅 Départ : *${fmtD(b.co)}*\n💰 Tarif par nuit : ${sym}${nights_>0?(b.total/nights_).toFixed(0):b.total}\n\n🌙 *Souhaitez-vous prolonger votre séjour d'une nuit ou plus ?*\nNous serons ravis d'organiser cela — merci de nous informer rapidement.\n\n📞 ${prop.phone}\n\nMerci d'avoir choisi *${prop.name}* 💛`},
+      discount:{title:'🎁 Offre exclusive rien que pour vous',body:`Cher/Chère *${b.name}* 🌊\n\nNous avons une offre exclusive pour vous à *${prop.name}* :\n\n🎁 *15% de réduction sur votre prochain séjour* lors d'une réservation directe !\n\n🏨 Types de chambres :\n• Single — ${sym}${(prices.Single?prices.Single[b.cur.toLowerCase()]||prices.Single.egp:0)}/nuit\n• Double — ${sym}${(prices.Double?prices.Double[b.cur.toLowerCase()]||prices.Double.egp:0)}/nuit\n• Triple — ${sym}${(prices.Triple?prices.Triple[b.cur.toLowerCase()]||prices.Triple.egp:0)}/nuit\n\n✅ Offre limitée\n\n📞 ${prop.phone}\n\nNous attendons votre réservation ! 💛\n— L'équipe *${prop.name}* 🌊`},
+      stay_summary:{title:'📋 Récapitulatif de votre séjour',body:`Cher/Chère *${b.name}* 🌊\n\nVoici un récapitulatif de votre séjour à *${prop.name}* :\n\n🏨 Chambre : *${b.room}* (${b.type||''})\n📅 Arrivée : ${fmtD(b.ci)}\n📅 Départ : ${fmtD(b.co)}\n🌙 Nuits : ${nights_}\n\n💰 Total : *${sym}${b.total}*\n${paidSum_wat>0?'✅ Payé : '+sym+paidSum_wat.toFixed(2)+'\n':''}${remAmt_wat>0?'⏳ Solde : *'+sym+remAmt_wat.toFixed(2)+'*\n':''}\nPour toute question :\n📞 ${prop.phone}\n\nMerci de votre confiance 💛`}
     },
     de:{
       confirm:{title:'✅ Buchungsbestätigung',body:`Liebe/r *${b.name}*, 🌊\n\nWir freuen uns, Ihre Buchung im *${prop.name}* zu bestätigen:\n\n🏨 Zimmer: ${b.room} (${b.type||''})\n📅 Check-in: ${fmtD(b.ci)}\n📅 Check-out: ${fmtD(b.co)}\n🌙 Nächte: ${nights_}\n💰 Gesamt: ${sym}${b.total}\n💳 Status: ${payLbl}\n\nWir freuen uns auf Ihre Ankunft! Bitte teilen Sie uns Ihre Ankunftszeit mit.\n📞 ${prop.phone}`},
@@ -15000,7 +15012,10 @@ function loadWATemplate(){
       upgrade:{title:'🏖️ Sonderangebot',body:`Hallo *${b.name}* 🌊\n\nSie haben einen bevorstehenden Aufenthalt im *${prop.name}* am ${fmtD(b.ci)}.\n\n🌟 Sonderangebot: kostenloses Zimmer-Upgrade (je nach Verfügbarkeit) oder Rabatt auf Touren & Restaurant.\n\nFür Anfragen und Bestätigung:\n📞 ${prop.phone}\n\nWir freuen uns auf Ihren Besuch! 💛`},
       pay_thanks:{title:'💚 Zahlung erhalten — Vielen Dank!',body:`Hallo *${b.name}* 💚\n\nIhre Zahlung ist erfolgreich eingegangen! Vielen herzlichen Dank 🙏\n\n✅ Quittung:\n🏨 *${prop.name}*\n📋 Buchungs-Nr.: ${b.invNo||b.id}\n🏠 Zimmer: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} Nächte)\n💰 Bezahlter Betrag: *${sym}${b.total}*\n\nIhre Buchung ist bestätigt — wir freuen uns auf Ihre Ankunft! 💛\n— Team *${prop.name}* 🌊\n📞 ${prop.phone}`},
       review_thanks:{title:'🌟 Danke für Ihre Bewertung!',body:`Liebe/r *${b.name}* 🌊\n\nWir haben Ihre wunderbare Bewertung erhalten und sind sehr gerührt! 🌟✨\n\nVielen Dank, dass Sie sich die Zeit genommen haben, Ihre Erfahrung zu teilen — Ihre Worte motivieren uns, immer besser zu werden.\n\nWir würden uns freuen, Sie erneut im *${prop.name}* willkommen zu heißen 💛\n\nFür Buchungen:\n📞 ${prop.phone}\n— Team *${prop.name}* 🌊`},
-      comfort_check:{title:'🏨 Ihr Wohlbefinden ist unsere Priorität',body:`Liebe/r *${b.name}* 🌊\n\nWir hoffen, dass Ihr Aufenthalt im *${prop.name}* angenehm und komfortabel ist 😊\n\n🏨 Ihr Wohlbefinden ist unsere Priorität — wenn Sie eine Frage oder einen Wunsch haben, steht Ihnen unser Team rund um die Uhr zur Verfügung.\n\nZögern Sie nicht, uns jederzeit zu kontaktieren 🙏\n\n📞 ${prop.phone}\n\nEs ist uns immer eine Freude, Sie zu empfangen 💛\n— Team *${prop.name}*`}
+      comfort_check:{title:'🏨 Ihr Wohlbefinden ist unsere Priorität',body:`Liebe/r *${b.name}* 🌊\n\nWir hoffen, dass Ihr Aufenthalt im *${prop.name}* angenehm und komfortabel ist 😊\n\n🏨 Ihr Wohlbefinden ist unsere Priorität — wenn Sie eine Frage oder einen Wunsch haben, steht Ihnen unser Team rund um die Uhr zur Verfügung.\n\nZögern Sie nicht, uns jederzeit zu kontaktieren 🙏\n\n📞 ${prop.phone}\n\nEs ist uns immer eine Freude, Sie zu empfangen 💛\n— Team *${prop.name}*`},
+      extend:{title:'🌙 Aufenthalt verlängern?',body:`Liebe/r *${b.name}* 🌊\n\nWir hoffen, Sie genießen Ihren Aufenthalt im *${prop.name}* !\n\nIhr aktuelles Abreisedatum :\n🏨 Zimmer: *${b.room}*\n📅 Abreise: *${fmtD(b.co)}*\n💰 Preis pro Nacht: ${sym}${nights_>0?(b.total/nights_).toFixed(0):b.total}\n\n🌙 *Möchten Sie Ihren Aufenthalt verlängern?*\nBitte geben Sie uns baldmöglichst Bescheid.\n\n📞 ${prop.phone}\n\nVielen Dank für Ihr Vertrauen 💛`},
+      discount:{title:'🎁 Exklusives Angebot für Sie',body:`Liebe/r *${b.name}* 🌊\n\nWir haben ein exklusives Angebot für Sie im *${prop.name}* :\n\n🎁 *15% Rabatt auf Ihren nächsten Aufenthalt* bei Direktbuchung!\n\n🏨 Zimmertypen:\n• Single — ${sym}${(prices.Single?prices.Single[b.cur.toLowerCase()]||prices.Single.egp:0)}/Nacht\n• Double — ${sym}${(prices.Double?prices.Double[b.cur.toLowerCase()]||prices.Double.egp:0)}/Nacht\n• Triple — ${sym}${(prices.Triple?prices.Triple[b.cur.toLowerCase()]||prices.Triple.egp:0)}/Nacht\n\n✅ Befristetes Angebot\n\n📞 ${prop.phone}\n\nWir freuen uns auf Ihre Buchung! 💛\n— Team *${prop.name}* 🌊`},
+      stay_summary:{title:'📋 Ihre Aufenthaltsübersicht',body:`Liebe/r *${b.name}* 🌊\n\nHier ist eine Übersicht Ihres Aufenthalts im *${prop.name}* :\n\n🏨 Zimmer: *${b.room}* (${b.type||''})\n📅 Check-in: ${fmtD(b.ci)}\n📅 Check-out: ${fmtD(b.co)}\n🌙 Nächte: ${nights_}\n\n💰 Gesamt: *${sym}${b.total}*\n${paidSum_wat>0?'✅ Bezahlt: '+sym+paidSum_wat.toFixed(2)+'\n':''}${remAmt_wat>0?'⏳ Offen: *'+sym+remAmt_wat.toFixed(2)+'*\n':''}\nFür Fragen stehen wir Ihnen gerne zur Verfügung:\n📞 ${prop.phone}\n\nVielen Dank 💛`}
     },
     ru:{
       confirm:{title:'✅ Подтверждение бронирования',body:`Уважаемый/ая *${b.name}*, 🌊\n\nМы рады подтвердить Ваше бронирование в *${prop.name}*:\n\n🏨 Номер: ${b.room} (${b.type||''})\n📅 Заезд: ${fmtD(b.ci)}\n📅 Выезд: ${fmtD(b.co)}\n🌙 Ночей: ${nights_}\n💰 Итого: ${sym}${b.total}\n💳 Статус: ${payLbl}\n\nМы с нетерпением ждём Вас! Пожалуйста, сообщите нам время Вашего прибытия.\n📞 ${prop.phone}`},
@@ -15016,7 +15031,10 @@ function loadWATemplate(){
       upgrade:{title:'🏖️ Специальное предложение',body:`Здравствуйте, *${b.name}* 🌊\n\nВас ждёт предстоящее пребывание в *${prop.name}* ${fmtD(b.ci)}.\n\n🌟 Специальное предложение: бесплатный апгрейд номера (при наличии) или скидка на экскурсии и ресторан.\n\nДля уточнений и подтверждения:\n📞 ${prop.phone}\n\nС нетерпением ждём Вас! 💛`},
       pay_thanks:{title:'💚 Оплата получена — Спасибо!',body:`Здравствуйте, *${b.name}* 💚\n\nВаш платёж успешно получен! Большое спасибо 🙏\n\n✅ Квитанция:\n🏨 *${prop.name}*\n📋 Номер бронирования: ${b.invNo||b.id}\n🏠 Номер: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} → ${fmtD(b.co)} (${nights_} ночей)\n💰 Оплаченная сумма: *${sym}${b.total}*\n\nВаше бронирование подтверждено — ждём Вас с нетерпением! 💛\n— Команда *${prop.name}* 🌊\n📞 ${prop.phone}`},
       review_thanks:{title:'🌟 Спасибо за Ваш отзыв!',body:`Уважаемый/ая *${b.name}* 🌊\n\nМы получили Ваш замечательный отзыв и это нас очень обрадовало! 🌟✨\n\nБольшое спасибо за то, что нашли время поделиться своими впечатлениями — Ваши слова вдохновляют нас становиться лучше.\n\nБудем рады снова принять Вас в *${prop.name}* 💛\n\nДля бронирования:\n📞 ${prop.phone}\n— Команда *${prop.name}* 🌊`},
-      comfort_check:{title:'🏨 Ваш комфорт — наш приоритет',body:`Уважаемый/ая *${b.name}* 🌊\n\nНадеемся, что Ваше пребывание в *${prop.name}* проходит комфортно и приятно 😊\n\n🏨 Ваш комфорт — наш приоритет — если у Вас есть какой-либо запрос или вопрос, наша команда к Вашим услугам круглосуточно.\n\nПожалуйста, не стесняйтесь обращаться к нам в любое время 🙏\n\n📞 ${prop.phone}\n\nНам всегда приятно видеть Вас у нас 💛\n— Команда *${prop.name}*`}
+      comfort_check:{title:'🏨 Ваш комфорт — наш приоритет',body:`Уважаемый/ая *${b.name}* 🌊\n\nНадеемся, что Ваше пребывание в *${prop.name}* проходит комфортно и приятно 😊\n\n🏨 Ваш комфорт — наш приоритет — если у Вас есть какой-либо запрос или вопрос, наша команда к Вашим услугам круглосуточно.\n\nПожалуйста, не стесняйтесь обращаться к нам в любое время 🙏\n\n📞 ${prop.phone}\n\nНам всегда приятно видеть Вас у нас 💛\n— Команда *${prop.name}*`},
+      extend:{title:'🌙 Продлить пребывание?',body:`Уважаемый/ая *${b.name}* 🌊\n\nНадеемся, Вы наслаждаетесь пребыванием в *${prop.name}* !\n\nВаша текущая дата выезда:\n🏨 Номер: *${b.room}*\n📅 Выезд: *${fmtD(b.co)}*\n💰 Стоимость за ночь: ${sym}${nights_>0?(b.total/nights_).toFixed(0):b.total}\n\n🌙 *Не желаете ли продлить пребывание?*\nПожалуйста, сообщите нам как можно скорее.\n\n📞 ${prop.phone}\n\nСпасибо за доверие 💛`},
+      discount:{title:'🎁 Эксклюзивное предложение',body:`Уважаемый/ая *${b.name}* 🌊\n\nМы подготовили для Вас эксклюзивное предложение в *${prop.name}* :\n\n🎁 *Скидка 15% на следующее пребывание* при прямом бронировании!\n\n🏨 Типы номеров:\n• Single — ${sym}${(prices.Single?prices.Single[b.cur.toLowerCase()]||prices.Single.egp:0)}/ночь\n• Double — ${sym}${(prices.Double?prices.Double[b.cur.toLowerCase()]||prices.Double.egp:0)}/ночь\n• Triple — ${sym}${(prices.Triple?prices.Triple[b.cur.toLowerCase()]||prices.Triple.egp:0)}/ночь\n\n✅ Ограниченное предложение\n\n📞 ${prop.phone}\n\nБудем рады Вашему бронированию! 💛\n— Команда *${prop.name}* 🌊`},
+      stay_summary:{title:'📋 Сводка пребывания',body:`Уважаемый/ая *${b.name}* 🌊\n\nСводка Вашего пребывания в *${prop.name}* :\n\n🏨 Номер: *${b.room}* (${b.type||''})\n📅 Заезд: ${fmtD(b.ci)}\n📅 Выезд: ${fmtD(b.co)}\n🌙 Ночей: ${nights_}\n\n💰 Итого: *${sym}${b.total}*\n${paidSum_wat>0?'✅ Оплачено: '+sym+paidSum_wat.toFixed(2)+'\n':''}${remAmt_wat>0?'⏳ Остаток: *'+sym+remAmt_wat.toFixed(2)+'*\n':''}\nПо любым вопросам:\n📞 ${prop.phone}\n\nСпасибо 💛`}
     }
   };
   const templates=allTemplates[_watLang]||allTemplates.en;
