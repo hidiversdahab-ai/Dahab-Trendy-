@@ -1139,7 +1139,10 @@ select option{background:#1a1a2e;color:var(--text)}
     <div class="bn-more-item" onclick="exportAll();closeBnMore()"><span class="bm-icon">💾</span><span class="t" data-ar="تصدير" data-en="Export">تصدير</span></div>
     <div class="bn-more-item" onclick="document.getElementById('impfile').click();closeBnMore()"><span class="bm-icon">📂</span><span class="t" data-ar="استيراد" data-en="Import">استيراد</span></div>
     <div class="bn-more-item" onclick="toggleTheme();closeBnMore()"><span class="bm-icon" id="bn-theme-icon">🌙</span><span class="t" data-ar="الوضع" data-en="Theme">الوضع</span></div>
-    <div class="bn-more-item" onclick="toggleLangMenu();closeBnMore()"><span class="bm-icon">🌐</span><span class="t" data-ar="اللغة" data-en="Language">اللغة</span></div>
+    <div style="display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <button onclick="setLang('ar');closeBnMore()" id="menu-lang-ar" style="flex:1;padding:8px;border-radius:8px;border:2px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.1);color:var(--gold);font-weight:700;font-size:13px;cursor:pointer;">🇸🇦 عربي</button>
+      <button onclick="setLang('en');closeBnMore()" id="menu-lang-en" style="flex:1;padding:8px;border-radius:8px;border:2px solid rgba(255,255,255,0.1);background:transparent;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;">🇬🇧 English</button>
+    </div>
   </div>
 </div>
 
@@ -1237,10 +1240,17 @@ select option{background:#1a1a2e;color:var(--text)}
 <button class="nb btn-pdf" onclick="openPDFReport()" style="padding:5px 10px;font-size:11px;font-weight:700;">📊 PDF</button>
 <button class="nb" onclick="openAIWelcome()" style="background:rgba(201,168,76,0.15);color:var(--gold);border-color:var(--gold);font-weight:700;font-size:11px;">✍️ AI رسائل</button>
 <div style="position:relative;display:inline-block;" id="lang-dropdown-wrap">
-<button class="nb" id="lang-btn" onclick="toggleLangMenu()" style="background:rgba(201,168,76,0.15);color:var(--gold);border-color:var(--gold);font-weight:700;">🌐 <span id="lang-label">EN</span> ▾</button>
-<div id="lang-menu" style="display:none;position:absolute;top:36px;right:0;background:#1e2a3a;border:1px solid var(--bdr);border-radius:10px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,0.5);overflow:hidden;min-width:130px;">
-  <div onclick="setLang('en')" id="lang-opt-en" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text);">🇬🇧 English</div>
-  <div onclick="setLang('ar')" id="lang-opt-ar" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text);border-top:1px solid var(--bdr);">🇸🇦 العربية</div>
+<button class="nb" id="lang-btn" onclick="toggleLangMenu()" style="background:rgba(201,168,76,0.15);color:var(--gold);border-color:var(--gold);font-weight:700;min-width:70px;display:flex;align-items:center;gap:4px;">
+  🌐 <span id="lang-label" style="font-size:12px;">EN</span> ▾
+</button>
+<div id="lang-menu" style="display:none;position:absolute;top:40px;right:0;background:#1e2a3a;border:1px solid rgba(201,168,76,0.3);border-radius:12px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,0.6);overflow:hidden;min-width:150px;">
+  <div style="padding:8px 12px;font-size:9px;color:var(--muted);letter-spacing:1px;font-weight:700;border-bottom:1px solid var(--bdr);">اختر اللغة / Language</div>
+  <div onclick="setLang('en')" id="lang-opt-en" style="padding:11px 16px;cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px;color:var(--text);transition:background .15s;" onmouseover="this.style.background='rgba(201,168,76,0.08)'" onmouseout="this.style.background='transparent'">
+    🇬🇧 <span>English</span>
+  </div>
+  <div onclick="setLang('ar')" id="lang-opt-ar" style="padding:11px 16px;cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;gap:10px;color:var(--text);border-top:1px solid var(--bdr);transition:background .15s;" onmouseover="this.style.background='rgba(201,168,76,0.08)'" onmouseout="this.style.background='transparent'">
+    🇸🇦 <span>العربية</span>
+  </div>
 </div>
 </div>
 <button class="nb" onclick="openAIChat()" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border-color:#4A90D9;font-weight:700;">🤖 AI</button>
@@ -5231,7 +5241,7 @@ function renderTodayMovements(){
   };
   el.innerHTML=`<div style="background:var(--card);border:1px solid var(--bdr);border-radius:11px;padding:14px;">
     <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">
-      📅 ${ar?'حركة اليوم':"Today's Movements"} — ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}
+      📅 ${ar?'حركة اليوم':'Today's Movements'} — ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}
       <span style="font-weight:400;color:var(--muted);margin-right:8px;">${arrivals.length} ${ar?'وصول':'arrivals'} · ${departures.length} ${ar?'مغادرة':'departures'}</span>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -5905,7 +5915,8 @@ function bulkExportCSV(){
     b.id, b.name, b.room, b.ci, b.co, nts(b.ci,b.co),
     b.status, b.total, b.cur, b.nat||'', b.phone||''
   ]);
-  const csv = [headers, ...rows].map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('\n');
+  const csv = [headers, ...rows].map(r=>r.map(v=>'"'+(String(v||'').replace(/"/g,'""'))+'"').join(',')).join('
+');
   const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -12713,6 +12724,260 @@ const _dict = {
   "لا يوجد بيانات":"No data available",
   "مثال: يرجى التأكيد قبل تاريخ الوصول...":"e.g. Please confirm before arrival date...",
   "امتداد":"Extension",
+
+  // ── Dashboard جديد ──
+  "حركة اليوم":"Today's Movements",
+  "وصول":"Arrivals",
+  "مغادرة":"Departures",
+  "غرف فاضية لفترة طويلة":"Rooms Vacant For Long",
+  "لا يوجد وصول":"No arrivals",
+  "لا يوجد مغادرة":"No departures",
+  "لا حجز قادم":"No upcoming booking",
+  "حجز":"booking",
+
+  // ── Bookings جديد ──
+  "إجمالي الحجوزات":"Total Bookings",
+  "إجمالي الإيرادات":"Total Revenue",
+  "مدفوع ✅":"Paid ✅",
+  "معلق ⏳":"Pending ⏳",
+  "ملغي ❌":"Cancelled ❌",
+  "فلتر / Filter:":"Filter:",
+  "ترتيب: متأخر أولاً":"Sort: Overdue First",
+  "ترتيب: الأعلى مبلغاً":"Sort: Highest Amount",
+  "ترتيب: أقرب مغادرة":"Sort: Nearest Checkout",
+  "ترتيب: أقرب وصول":"Sort: Nearest Check-in",
+  "كل الحالات":"All Statuses",
+  "الكل / All":"All",
+  "غير مدفوع / Unpaid":"Unpaid",
+  "مدفوع جزئي / Partial":"Partial",
+  "متأخر / Overdue":"Overdue",
+  "⚠️ عربون ناقص":"⚠️ Low Deposit",
+  "🚨 مغادرة قريبة + دين":"🚨 Checkout Soon + Debt",
+  "ابحث بالاسم أو رقم الغرفة...":"Search by name or room...",
+  "🔍 ابحث بالاسم أو رقم الغرفة...":"🔍 Search by name or room...",
+
+  // ── Bulk Actions ──
+  "حجز محدد":"bookings selected",
+  "واتساب جماعي":"Bulk WhatsApp",
+  "تصدير CSV":"Export CSV",
+  "تحديد مدفوع":"Mark as Paid",
+  "إلغاء التحديد":"Clear Selection",
+  "جاري الإرسال لـ":"Sending to",
+  "ضيف":"guest",
+  "تم فتح واتساب لـ":"Opened WhatsApp for",
+  "تم تصدير":"Exported",
+  "حجز بنجاح":"bookings successfully",
+  "سيتم تغيير حالة":"Status will change for",
+  "إلى Paid":"to Paid",
+
+  // ── Tags ──
+  "اضغط على التاج لتحديده — ممكن تحدد أكتر من واحد":"Click tag to select — multiple selection allowed",
+
+  // ── Rooms ──
+  "كل الحالات":"All Statuses",
+  "🟢 متاح":"🟢 Available",
+  "🔴 مشغول":"🔴 Occupied",
+  "🔵 وصول اليوم":"🔵 Check-in Today",
+  "🟠 مغادرة اليوم":"🟠 Check-out Today",
+  "🟡 محجوز":"🟡 Reserved",
+  "⚫ صيانة":"⚫ Maintenance",
+  "🟣 Standby":"🟣 Standby",
+  "اسم الضيف أو رقم الغرفة...":"Guest name or room number...",
+  "🔍 اسم الضيف أو رقم الغرفة...":"🔍 Guest name or room number...",
+  "نسبة الإشغال":"Occupancy Rate",
+  "متاح":"Available",
+  "مشغول":"Occupied",
+  "وصول":"Arrivals",
+  "صيانة":"Maintenance",
+  "🗺️ خريطة":"🗺️ Map",
+
+  // ── Payments ──
+  "مديونية متأخرة":"Overdue Debts",
+  "تجاوزوا تاريخ المغادرة":"Past check-out date",
+  "عربون ناقص (أقل 50%)":"Low Deposit (<50%)",
+  "حجوزات مستقبلية بعربون غير كافٍ":"Future bookings with insufficient deposit",
+  "مغادرة خلال 3 أيام مع دين":"Checkout in 3 Days + Debt",
+  "يجب تحصيل المبلغ قبل المغادرة":"Collect before departure",
+  "مدفوعات مستحقة هذا الأسبوع":"Payments Due This Week",
+  "ضيوف سيغادرون خلال 7 أيام":"Guests departing within 7 days",
+  "مغادرة قريبة!":"CHECKOUT SOON!",
+  "عربون ناقص":"LOW DEPOSIT",
+
+  // ── Housekeeping ──
+  "ملاحظات التنظيف":"Cleaning Notes",
+  "ملاحظات الصيانة (تظهر دائماً على الكارت)":"Maintenance Notes (always visible on card)",
+  "اتركه فارغاً لو مفيش مشكلة":"Leave empty if no issue",
+  "وقت الوصول المتوقع (لترتيب الأولوية)":"Expected Arrival Time (for priority sorting)",
+  "الغرف ذات الوصول المبكر تتقدم تلقائياً في القائمة":"Rooms with early arrivals are auto-prioritized",
+  "🔧 صيانة":"🔧 Maintenance",
+  "وصول:":"Arrival:",
+
+  // ── Group Booking ──
+  "ملاحظات داخلية (للفريق فقط)":"Internal Notes (team only)",
+  "مثال: الشركة طلبت غرف متجاورة — تحتاج موافقة المدير...":"e.g. Company requested adjacent rooms — needs manager approval...",
+  "الكل":"All",
+  "📅 قادم":"📅 Upcoming",
+  "🟢 نشط":"🟢 Active",
+  "✅ منتهي":"✅ Finished",
+  "⚠️ دين معلق":"⚠️ Outstanding Debt",
+  "بحث بالشركة أو اسم المسؤول أو رقم الجروب...":"Search by company, contact, or group ID...",
+  "🔍 بحث بالشركة...":"🔍 Search by company...",
+  "لا توجد نتائج":"No results found",
+  "📅 قادم":"📅 Upcoming",
+  "🟢 نشط":"🟢 Active",
+  "✅ منتهي":"✅ Finished",
+
+  // ── WA Templates ──
+  "اختر الضيف / الحجز":"Select Guest / Booking",
+  "ابحث بالاسم أو رقم الغرفة...":"Search by name or room...",
+  "حجز":"booking",
+  "إرسال واتساب":"Send WhatsApp",
+  "إرسال جماعي — سيفتح واتساب لكل ضيف على حدة":"Bulk Send — WhatsApp will open for each guest",
+  "الضيوف الحاليين":"Current Guests",
+  "الوصول خلال 3 أيام":"Arrivals in 3 Days",
+  "جاري فتح واتساب لـ":"Opening WhatsApp for",
+  "آخر رسالة لـ":"Last message to",
+  "إجمالي الرسائل:":"Total messages:",
+
+  // ── Analytics جديد ──
+  "مقارنة الشهر بنفس الشهر السنة الماضية (YoY)":"Monthly YoY Comparison",
+  "إيرادات هذا العام":"This Year Revenue",
+  "إيرادات العام الماضي":"Last Year Revenue",
+  "فرق %":"Change %",
+  "إشغال هذا العام":"This Year Occupancy",
+  "إشغال العام الماضي":"Last Year Occupancy",
+  "فرق نقاط":"Point Diff",
+  "أعلى 10 جنسيات — تفاصيل كاملة":"Top 10 Nationalities — Full Details",
+  "متوسط:":"Avg:",
+
+  // ── RevPAR ──
+  "📊 RevPAR Tracker":"📊 RevPAR Tracker",
+  "آخر 7 أيام":"Last 7 Days",
+  "آخر 30 يوم":"Last 30 Days",
+  "آخر 90 يوم":"Last 90 Days",
+  "هذه السنة":"This Year",
+  "الهدف:":"Target:",
+  "$/ليلة":"$/night",
+  "من الهدف":"of target",
+  "متوسط سعر الليلة":"Average Nightly Rate",
+  "الإيراد":"Revenue",
+  "📈 RevPAR الشهري — الخط الذهبي = الهدف":"📈 Monthly RevPAR — Gold line = Target",
+
+  // ── Gantt Chart ──
+  "التقويم الشهري":"Monthly Calendar",
+  "Gantt Chart":"Gantt Chart",
+  "14 يوم":"14 Days",
+  "30 يوم":"30 Days",
+  "60 يوم":"60 Days",
+  "90 يوم":"90 Days",
+  "7 أيام ▶":"7 Days ▶",
+  "◀ 7 أيام":"◀ 7 Days",
+
+  // ── Floor Map ──
+  "خريطة الغرف التفاعلية — Floor Plan":"Interactive Floor Plan",
+  "الطابق:":"Floor:",
+  "الطابق الأول (101-107)":"First Floor (101-107)",
+  "الطابق الثاني (108-114)":"Second Floor (108-114)",
+  "الكل":"All",
+  "🏢 الطابق الأول":"🏢 First Floor",
+  "🏢 الطابق الثاني":"🏢 Second Floor",
+  "━━━━━━━━  ممر  ━━━━━━━━":"━━━━━━━━  Corridor  ━━━━━━━━",
+  "اضغط لحجز هذه الغرفة":"Click to book this room",
+  "إشغال":"Occupancy",
+
+  // ── Promo Codes ──
+  "إدارة Promo Codes":"Manage Promo Codes",
+  "إضافة كود جديد":"Add New Code",
+  "الكود":"Code",
+  "النوع":"Type",
+  "نسبة مئوية %":"Percentage %",
+  "مبلغ ثابت":"Fixed Amount",
+  "ليلة مجانية":"Free Night",
+  "القيمة":"Value",
+  "الحد الأقصى للاستخدام":"Max Usage",
+  "لا حد = 0":"No limit = 0",
+  "صالح حتى":"Valid Until",
+  "الأكواد الحالية":"Current Codes",
+  "✅ فعّال":"✅ Active",
+  "⏸ موقف":"⏸ Paused",
+  "كود الخصم (اختياري)":"Discount Code (optional)",
+  "أدخل الكود...":"Enter code...",
+  "تطبيق ✓":"Apply ✓",
+  "استخدام":"usage",
+  "حتى":"until",
+  "كود غير صحيح أو غير فعّال":"Invalid or inactive code",
+  "الكود منتهي الصلاحية":"Code has expired",
+  "الكود وصل الحد الأقصى للاستخدام":"Code reached maximum usage",
+  "خصم":"Discount",
+  "ثابت":"fixed",
+  "ليلة مجانية ✅":"Free Night ✅",
+  "كود مقبول":"Code Accepted",
+
+  // ── Follow-up ──
+  "المهام والمتابعة":"Tasks & Follow-up",
+  "معلق":"Pending",
+  "اليوم":"Today",
+  "متأخر":"Overdue",
+  "منجز":"Done",
+  "➕ جديد":"➕ New",
+  "إضافة مهمة متابعة":"Add Follow-up Task",
+  "الموعد":"Due Date",
+  "الحجز المرتبط (اختياري)":"Linked Booking (optional)",
+  "بدون حجز":"No booking",
+  "الملاحظة":"Note",
+  "اكتب المهمة أو الملاحظة...":"Write task or note...",
+  "📞 مكالمة":"📞 Call",
+  "✅ مهمة":"✅ Task",
+  "📝 ملاحظة":"📝 Note",
+  "💰 متابعة دفع":"💰 Payment Follow-up",
+  "مكالمة":"Call",
+  "مهمة":"Task",
+  "ملاحظة":"Note",
+  "دفع":"Payment",
+  "🗑 مسح المنجزة":"🗑 Clear Done",
+  "معلق":"pending",
+  "🔴 متأخر:":"🔴 Overdue:",
+  "🟡 اليوم:":"🟡 Today:",
+  "بلا تاريخ":"No date",
+
+  // ── Notifications ──
+  "الإشعارات":"Notifications",
+  "قراءة الكل":"Mark All Read",
+  "🗑 مسح":"🗑 Clear",
+  "لا توجد إشعارات":"No notifications",
+  "حفظ تلقائي":"Auto-saved",
+  "تم حفظ البيانات":"Data saved",
+  "وصول اليوم":"Check-ins Today",
+  "مغادرة لم تتأكد":"Unconfirmed Check-outs",
+  "مديونية متأخرة":"Overdue Debt",
+  "عيد ميلاد اليوم!":"Birthday Today!",
+  "ضيف في الفندق":"Guest in hotel",
+  "غرفة في الصيانة":"Room in Maintenance",
+  "غرف:":"Rooms:",
+
+  // ── Auto-Save + Undo ──
+  "تم الحفظ التلقائي":"Auto-saved",
+  "سجل التراجع":"Undo History",
+  "تراجع":"Undo",
+  "لا يوجد عمليات محفوظة":"No operations saved",
+  "حُفظ:":"Saved:",
+  "تم التراجع عن:":"Undone:",
+  "لا يوجد عملية للتراجع عنها":"Nothing to undo",
+
+  // ── Live Dashboard ──
+  "يتحدث تلقائياً كل 30 ثانية":"Auto-updates every 30 seconds",
+  "الآن":"Now",
+
+  // ── AI Assistant ──
+  "Hotel AI Assistant":"Hotel AI Assistant",
+  "بيانات لحظية":"Live Data",
+  "⛶ توسيع":"⛶ Expand",
+  "وضع الفندق اليوم؟":"Hotel status today?",
+  "الإيراد هذا الشهر؟":"This month's revenue?",
+  "من يصل ومن يغادر اليوم؟":"Who arrives/departs today?",
+  "المدفوعات المعلقة؟":"Pending payments?",
+  "اقترح طرق لزيادة الإيراد":"Suggest ways to increase revenue",
+  "اسأل أي شيء...":"Ask anything...",
 };
 
 // Helper: translate a string from Arabic→English
@@ -12776,6 +13041,11 @@ function applyLang(){
 function setLang(lang){
   currentLang = lang;
   localStorage.setItem("dta_lang", currentLang);
+  // تحديث أزرار اللغة في القائمة
+  const menuAr = document.getElementById('menu-lang-ar');
+  const menuEn = document.getElementById('menu-lang-en');
+  if(menuAr){ menuAr.style.background=lang==='ar'?'rgba(201,168,76,0.2)':'transparent'; menuAr.style.borderColor=lang==='ar'?'rgba(201,168,76,0.5)':'rgba(255,255,255,0.1)'; menuAr.style.color=lang==='ar'?'var(--gold)':'var(--muted)'; }
+  if(menuEn){ menuEn.style.background=lang==='en'?'rgba(52,152,219,0.2)':'transparent'; menuEn.style.borderColor=lang==='en'?'rgba(52,152,219,0.5)':'rgba(255,255,255,0.1)'; menuEn.style.color=lang==='en'?'#7ab8f5':'var(--muted)'; }
   applyLang();
   closeLangMenu();
   renderDashboard();
@@ -13037,7 +13307,8 @@ async function sendAIMini(preMsg){
     const reply = data.content&&data.content[0]?data.content[0].text:'عذراً، حدث خطأ.';
     _aiMiniHistory.push({role:'assistant', content:reply});
     document.getElementById(typingId)?.remove();
-    const formatted = reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    const formatted = reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/
+/g,'<br>');
     msgsEl.innerHTML += `<div class="ai-mini-msg-ai">${formatted}</div>`;
   } catch(e){
     document.getElementById(typingId)?.remove();
