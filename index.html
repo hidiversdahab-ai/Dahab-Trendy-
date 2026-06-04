@@ -5455,6 +5455,16 @@ const p=isDU?(duPrices[type]||{usd:0,egp:0,eur:0}):(prices[type]||{usd:0,egp:0,e
 const baseRate=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
 const customP=parseFloat(document.getElementById("bm-customprice").value)||0;
 const rate=customP>0?customP:baseRate;
+// ══ فحص سعر مشبوه ══
+if(customP>0 && baseRate>0 && customP > baseRate*2){
+  const sym2=cur==="USD"?"$":cur==="EUR"?"€":"£";
+  alert("⚠️ تنبيه: سعر مشبوه!\n\nالسعر الافتراضي للغرفة: "+sym2+baseRate+"\nالسعر المدخل: "+sym2+customP+"\n\nالسعر المدخل أعلى من الضعف! يرجى التحقق قبل الحفظ.");
+  return;
+}
+if(customP>0 && baseRate>0 && customP > baseRate*1.5){
+  const sym2=cur==="USD"?"$":cur==="EUR"?"€":"£";
+  if(!confirm("⚠️ تحذير: السعر المدخل أعلى من المعتاد!\n\nالسعر الافتراضي: "+sym2+baseRate+"\nالسعر المدخل: "+sym2+customP+"\n\nهل أنت متأكد؟")) return;
+}
 const duIn=isDU?document.getElementById("bm-du-in").value:"";
 const duOut=isDU?document.getElementById("bm-du-out").value:"";
 // Total: use nightPrices sum if available, else rate*n
@@ -8673,6 +8683,18 @@ if(payEdit===null) return;
 const amt=parseFloat(document.getElementById("pay-amount").value)||0;
 if(!amt){alert("Please enter an amount.");return;}
 const b=bookings[payEdit];
+// ══ فحص مبلغ مشبوه ══
+if(b.total>0 && amt > b.total*2){
+  const sym2=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
+  alert("⛔ منع الحفظ: المبلغ مشبوه!\n\nإجمالي الحجز: "+sym2+b.total.toFixed(2)+"\nالمبلغ المدخل: "+sym2+amt.toFixed(2)+"\n\nالمبلغ أعلى من ضعف الإجمالي. يرجى التحقق.");
+  return;
+}
+if(b.total>0 && amt > b.total*1.2){
+  const sym2=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
+  const alreadyPaid=calcPaid(b);
+  const remaining=b.total-alreadyPaid;
+  if(!confirm("⚠️ تحذير: المبلغ المدخل أعلى من المتوقع!\n\nإجمالي الحجز: "+sym2+b.total.toFixed(2)+"\nمدفوع سابقاً: "+sym2+alreadyPaid.toFixed(2)+"\nالمتبقي: "+sym2+remaining.toFixed(2)+"\nالمبلغ المدخل: "+sym2+amt.toFixed(2)+"\n\nهل أنت متأكد؟")) return;
+}
 if(!b.payments) b.payments=[];
 b.payments.push({
 date:document.getElementById("pay-date").value||toDay(),
