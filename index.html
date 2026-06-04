@@ -10412,22 +10412,26 @@ const reader=new FileReader();
 reader.onload=function(ev){
 try{
 const content=ev.target.result;
-// Try to extract JSON from HTML backup file
 let data=null;
-const match=content.match(/const _DATA\s*=\s*(\{[\s\S]*?\});\s*function restoreData/);
-if(match){
-data=JSON.parse(match[1]);
-} else {
-// Fallback: try parsing as raw JSON
-data=JSON.parse(content);
+// استخراج JSON من HTML قديم بدون regex كارثي
+const startMarker='const _DATA = ';
+const endMarker=';\nfunction restoreData';
+const si=content.indexOf(startMarker);
+if(si!==-1){
+  const jsonStart=si+startMarker.length;
+  const ei=content.indexOf(endMarker,jsonStart);
+  if(ei!==-1){ try{ data=JSON.parse(content.slice(jsonStart,ei)); }catch(ex){} }
 }
+// Fallback: JSON مباشر
+if(!data) data=JSON.parse(content);
 if(!data) throw new Error("لم يتم العثور على بيانات صحيحة");
 if(data.bookings){bookings=data.bookings;LSS("dta_bk",bookings);}
 if(data.prices){prices=data.prices;LSS("dta_pr",prices);}
+if(data.duPrices){duPrices=data.duPrices;LSS("dta_du",duPrices);}
 if(data.roomSt){roomSt=data.roomSt;LSS("dta_rs",roomSt);}
 if(data.policies){policies=data.policies;LSS("dta_pol",policies);}
 if(data.expenses){expenses=data.expenses;LSS("dta_ex",expenses);}
-if(data.exRate){exRate=data.exRate;localStorage.setItem("dta_rate",exRate);}
+if(data.exRate){exRate=parseFloat(data.exRate);localStorage.setItem("dta_rate",exRate);}
 const bn=document.getElementById("banner");
 bn.style.display="block";setTimeout(()=>bn.style.display="none",4000);
 renderDashboard();renderBookings();renderRooms();renderExpenses();renderSettings();
@@ -20551,7 +20555,7 @@ const DTA_BACKUP = (function(){
     return false;
   }
 
-  // استيراد backup (JSON أو .gz أو HTML قديم)
+  // استيراد backup (JSON أو .gz)
   async function importBackup(file){
     if(!file) return;
     let text = '';
@@ -20570,35 +20574,31 @@ const DTA_BACKUP = (function(){
     }
     try{
       let data = null;
-
-      // محاولة 1: HTML قديم يحتوي على const _DATA = {...}
-      const htmlMatch = text.match(/const _DATA\s*=\s*(\{[\s\S]*?\});\s*function restoreData/);
-      if(htmlMatch){
-        data = JSON.parse(htmlMatch[1]);
+      // محاولة 1: HTML قديم — indexOf بدل regex لتجنب stack overflow
+      const _sm='const _DATA = ', _em=';\nfunction restoreData';
+      const _si=text.indexOf(_sm);
+      if(_si!==-1){
+        const _js=_si+_sm.length, _ei=text.indexOf(_em,_js);
+        if(_ei!==-1){ try{ data=JSON.parse(text.slice(_js,_ei)); }catch(ex){} }
       }
-
       // محاولة 2: JSON عادي
-      if(!data){
-        data = JSON.parse(text);
-      }
-
-      if(!data || !data.bookings) throw new Error('invalid format');
+      if(!data) data=JSON.parse(text);
+      if(!data||!data.bookings) throw new Error('invalid format');
       if(!confirm('سيتم استبدال كل البيانات الحالية بالبيانات المستوردة. هل أنت متأكد؟')) return;
-      // حفظ snapshot للـ undo أولاً
       pushUndo('قبل الاستيراد', getUndoSnapshot());
-      if(data.bookings)   { bookings=data.bookings;           sv('dta_bk',bookings); }
-      if(data.expenses)   { expenses=data.expenses;           sv('dta_ex',expenses); }
-      if(data.roomSt)     { roomSt=data.roomSt;               sv('dta_rs',roomSt); }
-      if(data.restaurantTx){ restaurantTx=data.restaurantTx; sv('dta_rest',restaurantTx); }
-      if(data.tours)      { tours=data.tours;                 sv('dta_tours',tours); }
-      if(data.prices)     { prices=data.prices;               sv('dta_pr',prices); }
-      if(data.duPrices)   { duPrices=data.duPrices;           sv('dta_du',duPrices); }
-      if(data.policies)   { policies=data.policies;           sv('dta_pol',policies); }
-      if(data.exRate)     { exRate=parseFloat(data.exRate);   localStorage.setItem('dta_rate',exRate); }
+      if(data.bookings)    { bookings=data.bookings;           sv('dta_bk',bookings); }
+      if(data.expenses)    { expenses=data.expenses;           sv('dta_ex',expenses); }
+      if(data.roomSt)      { roomSt=data.roomSt;               sv('dta_rs',roomSt); }
+      if(data.restaurantTx){ restaurantTx=data.restaurantTx;  sv('dta_rest',restaurantTx); }
+      if(data.tours)       { tours=data.tours;                 sv('dta_tours',tours); }
+      if(data.prices)      { prices=data.prices;               sv('dta_pr',prices); }
+      if(data.duPrices)    { duPrices=data.duPrices;           sv('dta_du',duPrices); }
+      if(data.policies)    { policies=data.policies;           sv('dta_pol',policies); }
+      if(data.exRate)      { exRate=parseFloat(data.exRate);   localStorage.setItem('dta_rate',exRate); }
       renderDashboard(); renderBookings();
-      sNotify('✅ استيراد ناجح','تم استيراد '+bookings.length+' حجز بنجاح','success',4000);
+      sNotify('\u2705 استيراد ناجح','تم استيراد '+bookings.length+' حجز بنجاح','success',4000);
     }catch(e){
-      sNotify('❌ خطأ','ملف غير صحيح: '+e.message,'urgent',4000);
+      sNotify('\u274c خطأ','ملف غير صحيح: '+e.message,'urgent',4000);
     }
   }
 
