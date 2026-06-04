@@ -20551,7 +20551,7 @@ const DTA_BACKUP = (function(){
     return false;
   }
 
-  // استيراد backup (JSON أو .gz)
+  // استيراد backup (JSON أو .gz أو HTML قديم)
   async function importBackup(file){
     if(!file) return;
     let text = '';
@@ -20569,17 +20569,32 @@ const DTA_BACKUP = (function(){
       text = await file.text();
     }
     try{
-      const data = JSON.parse(text);
-      if(!data.bookings) throw new Error('invalid format');
+      let data = null;
+
+      // محاولة 1: HTML قديم يحتوي على const _DATA = {...}
+      const htmlMatch = text.match(/const _DATA\s*=\s*(\{[\s\S]*?\});\s*function restoreData/);
+      if(htmlMatch){
+        data = JSON.parse(htmlMatch[1]);
+      }
+
+      // محاولة 2: JSON عادي
+      if(!data){
+        data = JSON.parse(text);
+      }
+
+      if(!data || !data.bookings) throw new Error('invalid format');
       if(!confirm('سيتم استبدال كل البيانات الحالية بالبيانات المستوردة. هل أنت متأكد؟')) return;
       // حفظ snapshot للـ undo أولاً
       pushUndo('قبل الاستيراد', getUndoSnapshot());
-      if(data.bookings)   { bookings=data.bookings;   sv('dta_bk',bookings); }
-      if(data.expenses)   { expenses=data.expenses;   sv('dta_ex',expenses); }
-      if(data.roomSt)     { roomSt=data.roomSt;       sv('dta_rs',roomSt); }
+      if(data.bookings)   { bookings=data.bookings;           sv('dta_bk',bookings); }
+      if(data.expenses)   { expenses=data.expenses;           sv('dta_ex',expenses); }
+      if(data.roomSt)     { roomSt=data.roomSt;               sv('dta_rs',roomSt); }
       if(data.restaurantTx){ restaurantTx=data.restaurantTx; sv('dta_rest',restaurantTx); }
-      if(data.tours)      { tours=data.tours;         sv('dta_tours',tours); }
-      if(data.prices)     { prices=data.prices;       sv('dta_pr',prices); }
+      if(data.tours)      { tours=data.tours;                 sv('dta_tours',tours); }
+      if(data.prices)     { prices=data.prices;               sv('dta_pr',prices); }
+      if(data.duPrices)   { duPrices=data.duPrices;           sv('dta_du',duPrices); }
+      if(data.policies)   { policies=data.policies;           sv('dta_pol',policies); }
+      if(data.exRate)     { exRate=parseFloat(data.exRate);   localStorage.setItem('dta_rate',exRate); }
       renderDashboard(); renderBookings();
       sNotify('✅ استيراد ناجح','تم استيراد '+bookings.length+' حجز بنجاح','success',4000);
     }catch(e){
@@ -20601,7 +20616,7 @@ function importData(file){
   if(file) DTA_BACKUP.importBackup(file);
   else{
     const inp = document.createElement('input');
-    inp.type='file'; inp.accept='.json,.gz';
+    inp.type='file'; inp.accept='.json,.gz,.html';
     inp.onchange = e=> DTA_BACKUP.importBackup(e.target.files[0]);
     inp.click();
   }
