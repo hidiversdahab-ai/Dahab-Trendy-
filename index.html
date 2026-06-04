@@ -3565,7 +3565,9 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 <div class="sdiv">➕ Add Payment</div>
 <div class="g2" style="margin-top:8px;">
 <div class="fld"><label>Date</label><input id="pay-date" type="date"></div>
-<div class="fld"><label>Amount (<span id="pay-sym">$</span>)</label><input id="pay-amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
+<div class="fld"><label>Amount (<span id="pay-sym">$</span>)</label><input id="pay-amount" type="number" min="0" step="0.01" placeholder="0.00" oninput="checkPayAmountWarn()">
+<div id="pay-amount-warn" style="display:none;background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.5);border-radius:6px;padding:6px 9px;margin-top:5px;font-size:11px;color:#e74c3c;font-weight:700;"></div>
+</div>
 <div class="fld"><label>Method</label>
 <select id="pay-method"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Online</option></select>
 </div>
@@ -5455,16 +5457,6 @@ const p=isDU?(duPrices[type]||{usd:0,egp:0,eur:0}):(prices[type]||{usd:0,egp:0,e
 const baseRate=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
 const customP=parseFloat(document.getElementById("bm-customprice").value)||0;
 const rate=customP>0?customP:baseRate;
-// ══ فحص سعر مشبوه ══
-if(customP>0 && baseRate>0 && customP > baseRate*2){
-  const sym2=cur==="USD"?"$":cur==="EUR"?"€":"£";
-  alert("⚠️ تنبيه: سعر مشبوه!\n\nالسعر الافتراضي للغرفة: "+sym2+baseRate+"\nالسعر المدخل: "+sym2+customP+"\n\nالسعر المدخل أعلى من الضعف! يرجى التحقق قبل الحفظ.");
-  return;
-}
-if(customP>0 && baseRate>0 && customP > baseRate*1.5){
-  const sym2=cur==="USD"?"$":cur==="EUR"?"€":"£";
-  if(!confirm("⚠️ تحذير: السعر المدخل أعلى من المعتاد!\n\nالسعر الافتراضي: "+sym2+baseRate+"\nالسعر المدخل: "+sym2+customP+"\n\nهل أنت متأكد؟")) return;
-}
 const duIn=isDU?document.getElementById("bm-du-in").value:"";
 const duOut=isDU?document.getElementById("bm-du-out").value:"";
 // Total: use nightPrices sum if available, else rate*n
@@ -6993,10 +6985,7 @@ function openReviewModal(b){
     document.body.appendChild(m);
   }
   m.innerHTML=`
-    <div class="mdl" style="max-width:420px;text-align:center;">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
-        <button onclick="closeM('review-request-modal')" style="background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.5);color:#e74c3c;font-size:20px;font-weight:700;cursor:pointer;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
-      </div>
+    <div class="modal" style="max-width:420px;text-align:center;">
       <div style="font-size:36px;margin-bottom:8px;">⭐</div>
       <h3 style="color:var(--gold);margin:0 0 4px;">${ar?"اطلب Review من الضيف":"Request a Guest Review"}</h3>
       <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">${b.name} · ${ar?"غرفة":"Room"} ${b.room}</p>
@@ -7004,11 +6993,11 @@ function openReviewModal(b){
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;justify-content:center;">
         ${btns}
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;margin-bottom:18px;">
         <a href="${gmLink}" target="_blank" class="btn" style="flex:1;background:#4285F4;color:#fff;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">📍 Google Maps</a>
         <a href="${taLink}" target="_blank" class="btn" style="flex:1;background:#34E0A1;color:#000;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">✈️ TripAdvisor</a>
       </div>
-      <button class="btn br" onclick="closeM('review-request-modal')" style="width:100%;padding:12px;font-size:15px;font-weight:700;">✕ ${ar?"إغلاق":"Close"}</button>
+      <button class="btn bb" onclick="closeM('review-request-modal')" style="width:100%;">${ar?"إغلاق":"Close"}</button>
     </div>`;
   m.classList.add("on");
 }
@@ -8570,6 +8559,7 @@ document.getElementById("pay-sym").textContent=sym;
 document.getElementById("pay-date").value=toDay();
 document.getElementById("pay-amount").value="";
 document.getElementById("pay-note").value="";
+const pw=document.getElementById("pay-amount-warn");if(pw)pw.style.display="none";
 renderPayList();
 document.getElementById("pay-modal").classList.add("on");
 }
@@ -8678,22 +8668,53 @@ renderPayList();
 renderBookings();
 sNotify("✅ تم التحديث","تم تغيير حالة مصروف المطعم","success",2000);
 }
+function checkPayAmountWarn(){
+  const warn=document.getElementById("pay-amount-warn");
+  if(!warn||payEdit===null) return;
+  const amt=parseFloat(document.getElementById("pay-amount").value)||0;
+  if(!amt){warn.style.display="none";return;}
+  const b=bookings[payEdit];
+  if(!b) return;
+  const sym=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
+  const alreadyPaid=calcPaid(b);
+  const remaining=Math.max(0,b.total-alreadyPaid);
+  if(amt>b.total){
+    warn.style.display="";
+    warn.innerHTML="⛔ المبلغ ("+sym+amt.toFixed(0)+") أعلى من إجمالي الحجز ("+sym+b.total.toFixed(0)+")! — سيتم منع الحفظ";
+    warn.style.background="rgba(231,76,60,0.25)";
+    warn.style.borderColor="rgba(231,76,60,0.8)";
+  } else if(remaining>0 && amt>remaining){
+    warn.style.display="";
+    warn.innerHTML="⚠️ المبلغ ("+sym+amt.toFixed(0)+") أعلى من المتبقي ("+sym+remaining.toFixed(0)+") — هل دفعة سلفة؟";
+    warn.style.background="rgba(243,156,18,0.15)";
+    warn.style.borderColor="rgba(243,156,18,0.5)";
+    warn.style.color="#f39c12";
+  } else if(remaining===0){
+    warn.style.display="";
+    warn.innerHTML="✅ الحجز مدفوع بالكامل بالفعل";
+    warn.style.background="rgba(37,211,102,0.1)";
+    warn.style.borderColor="rgba(37,211,102,0.4)";
+    warn.style.color="#25D366";
+  } else {
+    warn.style.display="none";
+  }
+}
 function addPayment(){
 if(payEdit===null) return;
 const amt=parseFloat(document.getElementById("pay-amount").value)||0;
 if(!amt){alert("Please enter an amount.");return;}
 const b=bookings[payEdit];
-// ══ فحص مبلغ مشبوه ══
-if(b.total>0 && amt > b.total*2){
-  const sym2=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
-  alert("⛔ منع الحفظ: المبلغ مشبوه!\n\nإجمالي الحجز: "+sym2+b.total.toFixed(2)+"\nالمبلغ المدخل: "+sym2+amt.toFixed(2)+"\n\nالمبلغ أعلى من ضعف الإجمالي. يرجى التحقق.");
+const sym=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
+const alreadyPaid=calcPaid(b);
+const remaining=Math.max(0,b.total-alreadyPaid);
+// ══ منع الحفظ لو المبلغ أعلى من الإجمالي ══
+if(amt>b.total){
+  alert("⛔ منع الحفظ!\n\nالمبلغ المدخل: "+sym+amt.toFixed(2)+"\nإجمالي الحجز: "+sym+b.total.toFixed(2)+"\n\nالمبلغ أعلى من الإجمالي — يرجى التحقق.");
   return;
 }
-if(b.total>0 && amt > b.total*1.2){
-  const sym2=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
-  const alreadyPaid=calcPaid(b);
-  const remaining=b.total-alreadyPaid;
-  if(!confirm("⚠️ تحذير: المبلغ المدخل أعلى من المتوقع!\n\nإجمالي الحجز: "+sym2+b.total.toFixed(2)+"\nمدفوع سابقاً: "+sym2+alreadyPaid.toFixed(2)+"\nالمتبقي: "+sym2+remaining.toFixed(2)+"\nالمبلغ المدخل: "+sym2+amt.toFixed(2)+"\n\nهل أنت متأكد؟")) return;
+// ══ تحذير لو المبلغ أعلى من المتبقي ══
+if(remaining>0 && amt>remaining){
+  if(!confirm("⚠️ تحذير: المبلغ أعلى من المتبقي!\n\nالمتبقي: "+sym+remaining.toFixed(2)+"\nالمبلغ المدخل: "+sym+amt.toFixed(2)+"\n\nهل أنت متأكد؟")) return;
 }
 if(!b.payments) b.payments=[];
 b.payments.push({
@@ -8710,6 +8731,8 @@ else if(paidSum>0) b.status="Partial";
 sv("dta_bk",bookings);
 document.getElementById("pay-amount").value="";
 document.getElementById("pay-note").value="";
+const w=document.getElementById("pay-amount-warn");
+if(w) w.style.display="none";
 renderPayList();
 renderBookings();
 }
