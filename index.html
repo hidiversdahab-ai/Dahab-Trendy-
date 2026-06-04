@@ -10408,23 +10408,39 @@ showToast("✓ Exported as HTML!");
 }
 function importAll(e){
 const file=e.target.files[0];if(!file)return;
-const reader=new FileReader();
-reader.onload=function(ev){
-try{
-const content=ev.target.result;
-let data=null;
-// استخراج JSON من HTML قديم بدون regex كارثي
-const startMarker='const _DATA = ';
-const endMarker=';\nfunction restoreData';
-const si=content.indexOf(startMarker);
-if(si!==-1){
-  const jsonStart=si+startMarker.length;
-  const ei=content.indexOf(endMarker,jsonStart);
-  if(ei!==-1){ try{ data=JSON.parse(content.slice(jsonStart,ei)); }catch(ex){} }
+_importFileAsync(file).catch(err=>{
+  alert("خطأ: الملف غير صحيح أو تالف.\nError: Invalid or corrupted backup file.\n"+err.message);
+});
+e.target.value="";
 }
-// Fallback: JSON مباشر
-if(!data) data=JSON.parse(content);
-if(!data) throw new Error("لم يتم العثور على بيانات صحيحة");
+async function _importFileAsync(file){
+// قراءة الملف
+const content = await file.text();
+let data = null;
+// محاولة 1: HTML قديم — ابحث عن const _DATA =
+const SM = 'const _DATA = ';
+const EM = ';\nfunction restoreData';
+const si = content.indexOf(SM);
+if(si !== -1){
+  const js = si + SM.length;
+  const ei = content.indexOf(EM, js);
+  const jsonStr = ei !== -1 ? content.slice(js, ei) : content.slice(js, js+5000000);
+  try{ data = JSON.parse(jsonStr); }catch(ex){ console.warn('[import] HTML parse failed:',ex.message); }
+}
+// محاولة 2: HTML قديم بدون سطر جديد قبل function
+if(!data){
+  const EM2 = ';function restoreData';
+  const si2 = content.indexOf(SM);
+  if(si2 !== -1){
+    const js2 = si2 + SM.length;
+    const ei2 = content.indexOf(EM2, js2);
+    if(ei2 !== -1){ try{ data = JSON.parse(content.slice(js2, ei2)); }catch(ex){} }
+  }
+}
+// محاولة 3: JSON مباشر
+if(!data){ try{ data = JSON.parse(content); }catch(ex){} }
+if(!data || !data.bookings) throw new Error("لم يتم العثور على بيانات صحيحة في الملف");
+if(!confirm("سيتم استبدال كل البيانات الحالية. هل أنت متأكد؟\nThis will overwrite all data. Are you sure?")) return;
 if(data.bookings){bookings=data.bookings;LSS("dta_bk",bookings);}
 if(data.prices){prices=data.prices;LSS("dta_pr",prices);}
 if(data.duPrices){duPrices=data.duPrices;LSS("dta_du",duPrices);}
@@ -10435,11 +10451,7 @@ if(data.exRate){exRate=parseFloat(data.exRate);localStorage.setItem("dta_rate",e
 const bn=document.getElementById("banner");
 bn.style.display="block";setTimeout(()=>bn.style.display="none",4000);
 renderDashboard();renderBookings();renderRooms();renderExpenses();renderSettings();
-showToast("✓ Imported!");
-}catch(err){alert("خطأ: الملف غير صحيح أو تالف.\nError: Invalid or corrupted backup file.\n"+err.message);}
-e.target.value="";
-};
-reader.readAsText(file);
+showToast("✓ Imported "+bookings.length+" bookings!");
 }
 // ═══════════ i18n LANGUAGE SYSTEM ═══════════
 let currentLang = localStorage.getItem("dta_lang") || "en";
