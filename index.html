@@ -6983,7 +6983,10 @@ function openReviewModal(b){
     document.body.appendChild(m);
   }
   m.innerHTML=`
-    <div class="modal" style="max-width:420px;text-align:center;">
+    <div class="mdl" style="max-width:420px;text-align:center;">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
+        <button onclick="closeM('review-request-modal')" style="background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.5);color:#e74c3c;font-size:20px;font-weight:700;cursor:pointer;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+      </div>
       <div style="font-size:36px;margin-bottom:8px;">⭐</div>
       <h3 style="color:var(--gold);margin:0 0 4px;">${ar?"اطلب Review من الضيف":"Request a Guest Review"}</h3>
       <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">${b.name} · ${ar?"غرفة":"Room"} ${b.room}</p>
@@ -6991,11 +6994,11 @@ function openReviewModal(b){
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;justify-content:center;">
         ${btns}
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:18px;">
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
         <a href="${gmLink}" target="_blank" class="btn" style="flex:1;background:#4285F4;color:#fff;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">📍 Google Maps</a>
         <a href="${taLink}" target="_blank" class="btn" style="flex:1;background:#34E0A1;color:#000;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">✈️ TripAdvisor</a>
       </div>
-      <button class="btn bb" onclick="closeM('review-request-modal')" style="width:100%;">${ar?"إغلاق":"Close"}</button>
+      <button class="btn br" onclick="closeM('review-request-modal')" style="width:100%;padding:12px;font-size:15px;font-weight:700;">✕ ${ar?"إغلاق":"Close"}</button>
     </div>`;
   m.classList.add("on");
 }
