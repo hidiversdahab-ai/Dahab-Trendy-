@@ -2556,29 +2556,29 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 
 <!-- ══ HEADER ══ -->
 <div class="flex" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-  <h2 style="color:var(--gold);font-size:18px;font-weight:800;">🍽️ المطعم</h2>
+  <h2 style="color:var(--gold);font-size:18px;font-weight:800;">🍽️ <span class="t" data-ar="المطعم" data-en="Restaurant">المطعم</span></h2>
   <div style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap;">
-    <button class="btn bg" onclick="openRestM()" id="rest-add-btn">+ معاملة</button>
+    <button class="btn bg" onclick="openRestM()" id="rest-add-btn">+ <span class="t" data-ar="معاملة" data-en="Transaction">معاملة</span></button>
     <button class="btn" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.4);" onclick="switchRestView('pos', document.getElementById('rtab-pos'))">🧾 POS</button>
-    <button class="btn" style="background:rgba(37,211,102,0.12);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);" onclick="switchRestView('menu', document.getElementById('rtab-menu'))">🍴 تعديل المنيو</button>
+    <button class="btn" style="background:rgba(37,211,102,0.12);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);" onclick="switchRestView('menu', document.getElementById('rtab-menu'))">🍴 <span class="t" data-ar="تعديل المنيو" data-en="Edit Menu">تعديل المنيو</span></button>
   </div>
 </div>
 
 <!-- ══ MAIN TABS ══ -->
 <div class="rest-tab" id="rest-main-tabs" style="margin-bottom:16px;">
-  <button id="rtab-ledger" class="act" onclick="switchRestView('ledger',this)">📋 السجل</button>
-  <button id="rtab-menu-browse" onclick="switchRestView('menu-browse',this)" style="background:rgba(201,168,76,0.12);color:var(--gold);border-color:rgba(201,168,76,0.4);">🗂️ تصفح المنيو</button>
-  <button id="rtab-pos" onclick="switchRestView('pos',this)" style="background:rgba(230,126,34,0.12);color:#e67e22;border-color:rgba(230,126,34,0.4);font-weight:700;">🧾 POS — طلبات</button>
-  <button id="rtab-menu" onclick="switchRestView('menu',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);">🍴 إدارة القائمة</button>
+  <button id="rtab-ledger" class="act" onclick="switchRestView('ledger',this)">📋 <span class="t" data-ar="السجل" data-en="Ledger">السجل</span></button>
+  <button id="rtab-menu-browse" onclick="switchRestView('menu-browse',this)" style="background:rgba(201,168,76,0.12);color:var(--gold);border-color:rgba(201,168,76,0.4);">🗂️ <span class="t" data-ar="تصفح المنيو" data-en="Browse Menu">تصفح المنيو</span></button>
+  <button id="rtab-pos" onclick="switchRestView('pos',this)" style="background:rgba(230,126,34,0.12);color:#e67e22;border-color:rgba(230,126,34,0.4);font-weight:700;">🧾 <span class="t" data-ar="POS — طلبات" data-en="POS — Orders">POS — طلبات</span></button>
+  <button id="rtab-menu" onclick="switchRestView('menu',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);">🍴 <span class="t" data-ar="إدارة القائمة" data-en="Manage Menu">إدارة القائمة</span></button>
 </div>
 
 <!-- ══ LEDGER VIEW ══ -->
 <div id="rest-view-ledger">
   <div class="rest-tab">
-    <button id="rtab-all" class="act" onclick="filterRest('all',this)">📋 الكل</button>
-    <button id="rtab-income" onclick="filterRest('income',this)">🟢 دخول</button>
-    <button id="rtab-expense" onclick="filterRest('expense',this)">🔴 خروج</button>
-    <button id="rtab-pos-orders" onclick="filterRest('pos',this)">🧾 طلبات POS</button>
+    <button id="rtab-all" class="act" onclick="filterRest('all',this)">📋 <span class="t" data-ar="الكل" data-en="All">الكل</span></button>
+    <button id="rtab-income" onclick="filterRest('income',this)">🟢 <span class="t" data-ar="دخول" data-en="Income">دخول</span></button>
+    <button id="rtab-expense" onclick="filterRest('expense',this)">🔴 <span class="t" data-ar="خروج" data-en="Expense">خروج</span></button>
+    <button id="rtab-pos-orders" onclick="filterRest('pos',this)">🧾 <span class="t" data-ar="طلبات POS" data-en="POS Orders">طلبات POS</span></button>
   </div>
   <div class="g3" id="rest-stats" style="margin-bottom:12px;"></div>
   <div class="card tbl-wrap" style="padding:0;overflow:hidden;">
@@ -10595,6 +10595,20 @@ const _dict = {
   "لا يوجد بيانات":"No data available",
   "مثال: يرجى التأكيد قبل تاريخ الوصول...":"e.g. Please confirm before arrival date...",
   "امتداد":"Extension",
+  // Restaurant
+  "المطعم":"Restaurant",
+  "معاملة":"Transaction",
+  "تعديل المنيو":"Edit Menu",
+  "السجل":"Ledger",
+  "تصفح المنيو":"Browse Menu",
+  "POS — طلبات":"POS — Orders",
+  "إدارة القائمة":"Manage Menu",
+  "الكل":"All",
+  "دخول":"Income",
+  "خروج":"Expense",
+  "طلبات POS":"POS Orders",
+  "إجمالي الدخول":"Total Income",
+  "إجمالي الخروج":"Total Expenses",
 };
 
 // Helper: translate a string from Arabic→English
@@ -20424,8 +20438,8 @@ const DTA_NOTIFY = (function(){
 (function addNotifyBtn(){
   document.addEventListener('DOMContentLoaded', ()=>{
     const nav = document.querySelector('.nav');
-    if(!nav || Notification.permission==='granted') return;
     if(!('Notification' in window)) return;
+    if(!nav || Notification.permission==='granted') return;
     const btn = document.createElement('button');
     btn.className='nb';
     btn.innerHTML='🔔 إشعارات';
