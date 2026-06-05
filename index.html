@@ -914,10 +914,10 @@ select option{background:#1a1a2e;color:var(--text)}
 <button class="nb btn-pdf" onclick="openPDFReport()" style="padding:5px 10px;font-size:11px;font-weight:700;">📊 PDF</button>
 <button class="nb" onclick="openAIWelcome()" style="background:rgba(201,168,76,0.15);color:var(--gold);border-color:var(--gold);font-weight:700;font-size:11px;">✍️ AI رسائل</button>
 <div style="position:relative;display:inline-block;" id="lang-dropdown-wrap">
-<button class="nb" id="lang-btn" onclick="toggleLangMenu()" style="background:rgba(201,168,76,0.15);color:var(--gold);border-color:var(--gold);font-weight:700;">🌐 <span id="lang-label">EN</span> ▾</button>
+<button class="nb" id="lang-btn" onclick="event.stopPropagation();toggleLangMenu()" style="background:rgba(201,168,76,0.15);color:var(--gold);border-color:var(--gold);font-weight:700;">🌐 <span id="lang-label">EN</span> ▾</button>
 <div id="lang-menu" style="display:none;position:absolute;top:36px;right:0;background:#1e2a3a;border:1px solid var(--bdr);border-radius:10px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,0.5);overflow:hidden;min-width:130px;">
-  <div onclick="setLang('en')" id="lang-opt-en" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text);">🇬🇧 English</div>
-  <div onclick="setLang('ar')" id="lang-opt-ar" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text);border-top:1px solid var(--bdr);">🇸🇦 العربية</div>
+  <div onclick="event.stopPropagation();setLang('en')" id="lang-opt-en" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text);">🇬🇧 English</div>
+  <div onclick="event.stopPropagation();setLang('ar')" id="lang-opt-ar" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--text);border-top:1px solid var(--bdr);">🇸🇦 العربية</div>
 </div>
 </div>
 <button class="nb" onclick="openAIChat()" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border-color:#4A90D9;font-weight:700;">🤖 AI</button>
@@ -3946,7 +3946,7 @@ function updateUndoBtn(){
 // ═══════════════════════════════════════════════
 // ══ v8: AUTO-BACKUP (every 30 min) ══
 // ═══════════════════════════════════════════════
-function autoBackup(){
+var autoBackup = function(){
   try {
     const snap = {
       ts: new Date().toISOString(),
@@ -3955,7 +3955,7 @@ function autoBackup(){
     localStorage.setItem("dta_autobackup", JSON.stringify(snap));
     console.log("✅ Auto-backup saved at", snap.ts);
   } catch(e){ console.warn("Auto-backup failed:", e); }
-}
+};
 // Run backup every 30 minutes
 setInterval(autoBackup, 30 * 60 * 1000);
 // Also backup on page hide (mobile tab switch / close)
@@ -3967,7 +3967,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.hidden) autoBack
 function showStorageWarning(){
   sNotify("⚠️ تحذير","مساحة التخزين ممتلئة! قم بتصدير البيانات الآن ثم امسح السجلات القديمة","urgent",8000);
 }
-function checkStorageUsage(){
+var checkStorageUsage = function(){
   try {
     let used = 0;
     for(let k in localStorage){ used += (localStorage[k]||"").length + k.length; }
@@ -3978,7 +3978,7 @@ function checkStorageUsage(){
     }
     return {usedKB, pct: Math.round(usedKB/limitKB*100)};
   } catch(e){ return {usedKB:0, pct:0}; }
-}
+};
 // Check on load
 setTimeout(checkStorageUsage, 5000);
 
@@ -3990,7 +3990,7 @@ function pad(n){return String(n).padStart(2,"0");}
 function toDay(){return new Date().toISOString().split("T")[0];}
 function fmtD(s){if(!s)return"—";return new Date(s).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});}
 function nts(a,b){if(!a||!b)return 0;return Math.max(0,Math.round((new Date(b)-new Date(a))/86400000));}
-function sv(key,val){LSS(key,val);showToast();scheduleDriveSync();}
+var sv = function(key,val){LSS(key,val);showToast();scheduleDriveSync();};
 // ✅ حساب المبالغ المدفوعة فعلاً من الضيف (بدون خصومات الإلغاء)
 function calcPaid(b){
   if(!b||!b.payments||!b.payments.length) return b?( b.prepay||0):0;
@@ -20064,26 +20064,26 @@ const DTA_IDB = (function(){
 
 // ── تحديث sv() لتحفظ في IDB بالتوازي مع localStorage ──
 const _sv_original = sv;
-function sv(key, val){
+sv = function(key, val){
   _sv_original(key, val);
   // حفظ موازٍ في IndexedDB
   DTA_IDB.saveAll(key, val).catch(()=>{});
-}
+};
 
 // ── تحديث autoBackup() ليشمل IDB ──
 const _autoBackup_original = autoBackup;
-function autoBackup(){
+autoBackup = function(){
   _autoBackup_original();
   // حفظ snapshot في IDB
   DTA_IDB.saveSnapshot('auto', {
     bk: bookings, ex: expenses, rs: roomSt,
     rest: restaurantTx, tours, ts: new Date().toISOString()
   }).catch(()=>{});
-}
+};
 
 // ── تحديث checkStorageUsage() ليعرض مساحة IDB الحقيقية ──
 const _checkStorage_original = checkStorageUsage;
-function checkStorageUsage(){
+checkStorageUsage = function(){
   const ls = _checkStorage_original();
   DTA_IDB.getUsage().then(({usedMB, quotaGB, pct})=>{
     if(pct > 80){
