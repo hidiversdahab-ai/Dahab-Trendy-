@@ -1219,7 +1219,11 @@ select option{background:#1a1a2e;color:var(--text)}
 <div class="card">
   <div class="ctitle">🏨 الغرف</div>
   <div id="grp-rooms-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
-  <button class="btn bb bsm" onclick="addGrpRoom()">➕ إضافة غرفة</button>
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+  <button class="btn bb bsm" onclick="addGrpRoom()" style="font-size:12px;padding:8px 14px;">➕ إضافة غرفة</button>
+  <button class="btn bb bsm" onclick="addAllAvailableRooms()" style="font-size:12px;padding:8px 14px;background:rgba(52,152,219,0.1);color:#7ab8f5;border-color:rgba(52,152,219,0.3);">🏨 إضافة كل الغرف المتاحة</button>
+  <span id="grp-rooms-summary" style="font-size:11px;color:var(--muted);"></span>
+</div>
 </div>
 
 <!-- الكوميشن والدفع -->
@@ -9324,6 +9328,36 @@ function calcGrpNights(){
   calcGrpTotal();
 }
 
+function addAllAvailableRooms(){
+  const ci = document.getElementById('grp-ci').value;
+  const co = document.getElementById('grp-co').value;
+  if(!ci||!co){ alert('اختر تواريخ الجروب أولاً'); return; }
+  // الغرف المشغولة في الفترة
+  const bookedInPeriod = new Set();
+  bookings.forEach(bk=>{
+    if(bk.status==='Cancelled') return;
+    if(bk.ci<co && bk.co>ci) bookedInPeriod.add(String(bk.room));
+  });
+  // الغرف المختارة حالياً
+  const already = new Set(grpRooms.map(r=>r.roomNum).filter(Boolean));
+  // إضافة الغرف المتاحة
+  let added = 0;
+  ROOMS.forEach(r=>{
+    const rmStr = String(r);
+    if(bookedInPeriod.has(rmStr)) return;
+    if(roomSt[r]==='maintenance') return;
+    if(already.has(rmStr)) return;
+    const id = Date.now()+added;
+    grpRooms.push({id, roomNum:rmStr, type:'Double', qty:1, pricePerNight:0, guestName:''});
+    grpRoomNumChange(grpRooms.length-1, rmStr);
+    added++;
+  });
+  if(!added) sNotify('ℹ️','لا توجد غرف متاحة إضافية','info',2500);
+  else sNotify('✅',`تم إضافة ${added} غرفة متاحة`,'success',2500);
+  renderGrpRooms();
+  calcGrpTotal();
+}
+
 function addGrpRoom(){
   const id = Date.now();
   grpRooms.push({id, roomNum:'', type:'Double', qty:1, pricePerNight:0, guestName:''});
@@ -9333,17 +9367,108 @@ function addGrpRoom(){
 function grpRoomNumChange(i, val){
   grpRooms[i].roomNum = val;
   if(val){
-    const info = roomTypes['room_'+val] || {type:'Double'};
-    grpRooms[i].type = info.type;
-    // auto price from price list if available
+    // ── جلب نوع الغرفة من مصادر متعددة ──
+    let roomType = 'Double';
+    let autoPrice = 0;
+
+    // 1. من roomTypes (localStorage)
+    const rtInfo = roomTypes['room_'+val];
+    if(rtInfo && rtInfo.type) roomType = rtInfo.type;
+
+    // 2. من DEF_PRICES (object keyed by type)
+    if(typeof DEF_PRICES !== 'undefined' && DEF_PRICES[roomType]){
+      const dp = DEF_PRICES[roomType];
+      if(dp && dp.usd) autoPrice = dp.usd;
+    }
+    // من prices object
+    if(typeof prices !== 'undefined' && prices[roomType]){
+      const pp = prices[roomType];
+      if(pp && pp.usd) autoPrice = pp.usd;
+    }
+
+    // 3. من price list الموسمي
     const plData = LS('dta_pl',{});
     const season = (typeof getCurrentSeason === 'function') ? getCurrentSeason() : null;
-    if(season && plData[season] && plData[season][info.type] !== undefined){
-      grpRooms[i].pricePerNight = plData[season][info.type];
+    if(season && plData[season] && plData[season][roomType] !== undefined){
+      autoPrice = plData[season][roomType];
     }
+
+    // 4. من أحدث حجز لنفس الغرفة
+    if(!autoPrice){
+      const lastBk = [...bookings].reverse().find(b=>String(b.room)===String(val)&&b.status!=='Cancelled');
+      if(lastBk){
+        const n = Math.round((new Date(lastBk.co)-new Date(lastBk.ci))/86400000);
+        if(n>0) autoPrice = Math.round(lastBk.total/n);
+        if(lastBk.type) roomType = lastBk.type;
+      }
+    }
+
+    grpRooms[i].type = roomType;
+    if(autoPrice) grpRooms[i].pricePerNight = autoPrice;
   }
   renderGrpRooms();
   calcGrpTotal();
+}
+
+function grpTypeChange(i){
+  // لما يغير النوع يدوي — بيحدث السعر تلقائياً من القائمة
+  grpAutoPrice(i);
+  renderGrpRooms();
+  calcGrpTotal();
+}
+
+function grpAutoPrice(i){
+  if(!grpRooms[i]) return;
+  const roomType = grpRooms[i].type || 'Double';
+  let autoPrice = 0;
+
+  // 1. من price list الموسمي
+  const plData = LS('dta_pl',{});
+  const season = (typeof getCurrentSeason==='function') ? getCurrentSeason() : null;
+  if(season && plData[season] && plData[season][roomType] !== undefined){
+    autoPrice = plData[season][roomType];
+  }
+
+  // 2. من DEF_PRICES
+  if(!autoPrice && typeof DEF_PRICES!=='undefined' && DEF_PRICES[roomType]){
+    autoPrice = DEF_PRICES[roomType].usd || 0;
+  }
+
+  // 3. من prices
+  if(!autoPrice && typeof prices!=='undefined' && prices[roomType]){
+    autoPrice = prices[roomType].usd || 0;
+  }
+
+  // 4. من آخر حجز لنفس الغرفة ونفس النوع
+  if(!autoPrice && grpRooms[i].roomNum){
+    const lastBk = [...bookings].reverse().find(b=>
+      String(b.room)===String(grpRooms[i].roomNum)&&b.status!=='Cancelled'
+    );
+    if(lastBk){
+      const n = Math.round((new Date(lastBk.co)-new Date(lastBk.ci))/86400000);
+      if(n>0) autoPrice = Math.round(lastBk.total/n);
+    }
+  }
+
+  if(autoPrice){
+    grpRooms[i].pricePerNight = autoPrice;
+    renderGrpRooms();
+    calcGrpTotal();
+    sNotify('⚡ سعر تلقائي', `${roomType}: ${autoPrice}$`, 'success', 2000);
+  } else {
+    sNotify('ℹ️', `لم يوجد سعر محدد لـ ${roomType} — أدخله يدوياً`, 'info', 3000);
+  }
+}
+
+function _updateGrpRowTotal(i){
+  if(!grpRooms[i]) return;
+  const ci2 = document.getElementById('grp-ci').value;
+  const co2 = document.getElementById('grp-co').value;
+  const nights2 = (ci2&&co2) ? Math.max(0,Math.round((new Date(co2)-new Date(ci2))/86400000)) : 0;
+  const total = grpRooms[i].pricePerNight * nights2;
+  const el = document.getElementById('grp-row-total-'+i);
+  const sym2 = ((typeof PROP!=="undefined"&&PROP.currency)?PROP.currency==="USD"?"$":PROP.currency==="EUR"?"€":"£":"£");
+  if(el) el.textContent = sym2+total.toFixed(0);
 }
 
 function removeGrpRoom(id){
