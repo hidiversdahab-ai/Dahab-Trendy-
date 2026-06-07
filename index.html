@@ -966,6 +966,7 @@ select option{background:#1a1a2e;color:var(--text)}
 <div class="ctitle">💰 <span class="t" data-ar="ملخص مالي" data-en="Financial Summary">Financial Summary</span></div>
 <div id="db-finance" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;"></div>
 </div>
+<div id="db-commission-section" style="display:none;margin-bottom:12px;"></div>
 <div class="g2">
 <div class="card"><div class="ctitle">🏨 <span class="t" data-ar="حالة الغرف" data-en="Room Status">Room Status</span></div><div id="db-rooms"></div></div>
 <div class="card"><div class="ctitle">📋 <span class="t" data-ar="آخر الحجوزات" data-en="Recent Bookings">Recent Bookings</span></div><div id="db-recent-alerts" style="margin-bottom:8px;"></div><div id="db-recent"></div></div>
@@ -1266,7 +1267,8 @@ select option{background:#1a1a2e;color:var(--text)}
   <button class="btn bg" onclick="calcGrpTotal()">🧮 احسب الإجمالي</button>
   <button class="btn" style="background:#25D366;color:#fff;" onclick="sendGrpWA()">📱 إرسال واتساب</button>
   <button class="btn" style="background:#e74c3c;color:#fff;" onclick="printGrpInvoice()">📄 طباعة / PDF</button>
-  <button class="btn bb" onclick="saveGrpBooking()">💾 حفظ الحجز</button>
+  <button class="btn bb" onclick="saveGrpBooking()">💾 حفظ الجروب</button>
+  <button class="btn" style="background:linear-gradient(135deg,#2980b9,#3498db);color:#fff;font-weight:700;" onclick="convertGrpToBookings()">🔄 تحويل إلى Bookings</button>
 </div>
 
 <!-- Invoice Print Area -->
@@ -4600,6 +4602,112 @@ mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","
 mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid Balance","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
 mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
 mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح":"Net Profit","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",netEGP>=0?"#27ae60":"#e74c3c");
+
+// ── تفاصيل العمولات ──
+const commSec = document.getElementById("db-commission-section");
+if(commSec){
+  const commBks = bookings.filter(b=>b.status!=="Cancelled"&&(b.commissionAmt||0)>0);
+  if(commBks.length===0){ commSec.style.display="none"; }
+  else {
+    commSec.style.display="";
+    // تجميع حسب الشركة (groupTag أو name)
+    const agencyMap = {};
+    commBks.forEach(b=>{
+      const key = (b.groupTag||b.company||b.name||"—").trim();
+      if(!agencyMap[key]) agencyMap[key]={name:key,bookings:[],grossEGP:0,commEGP:0,netEGP:0,commPct:0};
+      const gross = b.cur==="USD"?(b.total+b.commissionAmt)*exRate : b.cur==="EUR"?(b.total+b.commissionAmt)*eurRate : (b.total+(b.commissionAmt||0));
+      const comm  = b.cur==="USD"?(b.commissionAmt*exRate) : b.cur==="EUR"?(b.commissionAmt*eurRate) : (b.commissionAmt||0);
+      const net   = b.cur==="USD"?(b.total*exRate) : b.cur==="EUR"?(b.total*eurRate) : b.total;
+      agencyMap[key].bookings.push(b);
+      agencyMap[key].grossEGP += gross;
+      agencyMap[key].commEGP  += comm;
+      agencyMap[key].netEGP   += net;
+      if(b.commissionPct>0) agencyMap[key].commPct = b.commissionPct;
+    });
+    const agencies = Object.values(agencyMap).sort((a,b)=>b.commEGP-a.commEGP);
+
+    const rows = agencies.map(ag=>{
+      const pct = ag.commPct>0 ? ag.commPct+"%" : ((ag.grossEGP>0?(ag.commEGP/ag.grossEGP*100).toFixed(1):0)+"%");
+      const bkList = ag.bookings.map(b=>`
+        <tr style="font-size:11px;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <td style="padding:4px 8px;color:var(--muted);">غرفة ${b.room}</td>
+          <td style="padding:4px 8px;">${b.name}</td>
+          <td style="padding:4px 8px;color:var(--muted);">${b.ci} ← ${b.co}</td>
+          <td style="padding:4px 8px;text-align:right;">£${(b.cur==="USD"?(b.total+b.commissionAmt)*exRate:b.cur==="EUR"?(b.total+b.commissionAmt)*eurRate:(b.total+(b.commissionAmt||0))).toFixed(0)}</td>
+          <td style="padding:4px 8px;text-align:right;color:#e67e22;">−£${(b.cur==="USD"?b.commissionAmt*exRate:b.cur==="EUR"?b.commissionAmt*eurRate:(b.commissionAmt||0)).toFixed(0)}</td>
+          <td style="padding:4px 8px;text-align:right;color:#2ecc71;">£${(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total).toFixed(0)}</td>
+        </tr>`).join("");
+      return `
+      <div style="border:1px solid rgba(230,126,34,0.25);border-radius:9px;overflow:hidden;margin-bottom:8px;">
+        <!-- رأس الشركة -->
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 14px;background:rgba(230,126,34,0.07);cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;font-weight:700;color:#e67e22;">🏢 ${ag.name}</span>
+            <span style="font-size:11px;color:var(--muted);">${ag.bookings.length} حجز</span>
+            <span style="font-size:11px;background:rgba(230,126,34,0.15);color:#e67e22;padding:2px 7px;border-radius:5px;font-weight:700;">${pct} كوميشن</span>
+          </div>
+          <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+            <div style="text-align:center;">
+              <div style="font-size:11px;color:var(--muted);">إجمالي</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);">£${ag.grossEGP.toFixed(0)}</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:11px;color:var(--muted);">الكوميشن</div>
+              <div style="font-size:13px;font-weight:700;color:#e67e22;">−£${ag.commEGP.toFixed(0)}</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:11px;color:var(--muted);">الصافي</div>
+              <div style="font-size:14px;font-weight:700;color:#2ecc71;">£${ag.netEGP.toFixed(0)}</div>
+            </div>
+            <span style="font-size:16px;color:var(--muted);">▾</span>
+          </div>
+        </div>
+        <!-- تفاصيل الحجوزات (مخفية بالضغط) -->
+        <div style="display:none;">
+          <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead>
+              <tr style="background:rgba(255,255,255,0.03);">
+                <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:10px;">غرفة</th>
+                <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:10px;">الضيف</th>
+                <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:10px;">الفترة</th>
+                <th style="padding:5px 8px;text-align:right;color:var(--gold);font-size:10px;">إجمالي</th>
+                <th style="padding:5px 8px;text-align:right;color:#e67e22;font-size:10px;">كوميشن</th>
+                <th style="padding:5px 8px;text-align:right;color:#2ecc71;font-size:10px;">صافي</th>
+              </tr>
+            </thead>
+            <tbody>${bkList}</tbody>
+            <tfoot>
+              <tr style="background:rgba(255,255,255,0.04);font-weight:700;">
+                <td colspan="3" style="padding:6px 8px;font-size:11px;color:var(--muted);">الإجمالي</td>
+                <td style="padding:6px 8px;text-align:right;">£${ag.grossEGP.toFixed(0)}</td>
+                <td style="padding:6px 8px;text-align:right;color:#e67e22;">−£${ag.commEGP.toFixed(0)}</td>
+                <td style="padding:6px 8px;text-align:right;color:#2ecc71;">£${ag.netEGP.toFixed(0)}</td>
+              </tr>
+            </tfoot>
+          </table>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+
+    commSec.innerHTML = `
+    <div class="card" style="border-color:rgba(230,126,34,0.3);">
+      <div class="ctitle" style="color:#e67e22;">🤝 تفاصيل العمولات — ${agencies.length} شركة / وكالة
+        <span style="float:left;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0;">اضغط على الشركة للتفاصيل ▾</span>
+      </div>
+      <!-- بار ملخص سريع -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
+        ${mkFin("£"+totalCommEGP_db.toFixed(0),"إجمالي العمولات المخصومة","rgba(230,126,34,0.08)","rgba(230,126,34,0.25)","#e67e22")}
+        ${mkFin("£"+revEGP.toFixed(0),"إجمالي الإيرادات","rgba(201,168,76,0.08)","rgba(201,168,76,0.25)","var(--gold)")}
+        ${mkFin("£"+netRevAfterCommEGP.toFixed(0),"صافي الإيرادات","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#2ecc71")}
+        ${mkFin(((totalCommEGP_db/revEGP)*100).toFixed(1)+"%","نسبة العمولة الكلية","rgba(155,89,182,0.08)","rgba(155,89,182,0.25)","#c39bd3")}
+      </div>
+      <!-- تفاصيل كل شركة -->
+      ${rows}
+    </div>`;
+  }
+}
 const dbGuestColorMap=buildGuestColorMap(bookings);
 document.getElementById("db-rooms").innerHTML=ROOMS.map(r=>{
 const rs=roomSt[r]||"available";
@@ -9348,7 +9456,7 @@ function addAllAvailableRooms(){
     if(roomSt[r]==='maintenance') return;
     if(already.has(rmStr)) return;
     const id = Date.now()+added;
-    grpRooms.push({id, roomNum:rmStr, type:'Double', qty:1, pricePerNight:0, guestName:''});
+    grpRooms.push({id, roomNum:rmStr, type:'Double', qty:1, pricePerNight:0, guestName:'', customPrice:false});
     grpRoomNumChange(grpRooms.length-1, rmStr);
     added++;
   });
@@ -9360,7 +9468,7 @@ function addAllAvailableRooms(){
 
 function addGrpRoom(){
   const id = Date.now();
-  grpRooms.push({id, roomNum:'', type:'Double', qty:1, pricePerNight:0, guestName:''});
+  grpRooms.push({id, roomNum:'', type:'Double', qty:1, pricePerNight:0, guestName:'', customPrice:false});
   renderGrpRooms();
 }
 
@@ -9404,7 +9512,7 @@ function grpRoomNumChange(i, val){
     }
 
     grpRooms[i].type = roomType;
-    if(autoPrice) grpRooms[i].pricePerNight = autoPrice;
+    if(autoPrice && !grpRooms[i].customPrice) grpRooms[i].pricePerNight = autoPrice;
   }
   renderGrpRooms();
   calcGrpTotal();
@@ -9452,6 +9560,7 @@ function grpAutoPrice(i){
 
   if(autoPrice){
     grpRooms[i].pricePerNight = autoPrice;
+    grpRooms[i].customPrice = false;
     renderGrpRooms();
     calcGrpTotal();
     sNotify('⚡ سعر تلقائي', `${roomType}: ${autoPrice}$`, 'success', 2000);
@@ -9466,10 +9575,13 @@ function _updateGrpRowTotal(i){
   const co2 = document.getElementById('grp-co').value;
   const nights2 = (ci2&&co2) ? Math.max(0,Math.round((new Date(co2)-new Date(ci2))/86400000)) : 0;
   const total = grpRooms[i].pricePerNight * nights2;
-  const el = document.getElementById('grp-row-total-'+i);
   const sym2 = ((typeof PROP!=="undefined"&&PROP.currency)?PROP.currency==="USD"?"$":PROP.currency==="EUR"?"€":"£":"£");
-  if(el) el.textContent = sym2+total.toFixed(0);
+  const elTotal = document.getElementById('grp-row-total-'+i);
+  const elPpn   = document.getElementById('grp-row-ppn-'+i);
+  if(elTotal) elTotal.textContent = sym2+total.toFixed(2);
+  if(elPpn)   elPpn.textContent   = sym2+grpRooms[i].pricePerNight;
 }
+function grpUpdateRowTotal(i){ _updateGrpRowTotal(i); }
 
 function removeGrpRoom(id){
   grpRooms = grpRooms.filter(r => r.id !== id);
@@ -9497,6 +9609,9 @@ function renderGrpRooms(){
 
   // الغرف المختارة في الصفوف الأخرى
   const chosenInOtherRows = new Set(grpRooms.map(r=>r.roomNum).filter(Boolean));
+
+  // حساب الليالي مرة واحدة قبل الـ loop
+  const nights = (ci && co && co > ci) ? nts(ci, co) : 0;
 
   el.innerHTML = grpRooms.map((r,i) => {
     // بناء options لاختيار الغرفة
@@ -9537,13 +9652,23 @@ function renderGrpRooms(){
           <span style="font-size:12px;color:var(--gold);font-weight:700;background:rgba(201,168,76,0.15);padding:3px 8px;border-radius:5px;">${typeLabel}</span>
         </div>
 
-        <!-- السعر -->
+        <!-- السعر Custom -->
         <div style="display:flex;align-items:center;gap:4px;">
-          <span style="font-size:11px;color:var(--muted);">${sym}/ليلة</span>
-          <input type="number" min="0" value="${r.pricePerNight}" style="width:70px;padding:4px 6px;font-size:12px;text-align:center;" onchange="grpRooms[${i}].pricePerNight=parseFloat(this.value)||0;calcGrpTotal()">
+          <span style="font-size:11px;color:${r.customPrice?'#e67e22':'#f39c12'};white-space:nowrap;font-weight:700;">${r.customPrice?'✏️ يدوي':'✏️'} ${sym}/ليلة</span>
+          <input type="number" min="0" value="${r.pricePerNight}" style="width:80px;padding:4px 6px;font-size:13px;text-align:center;border-color:${r.customPrice?'rgba(230,126,34,0.7)':'rgba(243,156,18,0.5)'};background:${r.customPrice?'rgba(230,126,34,0.12)':'rgba(243,156,18,0.08)'};font-weight:700;" oninput="grpRooms[${i}].pricePerNight=parseFloat(this.value)||0;grpRooms[${i}].customPrice=true;calcGrpTotal();grpUpdateRowTotal(${i});this.style.borderColor='rgba(230,126,34,0.7)';this.style.background='rgba(230,126,34,0.12)';" title="سعر يدوي — لن يتغير تلقائياً">
+          <button onclick="grpRooms[${i}].customPrice=false;grpAutoPrice(${i});" title="استعادة السعر التلقائي" style="padding:3px 6px;font-size:12px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);border-radius:5px;cursor:pointer;color:var(--gold);">🔄</button>
         </div>
 
         <button class="btn bsm" style="background:rgba(231,76,60,0.15);color:#e74c3c;" onclick="removeGrpRoom(${r.id})">🗑️</button>
+      </div>
+
+      <!-- صف الليالي × السعر = الإجمالي -->
+      <div id="grp-row-calc-${i}" style="display:flex;align-items:center;gap:8px;background:rgba(201,168,76,0.08);border-radius:5px;padding:4px 8px;font-size:12px;${nights>0?'':'display:none!important;'}">
+        <span style="color:var(--muted);">🌙 ${nights} ليلة</span>
+        <span style="color:var(--muted);">×</span>
+        <span id="grp-row-ppn-${i}" style="color:var(--text);">${sym}${r.pricePerNight}</span>
+        <span style="color:var(--muted);">=</span>
+        <span id="grp-row-total-${i}" style="color:#2ecc71;font-weight:700;">${sym}${(r.pricePerNight*nights).toFixed(2)}</span>
       </div>
 
       <!-- اسم الضيف -->
@@ -9601,15 +9726,20 @@ function calcGrpTotal(){
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
         <span style="color:var(--muted);">👥 عدد الأفراد (تقريبي)</span><span style="font-weight:700;">${totalGuests} فرد</span>
       </div>
-      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+      ${grpRooms.filter(r=>r.roomNum).map(r=>`
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;">
+        <span style="color:var(--muted);">🏨 غرفة ${r.roomNum} (${r.type}) × ${nights} ليلة</span>
+        <span style="color:var(--text);">${sym}${(r.pricePerNight*nights).toFixed(2)}</span>
+      </div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid rgba(255,255,255,0.08);border-bottom:1px solid rgba(255,255,255,0.06);">
         <span style="color:var(--muted);">💵 إجمالي الغرف</span><span style="font-weight:700;">${sym}${roomsTotal.toFixed(2)}</span>
       </div>
-      ${commission>0?`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
-        <span style="color:#e67e22;">🤝 كوميشن (${commType==='percent'?commVal+'%':sym+commVal})</span>
-        <span style="color:#e67e22;font-weight:700;">−${sym}${commission.toFixed(2)}</span>
-      </div>`:''}
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <span style="color:${commission>0?'#e67e22':'var(--muted)'};">🤝 كوميشن (${commType==='percent'?commVal+'%':commType==='fixed'?sym+commVal:'بدون'})</span>
+        <span style="color:${commission>0?'#e67e22':'var(--muted)'};font-weight:700;">−${sym}${commission.toFixed(2)}</span>
+      </div>
       <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:2px solid rgba(201,168,76,0.3);">
-        <span style="color:var(--gold);font-weight:700;font-size:14px;">💰 الإجمالي</span>
+        <span style="color:var(--gold);font-weight:700;font-size:14px;">💰 الإجمالي بعد الكوميشن</span>
         <span style="color:var(--gold);font-weight:700;font-size:14px;">${sym}${grandTotal.toFixed(2)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:6px 0;">
@@ -9872,13 +10002,10 @@ function saveGrpBooking(){
   if(!d.ci||!d.co||!d.company){sNotify('⚠️','أدخل بيانات الشركة والتواريخ','warning',2000);return;}
   const grpId = 'GRP-'+Date.now().toString().slice(-6);
   let added = 0;
-
-  // توزيع الكوميشن بالتساوي على كل الغرف
   const totalRoomsCount = grpRooms.filter(r=>r.roomNum).length;
   const commPerRoom = totalRoomsCount > 0 ? d.commission / totalRoomsCount : 0;
-
   grpRooms.forEach(r=>{
-    if(!r.roomNum){ return; } // تجاهل الصفوف اللي ملهاش غرفة مختارة
+    if(!r.roomNum){ return; }
     const roomBase = r.pricePerNight * d.nights;
     const info = roomTypes['room_'+r.roomNum] || {type: r.type};
     const bk={
@@ -9906,6 +10033,115 @@ function saveGrpBooking(){
   });
   saveData();
   sNotify('✅ تم الحفظ',`تم إضافة ${added} حجز للجروب ${grpId}${d.commission>0?' (شامل الكوميشن في الإيرادات)':''}`,'success',3000);
+}
+
+function convertGrpToBookings(){
+  const d = getGrpData();
+  if(!d.ci||!d.co){sNotify('⚠️','أدخل تواريخ الإقامة أولاً','warning',2000);return;}
+  if(!d.company){sNotify('⚠️','أدخل اسم الشركة أولاً','warning',2000);return;}
+  const roomsWithNum = grpRooms.filter(r=>r.roomNum);
+  if(roomsWithNum.length===0){sNotify('⚠️','أضف غرفة واحدة على الأقل','warning',2000);return;}
+  const sym = d.sym;
+  const conflicted = [], available = [];
+  roomsWithNum.forEach(r=>{
+    const hasConflict = bookings.some(bk=>
+      bk.status!=='Cancelled' &&
+      String(bk.room)===String(r.roomNum) &&
+      bk.ci < d.co && bk.co > d.ci
+    );
+    if(hasConflict) conflicted.push(r);
+    else available.push(r);
+  });
+  if(conflicted.length>0 && available.length===0){
+    const list = conflicted.map(r=>`<li style="padding:3px 0;color:#e74c3c;">🚫 غرفة ${r.roomNum} (${r.type})</li>`).join('');
+    showGrpModal('🚫 تعارض في جميع الغرف',
+      `<p style="color:var(--muted);margin-bottom:10px;">كل الغرف محجوزة في الفترة <strong>${fmtD(d.ci)} ← ${fmtD(d.co)}</strong></p><ul style="list-style:none;padding:0;">${list}</ul>`,
+      [{label:'حسناً', style:'background:#e74c3c;color:#fff;', fn:'closeGrpModal()'}]);
+    return;
+  }
+  if(conflicted.length>0){
+    window._grpPendingRooms = available.map(r=>r.roomNum);
+    const cList = conflicted.map(r=>`<li style="padding:2px 0;color:#e74c3c;">🚫 غرفة ${r.roomNum} (${r.type})</li>`).join('');
+    const aList = available.map(r=>`<li style="padding:2px 0;color:#2ecc71;">✅ غرفة ${r.roomNum} (${r.type}) = ${sym}${(r.pricePerNight*d.nights).toFixed(2)}</li>`).join('');
+    showGrpModal('⚠️ تعارض في بعض الغرف',
+      `<p style="color:var(--muted);margin-bottom:8px;">الفترة: <strong>${fmtD(d.ci)} ← ${fmtD(d.co)}</strong></p>
+       <div style="margin-bottom:8px;"><div style="font-size:11px;color:#e74c3c;font-weight:700;margin-bottom:3px;">محجوزة — لن تُحوَّل:</div><ul style="list-style:none;padding:0 6px;">${cList}</ul></div>
+       <div><div style="font-size:11px;color:#2ecc71;font-weight:700;margin-bottom:3px;">متاحة — ستُحوَّل:</div><ul style="list-style:none;padding:0 6px;">${aList}</ul></div>`,
+      [{label:`✅ حوّل ${available.length} غرفة`, style:'background:#27ae60;color:#fff;font-weight:700;', fn:'doConvertGrpPending()'},
+       {label:'إلغاء', style:'background:rgba(255,255,255,0.07);color:var(--muted);border:1px solid var(--bdr);', fn:'closeGrpModal()'}]);
+    return;
+  }
+  window._grpPendingRooms = available.map(r=>r.roomNum);
+  const rList = available.map(r=>`<li style="padding:2px 0;color:#2ecc71;">✅ غرفة ${r.roomNum} (${r.type}) — ${sym}${r.pricePerNight}/ليلة × ${d.nights} = <strong>${sym}${(r.pricePerNight*d.nights).toFixed(2)}</strong></li>`).join('');
+  showGrpModal('🔄 تأكيد التحويل إلى Bookings',
+    `<p style="color:var(--muted);margin-bottom:8px;">${fmtD(d.ci)} ← ${fmtD(d.co)} (${d.nights} ليلة)</p><ul style="list-style:none;padding:0;">${rList}</ul><p style="margin-top:8px;color:var(--muted);font-size:12px;">سيتم إنشاء ${available.length} حجز في Bookings</p>`,
+    [{label:'✅ تأكيد التحويل', style:'background:linear-gradient(135deg,#2980b9,#3498db);color:#fff;font-weight:700;', fn:'doConvertGrpPending()'},
+     {label:'إلغاء', style:'background:rgba(255,255,255,0.07);color:var(--muted);border:1px solid var(--bdr);', fn:'closeGrpModal()'}]);
+}
+
+function doConvertGrpPending(){
+  doConvertGrp(window._grpPendingRooms || []);
+}
+function doConvertGrp(roomNums){
+  closeGrpModal();
+  const d = getGrpData();
+  const grpId = 'GRP-'+Date.now().toString().slice(-6);
+  const toConvert = grpRooms.filter(r=>roomNums.includes(r.roomNum));
+  let added = 0;
+  // حساب إجمالي الغرف المراد تحويلها فقط (للكوميشن النسبي)
+  const toConvertRoomsTotal = toConvert.reduce((sum,r)=>sum+(r.pricePerNight*d.nights),0);
+  toConvert.forEach(r=>{
+    const info = roomTypes['room_'+r.roomNum]||{type:r.type};
+    const roomGross = r.pricePerNight * d.nights;
+    // نصيب الغرفة من الكوميشن بالتناسب مع إجماليها
+    let commForRoom = 0;
+    if(d.commType==='percent'){
+      commForRoom = roomGross * d.commVal / 100;
+    } else if(d.commType==='fixed' && toConvertRoomsTotal>0){
+      commForRoom = d.commission * (roomGross / toConvertRoomsTotal);
+    }
+    const roomNet = roomGross - commForRoom;
+    bookings.push({
+      id:Date.now()+Math.random(),
+      room:String(r.roomNum),
+      name:r.guestName&&r.guestName.trim()?r.guestName.trim():d.company,
+      phone:d.phone, type:info.type, ci:d.ci, co:d.co,
+      adults:ROOM_TYPE_CAPACITY[info.type]||2, children:0,
+      total:roomNet,
+      commissionAmt:commForRoom,
+      commissionPct:d.commType==='percent'?d.commVal:0,
+      commissionType:d.commType,
+      paid:0, status:'Confirmed', source:'Corporate',
+      notes:`جروب: ${grpId} | مسؤول: ${d.contact}`,
+      groupId:grpId, groupTag:d.company
+    });
+    added++;
+  });
+  saveData();
+  sNotify('✅ تم التحويل',`تم إضافة ${added} حجز (${grpId}) إلى Bookings`,'success',3000);
+  setTimeout(()=>goPage('bookings', document.querySelector('.nb[onclick*="bookings"]')), 600);
+}
+
+function showGrpModal(title, body, buttons){
+  let el = document.getElementById('grp-conflict-modal');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'grp-conflict-modal';
+    el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    document.body.appendChild(el);
+  }
+  const btns = buttons.map(b=>`<button class="btn" style="flex:1;padding:10px 14px;font-size:13px;${b.style}" onclick="${b.fn}">${b.label}</button>`).join('');
+  el.innerHTML=`<div style="background:#1a1a2e;border:1px solid var(--bdr);border-radius:12px;padding:20px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;">
+    <div style="color:var(--gold);font-size:14px;font-weight:700;margin-bottom:14px;">${title}</div>
+    <div style="font-size:13px;color:var(--text);margin-bottom:16px;">${body}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">${btns}</div>
+  </div>`;
+  el.style.display='flex';
+}
+
+function closeGrpModal(){
+  const el=document.getElementById('grp-conflict-modal');
+  if(el) el.style.display='none';
 }
 
 function renderGroupBooking(){
