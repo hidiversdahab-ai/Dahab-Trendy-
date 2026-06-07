@@ -9520,36 +9520,36 @@ function renderGrpRooms(){
     return `
     <div style="display:flex;flex-direction:column;gap:6px;padding:10px 12px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.18);border-radius:8px;">
       <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span style="font-size:11px;color:var(--muted);min-width:18px;">\${i+1}</span>
+        <span style="font-size:11px;color:var(--muted);min-width:18px;">${i+1}</span>
 
         <!-- رقم الغرفة -->
         <div style="display:flex;align-items:center;gap:4px;">
           <span style="font-size:11px;color:var(--gold);white-space:nowrap;">🏨 غرفة</span>
-          <select onchange="grpRoomNumChange(\${i},this.value)" style="min-width:150px;padding:5px 8px;font-size:12px;">
+          <select onchange="grpRoomNumChange(${i},this.value)" style="min-width:150px;padding:5px 8px;font-size:12px;">
             <option value="">— اختر الغرفة —</option>
-            \${roomOptions}
+            ${roomOptions}
           </select>
         </div>
 
         <!-- النوع (تلقائي) -->
         <div style="display:flex;align-items:center;gap:4px;">
           <span style="font-size:11px;color:var(--muted);">النوع:</span>
-          <span style="font-size:12px;color:var(--gold);font-weight:700;background:rgba(201,168,76,0.15);padding:3px 8px;border-radius:5px;">\${typeLabel}</span>
+          <span style="font-size:12px;color:var(--gold);font-weight:700;background:rgba(201,168,76,0.15);padding:3px 8px;border-radius:5px;">${typeLabel}</span>
         </div>
 
         <!-- السعر -->
         <div style="display:flex;align-items:center;gap:4px;">
-          <span style="font-size:11px;color:var(--muted);">\${sym}/ليلة</span>
-          <input type="number" min="0" value="\${r.pricePerNight}" style="width:70px;padding:4px 6px;font-size:12px;text-align:center;" onchange="grpRooms[\${i}].pricePerNight=parseFloat(this.value)||0;calcGrpTotal()">
+          <span style="font-size:11px;color:var(--muted);">${sym}/ليلة</span>
+          <input type="number" min="0" value="${r.pricePerNight}" style="width:70px;padding:4px 6px;font-size:12px;text-align:center;" onchange="grpRooms[${i}].pricePerNight=parseFloat(this.value)||0;calcGrpTotal()">
         </div>
 
-        <button class="btn bsm" style="background:rgba(231,76,60,0.15);color:#e74c3c;" onclick="removeGrpRoom(\${r.id})">🗑️</button>
+        <button class="btn bsm" style="background:rgba(231,76,60,0.15);color:#e74c3c;" onclick="removeGrpRoom(${r.id})">🗑️</button>
       </div>
 
       <!-- اسم الضيف -->
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="font-size:11px;color:var(--gold);white-space:nowrap;">👤 اسم الضيف</span>
-        <input type="text" value="\${r.guestName||''}" placeholder="اسم الضيف في هذه الغرفة (اختياري)" style="flex:1;padding:5px 8px;font-size:12px;" oninput="grpRooms[\${i}].guestName=this.value">
+        <input type="text" value="${r.guestName||''}" placeholder="اسم الضيف في هذه الغرفة (اختياري)" style="flex:1;padding:5px 8px;font-size:12px;" oninput="grpRooms[${i}].guestName=this.value">
       </div>
     </div>
   `;
