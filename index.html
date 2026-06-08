@@ -9354,7 +9354,21 @@ function resetDUPrices(){duPrices=JSON.parse(JSON.stringify(DEF_DU_PRICES));sv("
 // ═══════════════════════════════════════════════
 let roomTypes = LS('dta_room_types', {});
 const ROOM_TYPE_OPTIONS = ['Single','Double','Triple','Suite (غرفتين)','Quad (رباعي)'];
-const ROOM_TYPE_CAPACITY = {'Single':1,'Double':2,'Triple':3,'Suite (غرفتين)':4,'Quad (رباعي)':4};
+const ROOM_TYPE_CAPACITY = {'Single':1,'Double':2,'Triple':3,'Suite (غرفتين)':4,'Quad (رباعي)':4,'Suite':4,'Quad':4};
+function getRoomCapacity(type, roomNum){
+  // أولاً: من roomTypes المحفوظة
+  if(roomNum && roomTypes && roomTypes['room_'+roomNum] && roomTypes['room_'+roomNum].capacity){
+    return roomTypes['room_'+roomNum].capacity;
+  }
+  // ثانياً: من ROOM_TYPE_CAPACITY
+  if(ROOM_TYPE_CAPACITY[type]) return ROOM_TYPE_CAPACITY[type];
+  // ثالثاً: fuzzy match
+  if(type&&type.includes('Suite')) return 4;
+  if(type&&type.includes('Quad'))  return 4;
+  if(type&&type.includes('Triple'))return 3;
+  if(type&&type.includes('Single'))return 1;
+  return 2; // Double default
+}
 
 function renderRoomTypesGrid(){
   const grid = document.getElementById('room-types-grid');
@@ -10055,7 +10069,7 @@ function saveGrpBooking(){
       type:info.type,
       ci:d.ci,
       co:d.co,
-      adults:ROOM_TYPE_CAPACITY[info.type]||2,
+      adults:getRoomCapacity(info.type, r.roomNum),
       children:0,
       total: roomBase,
       commissionAmt: commPerRoom,
@@ -10145,7 +10159,7 @@ function doConvertGrp(roomNums){
       room:String(r.roomNum),
       name:r.guestName&&r.guestName.trim()?r.guestName.trim():d.company,
       phone:d.phone, type:info.type, ci:d.ci, co:d.co,
-      adults:ROOM_TYPE_CAPACITY[info.type]||2, children:0,
+      adults:getRoomCapacity(info.type, r.roomNum), children:0,
       total:roomNet,
       commissionAmt:commForRoom,
       commissionPct:d.commType==='percent'?d.commVal:0,
@@ -15728,7 +15742,12 @@ function loadWATemplate(){
   const templates=allTemplates[_watLang]||allTemplates.en;
   const tpl=templates[_watCurrentType]||templates.confirm;
   document.getElementById('wat-tpl-title').textContent=tpl.title;
-  document.getElementById('wat-tpl-body').textContent=tpl.body;
+  const _bodyEl=document.getElementById('wat-tpl-body');
+  _bodyEl.textContent=tpl.body;
+  // ضبط اتجاه النص حسب اللغة
+  _bodyEl.style.direction=_watLang==='ar'?'rtl':'ltr';
+  _bodyEl.style.textAlign=_watLang==='ar'?'right':'left';
+  _bodyEl.style.unicodeBidi='plaintext';
   // update bubble time
   const now=new Date();
   const timeStr=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
