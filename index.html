@@ -4747,19 +4747,58 @@ return "<div style='display:flex;justify-content:space-between;align-items:cente
 (guestName?"<span style='color:var(--muted);font-size:10px;'>"+guestName+dbDot+"</span>":"")+
 "</div></div>";
 }).join("");
-const rec=[...bookings].reverse();
+// ── تمييز حالة كل حجز للـ Recent Bookings ──
+const recRaw=[...bookings].filter(b=>b.status!=="Cancelled").reverse();
+// ترتيب: غادر اليوم → مقيم حالياً → وصول اليوم → محجوز مستقبلي
+function grpRank(b){
+  if(b.co===td && !b.coConfirmed) return 0;      // غادر اليوم
+  if(b.ci<=td && b.co>td)         return 1;      // مقيم حالياً
+  if(b.ci===td)                   return 2;      // وصول اليوم
+  if(b.ci>td)                     return 3;      // محجوز
+  return 4;                                       // منتهي
+}
+const rec = [...recRaw].sort((a,b)=>grpRank(a)-grpRank(b));
 document.getElementById("db-recent").innerHTML=rec.length?rec.map(b=>{
-const bc={Paid:"bg-green",Pending:"bg-yellow",Cancelled:"bg-red",Partial:"bg-blue",Standby:"bg-purple"}[b.status]||"bg-gray";
-return "<div style='padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);'>"+
-"<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;'>"+
-"<span style='font-weight:700;font-size:12px;'>"+b.name+"</span>"+
-"<span class='bdg "+bc+"' style='font-size:9px;'>"+b.status+"</span>"+
-"</div>"+
-"<div style='display:flex;justify-content:space-between;font-size:11px;color:var(--muted);'>"+
-"<span>"+(ar?"غرفة ":"Rm ")+b.room+" · "+b.type+"</span>"+
-"<span><span style='color:#3498db;'>🛬 "+fmtD(b.ci)+"</span> <span style='color:var(--muted);'>→</span> <span style='color:#e67e22;'>🛫 "+fmtD(b.co)+"</span></span>"+
-"</div>"+
-"</div>";
+  const bc={Paid:"bg-green",Pending:"bg-yellow",Cancelled:"bg-red",Partial:"bg-blue",Standby:"bg-purple"}[b.status]||"bg-gray";
+  // تحديد حالة الإقامة
+  const isCoToday   = b.co===td && !b.coConfirmed;
+  const isActive    = b.ci<=td && b.co>td && !b.coConfirmed;
+  const isCiToday   = b.ci===td;
+  const isFuture    = b.ci>td;
+  const isPast      = b.co<td || b.coConfirmed;
+  let stayBadge="", rowBorder="border-bottom:1px solid rgba(255,255,255,0.05);", rowBg="";
+  if(isCoToday){
+    stayBadge="<span style='font-size:9px;font-weight:700;background:rgba(230,126,34,0.18);color:#e67e22;border:1px solid rgba(230,126,34,0.4);border-radius:4px;padding:1px 6px;margin-left:5px;'>🛫 غادر اليوم</span>";
+    rowBorder="border-bottom:1px solid rgba(230,126,34,0.2);";
+    rowBg="background:rgba(230,126,34,0.04);border-radius:7px;padding:7px 6px;margin-bottom:2px;";
+  } else if(isActive){
+    stayBadge="<span style='font-size:9px;font-weight:700;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.35);border-radius:4px;padding:1px 6px;margin-left:5px;'>🏠 مقيم</span>";
+    rowBorder="border-bottom:1px solid rgba(46,204,113,0.1);";
+    rowBg="background:rgba(46,204,113,0.03);border-radius:7px;padding:7px 6px;margin-bottom:2px;";
+  } else if(isCiToday){
+    stayBadge="<span style='font-size:9px;font-weight:700;background:rgba(52,152,219,0.15);color:#3498db;border:1px solid rgba(52,152,219,0.35);border-radius:4px;padding:1px 6px;margin-left:5px;'>🛬 وصول اليوم</span>";
+    rowBorder="border-bottom:1px solid rgba(52,152,219,0.1);";
+    rowBg="background:rgba(52,152,219,0.04);border-radius:7px;padding:7px 6px;margin-bottom:2px;";
+  } else if(isFuture){
+    stayBadge="<span style='font-size:9px;color:var(--muted);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:1px 5px;margin-left:5px;'>📅 محجوز</span>";
+    rowBg="padding:7px 2px;";
+  } else {
+    stayBadge="<span style='font-size:9px;color:var(--muted);opacity:.5;border:1px solid rgba(255,255,255,0.07);border-radius:4px;padding:1px 5px;margin-left:5px;'>✓ منتهي</span>";
+    rowBg="padding:7px 2px;opacity:0.6;";
+  }
+  return "<div style='"+rowBg+rowBorder+"'>"+
+    "<div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;'>"+
+      "<div style='display:flex;align-items:center;flex-wrap:wrap;gap:2px;'>"+
+        "<span style='font-weight:700;font-size:12px;'>"+b.name+"</span>"+
+        stayBadge+
+      "</div>"+
+      "<span class='bdg "+bc+"' style='font-size:9px;'>"+b.status+"</span>"+
+    "</div>"+
+    "<div style='display:flex;justify-content:space-between;font-size:11px;color:var(--muted);'>"+
+      "<span>"+(ar?"غرفة ":"Rm ")+b.room+" · "+b.type+"</span>"+
+      "<span><span style='color:#3498db;'>🛬 "+fmtD(b.ci)+"</span> <span style='color:var(--muted);'>→</span> <span style='color:#e67e22;'>🛫 "+fmtD(b.co)+"</span></span>"+
+    "</div>"+
+  "</div>";
 }).join(""):"<div class='empty'>"+(ar?"لا توجد حجوزات":"No bookings yet")+"</div>";
 renderAlerts();
 renderBirthdayAlerts();
@@ -15477,7 +15516,7 @@ function openWATemplates(){
   _watAllActive=(bookings||[]).filter(b=>b.status!=='Cancelled').sort((a,b)=>b.ci.localeCompare(a.ci));
   _watBulkSelected=new Set();
   _watEditMode=false;
-  _watLang=currentLang==='ar'?'ar':'en';
+  _watLang=localStorage.getItem('dta_wat_lang')||(currentLang==='ar'?'ar':'en');
   _watFillSelect(_watAllActive);
   _updateWALangBtns();
   document.getElementById('wa-templates-modal').classList.add('on');
@@ -15502,6 +15541,7 @@ function watFilterGuests(){
 function setWALang(lang){
   _watLang=lang;
   _watEditMode=false;
+  localStorage.setItem('dta_wat_lang',lang);
   _updateWALangBtns();
   loadWATemplate();
 }
