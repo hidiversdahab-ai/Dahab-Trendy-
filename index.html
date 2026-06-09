@@ -1370,6 +1370,7 @@ label {
     <div class="bn-more-item" onclick="openBlacklist();closeBnMore()" style="border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.07);"><span class="bm-icon">🚫</span><span style="color:#e74c3c;">Blacklist</span></div>
     <div class="bn-more-item" onclick="bnGo('guesthistory',null);closeBnMore()"><span class="bm-icon">👥</span><span class="t" data-ar="سجل الضيوف" data-en="Guest History">Guest History</span></div>
     <div class="bn-more-item" onclick="bnGo('groupbooking',null);closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon">🏢</span><span class="t" data-ar="حجز جروب" data-en="Group Booking">Group Booking</span></div>
+    <div class="bn-more-item" onclick="bnGo('roomlist',null);closeBnMore()" style="border-color:rgba(46,204,113,0.4);background:rgba(46,204,113,0.07);"><span class="bm-icon">🛏</span><span class="t" data-ar="قائمة الغرف" data-en="Room List">Room List</span></div>
     <div class="bn-more-item" onclick="bnGo('pricelist',null);closeBnMore()" style="border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);"><span class="bm-icon">💰</span><span class="t" data-ar="قائمة الأسعار" data-en="Price List">قائمة الأسعار</span></div>
     <div class="bn-more-item" onclick="exportAll();closeBnMore()"><span class="bm-icon">💾</span><span class="t" data-ar="تصدير" data-en="Export">تصدير</span></div>
     <div class="bn-more-item" onclick="shareBackupWA();closeBnMore()" style="border-color:rgba(37,211,102,0.4);background:rgba(37,211,102,0.07);"><span class="bm-icon" style="color:#25D366;">📤</span><span class="t" data-ar="مشاركة نسخة" data-en="Share Backup">مشاركة نسخة</span></div>
@@ -1431,6 +1432,7 @@ label {
 <button class="nb" onclick="goPage('expenses',this)">💸 <span class="t" data-ar="المصروفات" data-en="Expenses">Expenses</span></button>
 <button class="nb" onclick="goPage('debt',this)" style="background:rgba(231,76,60,0.12);color:#e74c3c;border-color:rgba(231,76,60,0.4);font-weight:700;">💳 <span class="t" data-ar="مديونيات" data-en="Debt">مديونيات</span></button>
 <button class="nb" onclick="goPage('groupbooking',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;">🏢 <span class="t" data-ar="حجز جروب" data-en="Group Booking">حجز جروب</span></button>
+    <button class="nb" onclick="goPage('roomlist',this)" style="background:rgba(46,204,113,0.12);color:#58d68d;border-color:rgba(46,204,113,0.4);font-weight:700;">🛏 <span class="t" data-ar="قائمة الغرف" data-en="Room List">قائمة الغرف</span></button>
 <button class="nb" onclick="goPage('pricelist',this)" style="background:rgba(201,168,76,0.12);color:#c9a84c;border-color:rgba(201,168,76,0.4);font-weight:700;">💰 <span class="t" data-ar="قائمة الأسعار" data-en="Price List">قائمة الأسعار</span></button>
 <button class="nb" onclick="goPage('invoice',this)">📄 <span class="t" data-ar="الفاتورة" data-en="Invoice">Invoice</span></button>
 <button class="nb" onclick="goPage('restaurant',this)">🍽️ <span class="t" data-ar="المطعم" data-en="Restaurant">Restaurant</span></button>
@@ -1814,6 +1816,7 @@ label {
   <button class="btn bg" onclick="calcGrpTotal()">🧮 احسب الإجمالي</button>
   <button class="btn" style="background:#25D366;color:#fff;" onclick="sendGrpWA()">📱 إرسال واتساب</button>
   <button class="btn" style="background:#e74c3c;color:#fff;" onclick="printGrpInvoice()">📄 طباعة / PDF</button>
+  <button class="btn" style="background:linear-gradient(135deg,#c0392b,#922b21);color:#fff;font-weight:700;" onclick="downloadGrpInvoicePDF()">📥 تحميل PDF</button>
   <button class="btn bb" onclick="saveGrpBooking()">💾 حفظ الجروب</button>
   <button class="btn" style="background:linear-gradient(135deg,#2980b9,#3498db);color:#fff;font-weight:700;" onclick="convertGrpToBookings()">🔄 تحويل إلى Bookings</button>
 </div>
@@ -1825,6 +1828,53 @@ label {
 <!-- ═══════════════════════════════════════════ -->
 <!-- 👥 GUEST HISTORY PAGE -->
 <!-- ═══════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════ -->
+<!-- 🛏 ROOM LIST PAGE -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="page-roomlist" class="page">
+<div class="page-header">
+  <div class="ptitle">🛏 <span class="t" data-ar="قائمة الغرف" data-en="Room List">قائمة الغرف</span></div>
+</div>
+
+<!-- معلومات المرسل إليه -->
+<div class="card">
+  <div class="ctitle">🏢 إرسال إلى شركة / وكالة</div>
+  <div class="g2">
+    <div><label class="lbl">اسم الشركة</label><input id="rl-to-company" type="text" placeholder="مثال: Delta Tours" class="inp"></div>
+    <div><label class="lbl">اسم المسؤول</label><input id="rl-to-contact" type="text" placeholder="اسم الموظف" class="inp"></div>
+  </div>
+  <div class="g2" style="margin-top:10px;">
+    <div><label class="lbl">ملاحظات إضافية</label><input id="rl-notes" type="text" placeholder="مثال: متاحة للحجز من يوليو..." class="inp"></div>
+    <div><label class="lbl">العملة</label>
+      <select id="rl-currency" class="inp" onchange="renderRoomListPreview()">
+        <option value="GBP">GBP £</option>
+        <option value="USD">USD $</option>
+        <option value="EGP">EGP ج</option>
+        <option value="EUR">EUR €</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- معاينة -->
+<div class="card" style="padding:0;overflow:hidden;">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(201,168,76,0.08);border-bottom:1px solid rgba(201,168,76,0.18);">
+    <div class="ctitle" style="margin:0;">👁️ معاينة القائمة</div>
+    <button class="btn bb bsm" onclick="renderRoomListPreview()" style="font-size:11px;">🔄 تحديث</button>
+  </div>
+  <div id="rl-preview" style="padding:16px;"></div>
+</div>
+
+<!-- أزرار -->
+<div class="flex" style="gap:8px;flex-wrap:wrap;margin-top:4px;">
+  <button class="btn bg" onclick="renderRoomListPreview()">👁️ معاينة</button>
+  <button class="btn" style="background:#25D366;color:#fff;" onclick="sendRoomListWA()">📱 إرسال واتساب</button>
+  <button class="btn" style="background:#e74c3c;color:#fff;" onclick="printRoomList()">🖨️ طباعة / PDF</button>
+  <button class="btn" style="background:linear-gradient(135deg,#c0392b,#922b21);color:#fff;font-weight:700;" onclick="downloadRoomListPDF()">📥 تحميل PDF</button>
+</div>
+<div id="rl-print-area" style="display:none;"></div>
+</div>
+
 <div id="page-guesthistory" class="page">
 <div class="page-header">
   <div class="ptitle">👥 <span class="t" data-ar="سجل الضيوف" data-en="Guest History">سجل الضيوف</span></div>
@@ -4567,7 +4617,7 @@ document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
 document.querySelectorAll(".nb").forEach(b=>b.classList.remove("act"));
 document.getElementById("page-"+id).classList.add("on");
 if(btn) btn.classList.add("act");
-const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage};
+const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage};
 if(map[id]) map[id]();
 if(id==="invoice"){renderInvRooms();buildPreview();}
 }
@@ -10747,6 +10797,490 @@ function printGrpInvoice(){
   const w = window.open('','_blank');
   if(w){w.document.write(html);w.document.close();}
   else{sNotify('⚠️','السماح بالنوافذ المنبثقة في المتصفح','warning',3000);}
+}
+
+// ══════════════════════════════════════════════
+// 📥 DOWNLOAD GROUP INVOICE PDF
+// ══════════════════════════════════════════════
+async function downloadGrpInvoicePDF(){
+  const d = getGrpData();
+  if(!d.ci||!d.co){sNotify('⚠️','أدخل تواريخ الإقامة أولاً','warning',2000);return;}
+  if(!d.company){sNotify('⚠️','أدخل اسم الشركة أولاً','warning',2000);return;}
+
+  // Build same HTML as printGrpInvoice
+  const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy",phone:"",address:"",email:""};
+  const sym = d.sym;
+  const invoiceNum = 'GRP-'+Date.now().toString().slice(-6);
+  const today = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
+  const roomRows = grpRooms.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${r.type}</td>
+      <td style="text-align:center;">${r.qty}</td>
+      <td style="text-align:center;">${d.nights}</td>
+      <td style="text-align:right;">${sym}${r.pricePerNight.toFixed(2)}</td>
+      <td style="text-align:right;font-weight:700;color:#1a1a2e;">${sym}${(r.qty*r.pricePerNight*d.nights).toFixed(2)}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
+  <title>فاتورة جروب — ${d.company}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Arial',sans-serif;background:#fff;color:#222;padding:30px;}
+    .page{background:#fff;max-width:800px;margin:0 auto;}
+    .inv-header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);padding:32px 36px;display:flex;justify-content:space-between;align-items:center;}
+    .hotel-emoji{font-size:36px;margin-bottom:6px;}
+    .hotel-name{font-size:20px;font-weight:900;color:#c9a84c;letter-spacing:1px;}
+    .hotel-sub{font-size:11px;color:#a0b4c8;margin-top:3px;line-height:1.6;}
+    .inv-block{text-align:left;}
+    .inv-badge{background:#c9a84c;color:#1a1a2e;font-size:11px;font-weight:900;letter-spacing:2px;padding:4px 12px;border-radius:4px;margin-bottom:8px;display:inline-block;}
+    .inv-num{font-size:13px;color:#fff;font-weight:700;}
+    .inv-date{font-size:11px;color:#a0b4c8;margin-top:3px;}
+    .gold-bar{height:4px;background:linear-gradient(90deg,#c9a84c,#f0e0a0,#c9a84c);}
+    .inv-body{padding:28px 36px;}
+    .sec{margin-bottom:22px;}
+    .sec-title{font-size:11px;font-weight:800;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;border-right:3px solid #c9a84c;padding-right:8px;margin-bottom:12px;}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .info-item{background:#f8f6f0;border-radius:7px;padding:9px 12px;font-size:12px;}
+    .info-label{color:#888;font-size:10px;letter-spacing:1px;margin-bottom:3px;text-transform:uppercase;}
+    .info-val{font-weight:700;color:#1a1a2e;font-size:13px;}
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    thead tr{background:linear-gradient(135deg,#1a1a2e,#16213e);}
+    th{color:#c9a84c;padding:10px 12px;text-align:right;font-size:10px;letter-spacing:1px;font-weight:800;}
+    td{padding:9px 12px;border-bottom:1px solid #f0ead8;color:#333;}
+    tr:nth-child(even) td{background:#fdfbf5;}
+    .totals-wrap{background:#f8f6f0;border-radius:10px;padding:16px 20px;margin-top:6px;}
+    .total-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:1px solid #ede8d8;}
+    .total-row:last-child{border-bottom:none;}
+    .total-row.sub{color:#555;}
+    .total-row.comm{color:#e67e22;}
+    .total-row.paid-row{color:#27ae60;font-weight:700;}
+    .total-row.grand{font-size:16px;font-weight:900;color:#1a1a2e;border-top:2px solid #c9a84c;margin-top:6px;padding-top:10px;border-bottom:none;}
+    .total-row.remaining{color:#e74c3c;font-weight:800;font-size:14px;}
+    .total-row.settled{color:#27ae60;font-weight:800;font-size:14px;}
+    .grand-val{color:#c9a84c;}
+    .status-badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:1px;margin-top:12px;}
+    .status-pending{background:#fff3cd;color:#856404;border:1px solid #ffc107;}
+    .status-partial{background:#fff0e6;color:#7a3800;border:1px solid #e67e22;}
+    .status-paid{background:#d4edda;color:#155724;border:1px solid #28a745;}
+    .sig-wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px;}
+    .sig-box{border-top:1px dashed #bbb;padding-top:8px;text-align:center;font-size:11px;color:#888;}
+    .inv-footer{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:16px 36px;text-align:center;font-size:11px;color:#a0b4c8;line-height:2;}
+    .footer-gold{color:#c9a84c;font-weight:700;}
+  </style></head><body><div class="page">
+    <div class="inv-header">
+      <div>
+        <div class="hotel-emoji">🏨</div>
+        <div class="hotel-name">${prop.name}</div>
+        <div class="hotel-sub"><div>${prop.address||''}</div><div style="unicode-bidi:plaintext;direction:ltr;">${prop.phone||''} &nbsp;·&nbsp; ${prop.email||''}</div></div>
+      </div>
+      <div class="inv-block">
+        <div class="inv-badge">GROUP INVOICE</div>
+        <div class="inv-num">رقم: ${invoiceNum}</div>
+        <div class="inv-date">📅 ${today}</div>
+      </div>
+    </div>
+    <div class="gold-bar"></div>
+    <div class="inv-body">
+      <div class="sec">
+        <div class="sec-title">🏢 بيانات الشركة</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="info-label">اسم الشركة</div><div class="info-val">${d.company}</div></div>
+          <div class="info-item"><div class="info-label">المسؤول</div><div class="info-val">${d.contact||'—'}</div></div>
+          <div class="info-item"><div class="info-label">التليفون</div><div class="info-val">${d.phone||'—'}</div></div>
+          <div class="info-item"><div class="info-label">البريد الإلكتروني</div><div class="info-val">${d.email||'—'}</div></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-title">📅 تفاصيل الإقامة</div>
+        <div class="info-grid">
+          <div class="info-item"><div class="info-label">تاريخ الوصول</div><div class="info-val">🛬 ${fmtD(d.ci)}</div></div>
+          <div class="info-item"><div class="info-label">تاريخ المغادرة</div><div class="info-val">🛫 ${fmtD(d.co)}</div></div>
+          <div class="info-item"><div class="info-label">عدد الليالي</div><div class="info-val">🌙 ${d.nights} ليلة</div></div>
+          <div class="info-item"><div class="info-label">عدد الأفراد</div><div class="info-val">👥 ${d.totalGuests} فرد</div></div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-title">🛏 تفاصيل الغرف</div>
+        <table>
+          <thead><tr><th>#</th><th>نوع الغرفة</th><th style="text-align:center;">العدد</th><th style="text-align:center;">الليالي</th><th style="text-align:right;">سعر الليلة</th><th style="text-align:right;">الإجمالي</th></tr></thead>
+          <tbody>${roomRows}</tbody>
+        </table>
+      </div>
+      <div class="sec">
+        <div class="sec-title">💰 الحساب</div>
+        <div class="totals-wrap">
+          <div class="total-row sub"><span>💵 إجمالي الغرف</span><span>${sym}${d.roomsTotal.toFixed(2)}</span></div>
+          ${d.commission>0?`<div class="total-row comm"><span>🤝 كوميشن (${d.commType==='percent'?d.commVal+'%':sym+d.commVal})</span><span>− ${sym}${d.commission.toFixed(2)}</span></div>`:''}
+          <div class="total-row grand"><span>الإجمالي الكلي</span><span class="grand-val">${sym}${d.grandTotal.toFixed(2)}</span></div>
+          ${d.paidCompany>0?`<div class="total-row paid-row"><span>✅ مدفوع من الشركة</span><span>− ${sym}${d.paidCompany.toFixed(2)}</span></div>`:''}
+          ${d.paidGuests>0?`<div class="total-row paid-row"><span>✅ مدفوع من الضيوف</span><span>− ${sym}${d.paidGuests.toFixed(2)}</span></div>`:''}
+          <div class="total-row ${d.remaining>0?'remaining':'settled'}"><span>${d.remaining>0?'⚠️ المبلغ المتبقي':'✅ مسدد بالكامل'}</span><span>${d.remaining>0?sym+d.remaining.toFixed(2):'✅'}</span></div>
+        </div>
+        <div style="text-align:right;margin-top:10px;">
+          <span class="status-badge ${d.remaining<=0?'status-paid':d.paidCompany>0||d.paidGuests>0?'status-partial':'status-pending'}">
+            ${d.remaining<=0?'✅ مسدد بالكامل':d.paidCompany>0||d.paidGuests>0?'🔶 مدفوع جزئياً':'⏳ في الانتظار'}
+          </span>
+        </div>
+      </div>
+      <div class="sig-wrap">
+        <div class="sig-box">توقيع الشركة<br><br><br>_______________________<br>${d.company}</div>
+        <div class="sig-box">توقيع الفندق<br><br><br>_______________________<br>${prop.name}</div>
+      </div>
+    </div>
+    <div class="inv-footer">
+      <span class="footer-gold">${prop.name}</span> &nbsp;·&nbsp; <span dir="ltr">${prop.phone||''}</span> &nbsp;·&nbsp; ${prop.email||''}<br>
+      ${prop.address||''}<br>
+      <span style="font-size:10px;opacity:0.7;">شكراً لثقتكم بنا — هذه الفاتورة وثيقة رسمية معتمدة</span>
+    </div>
+  </div></body></html>`;
+
+  const loadScript = (src) => new Promise((res,rej)=>{
+    if(document.querySelector('script[src="'+src+'"]')){ res(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+  try{
+    sNotify('⏳','جاري تحضير PDF...','info',2000);
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = "position:fixed;top:0;left:50%;transform:translateX(-50%);width:800px;background:#fff;z-index:-9999;";
+    wrapper.innerHTML = html.replace(/<!DOCTYPE.*?<body>/s,'').replace(/<\/body>.*$/s,'');
+    document.body.appendChild(wrapper);
+    await new Promise(r=>setTimeout(r,400));
+    const canvas = await html2canvas(wrapper, {scale:2, useCORS:true, backgroundColor:'#ffffff', logging:false, width:800});
+    document.body.removeChild(wrapper);
+    const {jsPDF} = window.jspdf;
+    const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+    const imgW=210, imgH=(canvas.height*imgW)/canvas.width, pageH=297;
+    let y=0;
+    while(y<imgH){ if(y>0)pdf.addPage(); pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,-y,imgW,imgH); y+=pageH; }
+    const date=new Date().toISOString().split('T')[0];
+    pdf.save('GroupInvoice_'+d.company.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'_').substring(0,25)+'_'+date+'.pdf');
+    sNotify('✅','تم تحميل PDF بنجاح','success',2500);
+  }catch(e){
+    console.error(e);
+    // Fallback: HTML download
+    const blob = new Blob([html],{type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'GroupInvoice_'+d.company+'_'+new Date().toISOString().split('T')[0]+'.html';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+    sNotify('📄','تم تحميل الفاتورة كـ HTML','info',3000);
+  }
+}
+
+// ══════════════════════════════════════════════
+// 🛏 ROOM LIST PAGE FUNCTIONS
+// ══════════════════════════════════════════════
+function renderRoomListPage(){
+  renderRoomListPreview();
+}
+
+function _buildRoomListHTML(toCompany, toContact, notes, currency){
+  const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy Accommodation",phone:"",address:"",email:""};
+  const rt = (typeof roomTypes!=="undefined")?roomTypes:{};
+  const prices = (typeof window.roomPrices!=="undefined")?window.roomPrices:null;
+  const today = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
+  const sym = currency==='GBP'?'£':currency==='USD'?'$':currency==='EUR'?'€':'ج.م';
+
+  // Get price function
+  function getPrice(roomNum){
+    if(!prices) return '—';
+    const key = 'r'+roomNum+'_'+currency;
+    const key2 = 'r'+roomNum;
+    if(prices[key]) return sym+parseFloat(prices[key]).toFixed(0);
+    // Try from stored prices
+    const stored = localStorage.getItem('dta_prices');
+    if(stored){
+      try{
+        const p=JSON.parse(stored);
+        if(p[key]) return sym+parseFloat(p[key]).toFixed(0);
+        if(p['r'+roomNum+'_GBP']) return '£'+parseFloat(p['r'+roomNum+'_GBP']).toFixed(0);
+      }catch(e){}
+    }
+    return '—';
+  }
+
+  // Group rooms by type
+  const ROOMS_ARR = Array.from({length:14},(_,i)=>101+i);
+  const typeGroups = {};
+  ROOMS_ARR.forEach(r=>{
+    const info = rt['room_'+r]||{type:'Double',capacity:2};
+    const t = info.type;
+    if(!typeGroups[t]) typeGroups[t]={type:t, capacity:info.capacity, rooms:[], count:0};
+    typeGroups[t].rooms.push(r);
+    typeGroups[t].count++;
+  });
+
+  const typeIcons = {'Single':'🛏','Double':'🛏🛏','Triple':'🛏🛏🛏','Suite (غرفتين)':'🏠','Quad (رباعي)':'👨‍👩‍👧‍👦'};
+  const typeDesc  = {'Single':'غرفة لشخص واحد','Double':'غرفة مزدوجة لشخصين','Triple':'غرفة لثلاثة أشخاص','Suite (غرفتين)':'جناح يضم غرفتين','Quad (رباعي)':'غرفة لأربعة أشخاص'};
+
+  const totalRooms = ROOMS_ARR.length;
+  const totalCapacity = ROOMS_ARR.reduce((s,r)=>{ const i=rt['room_'+r]||{capacity:2}; return s+i.capacity;},0);
+
+  const typeRows = Object.values(typeGroups).map(g=>`
+    <tr>
+      <td style="font-size:18px;text-align:center;">${typeIcons[g.type]||'🛏'}</td>
+      <td><strong>${g.type}</strong><br><span style="font-size:11px;color:#666;">${typeDesc[g.type]||''}</span></td>
+      <td style="text-align:center;font-weight:700;font-size:16px;color:#1a1a2e;">${g.count}</td>
+      <td style="text-align:center;color:#555;">${g.capacity} نفر / غرفة</td>
+      <td style="text-align:center;font-weight:700;color:#c9a84c;">${g.capacity*g.count} نفر</td>
+      <td style="text-align:center;font-size:11px;color:#888;">${g.rooms.join('، ')}</td>
+    </tr>`).join('');
+
+  return `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
+  <title>قائمة الغرف — ${prop.name}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Arial',sans-serif;background:#f4f4f4;color:#222;padding:30px;}
+    .page{background:#fff;max-width:820px;margin:0 auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.13);}
+    .hdr{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);padding:32px 36px;display:flex;justify-content:space-between;align-items:center;}
+    .h-hotel{color:#c9a84c;font-size:22px;font-weight:900;letter-spacing:1px;}
+    .h-sub{font-size:11px;color:#a0b4c8;margin-top:4px;line-height:1.7;}
+    .h-badge{background:#c9a84c;color:#1a1a2e;font-size:10px;font-weight:900;letter-spacing:2px;padding:4px 12px;border-radius:4px;margin-bottom:8px;display:inline-block;}
+    .h-to{text-align:left;font-size:12px;color:#d0d8e4;}
+    .h-to strong{color:#fff;font-size:14px;display:block;margin-bottom:4px;}
+    .gold-bar{height:4px;background:linear-gradient(90deg,#c9a84c,#f0e0a0,#c9a84c);}
+    .body{padding:28px 36px;}
+    /* Summary cards */
+    .summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+    .s-card{background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:10px;padding:16px;text-align:center;border:1px solid rgba(201,168,76,0.25);}
+    .s-num{font-size:32px;font-weight:900;color:#c9a84c;}
+    .s-lbl{font-size:11px;color:#a0b4c8;margin-top:4px;}
+    /* Section title */
+    .sec-title{font-size:11px;font-weight:800;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;border-right:3px solid #c9a84c;padding-right:8px;margin-bottom:14px;}
+    /* Table */
+    table{width:100%;border-collapse:collapse;font-size:12px;}
+    thead tr{background:linear-gradient(135deg,#1a1a2e,#16213e);}
+    th{color:#c9a84c;padding:10px 12px;text-align:right;font-size:10px;letter-spacing:1px;font-weight:800;}
+    td{padding:10px 12px;border-bottom:1px solid #f0ead8;color:#333;vertical-align:middle;}
+    tr:nth-child(even) td{background:#fdfbf5;}
+    tr:last-child td{border-bottom:none;}
+    /* Notes */
+    .notes-box{background:#fffbf0;border:1px solid #f0d98c;border-radius:8px;padding:12px 16px;font-size:12px;color:#555;margin-top:20px;}
+    /* Footer */
+    .ftr{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:16px 36px;text-align:center;font-size:11px;color:#a0b4c8;line-height:2;}
+    .ftr-gold{color:#c9a84c;font-weight:700;}
+    @media print{body{background:#fff;padding:0;} .page{box-shadow:none;border-radius:0;}}
+  </style></head><body><div class="page">
+    <div class="hdr">
+      <div>
+        <div style="font-size:32px;margin-bottom:6px;">🏨</div>
+        <div class="h-hotel">${prop.name}</div>
+        <div class="h-sub">${prop.address||''}<br><span dir="ltr">${prop.phone||''} &nbsp;·&nbsp; ${prop.email||''}</span></div>
+      </div>
+      <div style="text-align:left;">
+        <div class="h-badge">ROOM LIST / قائمة الغرف</div>
+        ${toCompany?`<div class="h-to"><strong>${toCompany}</strong>${toContact?'عناية: '+toContact:''}</div>`:''}
+        <div style="font-size:11px;color:#a0b4c8;margin-top:6px;">📅 ${today}</div>
+      </div>
+    </div>
+    <div class="gold-bar"></div>
+    <div class="body">
+      <!-- Summary -->
+      <div class="summary-row">
+        <div class="s-card"><div class="s-num">${totalRooms}</div><div class="s-lbl">إجمالي الغرف</div></div>
+        <div class="s-card"><div class="s-num">${totalCapacity}</div><div class="s-lbl">أقصى طاقة استيعابية</div></div>
+        <div class="s-card"><div class="s-num">${Object.keys(typeGroups).length}</div><div class="s-lbl">أنواع الغرف</div></div>
+      </div>
+      <!-- Rooms Table -->
+      <div class="sec-title">🛏 تفاصيل أنواع الغرف</div>
+      <table>
+        <thead><tr>
+          <th></th>
+          <th>نوع الغرفة</th>
+          <th style="text-align:center;">عدد الغرف</th>
+          <th style="text-align:center;">السعة / غرفة</th>
+          <th style="text-align:center;">إجمالي الأفراد</th>
+          <th style="text-align:center;">أرقام الغرف</th>
+        </tr></thead>
+        <tbody>${typeRows}</tbody>
+        <tfoot>
+          <tr style="background:rgba(201,168,76,0.08);font-weight:700;">
+            <td colspan="2" style="font-size:13px;color:#1a1a2e;">📊 الإجمالي</td>
+            <td style="text-align:center;font-size:15px;color:#c9a84c;font-weight:900;">${totalRooms}</td>
+            <td></td>
+            <td style="text-align:center;font-size:15px;color:#27ae60;font-weight:900;">${totalCapacity} نفر</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+      ${notes?`<div class="notes-box">📝 <strong>ملاحظات:</strong> ${notes}</div>`:''}
+      <!-- Signature -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:28px;">
+        <div style="border-top:1px dashed #bbb;padding-top:8px;text-align:center;font-size:11px;color:#888;">توقيع الوكالة<br><br><br>_______________________</div>
+        <div style="border-top:1px dashed #bbb;padding-top:8px;text-align:center;font-size:11px;color:#888;">توقيع الفندق<br><br><br>_______________________<br>${prop.name}</div>
+      </div>
+    </div>
+    <div class="ftr"><span class="ftr-gold">${prop.name}</span> &nbsp;·&nbsp; <span dir="ltr">${prop.phone||''}</span> &nbsp;·&nbsp; ${prop.email||''}<br>${prop.address||''}<br><span style="font-size:10px;opacity:0.7;">يسعدنا خدمتكم — نتطلع للتعاون معكم</span></div>
+  </div></body></html>`;
+}
+
+function renderRoomListPreview(){
+  const toCompany = document.getElementById('rl-to-company')?.value||'';
+  const toContact = document.getElementById('rl-to-contact')?.value||'';
+  const notes     = document.getElementById('rl-notes')?.value||'';
+  const currency  = document.getElementById('rl-currency')?.value||'GBP';
+  const preview   = document.getElementById('rl-preview');
+  if(!preview) return;
+
+  const rt = (typeof roomTypes!=="undefined")?roomTypes:{};
+  const ROOMS_ARR = Array.from({length:14},(_,i)=>101+i);
+  const typeGroups = {};
+  ROOMS_ARR.forEach(r=>{
+    const info = rt['room_'+r]||{type:'Double',capacity:2};
+    const t = info.type;
+    if(!typeGroups[t]) typeGroups[t]={type:t, capacity:info.capacity, rooms:[], count:0};
+    typeGroups[t].rooms.push(r);
+    typeGroups[t].count++;
+  });
+
+  const typeIcons = {'Single':'🛏','Double':'🛏🛏','Triple':'🛏🛏🛏','Suite (غرفتين)':'🏠','Quad (رباعي)':'👨‍👩‍👧‍👦'};
+  const totalRooms = ROOMS_ARR.length;
+  const totalCapacity = ROOMS_ARR.reduce((s,r)=>{ const i=rt['room_'+r]||{capacity:2}; return s+i.capacity;},0);
+
+  let html = `<div style="background:#1a1a2e;border-radius:10px;padding:16px 20px;margin-bottom:16px;color:#fff;">
+    <div style="color:#c9a84c;font-size:16px;font-weight:900;">🏨 ${(typeof PROP!=="undefined"?PROP.name:'Dahab Trendy')}</div>
+    ${toCompany?`<div style="font-size:12px;color:#a0b4c8;margin-top:4px;">إلى: <strong style="color:#fff;">${toCompany}</strong>${toContact?' — '+toContact:''}</div>`:''}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+    <div style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:12px;text-align:center;">
+      <div style="font-size:24px;font-weight:900;color:#c9a84c;">${totalRooms}</div>
+      <div style="font-size:10px;color:var(--muted);">إجمالي الغرف</div>
+    </div>
+    <div style="background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25);border-radius:8px;padding:12px;text-align:center;">
+      <div style="font-size:24px;font-weight:900;color:#2ecc71;">${totalCapacity}</div>
+      <div style="font-size:10px;color:var(--muted);">أقصى طاقة</div>
+    </div>
+    <div style="background:rgba(52,152,219,0.08);border:1px solid rgba(52,152,219,0.25);border-radius:8px;padding:12px;text-align:center;">
+      <div style="font-size:24px;font-weight:900;color:#3498db;">${Object.keys(typeGroups).length}</div>
+      <div style="font-size:10px;color:var(--muted);">أنواع</div>
+    </div>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:12px;">
+    <thead><tr style="background:rgba(201,168,76,0.1);">
+      <th style="padding:8px;text-align:right;color:var(--gold);font-size:10px;">النوع</th>
+      <th style="padding:8px;text-align:center;color:var(--gold);font-size:10px;">العدد</th>
+      <th style="padding:8px;text-align:center;color:var(--gold);font-size:10px;">الأفراد/غرفة</th>
+      <th style="padding:8px;text-align:center;color:var(--gold);font-size:10px;">الإجمالي</th>
+    </tr></thead><tbody>`;
+
+  Object.values(typeGroups).forEach(g=>{
+    html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <td style="padding:8px;">${typeIcons[g.type]||'🛏'} ${g.type}</td>
+      <td style="padding:8px;text-align:center;font-weight:700;color:var(--gold);">${g.count}</td>
+      <td style="padding:8px;text-align:center;color:var(--muted);">${g.capacity} نفر</td>
+      <td style="padding:8px;text-align:center;font-weight:700;color:#2ecc71;">${g.capacity*g.count} نفر</td>
+    </tr>`;
+  });
+
+  html += `<tr style="background:rgba(201,168,76,0.06);">
+    <td style="padding:8px;font-weight:700;">📊 الإجمالي</td>
+    <td style="padding:8px;text-align:center;font-size:15px;font-weight:900;color:var(--gold);">${totalRooms}</td>
+    <td></td>
+    <td style="padding:8px;text-align:center;font-size:15px;font-weight:900;color:#2ecc71;">${totalCapacity} نفر</td>
+  </tr></tbody></table>`;
+
+  if(notes) html += `<div style="margin-top:12px;padding:10px;background:rgba(201,168,76,0.07);border-radius:7px;font-size:12px;color:var(--muted);">📝 ${notes}</div>`;
+  preview.innerHTML = html;
+}
+
+function printRoomList(){
+  const toCompany = document.getElementById('rl-to-company')?.value||'';
+  const toContact = document.getElementById('rl-to-contact')?.value||'';
+  const notes     = document.getElementById('rl-notes')?.value||'';
+  const currency  = document.getElementById('rl-currency')?.value||'GBP';
+  const html = _buildRoomListHTML(toCompany, toContact, notes, currency);
+  const w = window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else{sNotify('⚠️','السماح بالنوافذ المنبثقة في المتصفح','warning',3000);}
+}
+
+async function downloadRoomListPDF(){
+  const toCompany = document.getElementById('rl-to-company')?.value||'';
+  const toContact = document.getElementById('rl-to-contact')?.value||'';
+  const notes     = document.getElementById('rl-notes')?.value||'';
+  const currency  = document.getElementById('rl-currency')?.value||'GBP';
+  const html = _buildRoomListHTML(toCompany, toContact, notes, currency);
+
+  const loadScript = (src) => new Promise((res,rej)=>{
+    if(document.querySelector('script[src="'+src+'"]')){ res(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+  try{
+    sNotify('⏳','جاري تحضير PDF...','info',2000);
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = "position:fixed;top:0;left:50%;transform:translateX(-50%);width:820px;background:#fff;z-index:-9999;";
+    // Extract body content from html string
+    const bodyMatch = html.match(/<body>([\s\S]*)<\/body>/i);
+    wrapper.innerHTML = bodyMatch ? bodyMatch[1] : html;
+    document.body.appendChild(wrapper);
+    await new Promise(r=>setTimeout(r,500));
+    const canvas = await html2canvas(wrapper, {scale:2, useCORS:true, backgroundColor:'#f4f4f4', logging:false, width:820});
+    document.body.removeChild(wrapper);
+    const {jsPDF} = window.jspdf;
+    const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+    const imgW=210, imgH=(canvas.height*imgW)/canvas.width, pageH=297;
+    let y=0;
+    while(y<imgH){ if(y>0)pdf.addPage(); pdf.addImage(canvas.toDataURL('image/jpeg',0.93),'JPEG',0,-y,imgW,imgH); y+=pageH; }
+    const prop=(typeof PROP!=="undefined")?PROP:{name:"DahabTrendy"};
+    const fname = 'RoomList_'+(toCompany||prop.name).replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'_').substring(0,25)+'_'+new Date().toISOString().split('T')[0]+'.pdf';
+    pdf.save(fname);
+    sNotify('✅','تم تحميل PDF بنجاح','success',2500);
+  }catch(e){
+    console.error(e);
+    const blob = new Blob([html],{type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'RoomList_'+new Date().toISOString().split('T')[0]+'.html';
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+    sNotify('📄','تم تحميل القائمة كـ HTML','info',3000);
+  }
+}
+
+function sendRoomListWA(){
+  const toCompany = document.getElementById('rl-to-company')?.value||'';
+  const toContact = document.getElementById('rl-to-contact')?.value||'';
+  const notes     = document.getElementById('rl-notes')?.value||'';
+  const rt = (typeof roomTypes!=="undefined")?roomTypes:{};
+  const ROOMS_ARR = Array.from({length:14},(_,i)=>101+i);
+  const typeGroups = {};
+  ROOMS_ARR.forEach(r=>{
+    const info = rt['room_'+r]||{type:'Double',capacity:2};
+    const t = info.type;
+    if(!typeGroups[t]) typeGroups[t]={type:t, capacity:info.capacity, count:0, total:0};
+    typeGroups[t].count++;
+    typeGroups[t].total += info.capacity;
+  });
+  const totalRooms = ROOMS_ARR.length;
+  const totalCapacity = ROOMS_ARR.reduce((s,r)=>{ const i=rt['room_'+r]||{capacity:2}; return s+i.capacity;},0);
+  const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy Accommodation",phone:"",address:""};
+
+  let msg = `🏨 *${prop.name}*\n`;
+  if(prop.address) msg += `📍 ${prop.address}\n`;
+  msg += `\n`;
+  if(toCompany) msg += `إلى: *${toCompany}*${toContact?' — '+toContact:''}\n\n`;
+  msg += `🛏 *قائمة الغرف المتاحة*\n${'─'.repeat(28)}\n\n`;
+  Object.values(typeGroups).forEach(g=>{
+    msg += `🔹 *${g.type}*: ${g.count} غرفة — ${g.capacity} نفر/غرفة (إجمالي: ${g.total} نفر)\n`;
+  });
+  msg += `\n${'─'.repeat(28)}\n`;
+  msg += `📊 *الإجمالي: ${totalRooms} غرفة — طاقة ${totalCapacity} فرد*\n`;
+  if(notes) msg += `\n📝 ${notes}\n`;
+  msg += `\nيسعدنا خدمتكم 🤝`;
+
+  const phone = document.getElementById('rl-to-company')?.dataset?.phone||'';
+  const encoded = encodeURIComponent(msg);
+  window.open('https://wa.me/'+(phone||'')+( phone?'?text='+encoded:'?text='+encoded),'_blank');
 }
 
 function saveGrpBooking(){
