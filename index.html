@@ -21970,3 +21970,111 @@ function importData(file){
   console.log('[Dahab Enhance Pack v1] ✅ Ripples + CountUp + Tilt + Shimmer + Transitions + ScrollTop + Shortcuts');
 })();
 </script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ══ LANGUAGE FIX: Auto-translate Arabic → English on DOM changes ══
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+(function DahabLangFix(){
+  'use strict';
+
+  // ── Wait for app to initialize ──
+  function waitReady(cb){
+    if(typeof currentLang !== 'undefined' && typeof _translateDOM === 'function'){
+      cb();
+    } else {
+      setTimeout(function(){ waitReady(cb); }, 150);
+    }
+  }
+
+  waitReady(function(){
+
+    // ── 1. MutationObserver: translate any new Arabic text added to DOM ──
+    var translateTimer = null;
+    var observer = new MutationObserver(function(mutations){
+      if(window.currentLang === 'ar') return; // skip if Arabic mode
+
+      var hasArabic = false;
+      mutations.forEach(function(m){
+        m.addedNodes.forEach(function(node){
+          if(node.nodeType === 1 || node.nodeType === 3){
+            var text = node.textContent || '';
+            if(/[\u0600-\u06FF]/.test(text)) hasArabic = true;
+          }
+        });
+      });
+
+      if(hasArabic){
+        clearTimeout(translateTimer);
+        translateTimer = setTimeout(function(){
+          if(window.currentLang !== 'ar' && typeof _translateDOM === 'function'){
+            _translateDOM();
+          }
+        }, 80);
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: false
+    });
+
+    // ── 2. Patch all render functions to call _translateDOM after ──
+    var renderFns = [
+      'renderDashboard','renderBookings','renderRooms',
+      'renderExpenses','renderSettings','renderRestaurant',
+      'renderGuestsRegister','renderDebt','renderTours',
+      'renderGroupBooking','renderGuestHistoryPage','renderPLPage',
+      'renderAlerts','renderCalendar','renderAnalytics',
+      'renderHousekeeping','renderReviews','renderWaitlist'
+    ];
+
+    renderFns.forEach(function(fnName){
+      var orig = window[fnName];
+      if(typeof orig === 'function'){
+        window[fnName] = function(){
+          var result = orig.apply(this, arguments);
+          if(window.currentLang !== 'ar' && typeof _translateDOM === 'function'){
+            setTimeout(_translateDOM, 60);
+          }
+          return result;
+        };
+      }
+    });
+
+    // ── 3. Force English on load if no saved preference ──
+    if(!localStorage.getItem('dta_lang')){
+      localStorage.setItem('dta_lang','en');
+      window.currentLang = 'en';
+    }
+
+    // ── 4. Run translate now for any Arabic already on screen ──
+    if(window.currentLang !== 'ar' && typeof _translateDOM === 'function'){
+      setTimeout(_translateDOM, 500);
+      setTimeout(_translateDOM, 1500); // second pass for dynamic content
+    }
+
+    // ── 5. Patch applyLang to also update html[dir] smoothly ──
+    var _origApplyLang = window.applyLang;
+    if(typeof _origApplyLang === 'function'){
+      window.applyLang = function(){
+        _origApplyLang.apply(this, arguments);
+        // Smooth direction transition
+        document.documentElement.style.transition = 'all 0.2s';
+        setTimeout(function(){
+          document.documentElement.style.transition = '';
+        }, 300);
+        // Update bottom nav lang label
+        var bnLangLbl = document.getElementById('bn-lang-lbl');
+        if(bnLangLbl){
+          bnLangLbl.textContent = window.currentLang === 'ar' ? '🇸🇦 العربية' : '🇬🇧 English';
+        }
+      };
+    }
+
+    console.log('[Dahab LangFix] ✅ MutationObserver active — English default enforced');
+  });
+
+})();
+</script>
