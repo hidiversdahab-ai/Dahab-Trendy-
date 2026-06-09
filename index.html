@@ -1519,6 +1519,11 @@ label {
 <div id="db-empty-room-alerts" style="margin-top:12px;"></div>
 <!-- 🎂 BIRTHDAY ALERTS -->
 <div id="db-birthday-alerts" style="margin-top:12px;"></div>
+<!-- TECH 7: Predictive Occupancy -->
+<div class="card" style="margin-top:12px;" id="predictive-occ-card">
+<div class="ctitle">🔮 توقع الإشغال / Occupancy Forecast — 14 يوم القادمين</div>
+<div id="predictive-occ-content" style="padding:4px 0;"></div>
+</div>
 <!-- FEATURE 1: Revenue Charts -->
 <div class="g2" style="margin-top:12px;">
 <div class="card">
@@ -1993,6 +1998,7 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <button class="btn" style="background:#075E54;color:#fff;" onclick="screenshotAndWA()">📱 واتساب فاتورة كاملة</button>
 <button class="btn bbl" onclick="openShare('email')">✉️ Email</button>
 <button class="btn bg" onclick="doPrint()">🖨️ PDF</button>
+<button class="btn" style="background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;font-weight:700;" onclick="downloadInvoicePDF()">📥 تحميل PDF</button>
 <button class="btn" style="background:#6c3483;color:#fff;" onclick="openQRCode()">📱 QR Code</button>
 <button class="btn bb" onclick="copyMsgText()" id="copy-btn">📋 <span class="t" data-ar="نسخ نص الرسالة" data-en="Copy Message Text">نسخ نص الرسالة</span></button>
 </div>
@@ -5067,6 +5073,69 @@ const panel=document.getElementById("notif-panel");
 if(panel&&!panel.contains(e.target)&&btn&&!btn.contains(e.target)){panel.style.display="none";}
 });
 // ═══════════ DASHBOARD ═══════════
+// ══ TECH 7: Predictive Occupancy Forecast ══
+function renderPredictiveOccupancy(){
+  const el = document.getElementById("predictive-occ-content");
+  if(!el) return;
+  const totalRooms = ROOMS.length;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  // Build 14-day forecast
+  const days = [];
+  for(let i=0;i<14;i++){
+    const d = new Date(today);
+    d.setDate(today.getDate()+i);
+    const ds = d.toISOString().split("T")[0];
+    // Count confirmed bookings for this day
+    const confirmed = bookings.filter(b=>{
+      if(b.status==="Cancelled"||b.status==="Standby") return false;
+      return b.ci<=ds && b.co>ds;
+    }).length;
+    // Historical: same weekday last 4 weeks avg
+    let histTotal=0, histCount=0;
+    for(let w=1;w<=4;w++){
+      const hd = new Date(d);
+      hd.setDate(d.getDate()-(w*7));
+      const hds = hd.toISOString().split("T")[0];
+      const hCount = bookings.filter(b=>{
+        if(b.status==="Cancelled") return false;
+        return b.ci<=hds && b.co>hds;
+      }).length;
+      histTotal+=hCount; histCount++;
+    }
+    const histAvg = histCount>0 ? histTotal/histCount : 0;
+    // Weighted forecast: 70% confirmed + 30% historical trend
+    const forecast = Math.min(totalRooms, Math.round(confirmed*0.7 + histAvg*0.3 + (confirmed===0?histAvg*0.5:0)));
+    const pct = Math.round((forecast/totalRooms)*100);
+    const dayName = d.toLocaleDateString("ar-EG",{weekday:"short"});
+    const dayNum = d.toLocaleDateString("en-GB",{day:"2-digit",month:"short"});
+    days.push({ds,dayName,dayNum,confirmed,forecast,pct});
+  }
+  // Color logic
+  const barColor = (pct) => pct>=80?"#e74c3c":pct>=60?"#e67e22":pct>=40?"#f1c40f":"#2ecc71";
+  const html = `
+    <div style="overflow-x:auto;padding-bottom:4px;">
+    <div style="display:flex;gap:6px;min-width:600px;align-items:flex-end;height:110px;padding:0 4px;">
+    ${days.map((d,i)=>`
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default;" title="${d.ds}: ${d.confirmed} حجز مؤكد · توقع ${d.forecast}/${totalRooms} (${d.pct}%)">
+        <div style="font-size:9px;color:var(--muted);font-weight:700;">${d.pct}%</div>
+        <div style="width:100%;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;height:60px;display:flex;align-items:flex-end;">
+          <div style="width:100%;height:${Math.max(4,d.pct)}%;background:${barColor(d.pct)};border-radius:4px;transition:height 0.5s;opacity:${i<3?'1':'0.75'};"></div>
+        </div>
+        <div style="font-size:9px;color:var(--gold);font-weight:700;white-space:nowrap;">${d.dayName}</div>
+        <div style="font-size:8px;color:var(--muted);white-space:nowrap;">${d.dayNum}</div>
+      </div>`).join("")}
+    </div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:10px;padding:0 4px;">
+      <span style="color:#2ecc71;">● أقل من 40%</span>
+      <span style="color:#f1c40f;">● 40–60%</span>
+      <span style="color:#e67e22;">● 60–80%</span>
+      <span style="color:#e74c3c;">● أكثر من 80%</span>
+      <span style="color:var(--muted);margin-right:auto;">الأعمدة الأولى 3 = اليوم + غداً + بعده | الباقي توقع بالذكاء</span>
+    </div>`;
+  el.innerHTML = html;
+}
 function renderDashboard(){
 const td=toDay();
 const active=bookings.filter(b=>b.ci<=td&&b.co>td&&b.status!=="Cancelled"&&!b.coConfirmed);
@@ -5345,6 +5414,7 @@ document.getElementById("db-recent").innerHTML=rec.length?rec.map(b=>{
 renderAlerts();
 renderBirthdayAlerts();
 renderLiveDash();
+renderPredictiveOccupancy();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -6280,6 +6350,41 @@ commissionAmt: parseFloat(document.getElementById("bm-commission-amount").value)
 commissionPct: parseFloat(document.getElementById("bm-commission-pct").value) || 0,
 commissionType: document.getElementById("bm-comm-type").value || "percent",
 };
+// ══ TECH 10: Duplicate Booking Detection ══
+if(bkEdit===null){
+  const nameLower=bk.name.trim().toLowerCase();
+  const nameWords=nameLower.split(/\s+/).filter(w=>w.length>2);
+  const ciDate=new Date(bk.ci);
+  const coDate=new Date(bk.co);
+  const duplicates=bookings.filter(b=>{
+    if(b.status==="Cancelled") return false;
+    // Name similarity: share 2+ words or >70% char match
+    const bName=b.name.trim().toLowerCase();
+    const bWords=bName.split(/\s+/).filter(w=>w.length>2);
+    const sharedWords=nameWords.filter(w=>bWords.includes(w)).length;
+    const charMatch=nameLower.length>3 && (bName.includes(nameLower.substring(0,Math.floor(nameLower.length*0.7))) || nameLower.includes(bName.substring(0,Math.floor(bName.length*0.7))));
+    const nameSimilar=(sharedWords>=1 && nameWords.length>=1) || charMatch;
+    if(!nameSimilar) return false;
+    // Date overlap or within 3 days
+    const bCi=new Date(b.ci);
+    const bCo=new Date(b.co||b.ci);
+    const daysDiff=Math.abs(ciDate-bCi)/(1000*60*60*24);
+    const overlaps=(ciDate<bCo && coDate>bCi);
+    return overlaps || daysDiff<=3;
+  });
+  if(duplicates.length>0){
+    const d=duplicates[0];
+    const sym=d.cur==="USD"?"$":d.cur==="EUR"?"€":"£";
+    const msg="⚠️ تحذير: حجز مشابه موجود!\nDuplicate Booking Detected!\n\n"+
+      "👤 "+d.name+"\n"+
+      "🏨 غرفة / Room: "+d.room+"\n"+
+      "📅 "+fmtD(d.ci)+" → "+fmtD(d.co)+"\n"+
+      "💰 "+sym+(d.total||0)+"\n"+
+      "📋 "+d.status+"\n\n"+
+      "هل تريد المتابعة وحفظ الحجز الجديد؟\nContinue saving the new booking?";
+    if(!confirm(msg)) return;
+  }
+}
 if(bkEdit!==null) bookings[bkEdit]=bk; else bookings.push(bk);
 sv("dta_bk",bookings);
 closeM("bk-modal");
@@ -9230,6 +9335,58 @@ const btn=document.getElementById("sh-copy");
 btn.textContent="✓ Copied!";btn.style.background="#25a244";btn.style.color="#fff";
 setTimeout(()=>{btn.textContent="📋 Copy Message";btn.style.background="var(--gold)";btn.style.color="#1a1a2e";},2500);
 }
+// ══ TECH 8: PDF Invoice Direct Download ══
+async function downloadInvoicePDF(){
+  const previewEl = document.getElementById("iv-preview");
+  if(!previewEl || !previewEl.innerHTML.trim() || previewEl.innerHTML.includes("اضغط + Add Room")){
+    alert("الرجاء إضافة غرفة واحدة على الأقل.\nPlease add at least one room.");
+    return;
+  }
+  // Load html2canvas + jsPDF from CDN if not loaded
+  const loadScript = (src) => new Promise((res,rej)=>{
+    if(document.querySelector('script[src="'+src+'"]')){ res(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+  try{
+    showToast("⏳ جاري تحضير PDF...");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+    // Clone the preview for clean rendering
+    const clone = previewEl.cloneNode(true);
+    clone.style.cssText = "position:fixed;top:0;left:50%;transform:translateX(-50%);width:700px;background:#fff;color:#1a1a2e;font-size:11px;z-index:-9999;padding:20px;";
+    document.body.appendChild(clone);
+    await new Promise(r=>setTimeout(r,300));
+    const canvas = await html2canvas(clone, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      logging: false,
+      width: 700
+    });
+    document.body.removeChild(clone);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const imgW = 210; // A4 width mm
+    const imgH = (canvas.height * imgW) / canvas.width;
+    const pageH = 297; // A4 height mm
+    let y = 0;
+    while(y < imgH){
+      if(y > 0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.92), 'JPEG', 0, -y, imgW, imgH);
+      y += pageH;
+    }
+    // Get guest name for filename
+    const guestName = (document.getElementById("iv-preview")?.querySelector("h2,h3,.inv-name")?.textContent || "Invoice").trim().replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,"_").substring(0,30);
+    const date = new Date().toISOString().split("T")[0];
+    pdf.save("DahabTrendy_Invoice_"+guestName+"_"+date+".pdf");
+    showToast("✅ تم تحميل PDF!");
+  }catch(e){
+    console.error(e);
+    alert("خطأ في تحميل PDF.\nتأكد من الاتصال بالإنترنت.\n\nPDF error: "+e.message);
+  }
+}
 function doPrint(){
 const previewEl = document.getElementById("iv-preview");
 if(!previewEl || !previewEl.innerHTML.trim() || previewEl.innerHTML.includes("اضغط + Add Room")){
@@ -11333,24 +11490,25 @@ pre{background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);border-radi
 <div class="stat"><div class="sn">${bookings.filter(b=>b.status!=="Cancelled").length}</div><div class="sl">حجز نشط / Active</div></div>
 <div class="stat"><div class="sn">${exRate}</div><div class="sl">سعر الدولار / USD Rate</div></div>
 </div>
-<button class="btn" onclick="restoreData()">📂 استيراد هذه البيانات إلى النظام</button>
+<button class="btn" onclick="restoreData()">📥 تحميل JSON للاستيراد في النظام</button>
 <button class="btn btn2" onclick="document.getElementById('raw').style.display=document.getElementById('raw').style.display==='none'?'block':'none'">👁 عرض البيانات الخام</button>
 <pre id="raw">${dataStr.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</pre>
 </div>
 <script>
 const _DATA = ${dataStr};
 function restoreData(){
-if(!confirm("سيتم استيراد هذه البيانات وستستبدل البيانات الحالية. هل أنت متأكد؟\\nThis will overwrite current data. Are you sure?")) return;
 try{
-localStorage.setItem("dta_bk",JSON.stringify(_DATA.bookings||[]));
-localStorage.setItem("dta_pr",JSON.stringify(_DATA.prices||{}));
-localStorage.setItem("dta_du",JSON.stringify(_DATA.duPrices||{}));
-localStorage.setItem("dta_rs",JSON.stringify(_DATA.roomSt||{}));
-localStorage.setItem("dta_pol",JSON.stringify(_DATA.policies||{}));
-localStorage.setItem("dta_ex",JSON.stringify(_DATA.expenses||[]));
-localStorage.setItem("dta_rate",String(_DATA.exRate||50));
-alert("✅ تم الاستيراد بنجاح!\\nالرجاء فتح نظام Dahab Trendy الآن.\\n\\nImport successful! Please open the Dahab Trendy system.");
-}catch(e){alert("خطأ في الاستيراد: "+e.message);}
+var jsonStr=JSON.stringify(_DATA,null,2);
+var blob=new Blob([jsonStr],{type:"application/json"});
+var a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+var d=new Date().toISOString().split("T")[0];
+a.download="DahabTrendy_Import_"+d+".json";
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+alert("✅ تم تحميل ملف JSON!\\nالآن:\\n1. افتح نظام Dahab Trendy\\n2. اضغط زرار 📂 استيراد\\n3. اختر هذا الملف\\n\\nJSON downloaded! Now:\\n1. Open Dahab Trendy\\n2. Tap 📂 Import\\n3. Select this file");
+}catch(e){alert("خطأ: "+e.message);}
 }
 <\/script>
 </body>
@@ -11398,24 +11556,25 @@ pre{background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);border-radi
 <div class="stat"><div class="sn">${bookings.filter(b=>b.status!=="Cancelled").length}</div><div class="sl">حجز نشط / Active</div></div>
 <div class="stat"><div class="sn">${exRate}</div><div class="sl">سعر الدولار / USD Rate</div></div>
 </div>
-<button class="btn" onclick="restoreData()">📂 استيراد هذه البيانات إلى النظام</button>
+<button class="btn" onclick="restoreData()">📥 تحميل JSON للاستيراد في النظام</button>
 <button class="btn btn2" onclick="document.getElementById('raw').style.display=document.getElementById('raw').style.display==='none'?'block':'none'">👁 عرض البيانات الخام</button>
 <pre id="raw">${dataStr.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</pre>
 </div>
 <script>
 const _DATA = ${dataStr};
 function restoreData(){
-if(!confirm("سيتم استيراد هذه البيانات وستستبدل البيانات الحالية. هل أنت متأكد؟\\nThis will overwrite current data. Are you sure?")) return;
 try{
-localStorage.setItem("dta_bk",JSON.stringify(_DATA.bookings||[]));
-localStorage.setItem("dta_pr",JSON.stringify(_DATA.prices||{}));
-localStorage.setItem("dta_du",JSON.stringify(_DATA.duPrices||{}));
-localStorage.setItem("dta_rs",JSON.stringify(_DATA.roomSt||{}));
-localStorage.setItem("dta_pol",JSON.stringify(_DATA.policies||{}));
-localStorage.setItem("dta_ex",JSON.stringify(_DATA.expenses||[]));
-localStorage.setItem("dta_rate",String(_DATA.exRate||50));
-alert("✅ تم الاستيراد بنجاح!\\nالرجاء فتح نظام Dahab Trendy الآن.\\n\\nImport successful! Please open the Dahab Trendy system.");
-}catch(e){alert("خطأ في الاستيراد: "+e.message);}
+var jsonStr=JSON.stringify(_DATA,null,2);
+var blob=new Blob([jsonStr],{type:"application/json"});
+var a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+var d=new Date().toISOString().split("T")[0];
+a.download="DahabTrendy_Import_"+d+".json";
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+alert("✅ تم تحميل ملف JSON!\\nالآن:\\n1. افتح نظام Dahab Trendy\\n2. اضغط زرار 📂 استيراد\\n3. اختر هذا الملف\\n\\nJSON downloaded! Now:\\n1. Open Dahab Trendy\\n2. Tap 📂 Import\\n3. Select this file");
+}catch(e){alert("خطأ: "+e.message);}
 }
 <\/script>
 </body>
