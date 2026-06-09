@@ -832,6 +832,7 @@ select option{background:#1a1a2e;color:var(--text)}
     <div class="bn-more-item" onclick="bnGo('groupbooking',null);closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon">🏢</span><span class="t" data-ar="حجز جروب" data-en="Group Booking">Group Booking</span></div>
     <div class="bn-more-item" onclick="bnGo('pricelist',null);closeBnMore()" style="border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);"><span class="bm-icon">💰</span><span class="t" data-ar="قائمة الأسعار" data-en="Price List">قائمة الأسعار</span></div>
     <div class="bn-more-item" onclick="exportAll();closeBnMore()"><span class="bm-icon">💾</span><span class="t" data-ar="تصدير" data-en="Export">تصدير</span></div>
+    <div class="bn-more-item" onclick="shareBackupWA();closeBnMore()" style="border-color:rgba(37,211,102,0.4);background:rgba(37,211,102,0.07);"><span class="bm-icon" style="color:#25D366;">📤</span><span class="t" data-ar="مشاركة نسخة" data-en="Share Backup">مشاركة نسخة</span></div>
     <div class="bn-more-item" onclick="document.getElementById('impfile').click();closeBnMore()"><span class="bm-icon">📂</span><span class="t" data-ar="استيراد" data-en="Import">استيراد</span></div>
     <div class="bn-more-item" onclick="toggleTheme();closeBnMore()"><span class="bm-icon" id="bn-theme-icon">🌙</span><span class="t" data-ar="الوضع" data-en="Theme">الوضع</span></div>
     <div class="bn-more-item" onclick="showMobileLangPicker();closeBnMore()"><span class="bm-icon">🌐</span><span id="bn-lang-lbl">🌐 اللغة / Language</span></div>
@@ -932,6 +933,7 @@ select option{background:#1a1a2e;color:var(--text)}
 <button class="nb" onclick="openYoY()" style="background:rgba(26,188,156,0.12);color:#1abc9c;border-color:rgba(26,188,156,0.3);font-weight:700;" title="مقارنة السنوات">📊 YoY</button>
 <button class="nb" id="undo-btn" onclick="undoLast()" style="background:rgba(231,76,60,0.12);color:#e74c3c;border-color:rgba(231,76,60,0.4);font-weight:700;opacity:0.4;" title="تراجع عن آخر عملية">↩️ <span class="btn-txt-hide">Undo</span></button>
 <button class="nb exp-btn" onclick="exportAll()">💾 <span class="t" data-ar="تصدير" data-en="Export">Export</span></button>
+<button class="nb" onclick="shareBackupWA()" style="background:rgba(37,211,102,0.12);color:#25D366;border-color:rgba(37,211,102,0.4);font-weight:700;" title="مشاركة نسخة احتياطية عبر واتساب">📤</button>
 <button class="nb imp-btn" onclick="document.getElementById('impfile').click()">📂 <span class="t" data-ar="استيراد" data-en="Import">Import</span></button>
 <input type="file" id="impfile" accept=".html" style="display:none" onchange="importAll(event)">
 </div>
@@ -10820,6 +10822,84 @@ a.download="DahabTrendy_Backup_"+toDay()+".html";
 a.click();
 showToast("✓ Exported as HTML!");
 }
+async function shareBackupWA(){
+const data={bookings,prices,duPrices,roomSt,policies,expenses,exRate,savedAt:new Date().toISOString()};
+const dataStr=JSON.stringify(data,null,2);
+const html=`<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dahab Trendy — Backup ${toDay()}</title>
+<style>
+body{font-family:Arial,sans-serif;background:#0f0f1a;color:#f0e6cc;padding:30px;direction:rtl;}
+.box{background:#1a1a2e;border:2px solid #c9a84c;border-radius:13px;padding:24px;max-width:700px;margin:0 auto;}
+h1{color:#c9a84c;font-size:22px;margin-bottom:6px;}
+.sub{color:#7a8fa6;font-size:13px;margin-bottom:18px;}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.stat{background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:12px;text-align:center;}
+.sn{font-size:22px;font-weight:700;color:#c9a84c;}
+.sl{font-size:10px;color:#7a8fa6;letter-spacing:1px;text-transform:uppercase;margin-top:3px;}
+.btn{display:inline-block;background:#c9a84c;color:#1a1a2e;border:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin:5px 5px 5px 0;}
+.btn:hover{background:#e0c068;}
+.btn2{background:rgba(255,255,255,0.07);color:#7a8fa6;border:1px solid rgba(201,168,76,0.22);}
+pre{background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:14px;font-size:11px;color:#7ab8f5;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto;margin-top:15px;display:none;}
+.warn{background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:8px;padding:10px 14px;font-size:12px;color:#e74c3c;margin-bottom:14px;}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>🌊 Dahab Trendy — نسخة احتياطية</h1>
+<div class="sub">تاريخ الحفظ: ${new Date().toLocaleString("ar-EG")} · Backup Date: ${new Date().toLocaleString("en-GB")}</div>
+<div class="warn">⚠️ هذا الملف يحتوي على بيانات النظام — احتفظ به في مكان آمن. لا تعدّل المحتوى داخل الملف.</div>
+<div class="info">
+<div class="stat"><div class="sn">${bookings.length}</div><div class="sl">حجز / Bookings</div></div>
+<div class="stat"><div class="sn">${expenses.length}</div><div class="sl">مصروف / Expenses</div></div>
+<div class="stat"><div class="sn">${bookings.filter(b=>b.status!=="Cancelled").length}</div><div class="sl">حجز نشط / Active</div></div>
+<div class="stat"><div class="sn">${exRate}</div><div class="sl">سعر الدولار / USD Rate</div></div>
+</div>
+<button class="btn" onclick="restoreData()">📂 استيراد هذه البيانات إلى النظام</button>
+<button class="btn btn2" onclick="document.getElementById('raw').style.display=document.getElementById('raw').style.display==='none'?'block':'none'">👁 عرض البيانات الخام</button>
+<pre id="raw">${dataStr.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</pre>
+</div>
+<script>
+const _DATA = ${dataStr};
+function restoreData(){
+if(!confirm("سيتم استيراد هذه البيانات وستستبدل البيانات الحالية. هل أنت متأكد؟\\nThis will overwrite current data. Are you sure?")) return;
+try{
+localStorage.setItem("dta_bk",JSON.stringify(_DATA.bookings||[]));
+localStorage.setItem("dta_pr",JSON.stringify(_DATA.prices||{}));
+localStorage.setItem("dta_du",JSON.stringify(_DATA.duPrices||{}));
+localStorage.setItem("dta_rs",JSON.stringify(_DATA.roomSt||{}));
+localStorage.setItem("dta_pol",JSON.stringify(_DATA.policies||{}));
+localStorage.setItem("dta_ex",JSON.stringify(_DATA.expenses||[]));
+localStorage.setItem("dta_rate",String(_DATA.exRate||50));
+alert("✅ تم الاستيراد بنجاح!\\nالرجاء فتح نظام Dahab Trendy الآن.\\n\\nImport successful! Please open the Dahab Trendy system.");
+}catch(e){alert("خطأ في الاستيراد: "+e.message);}
+}
+<\/script>
+</body>
+</html>`;
+const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+const fileName="DahabTrendy_Backup_"+toDay()+".html";
+if(navigator.share && navigator.canShare){
+  const file=new File([blob],fileName,{type:"text/html"});
+  if(navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({files:[file],title:"Dahab Trendy — نسخة احتياطية "+toDay()});
+      return;
+    }catch(err){
+      if(err.name==="AbortError") return; // user cancelled
+    }
+  }
+}
+// fallback: download
+const a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download=fileName;
+a.click();
+showToast("✓ تم حفظ النسخة الاحتياطية!");
+}
 function importAll(e){
 const file=e.target.files[0];if(!file)return;
 _importFileAsync(file).catch(err=>{
@@ -15205,7 +15285,7 @@ function applyScanData(){
 
 <!-- ══ WA TEMPLATES MODAL ENHANCED ══ -->
 <div class="ovl" id="wa-templates-modal">
-<div class="mdl" style="max-width:600px;max-height:92vh;overflow-y:auto;">
+<div class="mdl" style="max-width:600px;max-height:92vh;overflow-y:auto;padding-bottom:80px;">
   <div class="flex" style="justify-content:space-between;margin-bottom:10px;">
     <div class="mtitle" style="margin-bottom:0;">💬 <span class="t" data-ar="قوالب رسائل واتساب" data-en="WhatsApp Templates">قوالب رسائل واتساب</span></div>
     <button onclick="closeM('wa-templates-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
@@ -15272,17 +15352,17 @@ function applyScanData(){
     <div id="wat-sent-info" style="margin-bottom:8px;min-height:18px;"></div>
 
     <!-- Edit toggle -->
-    <div style="margin-bottom:8px;">
-      <button class="btn bb bsm" onclick="watToggleEdit()" id="wat-edit-btn">✏️ <span class="t" data-ar="تعديل الرسالة" data-en="Edit Message">تعديل الرسالة</span></button>
-      <button class="btn bb bsm" onclick="watResetTpl()" id="wat-reset-btn" style="display:none;">↩️ <span class="t" data-ar="استعادة الأصلي" data-en="Restore Original">استعادة الأصلي</span></button>
+    <div style="margin-bottom:10px;display:flex;gap:7px;">
+      <button class="btn bb" onclick="watToggleEdit()" id="wat-edit-btn" style="flex:1;justify-content:center;padding:9px 8px;font-size:13px;border-radius:9px;">✏️ <span class="t" data-ar="تعديل الرسالة" data-en="Edit Message">تعديل الرسالة</span></button>
+      <button class="btn bb" onclick="watResetTpl()" id="wat-reset-btn" style="display:none;flex:1;justify-content:center;padding:9px 8px;font-size:13px;border-radius:9px;">↩️ <span class="t" data-ar="استعادة الأصلي" data-en="Restore Original">استعادة الأصلي</span></button>
     </div>
     <textarea id="wat-edit-area" style="display:none;width:100%;min-height:120px;font-size:12px;line-height:1.65;background:rgba(0,0,0,0.25);border:1px solid rgba(37,211,102,0.3);border-radius:7px;padding:9px;color:var(--text);resize:vertical;" oninput="watSyncEdit()"></textarea>
 
     <!-- Actions -->
-    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="btn bgr bsm" onclick="sendWATemplate()" style="flex:2;min-width:130px;font-size:13px;padding:10px 8px;">📱 <span class="t" data-ar="إرسال واتساب" data-en="Send WhatsApp">إرسال واتساب</span></button>
-      <button class="btn bb bsm" onclick="copyWATemplate()" style="flex:1;font-size:13px;padding:10px 8px;">📋 <span class="t" data-ar="نسخ" data-en="Copy">نسخ</span></button>
-      <button class="btn bsm" style="flex:1;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--bdr);font-size:13px;padding:10px 8px;" onclick="watSaveCustomFromCurrent()">💾 <span class="t" data-ar="حفظ كقالب" data-en="Save Template">حفظ كقالب</span></button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:4px;">
+      <button class="btn bgr" onclick="sendWATemplate()" style="grid-column:1/-1;font-size:14px;padding:12px 8px;justify-content:center;border-radius:10px;">📱 <span class="t" data-ar="إرسال واتساب" data-en="Send WhatsApp">إرسال واتساب</span></button>
+      <button class="btn bb" onclick="copyWATemplate()" style="font-size:13px;padding:11px 8px;justify-content:center;border-radius:9px;">📋 <span class="t" data-ar="نسخ" data-en="Copy">نسخ</span></button>
+      <button class="btn" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--bdr);font-size:13px;padding:11px 8px;justify-content:center;border-radius:9px;" onclick="watSaveCustomFromCurrent()">💾 <span class="t" data-ar="حفظ كقالب" data-en="Save Template">حفظ كقالب</span></button>
     </div>
   </div>
 
@@ -15658,6 +15738,7 @@ function loadWATemplate(){
   if(!b){document.getElementById('wat-tpl-body').textContent='لا يوجد حجز';return;}
   _watCurrentBk=b;
   const prop=(typeof PROP!=='undefined'?PROP:{name:'Dahab Trendy',phone:'',address:'دهب'});
+  const _propPhone=_watLang==='ar'?'\u200E'+(prop.phone||''):prop.phone||'';
   const sym=b.cur==='USD'?'$':b.cur==='EUR'?'€':'£';
   const nights_=nts(b.ci,b.co);
   const payLabels={
@@ -15673,23 +15754,23 @@ function loadWATemplate(){
   const remAmt_wat=Math.max(0,b.total-paidSum_wat);
   const allTemplates={
     ar:{
-      confirm:{title:'✅ تأكيد الحجز',body:`السلام عليكم ورحمة الله وبركاته 🌊\nعزيزنا *${b.name}*،\n\nيسعدنا تأكيد حجزكم في *${prop.name}*:\n\n🏨 الغرفة: ${b.room} (${b.type||''})\n📅 الوصول: ${fmtD(b.ci)}\n📅 المغادرة: ${fmtD(b.co)}\n🌙 عدد الليالي: ${nights_}\n💰 الإجمالي: ${sym}${b.total}\n💳 الحالة: ${payLbl}\n\nنتطلع لاستقبالكم! يرجى إبلاغنا بوقت الوصول.\n📞 ${prop.phone}`},
-      reminder:{title:'⏰ تذكير وصول',body:`مرحباً *${b.name}* 🌊\n\nتذكيرٌ بأن موعد وصولكم إلى *${prop.name}* هو:\n📅 *${fmtD(b.ci)}*\n🏨 الغرفة: ${b.room}\n⏰ وقت الاستقبال الرسمي: 2:00 PM\n\nيرجى إبلاغنا بالوقت التقريبي لوصولكم 🙏\n📞 ${prop.phone}`},
+      confirm:{title:'✅ تأكيد الحجز',body:`السلام عليكم ورحمة الله وبركاته 🌊\nعزيزنا *${b.name}*،\n\nيسعدنا تأكيد حجزكم في *${prop.name}*:\n\n🏨 الغرفة: ${b.room} (${b.type||''})\n📅 الوصول: ${fmtD(b.ci)}\n📅 المغادرة: ${fmtD(b.co)}\n🌙 عدد الليالي: ${nights_}\n💰 الإجمالي: ${sym}${b.total}\n💳 الحالة: ${payLbl}\n\nنتطلع لاستقبالكم! يرجى إبلاغنا بوقت الوصول.\n📞 ${_propPhone}`},
+      reminder:{title:'⏰ تذكير وصول',body:`مرحباً *${b.name}* 🌊\n\nتذكيرٌ بأن موعد وصولكم إلى *${prop.name}* هو:\n📅 *${fmtD(b.ci)}*\n🏨 الغرفة: ${b.room}\n⏰ وقت الاستقبال الرسمي: 2:00 PM\n\nيرجى إبلاغنا بالوقت التقريبي لوصولكم 🙏\n📞 ${_propPhone}`},
       thanks:{title:'🙏 شكر بعد المغادرة',body:`عزيزنا *${b.name}* 🌊\n\nشكراً جزيلاً على اختياركم *${prop.name}*!\nكان من دواعي سرورنا استضافتكم من ${fmtD(b.ci)} إلى ${fmtD(b.co)}.\n\nنتمنى أن تكون إقامتكم كانت مريحة ومميزة.\nنسعد بعودتكم دائماً! 💛\n📍 ${prop.address}`},
-      deposit:{title:'💰 طلب عربون',body:`السلام عليكم *${b.name}* 🌊\n\nبالإشارة إلى حجزكم في *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)} (${nights_} ليالي)\n🏨 الغرفة: ${b.room}\n💰 الإجمالي: ${sym}${b.total}\n\nيرجى تسديد العربون (50%): *${sym}${(b.total/2).toFixed(2)}*\n📞 ${prop.phone}\n\nشكراً لحجزكم معنا 🙏`},
+      deposit:{title:'💰 طلب عربون',body:`السلام عليكم *${b.name}* 🌊\n\nبالإشارة إلى حجزكم في *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)} (${nights_} ليالي)\n🏨 الغرفة: ${b.room}\n💰 الإجمالي: ${sym}${b.total}\n\nيرجى تسديد العربون (50%): *${sym}${(b.total/2).toFixed(2)}*\n📞 ${_propPhone}\n\nشكراً لحجزكم معنا 🙏`},
       bday:{title:'🎂 تهنئة عيد ميلاد',body:`🎂 عيد ميلاد سعيد يا *${b.name}*! 🎉\n\nيسعدنا أن نكون معكم في هذه المناسبة الجميلة 💛\nكل عام وأنتم بخير وسعادة وصحة!\n— فريق *${prop.name}* 🌊`},
-      welcome:{title:'🎉 مرحباً بكم!',body:`أهلاً وسهلاً *${b.name}* 🌊\n\nيسعدنا استقبالكم في *${prop.name}*! نتمنى أن تكون إقامتكم مريحة ومميزة.\n\n🏨 غرفتكم: *${b.room}*\n📅 المغادرة: ${fmtD(b.co)}\n\nنحن هنا لخدمتكم على مدار الساعة.\nلا تترددوا في التواصل معنا لأي طلب 🙏\n📞 ${prop.phone}\n\nأهلاً بكم 💛`},
-      checkin_info:{title:'🔑 تعليمات الوصول',body:`مرحباً *${b.name}* 🌊\n\nنرحب بكم في *${prop.name}*! إليكم تفاصيل إقامتكم:\n\n🏨 الغرفة: *${b.room}*\n📅 الوصول: ${fmtD(b.ci)} من الساعة 2:00 PM\n📅 المغادرة: ${fmtD(b.co)} قبل 12:00 PM\n\nلأي استفسار نحن على تواصل:\n📞 ${prop.phone}\n\nنتمنى لكم إقامة رائعة! 💛`},
+      welcome:{title:'🎉 مرحباً بكم!',body:`أهلاً وسهلاً *${b.name}* 🌊\n\nيسعدنا استقبالكم في *${prop.name}*! نتمنى أن تكون إقامتكم مريحة ومميزة.\n\n🏨 غرفتكم: *${b.room}*\n📅 المغادرة: ${fmtD(b.co)}\n\nنحن هنا لخدمتكم على مدار الساعة.\nلا تترددوا في التواصل معنا لأي طلب 🙏\n📞 ${_propPhone}\n\nأهلاً بكم 💛`},
+      checkin_info:{title:'🔑 تعليمات الوصول',body:`مرحباً *${b.name}* 🌊\n\nنرحب بكم في *${prop.name}*! إليكم تفاصيل إقامتكم:\n\n🏨 الغرفة: *${b.room}*\n📅 الوصول: ${fmtD(b.ci)} من الساعة 2:00 PM\n📅 المغادرة: ${fmtD(b.co)} قبل 12:00 PM\n\nلأي استفسار نحن على تواصل:\n📞 ${_propPhone}\n\nنتمنى لكم إقامة رائعة! 💛`},
       review:{title:'⭐ طلب تقييم',body:`عزيزنا *${b.name}* 🌊\n\nشكراً على إقامتكم معنا في *${prop.name}* من ${fmtD(b.ci)} إلى ${fmtD(b.co)}.\n\nرأيكم يهمنا ويساعدنا على تحسين خدماتنا.\nنقدّر تقييمكم على Google Maps أو TripAdvisor 🙏\n\nشكراً جزيلاً لكم 💛\n— فريق *${prop.name}*`},
-      late_pay:{title:'⚠️ تذكير دفع',body:`السلام عليكم *${b.name}* 🌊\n\nبالإشارة إلى حجزكم في *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 الغرفة: ${b.room}\n💰 الإجمالي: ${sym}${b.total}${paidSum_wat>0?'\n✅ المدفوع: '+sym+paidSum_wat.toFixed(2):''}\n⚠️ *المبلغ المتبقي: ${sym}${remAmt_wat.toFixed(2)}*\n\n⚠️ يرجى التواصل معنا لتسديد المبلغ المتبقي في أقرب وقت.\n📞 ${prop.phone}\n\nشكراً لتعاونكم 🙏`},
-      rebook:{title:'🔄 عرض إعادة الحجز',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتكم في *${prop.name}* كانت ممتعة!\n\n🎁 لدينا عروض خاصة لضيوفنا الكرام عند إعادة الحجز مباشرة معنا.\n\nللحجز والاستفسار:\n📞 ${prop.phone}\n\nنتطلع لاستقبالكم مجدداً! 💛`},
-      upgrade:{title:'🏖️ عرض خاص',body:`مرحباً *${b.name}* 🌊\n\nلديكم حجز قادم في *${prop.name}* بتاريخ ${fmtD(b.ci)}.\n\n🌟 عرض خاص لكم: ترقية مجانية للغرفة أو خصم على خدمات الرحلات والمطعم.\n\nللاستفسار والتأكيد:\n📞 ${prop.phone}\n\nنتطلع لاستقبالكم! 💛`},
-      pay_thanks:{title:'💚 شكر على الدفع',body:`السلام عليكم *${b.name}* 💚\n\nتم استلام دفعتكم بنجاح! شكراً جزيلاً لكم 🙏\n\n✅ الإيصال:\n🏨 *${prop.name}*\n📋 رقم الحجز: ${b.invNo||b.id}\n🏠 الغرفة: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} ← ${fmtD(b.co)} (${nights_} ليالي)\n💰 المبلغ المُسدَّد: *${sym}${b.total}*\n\nحجزكم مؤكد ومرحباً بكم دائماً 💛\n— فريق *${prop.name}* 🌊\n📞 ${prop.phone}`},
-      review_thanks:{title:'🌟 شكر على التقييم',body:`عزيزنا *${b.name}* 🌊\n\nوصلنا تقييمكم الرائع وأسعدنا كثيراً! 🌟✨\n\nشكراً من القلب على وقتكم وكلماتكم الجميلة — أنتم تحفّزوننا على تقديم الأفضل دائماً.\n\nيشرّفنا استقبالكم من جديد في *${prop.name}* 💛\n\nللحجز والاستفسار:\n📞 ${prop.phone}\n— فريق *${prop.name}* 🌊`},
-      comfort_check:{title:'🏨 راحتك أولويتنا',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتك في *${prop.name}* مريحة ومميزة 😊\n\n🏨 راحتك أولويتنا — إذا كان لديك أي طلب أو استفسار، فريقنا في خدمتك على مدار الساعة.\n\nفضلاً لا تتردد في التواصل معنا في أي وقت 🙏\n\n📞 ${prop.phone}\n\nأهلاً بك دائماً 💛\n— فريق *${prop.name}*`},
-      extend:{title:'🌙 طلب تمديد الإقامة',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتكم في *${prop.name}* مريحة وممتعة.\n\nللتذكير، موعد مغادرتكم الحالي:\n🏨 الغرفة: *${b.room}*\n📅 المغادرة: *${fmtD(b.co)}*\n💰 سعر الليلة: ${sym}${nights_>0?(b.total/nights_).toFixed(0):b.total}\n\n🌙 *هل تودّون تمديد إقامتكم ليلة أو أكثر؟*\nيسعدنا الترتيب لكم — يرجى إبلاغنا في أقرب وقت للتحقق من التوافر.\n\n📞 ${prop.phone}\n\nشكراً لاختياركم *${prop.name}* 💛`},
-      discount:{title:'🎁 عرض خصم خاص لكم',body:`عزيزنا *${b.name}* 🌊\n\nيسعدنا تقديم عرض حصري خاص بكم في *${prop.name}*:\n\n🎁 *خصم 15% على إقامتكم القادمة* عند الحجز المباشر معنا!\n\n🏨 أنواع الغرف المتاحة:\n• Single — ${sym}${(prices.Single?prices.Single[b.cur.toLowerCase()]||prices.Single.egp:0)}/ليلة\n• Double — ${sym}${(prices.Double?prices.Double[b.cur.toLowerCase()]||prices.Double.egp:0)}/ليلة\n• Triple — ${sym}${(prices.Triple?prices.Triple[b.cur.toLowerCase()]||prices.Triple.egp:0)}/ليلة\n\n✅ العرض ساري لفترة محدودة\n\n📞 ${prop.phone}\n\nننتظر حجزكم! 💛\n— فريق *${prop.name}* 🌊`},
-      stay_summary:{title:'📋 ملخص إقامتكم',body:`عزيزنا *${b.name}* 🌊\n\nإليكم ملخص إقامتكم في *${prop.name}*:\n\n🏨 الغرفة: *${b.room}* (${b.type||''})\n📅 الوصول: ${fmtD(b.ci)}\n📅 المغادرة: ${fmtD(b.co)}\n🌙 عدد الليالي: ${nights_}\n\n💰 الإجمالي: *${sym}${b.total}*\n${paidSum_wat>0?'✅ المدفوع: '+sym+paidSum_wat.toFixed(2)+'\n':''}${remAmt_wat>0?'⏳ المتبقي: *'+sym+remAmt_wat.toFixed(2)+'*\n':''}\nلأي استفسار نحن في خدمتكم:\n📞 ${prop.phone}\n\nشكراً لاختياركم *${prop.name}* 💛`}
+      late_pay:{title:'⚠️ تذكير دفع',body:`السلام عليكم *${b.name}* 🌊\n\nبالإشارة إلى حجزكم في *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 الغرفة: ${b.room}\n💰 الإجمالي: ${sym}${b.total}${paidSum_wat>0?'\n✅ المدفوع: '+sym+paidSum_wat.toFixed(2):''}\n⚠️ *المبلغ المتبقي: ${sym}${remAmt_wat.toFixed(2)}*\n\n⚠️ يرجى التواصل معنا لتسديد المبلغ المتبقي في أقرب وقت.\n📞 ${_propPhone}\n\nشكراً لتعاونكم 🙏`},
+      rebook:{title:'🔄 عرض إعادة الحجز',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتكم في *${prop.name}* كانت ممتعة!\n\n🎁 لدينا عروض خاصة لضيوفنا الكرام عند إعادة الحجز مباشرة معنا.\n\nللحجز والاستفسار:\n📞 ${_propPhone}\n\nنتطلع لاستقبالكم مجدداً! 💛`},
+      upgrade:{title:'🏖️ عرض خاص',body:`مرحباً *${b.name}* 🌊\n\nلديكم حجز قادم في *${prop.name}* بتاريخ ${fmtD(b.ci)}.\n\n🌟 عرض خاص لكم: ترقية مجانية للغرفة أو خصم على خدمات الرحلات والمطعم.\n\nللاستفسار والتأكيد:\n📞 ${_propPhone}\n\nنتطلع لاستقبالكم! 💛`},
+      pay_thanks:{title:'💚 شكر على الدفع',body:`السلام عليكم *${b.name}* 💚\n\nتم استلام دفعتكم بنجاح! شكراً جزيلاً لكم 🙏\n\n✅ الإيصال:\n🏨 *${prop.name}*\n📋 رقم الحجز: ${b.invNo||b.id}\n🏠 الغرفة: ${b.room} (${b.type||''})\n📅 ${fmtD(b.ci)} ← ${fmtD(b.co)} (${nights_} ليالي)\n💰 المبلغ المُسدَّد: *${sym}${b.total}*\n\nحجزكم مؤكد ومرحباً بكم دائماً 💛\n— فريق *${prop.name}* 🌊\n📞 ${_propPhone}`},
+      review_thanks:{title:'🌟 شكر على التقييم',body:`عزيزنا *${b.name}* 🌊\n\nوصلنا تقييمكم الرائع وأسعدنا كثيراً! 🌟✨\n\nشكراً من القلب على وقتكم وكلماتكم الجميلة — أنتم تحفّزوننا على تقديم الأفضل دائماً.\n\nيشرّفنا استقبالكم من جديد في *${prop.name}* 💛\n\nللحجز والاستفسار:\n📞 ${_propPhone}\n— فريق *${prop.name}* 🌊`},
+      comfort_check:{title:'🏨 راحتك أولويتنا',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتك في *${prop.name}* مريحة ومميزة 😊\n\n🏨 راحتك أولويتنا — إذا كان لديك أي طلب أو استفسار، فريقنا في خدمتك على مدار الساعة.\n\nفضلاً لا تتردد في التواصل معنا في أي وقت 🙏\n\n📞 ${_propPhone}\n\nأهلاً بك دائماً 💛\n— فريق *${prop.name}*`},
+      extend:{title:'🌙 طلب تمديد الإقامة',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتكم في *${prop.name}* مريحة وممتعة.\n\nللتذكير، موعد مغادرتكم الحالي:\n🏨 الغرفة: *${b.room}*\n📅 المغادرة: *${fmtD(b.co)}*\n💰 سعر الليلة: ${sym}${nights_>0?(b.total/nights_).toFixed(0):b.total}\n\n🌙 *هل تودّون تمديد إقامتكم ليلة أو أكثر؟*\nيسعدنا الترتيب لكم — يرجى إبلاغنا في أقرب وقت للتحقق من التوافر.\n\n📞 ${_propPhone}\n\nشكراً لاختياركم *${prop.name}* 💛`},
+      discount:{title:'🎁 عرض خصم خاص لكم',body:`عزيزنا *${b.name}* 🌊\n\nيسعدنا تقديم عرض حصري خاص بكم في *${prop.name}*:\n\n🎁 *خصم 15% على إقامتكم القادمة* عند الحجز المباشر معنا!\n\n🏨 أنواع الغرف المتاحة:\n• Single — ${sym}${(prices.Single?prices.Single[b.cur.toLowerCase()]||prices.Single.egp:0)}/ليلة\n• Double — ${sym}${(prices.Double?prices.Double[b.cur.toLowerCase()]||prices.Double.egp:0)}/ليلة\n• Triple — ${sym}${(prices.Triple?prices.Triple[b.cur.toLowerCase()]||prices.Triple.egp:0)}/ليلة\n\n✅ العرض ساري لفترة محدودة\n\n📞 ${_propPhone}\n\nننتظر حجزكم! 💛\n— فريق *${prop.name}* 🌊`},
+      stay_summary:{title:'📋 ملخص إقامتكم',body:`عزيزنا *${b.name}* 🌊\n\nإليكم ملخص إقامتكم في *${prop.name}*:\n\n🏨 الغرفة: *${b.room}* (${b.type||''})\n📅 الوصول: ${fmtD(b.ci)}\n📅 المغادرة: ${fmtD(b.co)}\n🌙 عدد الليالي: ${nights_}\n\n💰 الإجمالي: *${sym}${b.total}*\n${paidSum_wat>0?'✅ المدفوع: '+sym+paidSum_wat.toFixed(2)+'\n':''}${remAmt_wat>0?'⏳ المتبقي: *'+sym+remAmt_wat.toFixed(2)+'*\n':''}\nلأي استفسار نحن في خدمتكم:\n📞 ${_propPhone}\n\nشكراً لاختياركم *${prop.name}* 💛`}
     },
     en:{
       confirm:{title:'✅ Booking Confirmation',body:`Dear *${b.name}*, 🌊\n\nWe are pleased to confirm your booking at *${prop.name}*:\n\n🏨 Room: ${b.room} (${b.type||''})\n📅 Check-in: ${fmtD(b.ci)}\n📅 Check-out: ${fmtD(b.co)}\n🌙 Nights: ${nights_}\n💰 Total: ${sym}${b.total}\n💳 Status: ${payLbl}\n\nWe look forward to welcoming you! Please let us know your arrival time.\n📞 ${prop.phone}`},
