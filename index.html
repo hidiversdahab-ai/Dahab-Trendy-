@@ -15207,16 +15207,16 @@ function applyScanData(){
 <div class="ovl" id="wa-templates-modal">
 <div class="mdl" style="max-width:600px;max-height:92vh;overflow-y:auto;">
   <div class="flex" style="justify-content:space-between;margin-bottom:10px;">
-    <div class="mtitle" style="margin-bottom:0;">💬 قوالب رسائل واتساب</div>
+    <div class="mtitle" style="margin-bottom:0;">💬 <span class="t" data-ar="قوالب رسائل واتساب" data-en="WhatsApp Templates">قوالب رسائل واتساب</span></div>
     <button onclick="closeM('wa-templates-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
   </div>
 
   <!-- TABS -->
   <div class="wa-tab-bar">
-    <button class="wa-tab act" id="watab-single" onclick="watSwitchTab('single')">📩 إرسال فردي</button>
-    <button class="wa-tab" id="watab-bulk" onclick="watSwitchTab('bulk')">📨 إرسال جماعي</button>
-    <button class="wa-tab" id="watab-custom" onclick="watSwitchTab('custom')">✏️ قوالب مخصصة</button>
-    <button class="wa-tab" id="watab-history" onclick="watSwitchTab('history')">📋 سجل الإرسال</button>
+    <button class="wa-tab act" id="watab-single" onclick="watSwitchTab('single')">📩 <span class="t" data-ar="إرسال فردي" data-en="Send to One">إرسال فردي</span></button>
+    <button class="wa-tab" id="watab-bulk" onclick="watSwitchTab('bulk')">📨 <span class="t" data-ar="إرسال جماعي" data-en="Bulk Send">إرسال جماعي</span></button>
+    <button class="wa-tab" id="watab-custom" onclick="watSwitchTab('custom')">✏️ <span class="t" data-ar="قوالب مخصصة" data-en="Custom Templates">قوالب مخصصة</span></button>
+    <button class="wa-tab" id="watab-history" onclick="watSwitchTab('history')">📋 <span class="t" data-ar="سجل الإرسال" data-en="Send Log">سجل الإرسال</span></button>
   </div>
 
   <!-- TAB: SINGLE -->
@@ -15229,36 +15229,36 @@ function applyScanData(){
 
     <!-- Language -->
     <div class="fld" style="margin-bottom:10px;">
-      <label>لغة الرسالة</label>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;" id="wat-lang-btns">
-        <button class="btn bg bsm" id="wat-lang-ar" onclick="setWALang('ar')">🇸🇦 عربي</button>
-        <button class="btn bb bsm" id="wat-lang-en" onclick="setWALang('en')">🇬🇧 English</button>
-        <button class="btn bb bsm" id="wat-lang-fr" onclick="setWALang('fr')">🇫🇷 Français</button>
-        <button class="btn bb bsm" id="wat-lang-de" onclick="setWALang('de')">🇩🇪 Deutsch</button>
-        <button class="btn bb bsm" id="wat-lang-ru" onclick="setWALang('ru')">🇷🇺 Русский</button>
+      <label><span class="t" data-ar="لغة الرسالة" data-en="Message Language">لغة الرسالة</span></label>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;" id="wat-lang-btns" dir="ltr">
+        <button class="btn bb bsm" id="wat-lang-ar" onclick="setWALang('ar')">🇸🇦 عربي / Arabic</button>
+        <button class="btn bg bsm" id="wat-lang-en" onclick="setWALang('en')">🇬🇧 English / إنجليزي</button>
+        <button class="btn bb bsm" id="wat-lang-fr" onclick="setWALang('fr')">🇫🇷 Français / فرنسي</button>
+        <button class="btn bb bsm" id="wat-lang-de" onclick="setWALang('de')">🇩🇪 Deutsch / ألماني</button>
+        <button class="btn bb bsm" id="wat-lang-ru" onclick="setWALang('ru')">🇷🇺 Русский / روسي</button>
       </div>
     </div>
 
     <!-- Message Type -->
     <div class="fld" style="margin-bottom:10px;">
-      <label>نوع الرسالة</label>
+      <label><span class="t" data-ar="نوع الرسالة" data-en="Message Type">نوع الرسالة</span></label>
       <div style="display:flex;gap:5px;flex-wrap:wrap;" id="wat-type-btns">
-        <button class="btn bg bsm" onclick="setWAType('confirm')">✅ تأكيد حجز</button>
-        <button class="btn bb bsm" onclick="setWAType('reminder')">⏰ تذكير وصول</button>
-        <button class="btn bb bsm" onclick="setWAType('thanks')">🙏 شكر مغادرة</button>
-        <button class="btn bb bsm" onclick="setWAType('deposit')">💰 طلب عربون</button>
-        <button class="btn bb bsm" onclick="setWAType('bday')">🎂 عيد ميلاد</button>
-        <button class="btn bb bsm" onclick="setWAType('welcome')">🎉 ترحيب وصول</button>
-        <button class="btn bb bsm" onclick="setWAType('checkin_info')">🔑 تعليمات وصول</button>
-        <button class="btn bb bsm" onclick="setWAType('review')">⭐ طلب تقييم</button>
-        <button class="btn bb bsm" onclick="setWAType('late_pay')">⚠️ تذكير دفع</button>
-        <button class="btn bb bsm" onclick="setWAType('rebook')">🔄 إعادة حجز</button>
-        <button class="btn bb bsm" onclick="setWAType('upgrade')">🏖️ عرض خاص</button>
-        <button class="btn bb bsm" onclick="setWAType('pay_thanks')">💚 شكر دفع</button>
-        <button class="btn bb bsm" onclick="setWAType('review_thanks')">🌟 شكر تقييم</button>
-        <button class="btn bb bsm" onclick="setWAType('comfort_check')">🏨 راحتك أولويتنا</button>
-        <button class="btn bb bsm" onclick="setWAType('extend')">🌙 تمديد إقامة</button>
-        <button class="btn bb bsm" onclick="setWAType('stay_summary')">📋 ملخص إقامة</button>
+        <button class="btn bg bsm" onclick="setWAType('confirm')">تأكيد حجز ✅</button>
+        <button class="btn bb bsm" onclick="setWAType('reminder')">تذكير وصول ⏰</button>
+        <button class="btn bb bsm" onclick="setWAType('thanks')">شكر مغادرة 🙏</button>
+        <button class="btn bb bsm" onclick="setWAType('deposit')">طلب عربون 💰</button>
+        <button class="btn bb bsm" onclick="setWAType('bday')">عيد ميلاد 🎂</button>
+        <button class="btn bb bsm" onclick="setWAType('welcome')">ترحيب وصول 🎉</button>
+        <button class="btn bb bsm" onclick="setWAType('checkin_info')">تعليمات وصول 🔑</button>
+        <button class="btn bb bsm" onclick="setWAType('review')">طلب تقييم ⭐</button>
+        <button class="btn bb bsm" onclick="setWAType('late_pay')">تذكير دفع ⚠️</button>
+        <button class="btn bb bsm" onclick="setWAType('rebook')">إعادة حجز 🔄</button>
+        <button class="btn bb bsm" onclick="setWAType('upgrade')">عرض خاص 🏖️</button>
+        <button class="btn bb bsm" onclick="setWAType('pay_thanks')">شكر دفع 💚</button>
+        <button class="btn bb bsm" onclick="setWAType('review_thanks')">شكر تقييم 🌟</button>
+        <button class="btn bb bsm" onclick="setWAType('comfort_check')">راحتك أولويتنا 🏨</button>
+        <button class="btn bb bsm" onclick="setWAType('extend')">تمديد إقامة 🌙</button>
+        <button class="btn bb bsm" onclick="setWAType('stay_summary')">ملخص إقامة 📋</button>
       </div>
     </div>
 
@@ -15273,16 +15273,16 @@ function applyScanData(){
 
     <!-- Edit toggle -->
     <div style="margin-bottom:8px;">
-      <button class="btn bb bsm" onclick="watToggleEdit()" id="wat-edit-btn">✏️ تعديل الرسالة</button>
-      <button class="btn bb bsm" onclick="watResetTpl()" id="wat-reset-btn" style="display:none;">↩️ استعادة الأصلي</button>
+      <button class="btn bb bsm" onclick="watToggleEdit()" id="wat-edit-btn">✏️ <span class="t" data-ar="تعديل الرسالة" data-en="Edit Message">تعديل الرسالة</span></button>
+      <button class="btn bb bsm" onclick="watResetTpl()" id="wat-reset-btn" style="display:none;">↩️ <span class="t" data-ar="استعادة الأصلي" data-en="Restore Original">استعادة الأصلي</span></button>
     </div>
     <textarea id="wat-edit-area" style="display:none;width:100%;min-height:120px;font-size:12px;line-height:1.65;background:rgba(0,0,0,0.25);border:1px solid rgba(37,211,102,0.3);border-radius:7px;padding:9px;color:var(--text);resize:vertical;" oninput="watSyncEdit()"></textarea>
 
     <!-- Actions -->
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="btn bgr bsm" onclick="sendWATemplate()" style="flex:2;min-width:130px;">📱 إرسال واتساب</button>
-      <button class="btn bb bsm" onclick="copyWATemplate()" style="flex:1;">📋 نسخ</button>
-      <button class="btn bsm" style="flex:1;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--bdr);" onclick="watSaveCustomFromCurrent()">💾 حفظ كقالب</button>
+      <button class="btn bgr bsm" onclick="sendWATemplate()" style="flex:2;min-width:130px;font-size:13px;padding:10px 8px;">📱 <span class="t" data-ar="إرسال واتساب" data-en="Send WhatsApp">إرسال واتساب</span></button>
+      <button class="btn bb bsm" onclick="copyWATemplate()" style="flex:1;font-size:13px;padding:10px 8px;">📋 <span class="t" data-ar="نسخ" data-en="Copy">نسخ</span></button>
+      <button class="btn bsm" style="flex:1;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--bdr);font-size:13px;padding:10px 8px;" onclick="watSaveCustomFromCurrent()">💾 <span class="t" data-ar="حفظ كقالب" data-en="Save Template">حفظ كقالب</span></button>
     </div>
   </div>
 
@@ -15502,7 +15502,7 @@ function closeMorningBriefing(){
 // ══════════════════════════════════════════════
 let _watCurrentType='confirm';
 let _watCurrentBk=null;
-let _watLang='ar';
+let _watLang='en';
 let _watTab='single';
 let _watEditMode=false;
 let _watAllActive=[];
@@ -15530,7 +15530,10 @@ function openWATemplates(){
   _watAllActive=(bookings||[]).filter(b=>b.status!=='Cancelled').sort((a,b)=>b.ci.localeCompare(a.ci));
   _watBulkSelected=new Set();
   _watEditMode=false;
-  _watLang=localStorage.getItem('dta_wat_lang')||(currentLang==='ar'?'ar':'en');
+  const _savedWatLang=localStorage.getItem('dta_wat_lang');
+  // لو المستخدم اختار عربي قبل كده وعايز يفضل عربي → احترمها
+  // لو مفيش قيمة محفوظة → English default
+  _watLang=_savedWatLang||'en';
   _watFillSelect(_watAllActive);
   _updateWALangBtns();
   document.getElementById('wa-templates-modal').classList.add('on');
@@ -15559,11 +15562,37 @@ function setWALang(lang){
   _updateWALangBtns();
   loadWATemplate();
 }
+const _watTypeLabels={
+  ar:{confirm:'تأكيد حجز ✅',reminder:'تذكير وصول ⏰',thanks:'شكر مغادرة 🙏',deposit:'طلب عربون 💰',bday:'عيد ميلاد 🎂',welcome:'ترحيب وصول 🎉',checkin_info:'تعليمات وصول 🔑',review:'طلب تقييم ⭐',late_pay:'تذكير دفع ⚠️',rebook:'إعادة حجز 🔄',upgrade:'عرض خاص 🏖️',pay_thanks:'شكر دفع 💚',review_thanks:'شكر تقييم 🌟',comfort_check:'راحتك أولويتنا 🏨',extend:'تمديد إقامة 🌙',stay_summary:'ملخص إقامة 📋'},
+  en:{confirm:'Confirm ✅',reminder:'Arrival Reminder ⏰',thanks:'Thank You 🙏',deposit:'Deposit Request 💰',bday:'Birthday 🎂',welcome:'Welcome 🎉',checkin_info:'Check-in Info 🔑',review:'Review Request ⭐',late_pay:'Payment Reminder ⚠️',rebook:'Re-booking 🔄',upgrade:'Special Offer 🏖️',pay_thanks:'Payment Thanks 💚',review_thanks:'Review Thanks 🌟',comfort_check:'Comfort Check 🏨',extend:'Extend Stay 🌙',stay_summary:'Stay Summary 📋'},
+  fr:{confirm:'Confirmation ✅',reminder:'Rappel arrivée ⏰',thanks:'Merci 🙏',deposit:'Acompte 💰',bday:'Anniversaire 🎂',welcome:'Bienvenue 🎉',checkin_info:'Infos arrivée 🔑',review:'Avis ⭐',late_pay:'Rappel paiement ⚠️',rebook:'Re-réservation 🔄',upgrade:'Offre spéciale 🏖️',pay_thanks:'Merci paiement 💚',review_thanks:'Merci avis 🌟',comfort_check:'Confort 🏨',extend:'Prolonger 🌙',stay_summary:'Résumé séjour 📋'},
+  de:{confirm:'Bestätigung ✅',reminder:'Ankunft Erinnerung ⏰',thanks:'Danke 🙏',deposit:'Anzahlung 💰',bday:'Geburtstag 🎂',welcome:'Willkommen 🎉',checkin_info:'Check-in Info 🔑',review:'Bewertung ⭐',late_pay:'Zahlungserinnerung ⚠️',rebook:'Neubuchung 🔄',upgrade:'Sonderangebot 🏖️',pay_thanks:'Danke Zahlung 💚',review_thanks:'Danke Bewertung 🌟',comfort_check:'Komfort 🏨',extend:'Verlängerung 🌙',stay_summary:'Aufenthaltsübersicht 📋'},
+  ru:{confirm:'Подтверждение ✅',reminder:'Напоминание о заезде ⏰',thanks:'Благодарность 🙏',deposit:'Запрос депозита 💰',bday:'День рождения 🎂',welcome:'Добро пожаловать 🎉',checkin_info:'Инфо о заезде 🔑',review:'Запрос отзыва ⭐',late_pay:'Напоминание об оплате ⚠️',rebook:'Повторное бронирование 🔄',upgrade:'Спец. предложение 🏖️',pay_thanks:'Спасибо за оплату 💚',review_thanks:'Спасибо за отзыв 🌟',comfort_check:'Проверка комфорта 🏨',extend:'Продление 🌙',stay_summary:'Итог пребывания 📋'}
+};
+const _watLangLabels={
+  ar:{'ar':'عربي 🇸🇦','en':'إنجليزي 🇬🇧','fr':'فرنسي 🇫🇷','de':'ألماني 🇩🇪','ru':'روسي 🇷🇺'},
+  en:{'ar':'Arabic 🇸🇦','en':'English 🇬🇧','fr':'Français 🇫🇷','de':'Deutsch 🇩🇪','ru':'Русский 🇷🇺'},
+  fr:{'ar':'Arabe 🇸🇦','en':'Anglais 🇬🇧','fr':'Français 🇫🇷','de':'Allemand 🇩🇪','ru':'Russe 🇷🇺'},
+  de:{'ar':'Arabisch 🇸🇦','en':'Englisch 🇬🇧','fr':'Französisch 🇫🇷','de':'Deutsch 🇩🇪','ru':'Russisch 🇷🇺'},
+  ru:{'ar':'Арабский 🇸🇦','en':'Английский 🇬🇧','fr':'Французский 🇫🇷','de':'Немецкий 🇩🇪','ru':'Русский 🇷🇺'}
+};
 function _updateWALangBtns(){
   ['ar','en','fr','de','ru'].forEach(l=>{
     const el=document.getElementById('wat-lang-'+l);
-    if(el){el.className='btn bsm '+(l===_watLang?'bg':'bb');}
+    if(el){ el.className='btn bsm '+(l===_watLang?'bg':'bb'); }
   });
+  // ترجمة أسماء أزرار نوع الرسالة حسب لغة الأب (ar = لغة الملف)
+  const _appLang=(typeof ar!=='undefined'&&ar)?'ar':'en';
+  const labels=_watTypeLabels[_appLang]||_watTypeLabels.en;
+  const container=document.getElementById('wat-type-btns');
+  if(container){container.querySelectorAll('.btn').forEach(btn=>{
+    const match=(btn.getAttribute('onclick')||'').match(/'([^']+)'/);
+    if(match&&labels[match[1]]){btn.textContent=labels[match[1]];}
+  });}
+  // اتجاه أزرار اللغة والنوع حسب اللغة المختارة
+  if(container){container.style.direction=_watLang==='ar'?'rtl':'ltr';}
+  const langContainer=document.getElementById('wat-lang-btns');
+  if(langContainer){langContainer.style.direction=_watLang==='ar'?'rtl':'ltr';}
 }
 function setWAType(type){
   _watCurrentType=type;
@@ -15605,7 +15634,7 @@ function watSyncEdit(){
 function watResetTpl(){
   _watEditMode=false;
   document.getElementById('wat-edit-area').style.display='none';
-  document.getElementById('wat-edit-btn').textContent='✏️ تعديل الرسالة';
+  document.getElementById('wat-edit-btn').innerHTML='✏️ <span class="t" data-ar="تعديل الرسالة" data-en="Edit Message">'+((typeof ar!=='undefined'&&ar)?'تعديل الرسالة':'Edit Message')+'</span>';if(typeof applyLang==='function')applyLang();
   const rb=document.getElementById('wat-reset-btn');if(rb)rb.style.display='none';
   loadWATemplate();
 }
