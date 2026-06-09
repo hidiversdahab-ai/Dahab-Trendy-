@@ -10982,31 +10982,17 @@ function renderRoomListPage(){
 
 function _buildRoomListHTML(toCompany, toContact, notes, currency){
   const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy Accommodation",phone:"",address:"",email:""};
-  const rt = (typeof roomTypes!=="undefined")?roomTypes:{};
-  const prices = (typeof window.roomPrices!=="undefined")?window.roomPrices:null;
+  const rt  = (typeof roomTypes!=="undefined")?roomTypes:{};
+  const rst = (typeof roomSt!=="undefined")?roomSt:{};
   const today = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
   const sym = currency==='GBP'?'£':currency==='USD'?'$':currency==='EUR'?'€':'ج.م';
 
-  // Get price function
-  function getPrice(roomNum){
-    if(!prices) return '—';
-    const key = 'r'+roomNum+'_'+currency;
-    const key2 = 'r'+roomNum;
-    if(prices[key]) return sym+parseFloat(prices[key]).toFixed(0);
-    // Try from stored prices
-    const stored = localStorage.getItem('dta_prices');
-    if(stored){
-      try{
-        const p=JSON.parse(stored);
-        if(p[key]) return sym+parseFloat(p[key]).toFixed(0);
-        if(p['r'+roomNum+'_GBP']) return '£'+parseFloat(p['r'+roomNum+'_GBP']).toFixed(0);
-      }catch(e){}
-    }
-    return '—';
-  }
+  // استثناء غرف الصيانة
+  const ALL_ROOMS = Array.from({length:14},(_,i)=>101+i);
+  const ROOMS_ARR = ALL_ROOMS.filter(r => rst[String(r)] !== 'maintenance');
+  const maintCount = ALL_ROOMS.length - ROOMS_ARR.length;
 
-  // Group rooms by type
-  const ROOMS_ARR = Array.from({length:14},(_,i)=>101+i);
+  // تجميع حسب النوع
   const typeGroups = {};
   ROOMS_ARR.forEach(r=>{
     const info = rt['room_'+r]||{type:'Double',capacity:2};
@@ -11083,10 +11069,11 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency){
     <div class="body">
       <!-- Summary -->
       <div class="summary-row">
-        <div class="s-card"><div class="s-num">${totalRooms}</div><div class="s-lbl">إجمالي الغرف</div></div>
+        <div class="s-card"><div class="s-num">${totalRooms}</div><div class="s-lbl">غرف متاحة للحجز</div></div>
         <div class="s-card"><div class="s-num">${totalCapacity}</div><div class="s-lbl">أقصى طاقة استيعابية</div></div>
         <div class="s-card"><div class="s-num">${Object.keys(typeGroups).length}</div><div class="s-lbl">أنواع الغرف</div></div>
       </div>
+      ${maintCount>0?`<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;font-size:11px;color:#856404;margin-bottom:18px;">🔧 <strong>${maintCount} غرفة</strong> خارج الخدمة حالياً (صيانة) — غير مدرجة في القائمة</div>`:''}
       <!-- Rooms Table -->
       <div class="sec-title">🛏 تفاصيل أنواع الغرف</div>
       <table>
@@ -11128,8 +11115,12 @@ function renderRoomListPreview(){
   const preview   = document.getElementById('rl-preview');
   if(!preview) return;
 
-  const rt = (typeof roomTypes!=="undefined")?roomTypes:{};
-  const ROOMS_ARR = Array.from({length:14},(_,i)=>101+i);
+  const rt  = (typeof roomTypes!=="undefined")?roomTypes:{};
+  const rst = (typeof roomSt!=="undefined")?roomSt:{};
+  const ALL_ROOMS = Array.from({length:14},(_,i)=>101+i);
+  const ROOMS_ARR = ALL_ROOMS.filter(r => rst[String(r)] !== 'maintenance');
+  const maintCount = ALL_ROOMS.length - ROOMS_ARR.length;
+
   const typeGroups = {};
   ROOMS_ARR.forEach(r=>{
     const info = rt['room_'+r]||{type:'Double',capacity:2};
@@ -11146,11 +11137,16 @@ function renderRoomListPreview(){
   let html = `<div style="background:#1a1a2e;border-radius:10px;padding:16px 20px;margin-bottom:16px;color:#fff;">
     <div style="color:#c9a84c;font-size:16px;font-weight:900;">🏨 ${(typeof PROP!=="undefined"?PROP.name:'Dahab Trendy')}</div>
     ${toCompany?`<div style="font-size:12px;color:#a0b4c8;margin-top:4px;">إلى: <strong style="color:#fff;">${toCompany}</strong>${toContact?' — '+toContact:''}</div>`:''}
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+  </div>`;
+
+  if(maintCount>0){
+    html += `<div style="background:rgba(255,193,7,0.12);border:1px solid rgba(255,193,7,0.35);border-radius:8px;padding:8px 12px;font-size:11px;color:#ffc107;margin-bottom:12px;">🔧 ${maintCount} غرفة في الصيانة — مستبعدة من القائمة</div>`;
+  }
+
+  html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
     <div style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:12px;text-align:center;">
       <div style="font-size:24px;font-weight:900;color:#c9a84c;">${totalRooms}</div>
-      <div style="font-size:10px;color:var(--muted);">إجمالي الغرف</div>
+      <div style="font-size:10px;color:var(--muted);">غرف متاحة</div>
     </div>
     <div style="background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25);border-radius:8px;padding:12px;text-align:center;">
       <div style="font-size:24px;font-weight:900;color:#2ecc71;">${totalCapacity}</div>
@@ -11214,36 +11210,66 @@ async function downloadRoomListPDF(){
     document.head.appendChild(s);
   });
   try{
-    sNotify('⏳','جاري تحضير PDF...','info',2000);
+    sNotify('⏳','جاري تحضير PDF...','info',3000);
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = "position:fixed;top:0;left:50%;transform:translateX(-50%);width:820px;background:#fff;z-index:-9999;";
-    // Extract body content from html string
-    const bodyMatch = html.match(/<body>([\s\S]*)<\/body>/i);
-    wrapper.innerHTML = bodyMatch ? bodyMatch[1] : html;
-    document.body.appendChild(wrapper);
-    await new Promise(r=>setTimeout(r,500));
-    const canvas = await html2canvas(wrapper, {scale:2, useCORS:true, backgroundColor:'#f4f4f4', logging:false, width:820});
-    document.body.removeChild(wrapper);
+
+    // Render in hidden iframe so CSS and layout are fully applied
+    const oldF = document.getElementById('_rl_print_frame');
+    if(oldF) oldF.remove();
+    const iframe = document.createElement('iframe');
+    iframe.id = '_rl_print_frame';
+    iframe.style.cssText = 'position:fixed;top:0;left:0;width:900px;height:600px;border:none;opacity:0;pointer-events:none;z-index:-9999;';
+    document.body.appendChild(iframe);
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(html);
+    iframe.contentDocument.close();
+
+    // Wait for fonts/layout
+    await new Promise(r => setTimeout(r, 800));
+
+    const pageEl = iframe.contentDocument.querySelector('.page') || iframe.contentDocument.body;
+    const canvas = await html2canvas(pageEl, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: pageEl.scrollWidth,
+      windowWidth: 900
+    });
+    iframe.remove();
+
     const {jsPDF} = window.jspdf;
     const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
-    const imgW=210, imgH=(canvas.height*imgW)/canvas.width, pageH=297;
-    let y=0;
-    while(y<imgH){ if(y>0)pdf.addPage(); pdf.addImage(canvas.toDataURL('image/jpeg',0.93),'JPEG',0,-y,imgW,imgH); y+=pageH; }
+    const imgW = 210;
+    const imgH = (canvas.height * imgW) / canvas.width;
+    const pageH = 297;
+    let y = 0;
+    while(y < imgH){
+      if(y > 0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.93), 'JPEG', 0, -y, imgW, imgH);
+      y += pageH;
+    }
     const prop=(typeof PROP!=="undefined")?PROP:{name:"DahabTrendy"};
     const fname = 'RoomList_'+(toCompany||prop.name).replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'_').substring(0,25)+'_'+new Date().toISOString().split('T')[0]+'.pdf';
     pdf.save(fname);
     sNotify('✅','تم تحميل PDF بنجاح','success',2500);
   }catch(e){
     console.error(e);
-    const blob = new Blob([html],{type:'text/html;charset=utf-8'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'RoomList_'+new Date().toISOString().split('T')[0]+'.html';
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href),10000);
-    sNotify('📄','تم تحميل القائمة كـ HTML','info',3000);
+    // Fallback: open in new tab and let user print
+    const w = window.open('','_blank');
+    if(w){
+      w.document.write(html + '<script>window.onload=()=>window.print();<\/script>');
+      w.document.close();
+    } else {
+      const blob = new Blob([html],{type:'text/html;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'RoomList_'+new Date().toISOString().split('T')[0]+'.html';
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+    }
+    sNotify('📄','جرب "حفظ بصيغة PDF" من نافذة الطباعة','info',4000);
   }
 }
 
@@ -11251,8 +11277,12 @@ function sendRoomListWA(){
   const toCompany = document.getElementById('rl-to-company')?.value||'';
   const toContact = document.getElementById('rl-to-contact')?.value||'';
   const notes     = document.getElementById('rl-notes')?.value||'';
-  const rt = (typeof roomTypes!=="undefined")?roomTypes:{};
-  const ROOMS_ARR = Array.from({length:14},(_,i)=>101+i);
+  const rt  = (typeof roomTypes!=="undefined")?roomTypes:{};
+  const rst = (typeof roomSt!=="undefined")?roomSt:{};
+  const ALL_ROOMS = Array.from({length:14},(_,i)=>101+i);
+  const ROOMS_ARR = ALL_ROOMS.filter(r => rst[String(r)] !== 'maintenance');
+  const maintCount = ALL_ROOMS.length - ROOMS_ARR.length;
+
   const typeGroups = {};
   ROOMS_ARR.forEach(r=>{
     const info = rt['room_'+r]||{type:'Double',capacity:2};
@@ -11275,6 +11305,7 @@ function sendRoomListWA(){
   });
   msg += `\n${'─'.repeat(28)}\n`;
   msg += `📊 *الإجمالي: ${totalRooms} غرفة — طاقة ${totalCapacity} فرد*\n`;
+  if(maintCount>0) msg += `🔧 (${maintCount} غرفة في الصيانة — مستبعدة)\n`;
   if(notes) msg += `\n📝 ${notes}\n`;
   msg += `\nيسعدنا خدمتكم 🤝`;
 
