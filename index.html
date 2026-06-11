@@ -1367,6 +1367,9 @@ label {
     <div class="bn-more-item" onclick="bnGo('settings',null);closeBnMore()"><span class="bm-icon">⚙️</span><span class="t" data-ar="إعدادات" data-en="Settings">إعدادات</span></div>
     <div class="bn-more-item" onclick="openAIChat();closeBnMore()"><span class="bm-icon">🤖</span><span>AI Chat</span></div>
     <div class="bn-more-item" onclick="openWATemplates();closeBnMore()"><span class="bm-icon">💬</span><span>WA Templates</span></div>
+    <div class="bn-more-item" onclick="DTA_WA.openSettings();closeBnMore()" style="border-color:rgba(37,211,102,0.4);background:rgba(37,211,102,0.07);"><span class="bm-icon" style="color:#4cda7a;">⚙️</span><span style="color:#4cda7a;" class="t" data-ar="واتساب API" data-en="WhatsApp API">واتساب API</span></div>
+    <div class="bn-more-item" onclick="document.getElementById('qr-room-picker')?(document.getElementById('qr-room-picker').classList.add('on'),closeBnMore()):(closeBnMore(),setTimeout(()=>{const b=document.querySelector('[title=\'QR Code لجميع الغرف\']');b&&b.click();},100))" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">📱</span><span style="color:#7ab8f5;" class="t" data-ar="QR الغرف" data-en="Rooms QR">QR الغرف</span></div>
+    <div class="bn-more-item" onclick="openQRSettings();closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">⚙️</span><span style="color:#7ab8f5;" class="t" data-ar="إعدادات QR" data-en="QR Settings">إعدادات QR</span></div>
     <div class="bn-more-item" onclick="openBlacklist();closeBnMore()" style="border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.07);"><span class="bm-icon">🚫</span><span style="color:#e74c3c;">Blacklist</span></div>
     <div class="bn-more-item" onclick="bnGo('guesthistory',null);closeBnMore()"><span class="bm-icon">👥</span><span class="t" data-ar="سجل الضيوف" data-en="Guest History">Guest History</span></div>
     <div class="bn-more-item" onclick="bnGo('groupbooking',null);closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon">🏢</span><span class="t" data-ar="حجز جروب" data-en="Group Booking">Group Booking</span></div>
@@ -1374,7 +1377,7 @@ label {
     <div class="bn-more-item" onclick="bnGo('pricelist',null);closeBnMore()" style="border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);"><span class="bm-icon">💰</span><span class="t" data-ar="قائمة الأسعار" data-en="Price List">قائمة الأسعار</span></div>
     <div class="bn-more-item" onclick="exportAll();closeBnMore()"><span class="bm-icon">💾</span><span class="t" data-ar="تصدير" data-en="Export">تصدير</span></div>
     <div class="bn-more-item" onclick="shareBackupWA();closeBnMore()" style="border-color:rgba(37,211,102,0.4);background:rgba(37,211,102,0.07);"><span class="bm-icon" style="color:#25D366;">📤</span><span class="t" data-ar="مشاركة نسخة" data-en="Share Backup">مشاركة نسخة</span></div>
-    <div class="bn-more-item" onclick="document.getElementById('impfile').click();closeBnMore()"><span class="bm-icon">📂</span><span class="t" data-ar="استيراد" data-en="Import">استيراد</span></div>
+    <div class="bn-more-item" onclick="showImportGuide();closeBnMore()"><span class="bm-icon">📂</span><span class="t" data-ar="استيراد" data-en="Import">استيراد</span></div>
     <div class="bn-more-item" onclick="toggleTheme();closeBnMore()"><span class="bm-icon" id="bn-theme-icon">🌙</span><span class="t" data-ar="الوضع" data-en="Theme">الوضع</span></div>
     <div class="bn-more-item" onclick="showMobileLangPicker();closeBnMore()"><span class="bm-icon">🌐</span><span id="bn-lang-lbl">🌐 اللغة / Language</span></div>
   </div>
@@ -1476,8 +1479,8 @@ label {
 <button class="nb" id="undo-btn" onclick="undoLast()" style="background:rgba(231,76,60,0.12);color:#e74c3c;border-color:rgba(231,76,60,0.4);font-weight:700;opacity:0.4;" title="تراجع عن آخر عملية">↩️ <span class="btn-txt-hide">Undo</span></button>
 <button class="nb exp-btn" onclick="exportAll()">💾 <span class="t" data-ar="تصدير" data-en="Export">Export</span></button>
 <button class="nb" onclick="shareBackupWA()" style="background:rgba(37,211,102,0.12);color:#25D366;border-color:rgba(37,211,102,0.4);font-weight:700;" title="مشاركة نسخة احتياطية عبر واتساب">📤</button>
-<button class="nb imp-btn" onclick="document.getElementById('impfile').click()">📂 <span class="t" data-ar="استيراد" data-en="Import">Import</span></button>
-<input type="file" id="impfile" accept=".html" style="display:none" onchange="importAll(event)">
+<button class="nb imp-btn" onclick="showImportGuide()">📂 <span class="t" data-ar="استيراد" data-en="Import">Import</span></button>
+<input type="file" id="impfile" accept=".html,.json,application/json,text/html" style="display:none" onchange="importAll(event)">
 </div>
 </div>
 <div class="banner" id="banner">✅ Data imported successfully!</div>
@@ -1852,6 +1855,20 @@ label {
         <option value="EGP">EGP ج</option>
         <option value="EUR">EUR €</option>
       </select>
+    </div>
+  </div>
+  <div class="g2" style="margin-top:10px;">
+    <div><label class="lbl">📅 تاريخ الوصول (التوافر)</label><input id="rl-checkin" type="date" class="inp" onchange="renderRoomListPreview()"></div>
+    <div><label class="lbl">📅 تاريخ المغادرة</label><input id="rl-checkout" type="date" class="inp" onchange="renderRoomListPreview()"></div>
+  </div>
+  <div style="margin-top:10px;">
+    <label class="lbl">💰 الموسم للأسعار</label>
+    <div class="flex" style="gap:8px;flex-wrap:wrap;margin-top:6px;">
+      <button id="rl-season-low"  class="btn bsm act-season" onclick="setRLSeason('low')">🌥️ Low</button>
+      <button id="rl-season-mid"  class="btn bsm" onclick="setRLSeason('mid')">⛅ Mid</button>
+      <button id="rl-season-high" class="btn bsm" onclick="setRLSeason('high')">☀️ High</button>
+      <button id="rl-season-peak" class="btn bsm" onclick="setRLSeason('peak')">🎉 Peak</button>
+      <button id="rl-season-none" class="btn bsm" onclick="setRLSeason('none')" style="background:rgba(255,255,255,0.05);">🚫 بدون أسعار</button>
     </div>
   </div>
 </div>
@@ -4416,6 +4433,43 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 <div class="qr-wrap"><canvas id="qr-canvas" width="200" height="200"></canvas></div>
 <div style="font-size:10px;color:var(--muted);margin-top:8px;">امسح الـ QR Code لعرض تفاصيل الفاتورة كاملة</div>
 <button class="btn bg mt" onclick="downloadQR()">💾 تحميل QR Code</button>
+</div>
+</div>
+<!-- ══ QR SETTINGS MODAL ══ -->
+<div class="ovl" id="qr-settings-modal">
+<div class="mdl" style="max-width:420px;">
+<div class="flex" style="justify-content:space-between;margin-bottom:16px;">
+<div class="mtitle" style="margin-bottom:0;">⚙️ إعدادات صفحة QR الغرف</div>
+<button onclick="closeM('qr-settings-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;">
+<div>
+<label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">📡 اسم شبكة WiFi</label>
+<input id="qrs-wifi-name" class="inp" type="text" placeholder="DahabTrendy_Guest" style="width:100%;">
+</div>
+<div>
+<label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">🔑 كلمة مرور WiFi</label>
+<input id="qrs-wifi-pass" class="inp" type="text" placeholder="dahab2024" style="width:100%;">
+</div>
+<div>
+<label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">📱 رقم واتساب (بدون + مثل: 201099531272)</label>
+<input id="qrs-wa-num" class="inp" type="text" placeholder="201099531272" style="width:100%;direction:ltr;">
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+<div>
+<label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">⏰ وقت الـ Check-in</label>
+<input id="qrs-checkin-time" class="inp" type="text" placeholder="2:00 PM" style="width:100%;direction:ltr;">
+</div>
+<div>
+<label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">⏰ وقت الـ Check-out</label>
+<input id="qrs-checkout-time" class="inp" type="text" placeholder="12:00 PM" style="width:100%;direction:ltr;">
+</div>
+</div>
+</div>
+<div style="display:flex;gap:10px;margin-top:18px;">
+<button class="btn bg" onclick="saveQRSettings()" style="flex:1;">💾 حفظ</button>
+<button class="btn bbl" onclick="closeM('qr-settings-modal')" style="flex:1;">إلغاء</button>
+</div>
 </div>
 </div>
 <!-- ══ STANDBY ACTION MODAL ══ -->
@@ -10980,43 +11034,83 @@ function renderRoomListPage(){
   renderRoomListPreview();
 }
 
-function _buildRoomListHTML(toCompany, toContact, notes, currency){
+function _buildRoomListHTML(toCompany, toContact, notes, currency, season, checkin, checkout){
   const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy Accommodation",phone:"",address:"",email:""};
   const rt  = (typeof roomTypes!=="undefined")?roomTypes:{};
   const rst = (typeof roomSt!=="undefined")?roomSt:{};
+  const bks = (typeof bookings!=="undefined")?bookings:[];
   const today = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
   const sym = currency==='GBP'?'£':currency==='USD'?'$':currency==='EUR'?'€':'ج.م';
+  const curKey = currency.toLowerCase();
+  const seasonLabel = {low:'Low Season 🌥️',mid:'Mid Season ⛅',high:'High Season ☀️',peak:'Peak Season 🎉'}[season]||'';
+  const showPrices = season && season !== 'none';
 
   // استثناء غرف الصيانة
   const ALL_ROOMS = Array.from({length:14},(_,i)=>101+i);
   const ROOMS_ARR = ALL_ROOMS.filter(r => rst[String(r)] !== 'maintenance');
   const maintCount = ALL_ROOMS.length - ROOMS_ARR.length;
 
+  // حساب التوافر إذا تم تحديد تاريخ
+  let availMap = {};
+  if(checkin && checkout){
+    const ci = new Date(checkin), co = new Date(checkout);
+    ROOMS_ARR.forEach(r=>{ availMap[r] = true; });
+    bks.forEach(b=>{
+      if(!b.room||!b.checkin||!b.checkout) return;
+      const bci = new Date(b.checkin), bco = new Date(b.checkout);
+      if(ci < bco && co > bci){
+        (b.rooms||[b.room]).forEach(rm=>{ availMap[parseInt(rm)] = false; });
+      }
+    });
+  }
+  const hasAvail = checkin && checkout;
+
   // تجميع حسب النوع
   const typeGroups = {};
   ROOMS_ARR.forEach(r=>{
     const info = rt['room_'+r]||{type:'Double',capacity:2};
     const t = info.type;
-    if(!typeGroups[t]) typeGroups[t]={type:t, capacity:info.capacity, rooms:[], count:0};
+    if(!typeGroups[t]) typeGroups[t]={type:t, capacity:info.capacity, rooms:[], availRooms:[], count:0};
     typeGroups[t].rooms.push(r);
+    if(hasAvail && availMap[r]) typeGroups[t].availRooms.push(r);
     typeGroups[t].count++;
   });
+
+  // جلب الأسعار
+  const pd = (typeof getPLData==='function')?getPLData():{};
+  function getPrice(type){
+    if(!showPrices||!pd[type]) return '';
+    const val = pd[type][season+'_'+curKey] || pd[type][season] || 0;
+    return val ? sym+(val.toLocaleString()) : '';
+  }
 
   const typeIcons = {'Single':'🛏','Double':'🛏🛏','Triple':'🛏🛏🛏','Suite (غرفتين)':'🏠','Quad (رباعي)':'👨‍👩‍👧‍👦'};
   const typeDesc  = {'Single':'غرفة لشخص واحد','Double':'غرفة مزدوجة لشخصين','Triple':'غرفة لثلاثة أشخاص','Suite (غرفتين)':'جناح يضم غرفتين','Quad (رباعي)':'غرفة لأربعة أشخاص'};
 
   const totalRooms = ROOMS_ARR.length;
   const totalCapacity = ROOMS_ARR.reduce((s,r)=>{ const i=rt['room_'+r]||{capacity:2}; return s+i.capacity;},0);
+  const totalAvail = hasAvail ? ROOMS_ARR.filter(r=>availMap[r]).length : null;
 
-  const typeRows = Object.values(typeGroups).map(g=>`
+  const typeRows = Object.values(typeGroups).map(g=>{
+    const price = getPrice(g.type);
+    const availCell = hasAvail
+      ? `<td style="text-align:center;font-weight:700;color:${g.availRooms.length>0?'#27ae60':'#e74c3c'};">${g.availRooms.length>0?'✅ '+g.availRooms.length+' متاحة':'❌ محجوزة'}</td>`
+      : '';
+    const priceCell = showPrices
+      ? `<td style="text-align:center;font-weight:700;color:#c9a84c;font-size:14px;">${price||'—'}</td>`
+      : '';
+    return `
     <tr>
       <td style="font-size:18px;text-align:center;">${typeIcons[g.type]||'🛏'}</td>
       <td><strong>${g.type}</strong><br><span style="font-size:11px;color:#666;">${typeDesc[g.type]||''}</span></td>
       <td style="text-align:center;font-weight:700;font-size:16px;color:#1a1a2e;">${g.count}</td>
       <td style="text-align:center;color:#555;">${g.capacity} نفر / غرفة</td>
       <td style="text-align:center;font-weight:700;color:#c9a84c;">${g.capacity*g.count} نفر</td>
+      ${priceCell}
+      ${availCell}
       <td style="text-align:center;font-size:11px;color:#888;">${g.rooms.join('، ')}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 
   return `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
   <title>قائمة الغرف — ${prop.name}</title>
@@ -11068,12 +11162,27 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency){
     <div class="gold-bar"></div>
     <div class="body">
       <!-- Summary -->
-      <div class="summary-row">
-        <div class="s-card"><div class="s-num">${totalRooms}</div><div class="s-lbl">غرف متاحة للحجز</div></div>
+      <div class="summary-row" style="grid-template-columns:repeat(${hasAvail?4:3},1fr);">
+        <div class="s-card"><div class="s-num">${totalRooms}</div><div class="s-lbl">إجمالي الغرف</div></div>
         <div class="s-card"><div class="s-num">${totalCapacity}</div><div class="s-lbl">أقصى طاقة استيعابية</div></div>
         <div class="s-card"><div class="s-num">${Object.keys(typeGroups).length}</div><div class="s-lbl">أنواع الغرف</div></div>
+        ${hasAvail?`<div class="s-card" style="border-color:rgba(${totalAvail>0?'39,174,96':'231,76,60'},0.4);"><div class="s-num" style="color:${totalAvail>0?'#27ae60':'#e74c3c'};">${totalAvail}</div><div class="s-lbl" style="color:#a0b4c8;">متاحة للحجز</div></div>`:''}
       </div>
       ${maintCount>0?`<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;font-size:11px;color:#856404;margin-bottom:18px;">🔧 <strong>${maintCount} غرفة</strong> خارج الخدمة حالياً (صيانة) — غير مدرجة في القائمة</div>`:''}
+      <!-- Availability Banner -->
+      ${hasAvail?`<div style="background:linear-gradient(135deg,#0f3460,#16213e);border:1px solid rgba(201,168,76,0.4);border-radius:10px;padding:12px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:24px;">📅</div>
+        <div>
+          <div style="color:#c9a84c;font-weight:800;font-size:13px;">فترة الإقامة المطلوبة</div>
+          <div style="color:#fff;font-size:12px;margin-top:2px;" dir="ltr">${checkin} → ${checkout}</div>
+        </div>
+        <div style="margin-right:auto;text-align:center;background:rgba(39,174,96,0.15);border:1px solid rgba(39,174,96,0.4);border-radius:8px;padding:8px 16px;">
+          <div style="font-size:22px;font-weight:900;color:#27ae60;">${totalAvail}</div>
+          <div style="font-size:11px;color:#a0b4c8;">غرفة متاحة</div>
+        </div>
+      </div>`:''}
+      <!-- Season Badge -->
+      ${showPrices?`<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:6px;padding:5px 12px;margin-bottom:14px;font-size:12px;color:#c9a84c;font-weight:700;">${seasonLabel} — الأسعار لكل غرفة / ليلة</div>`:''}
       <!-- Rooms Table -->
       <div class="sec-title">🛏 تفاصيل أنواع الغرف</div>
       <table>
@@ -11083,6 +11192,8 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency){
           <th style="text-align:center;">عدد الغرف</th>
           <th style="text-align:center;">السعة / غرفة</th>
           <th style="text-align:center;">إجمالي الأفراد</th>
+          ${showPrices?'<th style="text-align:center;">السعر / ليلة</th>':''}
+          ${hasAvail?'<th style="text-align:center;">التوافر</th>':''}
           <th style="text-align:center;">أرقام الغرف</th>
         </tr></thead>
         <tbody>${typeRows}</tbody>
@@ -11092,6 +11203,8 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency){
             <td style="text-align:center;font-size:15px;color:#c9a84c;font-weight:900;">${totalRooms}</td>
             <td></td>
             <td style="text-align:center;font-size:15px;color:#27ae60;font-weight:900;">${totalCapacity} نفر</td>
+            ${showPrices?'<td></td>':''}
+            ${hasAvail?`<td style="text-align:center;font-weight:900;color:#27ae60;">${totalAvail} متاحة</td>`:''}
             <td></td>
           </tr>
         </tfoot>
@@ -11107,101 +11220,173 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency){
   </div></body></html>`;
 }
 
+function setRLSeason(s){
+  window._rlSeason = s;
+  document.querySelectorAll('[id^="rl-season-"]').forEach(b=>b.classList.remove('act-season'));
+  const btn = document.getElementById('rl-season-'+s);
+  if(btn) btn.classList.add('act-season');
+  renderRoomListPreview();
+}
+
 function renderRoomListPreview(){
   const toCompany = document.getElementById('rl-to-company')?.value||'';
   const toContact = document.getElementById('rl-to-contact')?.value||'';
   const notes     = document.getElementById('rl-notes')?.value||'';
   const currency  = document.getElementById('rl-currency')?.value||'GBP';
+  const season    = window._rlSeason||'low';
+  const checkin   = document.getElementById('rl-checkin')?.value||'';
+  const checkout  = document.getElementById('rl-checkout')?.value||'';
   const preview   = document.getElementById('rl-preview');
   if(!preview) return;
 
-  const rt  = (typeof roomTypes!=="undefined")?roomTypes:{};
-  const rst = (typeof roomSt!=="undefined")?roomSt:{};
+  const rt   = (typeof roomTypes!=="undefined")?roomTypes:{};
+  const rst  = (typeof roomSt!=="undefined")?roomSt:{};
+  const bks  = (typeof bookings!=="undefined")?bookings:[];
+  const pd   = (typeof getPLData==='function')?getPLData():{};
+  const sym  = currency==='GBP'?'£':currency==='USD'?'$':currency==='EUR'?'€':'ج.م';
+  const curKey = currency.toLowerCase();
+  const showPrices = season && season !== 'none';
+  const hasAvail = checkin && checkout;
+
   const ALL_ROOMS = Array.from({length:14},(_,i)=>101+i);
   const ROOMS_ARR = ALL_ROOMS.filter(r => rst[String(r)] !== 'maintenance');
   const maintCount = ALL_ROOMS.length - ROOMS_ARR.length;
+
+  // حساب التوافر
+  let availMap = {};
+  if(hasAvail){
+    const ci = new Date(checkin), co = new Date(checkout);
+    ROOMS_ARR.forEach(r=>{ availMap[r]=true; });
+    bks.forEach(b=>{
+      if(!b.room||!b.checkin||!b.checkout) return;
+      const bci=new Date(b.checkin),bco=new Date(b.checkout);
+      if(ci<bco && co>bci){ (b.rooms||[b.room]).forEach(rm=>{availMap[parseInt(rm)]=false;}); }
+    });
+  }
 
   const typeGroups = {};
   ROOMS_ARR.forEach(r=>{
     const info = rt['room_'+r]||{type:'Double',capacity:2};
     const t = info.type;
-    if(!typeGroups[t]) typeGroups[t]={type:t, capacity:info.capacity, rooms:[], count:0};
+    if(!typeGroups[t]) typeGroups[t]={type:t,capacity:info.capacity,rooms:[],availRooms:[],count:0};
     typeGroups[t].rooms.push(r);
+    if(hasAvail && availMap[r]) typeGroups[t].availRooms.push(r);
     typeGroups[t].count++;
   });
 
   const typeIcons = {'Single':'🛏','Double':'🛏🛏','Triple':'🛏🛏🛏','Suite (غرفتين)':'🏠','Quad (رباعي)':'👨‍👩‍👧‍👦'};
   const totalRooms = ROOMS_ARR.length;
   const totalCapacity = ROOMS_ARR.reduce((s,r)=>{ const i=rt['room_'+r]||{capacity:2}; return s+i.capacity;},0);
+  const totalAvail = hasAvail ? ROOMS_ARR.filter(r=>availMap[r]).length : null;
 
-  let html = `<div style="background:#1a1a2e;border-radius:10px;padding:16px 20px;margin-bottom:16px;color:#fff;">
-    <div style="color:#c9a84c;font-size:16px;font-weight:900;">🏨 ${(typeof PROP!=="undefined"?PROP.name:'Dahab Trendy')}</div>
-    ${toCompany?`<div style="font-size:12px;color:#a0b4c8;margin-top:4px;">إلى: <strong style="color:#fff;">${toCompany}</strong>${toContact?' — '+toContact:''}</div>`:''}
-  </div>`;
-
-  if(maintCount>0){
-    html += `<div style="background:rgba(255,193,7,0.12);border:1px solid rgba(255,193,7,0.35);border-radius:8px;padding:8px 12px;font-size:11px;color:#ffc107;margin-bottom:12px;">🔧 ${maintCount} غرفة في الصيانة — مستبعدة من القائمة</div>`;
+  function getPrice(type){
+    if(!showPrices||!pd[type]) return '';
+    const val = pd[type][season+'_'+curKey]||pd[type][season]||0;
+    return val ? sym+val.toLocaleString() : '';
   }
 
-  html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
-    <div style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:12px;text-align:center;">
-      <div style="font-size:24px;font-weight:900;color:#c9a84c;">${totalRooms}</div>
-      <div style="font-size:10px;color:var(--muted);">غرف متاحة</div>
+  // بناء رأس الجدول
+  let thAvail = hasAvail ? `<th style="padding:9px 10px;text-align:center;color:var(--gold);font-size:12px;">التوافر</th>` : '';
+  let thPrice = showPrices ? `<th style="padding:9px 10px;text-align:center;color:var(--gold);font-size:12px;">السعر/ليلة</th>` : '';
+
+  let html = `<div style="background:#1a1a2e;border-radius:10px;padding:16px 20px;margin-bottom:14px;color:#fff;display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <div style="color:#c9a84c;font-size:16px;font-weight:900;">🏨 ${(typeof PROP!=="undefined"?PROP.name:'Dahab Trendy')}</div>
+      ${toCompany?`<div style="font-size:12px;color:#a0b4c8;margin-top:3px;">إلى: <strong style="color:#fff;">${toCompany}</strong>${toContact?' — '+toContact:''}</div>`:''}
     </div>
-    <div style="background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.25);border-radius:8px;padding:12px;text-align:center;">
-      <div style="font-size:24px;font-weight:900;color:#2ecc71;">${totalCapacity}</div>
-      <div style="font-size:10px;color:var(--muted);">أقصى طاقة</div>
-    </div>
-    <div style="background:rgba(52,152,219,0.08);border:1px solid rgba(52,152,219,0.25);border-radius:8px;padding:12px;text-align:center;">
-      <div style="font-size:24px;font-weight:900;color:#3498db;">${Object.keys(typeGroups).length}</div>
-      <div style="font-size:10px;color:var(--muted);">أنواع</div>
-    </div>
-  </div>
-  <table style="width:100%;border-collapse:collapse;font-size:12px;">
+    ${showPrices?`<div style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:6px;padding:5px 10px;font-size:11px;color:#c9a84c;font-weight:700;">${{low:'🌥️ Low',mid:'⛅ Mid',high:'☀️ High',peak:'🎉 Peak'}[season]||''} Season</div>`:''}
+  </div>`;
+
+  if(hasAvail){
+    html += `<div style="background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.3);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+      <div style="font-size:20px;">📅</div>
+      <div style="flex:1;font-size:12px;color:var(--text);">فترة الإقامة: <strong dir="ltr">${checkin} ← ${checkout}</strong></div>
+      <div style="text-align:center;background:rgba(39,174,96,0.15);border-radius:6px;padding:6px 12px;">
+        <div style="font-size:20px;font-weight:900;color:#2ecc71;">${totalAvail}</div>
+        <div style="font-size:10px;color:var(--muted);">متاحة</div>
+      </div>
+    </div>`;
+  }
+  if(maintCount>0){
+    html += `<div style="background:rgba(255,193,7,0.12);border:1px solid rgba(255,193,7,0.35);border-radius:8px;padding:8px 12px;font-size:11px;color:#ffc107;margin-bottom:12px;">🔧 ${maintCount} غرفة في الصيانة — مستبعدة</div>`;
+  }
+
+  // بطاقات الإحصاء
+  const cards = [
+    {n:totalRooms, l:'غرف إجمالاً', c:'#c9a84c'},
+    {n:totalCapacity, l:'أقصى طاقة', c:'#2ecc71'},
+    {n:Object.keys(typeGroups).length, l:'أنواع', c:'#3498db'},
+    ...(hasAvail?[{n:totalAvail, l:'متاحة الآن', c:totalAvail>0?'#2ecc71':'#e74c3c'}]:[])
+  ];
+  html += `<div style="display:grid;grid-template-columns:repeat(${cards.length},1fr);gap:8px;margin-bottom:14px;">
+    ${cards.map(c=>`<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px;text-align:center;">
+      <div style="font-size:22px;font-weight:900;color:${c.c};">${c.n}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px;">${c.l}</div>
+    </div>`).join('')}
+  </div>`;
+
+  html += `<table style="width:100%;border-collapse:collapse;font-size:13px;">
     <thead><tr style="background:rgba(201,168,76,0.1);">
-      <th style="padding:8px;text-align:right;color:var(--gold);font-size:10px;">النوع</th>
-      <th style="padding:8px;text-align:center;color:var(--gold);font-size:10px;">العدد</th>
-      <th style="padding:8px;text-align:center;color:var(--gold);font-size:10px;">الأفراد/غرفة</th>
-      <th style="padding:8px;text-align:center;color:var(--gold);font-size:10px;">الإجمالي</th>
+      <th style="padding:9px 10px;text-align:right;color:var(--gold);font-size:12px;">النوع</th>
+      <th style="padding:9px 10px;text-align:center;color:var(--gold);font-size:12px;">العدد</th>
+      <th style="padding:9px 10px;text-align:center;color:var(--gold);font-size:12px;">أفراد/غرفة</th>
+      <th style="padding:9px 10px;text-align:center;color:var(--gold);font-size:12px;">الإجمالي</th>
+      ${thPrice}${thAvail}
     </tr></thead><tbody>`;
 
   Object.values(typeGroups).forEach(g=>{
+    const price = getPrice(g.type);
+    const availTd = hasAvail
+      ? `<td style="padding:9px 10px;text-align:center;font-weight:700;font-size:13px;color:${g.availRooms.length>0?'#2ecc71':'#e74c3c'};">${g.availRooms.length>0?'✅ '+g.availRooms.length:'❌'}</td>`
+      : '';
+    const priceTd = showPrices
+      ? `<td style="padding:9px 10px;text-align:center;font-weight:700;color:#c9a84c;">${price||'—'}</td>`
+      : '';
     html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-      <td style="padding:8px;">${typeIcons[g.type]||'🛏'} ${g.type}</td>
-      <td style="padding:8px;text-align:center;font-weight:700;color:var(--gold);">${g.count}</td>
-      <td style="padding:8px;text-align:center;color:var(--muted);">${g.capacity} نفر</td>
-      <td style="padding:8px;text-align:center;font-weight:700;color:#2ecc71;">${g.capacity*g.count} نفر</td>
+      <td style="padding:9px 10px;">${typeIcons[g.type]||'🛏'} ${g.type}</td>
+      <td style="padding:9px 10px;text-align:center;font-weight:700;color:var(--gold);">${g.count}</td>
+      <td style="padding:9px 10px;text-align:center;color:var(--muted);">${g.capacity}</td>
+      <td style="padding:9px 10px;text-align:center;font-weight:700;color:#2ecc71;">${g.capacity*g.count}</td>
+      ${priceTd}${availTd}
     </tr>`;
   });
 
-  html += `<tr style="background:rgba(201,168,76,0.06);">
-    <td style="padding:8px;font-weight:700;">📊 الإجمالي</td>
-    <td style="padding:8px;text-align:center;font-size:15px;font-weight:900;color:var(--gold);">${totalRooms}</td>
+  html += `<tr style="background:rgba(201,168,76,0.06);font-weight:700;">
+    <td style="padding:9px 10px;">📊 الإجمالي</td>
+    <td style="padding:9px 10px;text-align:center;font-size:15px;color:var(--gold);font-weight:900;">${totalRooms}</td>
     <td></td>
-    <td style="padding:8px;text-align:center;font-size:15px;font-weight:900;color:#2ecc71;">${totalCapacity} نفر</td>
+    <td style="padding:9px 10px;text-align:center;font-size:15px;color:#2ecc71;font-weight:900;">${totalCapacity}</td>
+    ${showPrices?'<td></td>':''}
+    ${hasAvail?`<td style="padding:9px 10px;text-align:center;font-weight:900;color:${totalAvail>0?'#2ecc71':'#e74c3c'};">${totalAvail}</td>`:''}
   </tr></tbody></table>`;
 
   if(notes) html += `<div style="margin-top:12px;padding:10px;background:rgba(201,168,76,0.07);border-radius:7px;font-size:12px;color:var(--muted);">📝 ${notes}</div>`;
   preview.innerHTML = html;
 }
 
+function _getRLParams(){
+  return {
+    toCompany: document.getElementById('rl-to-company')?.value||'',
+    toContact: document.getElementById('rl-to-contact')?.value||'',
+    notes:     document.getElementById('rl-notes')?.value||'',
+    currency:  document.getElementById('rl-currency')?.value||'GBP',
+    season:    window._rlSeason||'low',
+    checkin:   document.getElementById('rl-checkin')?.value||'',
+    checkout:  document.getElementById('rl-checkout')?.value||''
+  };
+}
+
 function printRoomList(){
-  const toCompany = document.getElementById('rl-to-company')?.value||'';
-  const toContact = document.getElementById('rl-to-contact')?.value||'';
-  const notes     = document.getElementById('rl-notes')?.value||'';
-  const currency  = document.getElementById('rl-currency')?.value||'GBP';
-  const html = _buildRoomListHTML(toCompany, toContact, notes, currency);
+  const p = _getRLParams();
+  const html = _buildRoomListHTML(p.toCompany, p.toContact, p.notes, p.currency, p.season, p.checkin, p.checkout);
   const w = window.open('','_blank');
   if(w){w.document.write(html);w.document.close();}
   else{sNotify('⚠️','السماح بالنوافذ المنبثقة في المتصفح','warning',3000);}
 }
 
 async function downloadRoomListPDF(){
-  const toCompany = document.getElementById('rl-to-company')?.value||'';
-  const toContact = document.getElementById('rl-to-contact')?.value||'';
-  const notes     = document.getElementById('rl-notes')?.value||'';
-  const currency  = document.getElementById('rl-currency')?.value||'GBP';
-  const html = _buildRoomListHTML(toCompany, toContact, notes, currency);
+  const p = _getRLParams();
+  const html = _buildRoomListHTML(p.toCompany, p.toContact, p.notes, p.currency, p.season, p.checkin, p.checkout);
 
   const loadScript = (src) => new Promise((res,rej)=>{
     if(document.querySelector('script[src="'+src+'"]')){ res(); return; }
@@ -11274,44 +11459,89 @@ async function downloadRoomListPDF(){
 }
 
 function sendRoomListWA(){
-  const toCompany = document.getElementById('rl-to-company')?.value||'';
-  const toContact = document.getElementById('rl-to-contact')?.value||'';
-  const notes     = document.getElementById('rl-notes')?.value||'';
+  const p = _getRLParams();
   const rt  = (typeof roomTypes!=="undefined")?roomTypes:{};
   const rst = (typeof roomSt!=="undefined")?roomSt:{};
+  const bks = (typeof bookings!=="undefined")?bookings:[];
+  const pd  = (typeof getPLData==='function')?getPLData():{};
+  const sym = p.currency==='GBP'?'£':p.currency==='USD'?'$':p.currency==='EUR'?'€':'ج.م';
+  const curKey = p.currency.toLowerCase();
+  const showPrices = p.season && p.season !== 'none';
+  const seasonLabel = {low:'Low Season',mid:'Mid Season',high:'High Season',peak:'Peak Season'}[p.season]||'';
   const ALL_ROOMS = Array.from({length:14},(_,i)=>101+i);
   const ROOMS_ARR = ALL_ROOMS.filter(r => rst[String(r)] !== 'maintenance');
   const maintCount = ALL_ROOMS.length - ROOMS_ARR.length;
+
+  // حساب التوافر
+  let availMap = {};
+  const hasAvail = p.checkin && p.checkout;
+  if(hasAvail){
+    const ci=new Date(p.checkin), co=new Date(p.checkout);
+    ROOMS_ARR.forEach(r=>{ availMap[r]=true; });
+    bks.forEach(b=>{
+      if(!b.room||!b.checkin||!b.checkout) return;
+      const bci=new Date(b.checkin),bco=new Date(b.checkout);
+      if(ci<bco && co>bci){ (b.rooms||[b.room]).forEach(rm=>{availMap[parseInt(rm)]=false;}); }
+    });
+  }
 
   const typeGroups = {};
   ROOMS_ARR.forEach(r=>{
     const info = rt['room_'+r]||{type:'Double',capacity:2};
     const t = info.type;
-    if(!typeGroups[t]) typeGroups[t]={type:t, capacity:info.capacity, count:0, total:0};
+    if(!typeGroups[t]) typeGroups[t]={type:t,capacity:info.capacity,count:0,total:0,avail:0};
     typeGroups[t].count++;
     typeGroups[t].total += info.capacity;
+    if(hasAvail && availMap[r]) typeGroups[t].avail++;
   });
   const totalRooms = ROOMS_ARR.length;
   const totalCapacity = ROOMS_ARR.reduce((s,r)=>{ const i=rt['room_'+r]||{capacity:2}; return s+i.capacity;},0);
+  const totalAvail = hasAvail ? ROOMS_ARR.filter(r=>availMap[r]).length : null;
   const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy Accommodation",phone:"",address:""};
 
-  let msg = `🏨 *${prop.name}*\n`;
-  if(prop.address) msg += `📍 ${prop.address}\n`;
-  msg += `\n`;
-  if(toCompany) msg += `إلى: *${toCompany}*${toContact?' — '+toContact:''}\n\n`;
-  msg += `🛏 *قائمة الغرف المتاحة*\n${'─'.repeat(28)}\n\n`;
-  Object.values(typeGroups).forEach(g=>{
-    msg += `🔹 *${g.type}*: ${g.count} غرفة — ${g.capacity} نفر/غرفة (إجمالي: ${g.total} نفر)\n`;
-  });
-  msg += `\n${'─'.repeat(28)}\n`;
-  msg += `📊 *الإجمالي: ${totalRooms} غرفة — طاقة ${totalCapacity} فرد*\n`;
-  if(maintCount>0) msg += `🔧 (${maintCount} غرفة في الصيانة — مستبعدة)\n`;
-  if(notes) msg += `\n📝 ${notes}\n`;
-  msg += `\nيسعدنا خدمتكم 🤝`;
+  let msg = `🏨 *${prop.name}*
+`;
+  if(prop.address) msg += `📍 ${prop.address}
+`;
+  msg += `
+`;
+  if(p.toCompany) msg += `إلى: *${p.toCompany}*${p.toContact?' — '+p.toContact:''}
 
-  const phone = document.getElementById('rl-to-company')?.dataset?.phone||'';
+`;
+  if(hasAvail) msg += `📅 الفترة: ${p.checkin} ← ${p.checkout}
+`;
+  if(showPrices) msg += `💰 ${seasonLabel}
+`;
+  msg += `
+🛏 *قائمة الغرف*
+${'─'.repeat(30)}
+
+`;
+  Object.values(typeGroups).forEach(g=>{
+    const priceVal = showPrices && pd[g.type] ? (pd[g.type][p.season+'_'+curKey]||pd[g.type][p.season]||0) : 0;
+    const priceStr = priceVal ? ` — 💰 ${sym}${priceVal.toLocaleString()}/ليلة` : '';
+    const availStr = hasAvail ? ` — ${g.avail>0?'✅ '+g.avail+' متاحة':'❌ محجوزة'}` : '';
+    msg += `🔹 *${g.type}*: ${g.count} غرفة${priceStr}${availStr}
+`;
+  });
+  msg += `
+${'─'.repeat(30)}
+`;
+  msg += `📊 *الإجمالي: ${totalRooms} غرفة — طاقة ${totalCapacity} فرد*`;
+  if(hasAvail) msg += ` — ✅ *${totalAvail} متاحة*`;
+  msg += `
+`;
+  if(maintCount>0) msg += `🔧 (${maintCount} غرفة صيانة — مستبعدة)
+`;
+  if(p.notes) msg += `
+📝 ${p.notes}
+`;
+  msg += `
+يسعدنا خدمتكم 🤝
+${prop.phone||''}`;
+
   const encoded = encodeURIComponent(msg);
-  window.open('https://wa.me/'+(phone||'')+( phone?'?text='+encoded:'?text='+encoded),'_blank');
+  window.open('https://wa.me/?text='+encoded,'_blank');
 }
 
 function saveGrpBooking(){
@@ -12055,26 +12285,80 @@ pre{background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);border-radi
 <div class="stat"><div class="sn">${bookings.filter(b=>b.status!=="Cancelled").length}</div><div class="sl">حجز نشط / Active</div></div>
 <div class="stat"><div class="sn">${exRate}</div><div class="sl">سعر الدولار / USD Rate</div></div>
 </div>
-<button class="btn" onclick="restoreData()">📥 تحميل JSON للاستيراد في النظام</button>
-<button class="btn btn2" onclick="document.getElementById('raw').style.display=document.getElementById('raw').style.display==='none'?'block':'none'">👁 عرض البيانات الخام</button>
-<pre id="raw">${dataStr.replace(/</g,"&lt;").replace(/>/g,"&gt;")}</pre>
+<div id="dl-area"></div>
+<button class="btn" onclick="restoreData()">📥 تحميل JSON للاستيراد</button>
+<button class="btn btn2" onclick="copyJSON()">📋 نسخ البيانات</button>
+<div id="copy-ok" style="display:none;color:#27ae60;font-size:12px;margin-top:6px;">✅ تم النسخ! الصق في ملف .json واستورده</div>
 </div>
 <script>
 const _DATA = ${dataStr};
+var _d = new Date().toISOString().split("T")[0];
+var _fname = "DahabTrendy_Import_"+_d+".json";
+var _jsonStr = JSON.stringify(_DATA,null,2);
+
+// محاولة 1: data URI مباشر (يعمل في واتساب webview)
 function restoreData(){
-try{
-var jsonStr=JSON.stringify(_DATA,null,2);
-var blob=new Blob([jsonStr],{type:"application/json"});
-var a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-var d=new Date().toISOString().split("T")[0];
-a.download="DahabTrendy_Import_"+d+".json";
-document.body.appendChild(a);
-a.click();
-document.body.removeChild(a);
-alert("✅ تم تحميل ملف JSON!\\nالآن:\\n1. افتح نظام Dahab Trendy\\n2. اضغط زرار 📂 استيراد\\n3. اختر هذا الملف\\n\\nJSON downloaded! Now:\\n1. Open Dahab Trendy\\n2. Tap 📂 Import\\n3. Select this file");
-}catch(e){alert("خطأ: "+e.message);}
+  try{
+    // طريقة data URI — تعمل بدون Blob في webview
+    var b64 = btoa(unescape(encodeURIComponent(_jsonStr)));
+    var a = document.createElement("a");
+    a.href = "data:application/json;base64,"+b64;
+    a.download = _fname;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){
+      var ok = document.getElementById("dl-ok");
+      if(ok) ok.style.display="block";
+    }, 500);
+  } catch(e) {
+    // fallback: Blob
+    try{
+      var blob = new Blob([_jsonStr],{type:"application/json"});
+      var url = URL.createObjectURL(blob);
+      var a2 = document.createElement("a");
+      a2.href = url; a2.download = _fname;
+      document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+      setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+    } catch(e2) {
+      copyJSON();
+      alert("لا يمكن تحميل الملف تلقائياً من هذا المتصفح.\nتم نسخ البيانات — الصقها في ملف نصي واحفظه باسم: "+_fname);
+    }
+  }
 }
+
+// محاولة 2: نسخ JSON للـ clipboard
+function copyJSON(){
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(_jsonStr).then(function(){
+        var el=document.getElementById("copy-ok"); if(el) el.style.display="block";
+      });
+    } else {
+      var ta=document.createElement("textarea");
+      ta.value=_jsonStr; ta.style.position="fixed"; ta.style.opacity="0";
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy");
+      document.body.removeChild(ta);
+      var el=document.getElementById("copy-ok"); if(el) el.style.display="block";
+    }
+  } catch(e){ alert("خطأ في النسخ: "+e.message); }
+}
+
+// رابط تحميل مباشر عند تحميل الصفحة
+window.onload = function(){
+  try{
+    var b64 = btoa(unescape(encodeURIComponent(_jsonStr)));
+    var a = document.createElement("a");
+    a.href = "data:application/json;base64,"+b64;
+    a.download = _fname;
+    a.className = "btn";
+    a.style.cssText = "display:inline-block;margin:5px 5px 5px 0;background:#27ae60;color:#fff;";
+    a.textContent = "⬇️ تحميل مباشر";
+    var dlArea = document.getElementById("dl-area");
+    if(dlArea) dlArea.appendChild(a);
+  } catch(e){}
+};
 <\/script>
 </body>
 </html>`;
@@ -12164,6 +12448,58 @@ a.download=fileName;
 a.click();
 showToast("✓ تم حفظ النسخة الاحتياطية!");
 }
+function showImportGuide(){
+  // إنشاء modal إرشادي
+  const existing = document.getElementById('_import_guide_mdl');
+  if(existing) existing.remove();
+
+  const mdl = document.createElement('div');
+  mdl.id = '_import_guide_mdl';
+  mdl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  mdl.innerHTML = `
+  <div style="background:#1a1a2e;border:1.5px solid rgba(201,168,76,0.4);border-radius:16px;max-width:420px;width:100%;padding:0;overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:18px 20px;border-bottom:1px solid rgba(201,168,76,0.2);display:flex;align-items:center;gap:10px;">
+      <div style="font-size:24px;">📥</div>
+      <div>
+        <div style="color:#c9a84c;font-weight:800;font-size:16px;">استيراد نسخة احتياطية</div>
+        <div style="color:#7a8fa6;font-size:11px;margin-top:2px;">Import Backup</div>
+      </div>
+      <button onclick="document.getElementById('_import_guide_mdl').remove()" style="margin-right:auto;background:rgba(255,255,255,0.07);border:none;color:#7a8fa6;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px;">✕</button>
+    </div>
+    <div style="padding:18px 20px;">
+      <!-- طريقة واتساب -->
+      <div style="background:rgba(37,211,102,0.07);border:1px solid rgba(37,211,102,0.25);border-radius:10px;padding:14px;margin-bottom:14px;">
+        <div style="color:#25D366;font-weight:800;font-size:13px;margin-bottom:10px;">📱 استيراد من واتساب</div>
+        <div style="color:#a0b4c8;font-size:12px;line-height:1.9;">
+          <div style="margin-bottom:6px;">١. افتح واتساب وابحث عن رسالة النسخة الاحتياطية</div>
+          <div style="margin-bottom:6px;">٢. اضغط على الملف لفتحه</div>
+          <div style="margin-bottom:6px;">٣. اضغط زرار <strong style="color:#27ae60;">⬇️ تحميل مباشر</strong> أو <strong style="color:#c9a84c;">📥 تحميل JSON</strong></div>
+          <div style="margin-bottom:6px;">٤. إذا لم يعمل التحميل — اضغط <strong style="color:#c9a84c;">📋 نسخ البيانات</strong></div>
+          <div>٥. ارجع هنا واضغط <strong style="color:#c9a84c;">اختيار الملف</strong> أدناه ↓</div>
+        </div>
+      </div>
+      <!-- طريقة مباشرة -->
+      <div style="background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:14px;margin-bottom:16px;">
+        <div style="color:#c9a84c;font-weight:800;font-size:13px;margin-bottom:8px;">📂 استيراد مباشر</div>
+        <div style="color:#a0b4c8;font-size:12px;line-height:1.8;">
+          إذا كان الملف محفوظاً على جهازك (.html أو .json) يمكنك اختياره مباشرة
+        </div>
+      </div>
+      <!-- تحذير -->
+      <div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.25);border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:11px;color:#e07070;">
+        ⚠️ الاستيراد سيستبدل جميع البيانات الحالية — تأكد من وجود نسخة احتياطية أولاً
+      </div>
+      <!-- زر الاختيار -->
+      <button onclick="document.getElementById('_import_guide_mdl').remove();document.getElementById('impfile').click();"
+        style="width:100%;background:linear-gradient(135deg,#c9a84c,#e0c068);color:#1a1a2e;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;">
+        📂 اختيار الملف (.html أو .json)
+      </button>
+    </div>
+  </div>`;
+  document.body.appendChild(mdl);
+  mdl.addEventListener('click', e=>{ if(e.target===mdl) mdl.remove(); });
+}
+
 function importAll(e){
 const file=e.target.files[0];if(!file)return;
 _importFileAsync(file).catch(err=>{
@@ -22799,6 +23135,1791 @@ function importData(file){
 
     console.log('[Dahab LangFix] ✅ MutationObserver active — English default enforced');
   });
+
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     ══ DAHAB TRENDY v11 — UPGRADE PACK                              ══
+     ══ 1. IndexedDB كامل (الـ PRIMARY storage بدل localStorage)    ══
+     ══ 2. Service Worker كامل (offline-first)                       ══
+     ══ 3. WhatsApp Business API (إرسال رسائل حقيقية)              ══
+     ══ 4. QR Code للغرف (صفحة ضيف كاملة)                           ══
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+(function DahabUpgradePack(){
+'use strict';
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  UPGRADE 1: IndexedDB COMPLETE — Primary Storage Engine     ║
+// ║  يحل محل localStorage كمصدر رئيسي، يدعم 50MB+             ║
+// ╚══════════════════════════════════════════════════════════════╝
+const DTA_DB = (function(){
+  const DB_NAME = 'DahabTrendyV11';
+  const DB_VER  = 3;
+  // جميع الـ stores المطلوبة
+  const STORES = {
+    bookings:     { keyPath:'id' },
+    expenses:     { keyPath:'id' },
+    rooms:        { keyPath:'id' },
+    restaurantTx: { keyPath:'id' },
+    tours:        { keyPath:'id' },
+    blacklist:    { keyPath:'id' },
+    reviews:      { keyPath:'id' },
+    waitlist:     { keyPath:'id' },
+    housekeeping: { keyPath:'id' },
+    waMessages:   { keyPath:'id' },
+    qrScans:      { keyPath:'id' },
+    settings:     { keyPath:'key' },
+    snapshots:    { keyPath:'ts' },
+    media:        { keyPath:'id' }
+  };
+  let _db = null;
+  let _ready = false;
+  const _queue = [];
+
+  function open(){
+    return new Promise((resolve, reject)=>{
+      if(_db){ resolve(_db); return; }
+      const req = indexedDB.open(DB_NAME, DB_VER);
+
+      req.onupgradeneeded = e=>{
+        const db = e.target.result;
+        Object.entries(STORES).forEach(([name, opts])=>{
+          if(!db.objectStoreNames.contains(name)){
+            const store = db.createObjectStore(name, opts);
+            // فهارس للبحث السريع
+            if(name==='bookings'){
+              store.createIndex('byCI',  'ci',     {unique:false});
+              store.createIndex('byCO',  'co',     {unique:false});
+              store.createIndex('byRoom','room',   {unique:false});
+              store.createIndex('byName','name',   {unique:false});
+              store.createIndex('byStatus','status',{unique:false});
+            }
+            if(name==='waMessages'){
+              store.createIndex('byPhone','phone', {unique:false});
+              store.createIndex('byDate', 'ts',    {unique:false});
+            }
+            if(name==='qrScans'){
+              store.createIndex('byRoom','room',   {unique:false});
+              store.createIndex('byDate','ts',     {unique:false});
+            }
+          }
+        });
+      };
+      req.onsuccess = e=>{
+        _db = e.target.result;
+        _ready = true;
+        _queue.forEach(fn=> fn(_db));
+        _queue.length = 0;
+        resolve(_db);
+      };
+      req.onerror = e=>{
+        console.error('[DTA_DB] open failed:', e.target.error);
+        reject(e.target.error);
+      };
+      req.onblocked = ()=>{ console.warn('[DTA_DB] blocked — close other tabs'); };
+    });
+  }
+
+  // ─── CRUD Operations ───
+  function put(store, obj){
+    return open().then(db=> new Promise((res,rej)=>{
+      const tx  = db.transaction(store,'readwrite');
+      const req = tx.objectStore(store).put(
+        Object.assign({}, obj, {_ts: Date.now()})
+      );
+      req.onsuccess = ()=> res(true);
+      req.onerror   = e=> { console.warn('[DTA_DB] put error:', e.target.error); rej(e.target.error); };
+    })).catch(()=> false);
+  }
+
+  function getByKey(store, key){
+    return open().then(db=> new Promise((res)=>{
+      const req = db.transaction(store,'readonly').objectStore(store).get(key);
+      req.onsuccess = e=> res(e.target.result || null);
+      req.onerror   = ()=> res(null);
+    })).catch(()=> null);
+  }
+
+  function getAll(store){
+    return open().then(db=> new Promise((res)=>{
+      const req = db.transaction(store,'readonly').objectStore(store).getAll();
+      req.onsuccess = e=> res(e.target.result || []);
+      req.onerror   = ()=> res([]);
+    })).catch(()=> []);
+  }
+
+  function remove(store, key){
+    return open().then(db=> new Promise((res)=>{
+      const tx = db.transaction(store,'readwrite');
+      tx.objectStore(store).delete(key);
+      tx.oncomplete = ()=> res(true);
+      tx.onerror    = ()=> res(false);
+    })).catch(()=> false);
+  }
+
+  function clear(store){
+    return open().then(db=> new Promise((res)=>{
+      const tx = db.transaction(store,'readwrite');
+      tx.objectStore(store).clear();
+      tx.oncomplete = ()=> res(true);
+      tx.onerror    = ()=> res(false);
+    })).catch(()=> false);
+  }
+
+  function getByIndex(store, indexName, value){
+    return open().then(db=> new Promise((res)=>{
+      const tx    = db.transaction(store,'readonly');
+      const index = tx.objectStore(store).index(indexName);
+      const req   = index.getAll(value);
+      req.onsuccess = e=> res(e.target.result || []);
+      req.onerror   = ()=> res([]);
+    })).catch(()=> []);
+  }
+
+  // ─── Settings (key/value) ───
+  function setSetting(key, value){
+    return put('settings', {key, value, _ts: Date.now()});
+  }
+
+  function getSetting(key, fallback){
+    return getByKey('settings', key).then(r=> r ? r.value : fallback);
+  }
+
+  // ─── Bulk save (مصفوفة كاملة) ───
+  function bulkSave(store, arr){
+    if(!Array.isArray(arr)) return Promise.resolve(false);
+    return open().then(db=> new Promise((res)=>{
+      const tx = db.transaction(store,'readwrite');
+      const os = tx.objectStore(store);
+      os.clear();
+      arr.forEach(item=>{
+        if(item && item.id) os.put(Object.assign({},item,{_ts:Date.now()}));
+      });
+      tx.oncomplete = ()=> res(true);
+      tx.onerror    = ()=> res(false);
+    })).catch(()=> false);
+  }
+
+  // ─── Snapshot لـ undo ───
+  function saveSnapshot(label, data){
+    return put('snapshots', {
+      ts: Date.now(),
+      label,
+      data: JSON.stringify(data)
+    });
+  }
+
+  function getSnapshots(){
+    return getAll('snapshots').then(snaps=>
+      snaps.sort((a,b)=> b.ts - a.ts).slice(0,30)
+    );
+  }
+
+  // ─── Migration من localStorage ───
+  async function migrateFromLS(){
+    const done = await getSetting('_v11_migrated', false);
+    if(done) return;
+    console.log('[DTA_DB] Starting migration from localStorage...');
+    const map = {
+      bookings:     'dta_bk',
+      expenses:     'dta_ex',
+      restaurantTx: 'dta_rest',
+      tours:        'dta_tours',
+      blacklist:    'dta_blacklist',
+      reviews:      'dta_reviews',
+      waitlist:     'dta_wl'
+    };
+    for(const [store, lsKey] of Object.entries(map)){
+      try{
+        const raw = localStorage.getItem(lsKey);
+        if(!raw) continue;
+        const arr = JSON.parse(raw);
+        if(Array.isArray(arr) && arr.length){
+          await bulkSave(store, arr);
+          console.log('[DTA_DB] Migrated', arr.length, 'records →', store);
+        }
+      }catch(e){ console.warn('[DTA_DB] migrate error for', store, e); }
+    }
+    // settings
+    const settingsKeys = ['dta_rs','dta_pr','dta_du','dta_pol','dta_rate','dta_eur_rate'];
+    for(const k of settingsKeys){
+      try{
+        const v = localStorage.getItem(k);
+        if(v) await setSetting(k, JSON.parse(v));
+      }catch(e){}
+    }
+    await setSetting('_v11_migrated', true);
+    console.log('[DTA_DB] ✅ Migration complete');
+  }
+
+  // ─── Storage info ───
+  async function getStorageInfo(){
+    if(navigator.storage && navigator.storage.estimate){
+      const est = await navigator.storage.estimate();
+      return {
+        usedMB:  (est.usage/1024/1024).toFixed(1),
+        quotaGB: (est.quota/1024/1024/1024).toFixed(1),
+        pct:     Math.round(est.usage/est.quota*100)
+      };
+    }
+    return {usedMB:'?', quotaGB:'?', pct:0};
+  }
+
+  // ─── تصدير كامل لـ JSON ───
+  async function exportAllData(){
+    const data = {};
+    for(const store of Object.keys(STORES)){
+      data[store] = await getAll(store);
+    }
+    return data;
+  }
+
+  // Init
+  open().then(()=> migrateFromLS()).catch(e=> console.warn('[DTA_DB] init error:', e));
+
+  return {
+    put, getByKey, getAll, remove, clear, getByIndex,
+    setSetting, getSetting, bulkSave, saveSnapshot,
+    getSnapshots, migrateFromLS, getStorageInfo, exportAllData,
+    get ready(){ return _ready; }
+  };
+})();
+
+// ─── تحديث sv() ليحفظ في DTA_DB أيضاً ───
+if(typeof sv === 'function'){
+  const _sv_v11 = sv;
+  sv = function(key, val){
+    _sv_v11(key, val);
+    // حفظ في IDB بشكل parallel
+    const storeMap = {
+      'dta_bk':'bookings','dta_ex':'expenses','dta_rest':'restaurantTx',
+      'dta_tours':'tours','dta_blacklist':'blacklist'
+    };
+    if(storeMap[key] && Array.isArray(val)){
+      DTA_DB.bulkSave(storeMap[key], val).catch(()=>{});
+    } else {
+      DTA_DB.setSetting(key, val).catch(()=>{});
+    }
+  };
+}
+
+// ─── عرض معلومات التخزين في الـ nav ───
+document.addEventListener('DOMContentLoaded', function(){
+  DTA_DB.getStorageInfo().then(info=>{
+    console.log('[DTA_DB v11] Storage:', info.usedMB+'MB /'+info.quotaGB+'GB ('+info.pct+'%)');
+    if(info.pct > 75 && typeof sNotify==='function'){
+      sNotify('⚠️ مساحة IDB','استخدمت '+info.usedMB+'MB — صدّر بياناتك','urgent',5000);
+    }
+  });
+});
+
+window.DTA_DB = DTA_DB;
+console.log('[DTA_DB v11] ✅ Full IndexedDB engine ready — Primary storage');
+
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  UPGRADE 2: SERVICE WORKER — Offline-First PWA             ║
+// ╚══════════════════════════════════════════════════════════════╝
+(function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return;
+
+  // كود الـ Service Worker — يُحفظ كـ Blob URL
+  const SW_CODE = `
+const CACHE_NAME = 'dahab-trendy-v11';
+const OFFLINE_URL = 'offline.html';
+
+// الملفات الأساسية التي تُحفظ دائماً
+const PRECACHE = [
+  self.registration.scope
+];
+
+self.addEventListener('install', e=>{
+  console.log('[SW] Installing v11...');
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(cache=>{
+      // حاول تخزين الصفحة الرئيسية
+      return cache.addAll(PRECACHE).catch(err=>{
+        console.warn('[SW] precache partial fail:', err);
+      });
+    }).then(()=> self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e=>{
+  console.log('[SW] Activating v11...');
+  e.waitUntil(
+    caches.keys().then(keys=>
+      Promise.all(keys.filter(k=> k !== CACHE_NAME).map(k=> caches.delete(k)))
+    ).then(()=> self.clients.claim())
+  );
+});
+
+// استراتيجية: Network-first + Cache-fallback
+self.addEventListener('fetch', e=>{
+  const url = new URL(e.request.url);
+  
+  // تجاهل طلبات خارجية (analytics, fonts, etc.) من ناحية الـ cache
+  if(url.origin !== self.location.origin){
+    // للـ Google Fonts — cache-first
+    if(url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com'){
+      e.respondWith(
+        caches.open(CACHE_NAME).then(cache=>
+          cache.match(e.request).then(cached=>{
+            if(cached) return cached;
+            return fetch(e.request).then(resp=>{
+              if(resp && resp.ok) cache.put(e.request, resp.clone());
+              return resp;
+            }).catch(()=> new Response('', {status:503}));
+          })
+        )
+      );
+    }
+    return;
+  }
+
+  // للطلبات المحلية: Network-first
+  e.respondWith(
+    fetch(e.request).then(resp=>{
+      if(!resp || !resp.ok || e.request.method !== 'GET') return resp;
+      const cloned = resp.clone();
+      caches.open(CACHE_NAME).then(cache=> cache.put(e.request, cloned));
+      return resp;
+    }).catch(()=>{
+      // Offline fallback
+      return caches.match(e.request).then(cached=>{
+        if(cached) return cached;
+        // لو navigation request — أعد الصفحة المحفوظة
+        if(e.request.mode === 'navigate'){
+          return caches.match(self.registration.scope).then(page=>{
+            if(page) return page;
+            return new Response(
+              '<html dir="rtl"><body style="background:#0f0f1a;color:#c9a84c;font-family:Arial;text-align:center;padding:40px;"><h2>🏨 Dahab Trendy</h2><p>أنت offline — البيانات محفوظة محلياً</p><button onclick="location.reload()" style="background:#c9a84c;color:#1a1a2e;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🔄 إعادة المحاولة</button></body></html>',
+              {headers:{'Content-Type':'text/html;charset=utf-8'}}
+            );
+          });
+        }
+        return new Response('Offline', {status:503});
+      });
+    })
+  );
+});
+
+// Background Sync لإرسال واتساب المؤجل
+self.addEventListener('sync', e=>{
+  if(e.tag === 'wa-send-queue'){
+    e.waitUntil(processWAQueue());
+  }
+});
+
+async function processWAQueue(){
+  console.log('[SW] Processing WA queue...');
+  // سيتم معالجتها من الـ page عند الاتصال
+  self.clients.matchAll().then(clients=>{
+    clients.forEach(c=> c.postMessage({type:'WA_PROCESS_QUEUE'}));
+  });
+}
+
+// Push notifications
+self.addEventListener('push', e=>{
+  const data = e.data ? e.data.json() : {};
+  e.waitUntil(
+    self.registration.showNotification(data.title || '🏨 Dahab Trendy', {
+      body: data.body || '',
+      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230f0f1a" rx="20"/><text y=".9em" font-size="80">🏨</text></svg>',
+      badge: '',
+      tag: data.tag || 'dt-'+Date.now(),
+      data: data
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e=>{
+  e.notification.close();
+  e.waitUntil(
+    clients.openWindow(self.registration.scope)
+  );
+});
+
+console.log('[SW] Dahab Trendy v11 Service Worker loaded ✓');
+`;
+
+  try{
+    const blob = new Blob([SW_CODE], {type:'application/javascript'});
+    const swUrl = URL.createObjectURL(blob);
+
+    navigator.serviceWorker.register(swUrl, {scope: './'}).then(reg=>{
+      console.log('[SW] ✅ Registered, scope:', reg.scope);
+      
+      // استقبال رسائل من SW
+      navigator.serviceWorker.addEventListener('message', e=>{
+        if(e.data && e.data.type === 'WA_PROCESS_QUEUE'){
+          if(typeof DTA_WA !== 'undefined') DTA_WA.processQueue();
+        }
+      });
+
+      // عرض offline banner
+      window.addEventListener('offline', ()=>{
+        if(typeof sNotify==='function')
+          sNotify('📴 Offline','تعمل بدون إنترنت — البيانات محفوظة محلياً','info',5000);
+      });
+      window.addEventListener('online', ()=>{
+        if(typeof sNotify==='function')
+          sNotify('🌐 متصل','عاد الاتصال بالإنترنت','success',3000);
+        // معالجة الرسائل المؤجلة
+        if(typeof DTA_WA !== 'undefined') DTA_WA.processQueue();
+      });
+
+    }).catch(e=> console.warn('[SW] registration failed:', e));
+
+  } catch(e){ console.warn('[SW] Blob URL not supported:', e); }
+})();
+
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  UPGRADE 3: WhatsApp Business API — إرسال حقيقي            ║
+// ║  يدعم: wa.me links + Cloud API + قوالب مخصصة               ║
+// ╚══════════════════════════════════════════════════════════════╝
+const DTA_WA = (function(){
+
+  // ─── إعدادات API (تُحفظ في DTA_DB) ───
+  let _config = {
+    mode:      'wa_me',     // 'wa_me' أو 'cloud_api'
+    apiToken:  '',          // WhatsApp Cloud API token
+    phoneId:   '',          // Phone number ID
+    phoneNo:   '',          // رقم هاتفك لاستقبال الردود
+    prefix:    '+20',       // بادئة الأرقام
+    autoSend:  false        // إرسال تلقائي عند CI/CO
+  };
+  let _queue = [];   // رسائل مؤجلة (offline)
+  let _log   = [];   // سجل الإرسال
+
+  // تحميل الإعدادات
+  DTA_DB.getSetting('wa_config', null).then(cfg=>{ if(cfg) _config = Object.assign(_config, cfg); });
+  DTA_DB.getSetting('wa_queue',  []).then(q=>  { if(q)   _queue = q; });
+  DTA_DB.getSetting('wa_log',    []).then(l=>  { if(l)   _log   = l; });
+
+  // ─── تنسيق رقم الهاتف ───
+  function formatPhone(phone){
+    if(!phone) return '';
+    let p = phone.replace(/[\s\-\(\)]/g,'');
+    if(p.startsWith('0')) p = _config.prefix + p.slice(1);
+    if(!p.startsWith('+')) p = _config.prefix + p;
+    return p.replace(/\+/g,'');
+  }
+
+  // ─── القوالب الجاهزة ───
+  const TEMPLATES = {
+    booking_confirm: (b)=>`🏨 *Dahab Trendy — تأكيد الحجز*
+
+مرحباً *${b.name}* 👋
+
+تم تأكيد حجزك بنجاح ✅
+
+📋 *تفاصيل الحجز:*
+• غرفة: *${b.room}* (${b.type||'Standard'})
+• 🛬 الوصول: *${b.ci}*
+• 🛫 المغادرة: *${b.co}*
+• 🌙 عدد الليالي: *${b.nights||''}*
+• 💰 المبلغ الإجمالي: *${b.cur||'USD'} ${b.total||''}*
+• 💵 المدفوع: *${b.cur||'USD'} ${b.prepay||0}*
+• 📌 الرقم المرجعي: *${b.invNo||b.id}*
+
+📍 العنوان: Dahab, South Sinai, Egypt
+📞 واتساب: +20 109 953 1272
+
+شكراً لاختيارك Dahab Trendy 🙏
+نتطلع لاستقبالك!`,
+
+    checkin_welcome: (b)=>`🌟 *أهلاً وسهلاً في Dahab Trendy!*
+
+عزيزنا *${b.name}*،
+يسعدنا استقبالك اليوم! 🎉
+
+🏨 غرفتك: *${b.room}*
+🕐 وقت Check-in: *${new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}*
+
+*خدماتنا:*
+🍽️ مطعم متاح من 7 صباحاً حتى 11 مساءً
+🌊 قريبون من شاطئ دهب الجميل
+🛁 تنظيف الغرف يومياً
+
+📞 للطوارئ أو الخدمة: 0109 953 1272
+
+نتمنى لك إقامة ممتعة! 🌴`,
+
+    checkout_invoice: (b, total)=>`🧾 *Dahab Trendy — فاتورة المغادرة*
+
+عزيزنا *${b.name}*،
+شكراً جزيلاً لاختيارك Dahab Trendy 🙏
+
+📋 *ملخص الإقامة:*
+• 🛬 الوصول: ${b.ci}
+• 🛫 المغادرة: ${b.co}
+• 🌙 الليالي: ${b.nights||''}
+• 💰 إجمالي الفاتورة: *${b.cur||'USD'} ${total||b.total}*
+
+نأمل أن تكون إقامتك كانت مريحة ومتعة 😊
+سيسعدنا استقبالك مجدداً! 
+
+⭐ شاركنا رأيك على Google Maps
+نتمنى لك سفراً سعيداً 🌟`,
+
+    payment_reminder: (b, remaining)=>`⏰ *تذكير بالدفع — Dahab Trendy*
+
+عزيزنا *${b.name}*،
+
+نود التذكير بأن المبلغ المتبقي من حجزك هو:
+💰 *${b.cur||'USD'} ${remaining}*
+
+📌 رقم الحجز: ${b.invNo||b.id}
+📅 تاريخ المغادرة: ${b.co}
+
+للدفع يرجى التواصل معنا:
+📞 0109 953 1272
+
+شكراً لتعاونكم 🙏`,
+
+    birthday_greet: (name)=>`🎂 *كل سنة وأنت بخير!*
+
+عزيزنا *${name}*،
+
+بمناسبة عيد ميلادك،
+يتمنى لك فريق *Dahab Trendy* يوماً مليئاً بالسعادة والأفراح! 🎉🎊
+
+🌟 نشكرك على ثقتك بنا
+💛 نتطلع لاستضافتك مجدداً
+
+— فريق Dahab Trendy 🏨`,
+
+    review_request: (b)=>`⭐ *شاركنا رأيك — Dahab Trendy*
+
+عزيزنا *${b.name}*،
+
+شكراً لإقامتك معنا من ${b.ci} إلى ${b.co} 🙏
+
+رأيك يهمنا كثيراً وسيساعدنا على تحسين خدماتنا.
+هل يمكنك تقييمنا على Google Maps؟
+
+🔗 رابط التقييم: https://g.page/r/dahabtrendy
+
+📞 لأي استفسار: 0109 953 1272
+شكراً على وقتك الكريم! 😊`,
+
+    custom: (text)=> text
+  };
+
+  // ─── إرسال عبر wa.me (فتح واتساب) ───
+  function sendViaWaMe(phone, message){
+    const p = formatPhone(phone);
+    if(!p){ console.warn('[WA] No phone number'); return false; }
+    const url = `https://wa.me/${p}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+    return true;
+  }
+
+  // ─── إرسال عبر Cloud API (حقيقي) ───
+  async function sendViaCloudAPI(phone, message){
+    if(!_config.apiToken || !_config.phoneId){
+      console.warn('[WA] Cloud API not configured');
+      return {ok:false, error:'API not configured'};
+    }
+    const p = formatPhone(phone);
+    try{
+      const res = await fetch(
+        `https://graph.facebook.com/v18.0/${_config.phoneId}/messages`,
+        {
+          method:'POST',
+          headers:{
+            'Authorization': `Bearer ${_config.apiToken}`,
+            'Content-Type':  'application/json'
+          },
+          body: JSON.stringify({
+            messaging_product: 'whatsapp',
+            to: p,
+            type: 'text',
+            text: {body: message, preview_url: false}
+          })
+        }
+      );
+      const data = await res.json();
+      if(data.messages && data.messages[0]){
+        return {ok:true, msgId: data.messages[0].id};
+      }
+      return {ok:false, error: data.error?.message || 'Unknown error'};
+    }catch(e){
+      return {ok:false, error:e.message};
+    }
+  }
+
+  // ─── الإرسال الرئيسي ───
+  async function send(phone, message, opts={}){
+    const entry = {
+      id:    'WA-'+Date.now(),
+      phone: formatPhone(phone),
+      msg:   message,
+      ts:    Date.now(),
+      type:  opts.type || 'manual',
+      bookingId: opts.bookingId || '',
+      status: 'pending'
+    };
+
+    // حفظ في السجل
+    _log.unshift(entry);
+    if(_log.length > 200) _log.pop();
+    DTA_DB.setSetting('wa_log', _log);
+
+    if(_config.mode === 'cloud_api' && navigator.onLine){
+      const result = await sendViaCloudAPI(phone, message);
+      entry.status = result.ok ? 'sent' : 'failed';
+      entry.msgId  = result.msgId;
+      DTA_DB.setSetting('wa_log', _log);
+      // حفظ في DB
+      DTA_DB.put('waMessages', entry);
+      if(result.ok){
+        if(typeof sNotify==='function') sNotify('💬 واتساب','تم إرسال الرسالة بنجاح ✓','success',3000);
+      } else {
+        // fallback لـ wa.me
+        sendViaWaMe(phone, message);
+      }
+      return result;
+    } else {
+      // wa.me mode
+      const ok = sendViaWaMe(phone, message);
+      entry.status = ok ? 'opened' : 'no-phone';
+      DTA_DB.setSetting('wa_log', _log);
+      DTA_DB.put('waMessages', entry);
+      return {ok, mode:'wa_me'};
+    }
+  }
+
+  // ─── إرسال قالب ───
+  async function sendTemplate(templateName, phone, data, opts={}){
+    const fn = TEMPLATES[templateName];
+    if(!fn){ console.warn('[WA] Unknown template:', templateName); return {ok:false}; }
+    const msg = fn(data);
+    return send(phone, msg, Object.assign({type: templateName}, opts));
+  }
+
+  // ─── معالجة قائمة الانتظار (offline → online) ───
+  async function processQueue(){
+    if(!_queue.length || !navigator.onLine) return;
+    console.log('[WA] Processing queue:', _queue.length, 'messages');
+    const toProcess = [..._queue];
+    _queue.length = 0;
+    DTA_DB.setSetting('wa_queue', _queue);
+    for(const item of toProcess){
+      await send(item.phone, item.msg, {type: item.type, bookingId: item.bookingId});
+      await new Promise(r=> setTimeout(r, 500)); // delay بين الرسائل
+    }
+  }
+
+  // ─── حفظ في queue لو offline ───
+  function queueMessage(phone, message, opts={}){
+    _queue.push({phone, message, opts, ts: Date.now()});
+    DTA_DB.setSetting('wa_queue', _queue);
+    if(typeof sNotify==='function')
+      sNotify('📴 قائمة انتظار','الرسالة ستُرسل عند الاتصال بالإنترنت','info',3000);
+  }
+
+  // ─── الإرسال التلقائي عند CI/CO ───
+  function setupAutoSend(){
+    // patch confirmCI
+    const _ci = window.confirmCI;
+    if(typeof _ci === 'function' && _config.autoSend){
+      window.confirmCI = function(idx){
+        _ci(idx);
+        const bk = (window.bookings||[])[idx];
+        if(bk && bk.phone){
+          setTimeout(()=> sendTemplate('checkin_welcome', bk.phone, bk, {bookingId: bk.id}), 1500);
+        }
+      };
+    }
+    // patch confirmCO
+    const _co = window.confirmCO;
+    if(typeof _co === 'function' && _config.autoSend){
+      window.confirmCO = function(idx){
+        _co(idx);
+        const bk = (window.bookings||[])[idx];
+        if(bk && bk.phone){
+          const remaining = (bk.total||0) - (typeof calcPaid==='function'?calcPaid(bk):bk.prepay||0);
+          setTimeout(()=> sendTemplate('checkout_invoice', bk.phone, bk, remaining.toFixed(0), {bookingId: bk.id}), 1500);
+        }
+      };
+    }
+  }
+
+  // ─── واجهة إدارة الإعدادات ───
+  function openSettings(){
+    DTA_DB.getSetting('wa_config', _config).then(cfg=>{
+      if(cfg) _config = Object.assign(_config, cfg);
+
+      let modal = document.getElementById('wa-api-settings-modal');
+      if(!modal){
+        modal = document.createElement('div');
+        modal.id = 'wa-api-settings-modal';
+        modal.className = 'ovl';
+        document.body.appendChild(modal);
+      }
+      // تحميل القوالب المخصصة المحفوظة
+      const _savedApiTpls = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
+      const _apiTplDefs = {
+        booking_confirm:  { label:'✅ تأكيد حجز',        vars:'{name} {room} {type} {ci} {co} {nights} {cur} {total} {prepay} {invNo}' },
+        checkin_welcome:  { label:'🎉 ترحيب وصول',       vars:'{name} {room}' },
+        checkout_invoice: { label:'🧾 فاتورة مغادرة',    vars:'{name} {ci} {co} {nights} {cur} {total}' },
+        payment_reminder: { label:'⚠️ تذكير دفع',        vars:'{name} {cur} {remaining} {invNo} {co}' },
+        birthday_greet:   { label:'🎂 تهنئة عيد ميلاد',  vars:'{name}' },
+        review_request:   { label:'⭐ طلب تقييم',         vars:'{name} {ci} {co}' }
+      };
+      // القوالب الافتراضية كنص (للعرض والتعديل)
+      const _apiTplDefaults = {
+        booking_confirm: `🏨 *Dahab Trendy — تأكيد الحجز*\n\nمرحباً *{name}* 👋\n\nتم تأكيد حجزك بنجاح ✅\n\n📋 *تفاصيل الحجز:*\n• غرفة: *{room}* ({type})\n• 🛬 الوصول: *{ci}*\n• 🛫 المغادرة: *{co}*\n• 🌙 عدد الليالي: *{nights}*\n• 💰 المبلغ الإجمالي: *{cur} {total}*\n• 💵 المدفوع: *{cur} {prepay}*\n• 📌 الرقم المرجعي: *{invNo}*\n\n📍 العنوان: Dahab, South Sinai, Egypt\n📞 واتساب: +20 109 953 1272\n\nشكراً لاختيارك Dahab Trendy 🙏\nنتطلع لاستقبالك!`,
+        checkin_welcome: `🌟 *أهلاً وسهلاً في Dahab Trendy!*\n\nعزيزنا *{name}*،\nيسعدنا استقبالك اليوم! 🎉\n\n🏨 غرفتك: *{room}*\n\n*خدماتنا:*\n🍽️ مطعم متاح من 7 صباحاً حتى 11 مساءً\n🌊 قريبون من شاطئ دهب الجميل\n🛁 تنظيف الغرف يومياً\n\n📞 للطوارئ أو الخدمة: 0109 953 1272\n\nنتمنى لك إقامة ممتعة! 🌴`,
+        checkout_invoice: `🧾 *Dahab Trendy — فاتورة المغادرة*\n\nعزيزنا *{name}*،\nشكراً جزيلاً لاختيارك Dahab Trendy 🙏\n\n📋 *ملخص الإقامة:*\n• 🛬 الوصول: {ci}\n• 🛫 المغادرة: {co}\n• 🌙 الليالي: {nights}\n• 💰 إجمالي الفاتورة: *{cur} {total}*\n\nنأمل أن تكون إقامتك كانت مريحة ومتعة 😊\nسيسعدنا استقبالك مجدداً!\n\n⭐ شاركنا رأيك على Google Maps\nنتمنى لك سفراً سعيداً 🌟`,
+        payment_reminder: `⏰ *تذكير بالدفع — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nنود التذكير بأن المبلغ المتبقي من حجزك هو:\n💰 *{cur} {remaining}*\n\n📌 رقم الحجز: {invNo}\n📅 تاريخ المغادرة: {co}\n\nللدفع يرجى التواصل معنا:\n📞 0109 953 1272\n\nشكراً لتعاونكم 🙏`,
+        birthday_greet: `🎂 *كل سنة وأنت بخير!*\n\nعزيزنا *{name}*،\n\nبمناسبة عيد ميلادك،\nيتمنى لك فريق *Dahab Trendy* يوماً مليئاً بالسعادة والأفراح! 🎉🎊\n\n🌟 نشكرك على ثقتك بنا\n💛 نتطلع لاستضافتك مجدداً\n\n— فريق Dahab Trendy 🏨`,
+        review_request: `⭐ *شاركنا رأيك — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nشكراً لإقامتك معنا من {ci} إلى {co} 🙏\n\nرأيك يهمنا كثيراً وسيساعدنا على تحسين خدماتنا.\nهل يمكنك تقييمنا على Google Maps؟\n\n🔗 رابط التقييم: https://g.page/r/dahabtrendy\n\n📞 لأي استفسار: 0109 953 1272\nشكراً على وقتك الكريم! 😊`
+      };
+
+      modal.innerHTML = `
+<div class="mdl" style="max-width:560px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div style="color:var(--gold);font-size:15px;font-weight:700;">💬 إعدادات WhatsApp Business API</div>
+    <button onclick="this.closest('.ovl').classList.remove('on')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;">✕</button>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--bdr);padding-bottom:10px;">
+    <button id="waset-tab-config" onclick="waSetSwitchTab('config')" style="flex:1;padding:8px 6px;border-radius:7px;border:1px solid rgba(37,211,102,0.6);background:rgba(37,211,102,0.15);color:#4cda7a;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;">⚙️ الإعدادات</button>
+    <button id="waset-tab-tpls" onclick="waSetSwitchTab('tpls')" style="flex:1;padding:8px 6px;border-radius:7px;border:1px solid var(--bdr);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;">✏️ قوالب API</button>
+  </div>
+
+  <!-- TAB: الإعدادات -->
+  <div id="waset-pane-config">
+    <!-- Mode selector -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">وضع الإرسال</div>
+      <div style="display:flex;gap:8px;">
+        <button id="wa-mode-wame" onclick="setWAMode('wa_me')" style="flex:1;padding:10px;border-radius:8px;border:2px solid rgba(37,211,102,${_config.mode==='wa_me'?'1':'0.3'});background:rgba(37,211,102,${_config.mode==='wa_me'?'0.2':'0.05'});color:${_config.mode==='wa_me'?'#4cda7a':'var(--muted)'};cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;transition:all .2s;">
+          📱 wa.me<br><span style="font-size:10px;font-weight:400;">يفتح واتساب</span>
+        </button>
+        <button id="wa-mode-api" onclick="setWAMode('cloud_api')" style="flex:1;padding:10px;border-radius:8px;border:2px solid rgba(37,211,102,${_config.mode==='cloud_api'?'1':'0.3'});background:rgba(37,211,102,${_config.mode==='cloud_api'?'0.2':'0.05'});color:${_config.mode==='cloud_api'?'#4cda7a':'var(--muted)'};cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;transition:all .2s;">
+          🔗 Cloud API<br><span style="font-size:10px;font-weight:400;">إرسال مباشر</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Cloud API fields -->
+    <div id="wa-api-fields" style="display:${_config.mode==='cloud_api'?'block':'none'};">
+      <div style="background:rgba(37,211,102,0.07);border:1px solid rgba(37,211,102,0.25);border-radius:8px;padding:12px;margin-bottom:12px;font-size:11px;color:#4cda7a;line-height:1.8;">
+        📌 للحصول على الـ API Token:<br>
+        1. اذهب إلى <strong>developers.facebook.com</strong><br>
+        2. أنشئ تطبيق WhatsApp Business<br>
+        3. انسخ الـ Access Token و Phone Number ID
+      </div>
+      <div class="fld"><label>🔑 Access Token</label>
+        <input id="wa-api-token" type="password" placeholder="EAAxxxx..." value="${_config.apiToken}" style="font-family:monospace;">
+      </div>
+      <div class="fld"><label>📱 Phone Number ID</label>
+        <input id="wa-phone-id" placeholder="1234567890" value="${_config.phoneId}">
+      </div>
+    </div>
+
+    <!-- Common settings -->
+    <div class="fld"><label>🌍 بادئة الأرقام الافتراضية</label>
+      <select id="wa-prefix">
+        <option value="+20" ${_config.prefix==='+20'?'selected':''}>🇪🇬 مصر (+20)</option>
+        <option value="+966" ${_config.prefix==='+966'?'selected':''}>🇸🇦 السعودية (+966)</option>
+        <option value="+971" ${_config.prefix==='+971'?'selected':''}>🇦🇪 الإمارات (+971)</option>
+        <option value="+44"  ${_config.prefix==='+44'?'selected':''}>🇬🇧 UK (+44)</option>
+        <option value="+1"   ${_config.prefix==='+1'?'selected':''}>🇺🇸 USA (+1)</option>
+        <option value="+49"  ${_config.prefix==='+49'?'selected':''}>🇩🇪 Germany (+49)</option>
+      </select>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 12px;">
+      <input type="checkbox" id="wa-auto-send" ${_config.autoSend?'checked':''} style="width:16px;height:16px;accent-color:#25D366;">
+      <label for="wa-auto-send" style="font-size:12px;color:var(--text);letter-spacing:0;text-transform:none;margin:0;">
+        إرسال تلقائي عند Check-in/Check-out
+      </label>
+    </div>
+
+    <!-- Send test -->
+    <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:8px;">🧪 اختبار الإرسال</div>
+      <div style="display:flex;gap:8px;">
+        <input id="wa-test-phone" placeholder="+20XXXXXXXXXX" style="flex:2;">
+        <button onclick="testWASend()" class="btn bgr bsm" style="flex:1;white-space:nowrap;">📤 اختبار</button>
+      </div>
+    </div>
+
+    <!-- Message log -->
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:8px;">📋 سجل آخر الرسائل (${_log.length})</div>
+      <div style="max-height:150px;overflow-y:auto;background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;">
+        ${_log.slice(0,10).map(l=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;">
+            <span style="color:${l.status==='sent'||l.status==='opened'?'#4cda7a':'var(--muted)'};">
+              ${l.status==='sent'?'✅':l.status==='opened'?'📱':l.status==='failed'?'❌':'⏳'} 
+              ${l.phone}
+            </span>
+            <span style="color:var(--muted);font-size:10px;">${new Date(l.ts).toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'})}</span>
+            <span style="background:rgba(37,211,102,0.1);color:#4cda7a;border-radius:4px;padding:1px 6px;font-size:9px;">${l.type}</span>
+          </div>`).join('')||'<div style="color:var(--muted);text-align:center;padding:10px;">لا توجد رسائل بعد</div>'}
+      </div>
+    </div>
+
+    <div class="flex mt">
+      <button onclick="saveWASettings()" class="btn bgr" style="flex:2;">💾 حفظ الإعدادات</button>
+      <button onclick="this.closest('.ovl').classList.remove('on')" class="btn bb" style="flex:1;">إغلاق</button>
+    </div>
+  </div>
+
+  <!-- TAB: قوالب API -->
+  <div id="waset-pane-tpls" style="display:none;">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.7;">
+      عدّل نصوص القوالب المُستخدمة عند الإرسال التلقائي والإرسال من بطاقة الحجز.<br>
+      <span style="color:#4cda7a;">المتغيرات المتاحة تظهر أسفل كل قالب — استخدمها كما هي بالأقواس.</span>
+    </div>
+
+    <!-- قائمة القوالب -->
+    <div id="waset-tpl-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+      ${Object.entries(_apiTplDefs).map(([key,def])=>`
+        <div style="background:rgba(255,255,255,0.04);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;">
+          <div onclick="waSetToggleTpl('${key}')" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;cursor:pointer;user-select:none;">
+            <span style="font-size:13px;font-weight:700;color:${_savedApiTpls[key]?'#4cda7a':'var(--text)'};">${def.label}${_savedApiTpls[key]?' ✏️':''}</span>
+            <span id="waset-tpl-arrow-${key}" style="color:var(--muted);font-size:12px;">▼</span>
+          </div>
+          <div id="waset-tpl-body-${key}" style="display:none;padding:0 12px 12px;">
+            <textarea id="waset-tpl-ta-${key}" style="width:100%;min-height:130px;font-size:11px;line-height:1.6;background:rgba(0,0,0,0.25);border:1px solid rgba(37,211,102,0.25);border-radius:6px;padding:8px;color:var(--text);resize:vertical;font-family:Arial,sans-serif;direction:rtl;" placeholder="اكتب نص القالب هنا...">${(_savedApiTpls[key]||_apiTplDefaults[key]||'').replace(/</g,'&lt;')}</textarea>
+            <div style="font-size:10px;color:#4cda7a;margin-top:5px;direction:ltr;">📎 ${def.vars}</div>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button onclick="waSetSaveTpl('${key}')" class="btn bg bsm" style="flex:1;justify-content:center;">💾 حفظ</button>
+              <button onclick="waSetResetTpl('${key}')" class="btn br bsm" style="flex:1;justify-content:center;">↩ استعادة الأصلي</button>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      <button onclick="waSetSaveAllTpls()" class="btn bgr" style="flex:2;">💾 حفظ جميع القوالب</button>
+      <button onclick="waSetResetAllTpls()" class="btn br" style="flex:1;">↩ استعادة الكل</button>
+    </div>
+  </div>
+
+</div>`;
+      modal.classList.add('on');
+    });
+  }
+
+  window.setWAMode = function(mode){
+    _config.mode = mode;
+    document.getElementById('wa-api-fields').style.display = mode==='cloud_api'?'block':'none';
+    ['wame','api'].forEach(m=>{
+      const btn = document.getElementById('wa-mode-'+m);
+      const active = (m==='wame' && mode==='wa_me') || (m==='api' && mode==='cloud_api');
+      if(btn){
+        btn.style.borderColor = active?'rgba(37,211,102,1)':'rgba(37,211,102,0.3)';
+        btn.style.background  = active?'rgba(37,211,102,0.2)':'rgba(37,211,102,0.05)';
+        btn.style.color       = active?'#4cda7a':'var(--muted)';
+      }
+    });
+  };
+
+  window.saveWASettings = function(){
+    _config.mode      = _config.mode;
+    _config.apiToken  = document.getElementById('wa-api-token')?.value||'';
+    _config.phoneId   = document.getElementById('wa-phone-id')?.value||'';
+    _config.prefix    = document.getElementById('wa-prefix')?.value||'+20';
+    _config.autoSend  = document.getElementById('wa-auto-send')?.checked||false;
+    DTA_DB.setSetting('wa_config', _config).then(()=>{
+      if(typeof sNotify==='function') sNotify('✅ WhatsApp','تم حفظ الإعدادات بنجاح','success',2500);
+      document.getElementById('wa-api-settings-modal')?.classList.remove('on');
+      setupAutoSend();
+    });
+  };
+
+  window.testWASend = function(){
+    const phone = document.getElementById('wa-test-phone')?.value;
+    if(!phone){ if(typeof sNotify==='function') sNotify('⚠️','أدخل رقم الهاتف','urgent',2000); return; }
+    send(phone, '🏨 *Dahab Trendy* — رسالة اختبار ✓\nالنظام يعمل بشكل صحيح! ✅', {type:'test'});
+  };
+
+  // ─── تبديل تبويبات modal الإعدادات ───
+  window.waSetSwitchTab = function(tab){
+    ['config','tpls'].forEach(t=>{
+      const pane = document.getElementById('waset-pane-'+t);
+      const btn  = document.getElementById('waset-tab-'+t);
+      if(pane) pane.style.display = t===tab ? '' : 'none';
+      if(btn){
+        btn.style.borderColor  = t===tab ? 'rgba(37,211,102,0.6)' : 'var(--bdr)';
+        btn.style.background   = t===tab ? 'rgba(37,211,102,0.15)' : 'transparent';
+        btn.style.color        = t===tab ? '#4cda7a' : 'var(--muted)';
+      }
+    });
+  };
+
+  // ─── فتح/إغلاق قالب واحد (accordion) ───
+  window.waSetToggleTpl = function(key){
+    const body  = document.getElementById('waset-tpl-body-'+key);
+    const arrow = document.getElementById('waset-tpl-arrow-'+key);
+    if(!body) return;
+    const open = body.style.display === 'none' || body.style.display === '';
+    // أغلق الباقين
+    ['booking_confirm','checkin_welcome','checkout_invoice','payment_reminder','birthday_greet','review_request'].forEach(k=>{
+      const b = document.getElementById('waset-tpl-body-'+k);
+      const a = document.getElementById('waset-tpl-arrow-'+k);
+      if(b) b.style.display = 'none';
+      if(a) a.textContent = '▼';
+    });
+    if(open){ body.style.display = ''; if(arrow) arrow.textContent = '▲'; }
+  };
+
+  // ─── حفظ قالب واحد ───
+  window.waSetSaveTpl = function(key){
+    const ta = document.getElementById('waset-tpl-ta-'+key);
+    if(!ta) return;
+    const saved = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
+    saved[key] = ta.value;
+    localStorage.setItem('dta_wa_api_tpls', JSON.stringify(saved));
+    // تحديث لون العنوان
+    const header = document.querySelector('#waset-tpl-body-'+key)?.previousElementSibling?.querySelector('span');
+    if(header && !header.textContent.includes('✏️')) header.textContent += ' ✏️';
+    if(header) header.style.color = '#4cda7a';
+    if(typeof sNotify==='function') sNotify('💾 تم الحفظ','تم حفظ القالب بنجاح','success',2000);
+    // تطبيق فوري على TEMPLATES
+    _applyCustomTplToEngine(key, ta.value);
+  };
+
+  // ─── استعادة قالب واحد للأصلي ───
+  window.waSetResetTpl = function(key){
+    const _defaults = {
+      booking_confirm: `🏨 *Dahab Trendy — تأكيد الحجز*\n\nمرحباً *{name}* 👋\n\nتم تأكيد حجزك بنجاح ✅\n\n📋 *تفاصيل الحجز:*\n• غرفة: *{room}* ({type})\n• 🛬 الوصول: *{ci}*\n• 🛫 المغادرة: *{co}*\n• 🌙 عدد الليالي: *{nights}*\n• 💰 المبلغ الإجمالي: *{cur} {total}*\n• 💵 المدفوع: *{cur} {prepay}*\n• 📌 الرقم المرجعي: *{invNo}*\n\n📍 العنوان: Dahab, South Sinai, Egypt\n📞 واتساب: +20 109 953 1272\n\nشكراً لاختيارك Dahab Trendy 🙏\nنتطلع لاستقبالك!`,
+      checkin_welcome: `🌟 *أهلاً وسهلاً في Dahab Trendy!*\n\nعزيزنا *{name}*،\nيسعدنا استقبالك اليوم! 🎉\n\n🏨 غرفتك: *{room}*\n\n*خدماتنا:*\n🍽️ مطعم متاح من 7 صباحاً حتى 11 مساءً\n🌊 قريبون من شاطئ دهب الجميل\n🛁 تنظيف الغرف يومياً\n\n📞 للطوارئ أو الخدمة: 0109 953 1272\n\nنتمنى لك إقامة ممتعة! 🌴`,
+      checkout_invoice: `🧾 *Dahab Trendy — فاتورة المغادرة*\n\nعزيزنا *{name}*،\nشكراً جزيلاً لاختيارك Dahab Trendy 🙏\n\n📋 *ملخص الإقامة:*\n• 🛬 الوصول: {ci}\n• 🛫 المغادرة: {co}\n• 🌙 الليالي: {nights}\n• 💰 إجمالي الفاتورة: *{cur} {total}*\n\nنأمل أن تكون إقامتك كانت مريحة ومتعة 😊\nسيسعدنا استقبالك مجدداً!\n\n⭐ شاركنا رأيك على Google Maps\nنتمنى لك سفراً سعيداً 🌟`,
+      payment_reminder: `⏰ *تذكير بالدفع — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nنود التذكير بأن المبلغ المتبقي من حجزك هو:\n💰 *{cur} {remaining}*\n\n📌 رقم الحجز: {invNo}\n📅 تاريخ المغادرة: {co}\n\nللدفع يرجى التواصل معنا:\n📞 0109 953 1272\n\nشكراً لتعاونكم 🙏`,
+      birthday_greet: `🎂 *كل سنة وأنت بخير!*\n\nعزيزنا *{name}*،\n\nبمناسبة عيد ميلادك،\nيتمنى لك فريق *Dahab Trendy* يوماً مليئاً بالسعادة والأفراح! 🎉🎊\n\n🌟 نشكرك على ثقتك بنا\n💛 نتطلع لاستضافتك مجدداً\n\n— فريق Dahab Trendy 🏨`,
+      review_request: `⭐ *شاركنا رأيك — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nشكراً لإقامتك معنا من {ci} إلى {co} 🙏\n\nرأيك يهمنا كثيراً وسيساعدنا على تحسين خدماتنا.\nهل يمكنك تقييمنا على Google Maps؟\n\n🔗 رابط التقييم: https://g.page/r/dahabtrendy\n\n📞 لأي استفسار: 0109 953 1272\nشكراً على وقتك الكريم! 😊`
+    };
+    const ta = document.getElementById('waset-tpl-ta-'+key);
+    if(ta) ta.value = _defaults[key]||'';
+    const saved = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
+    delete saved[key];
+    localStorage.setItem('dta_wa_api_tpls', JSON.stringify(saved));
+    const header = document.querySelector('#waset-tpl-body-'+key)?.previousElementSibling?.querySelector('span');
+    if(header){ header.textContent = header.textContent.replace(' ✏️',''); header.style.color = 'var(--text)'; }
+    if(typeof sNotify==='function') sNotify('↩ تمت الاستعادة','تم استعادة القالب الأصلي','info',2000);
+    _applyCustomTplToEngine(key, null);
+  };
+
+  // ─── حفظ جميع القوالب دفعة واحدة ───
+  window.waSetSaveAllTpls = function(){
+    const keys = ['booking_confirm','checkin_welcome','checkout_invoice','payment_reminder','birthday_greet','review_request'];
+    const saved = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
+    keys.forEach(key=>{
+      const ta = document.getElementById('waset-tpl-ta-'+key);
+      if(ta && ta.value.trim()){ saved[key] = ta.value; _applyCustomTplToEngine(key, ta.value); }
+    });
+    localStorage.setItem('dta_wa_api_tpls', JSON.stringify(saved));
+    if(typeof sNotify==='function') sNotify('💾 تم الحفظ','تم حفظ جميع القوالب','success',2500);
+  };
+
+  // ─── استعادة جميع القوالب ───
+  window.waSetResetAllTpls = function(){
+    if(!confirm('هل تريد استعادة جميع القوالب للنصوص الأصلية؟')) return;
+    localStorage.removeItem('dta_wa_api_tpls');
+    ['booking_confirm','checkin_welcome','checkout_invoice','payment_reminder','birthday_greet','review_request'].forEach(k=>{
+      _applyCustomTplToEngine(k, null);
+    });
+    if(typeof sNotify==='function') sNotify('↩ تمت الاستعادة','تم استعادة جميع القوالب الأصلية','info',2500);
+    // أعد فتح الـ modal لتحديث النصوص
+    document.getElementById('wa-api-settings-modal')?.classList.remove('on');
+    setTimeout(()=> DTA_WA.openSettings(), 300);
+  };
+
+  // ─── تطبيق القالب المخصص على محرك TEMPLATES ───
+  function _applyCustomTplToEngine(key, customText){
+    // دالة تحويل النص + {vars} إلى template function
+    const _makeVarFn = (text, key)=>{
+      if(!text) return null;
+      // بناء function تستبدل {var} بقيم الـ object
+      return (b, extra)=>{
+        const vals = Object.assign({
+          name: b.name||'', room: b.room||'', type: b.type||'Standard',
+          ci: b.ci||'', co: b.co||'', nights: b.nights||'',
+          cur: b.cur||'USD', total: b.total||'', prepay: b.prepay||0,
+          invNo: b.invNo||b.id||'', remaining: extra||''
+        }, b);
+        return text.replace(/\{(\w+)\}/g, (_,k)=> vals[k]!==undefined ? vals[k] : '{'+k+'}');
+      };
+    };
+    if(customText){
+      TEMPLATES[key] = _makeVarFn(customText, key);
+    } else {
+      // استعادة الدالة الأصلية من الـ defaults
+      const _origMap = {
+        booking_confirm:  (b)=>`🏨 *Dahab Trendy — تأكيد الحجز*\n\nمرحباً *${b.name}* 👋\n\nتم تأكيد حجزك بنجاح ✅\n\n📋 *تفاصيل الحجز:*\n• غرفة: *${b.room}* (${b.type||'Standard'})\n• 🛬 الوصول: *${b.ci}*\n• 🛫 المغادرة: *${b.co}*\n• 🌙 عدد الليالي: *${b.nights||''}*\n• 💰 المبلغ الإجمالي: *${b.cur||'USD'} ${b.total||''}*\n• 💵 المدفوع: *${b.cur||'USD'} ${b.prepay||0}*\n• 📌 الرقم المرجعي: *${b.invNo||b.id}*\n\n📍 العنوان: Dahab, South Sinai, Egypt\n📞 واتساب: +20 109 953 1272\n\nشكراً لاختيارك Dahab Trendy 🙏\nنتطلع لاستقبالك!`,
+        checkin_welcome:  (b)=>`🌟 *أهلاً وسهلاً في Dahab Trendy!*\n\nعزيزنا *${b.name}*،\nيسعدنا استقبالك اليوم! 🎉\n\n🏨 غرفتك: *${b.room}*\n\n*خدماتنا:*\n🍽️ مطعم متاح من 7 صباحاً حتى 11 مساءً\n🌊 قريبون من شاطئ دهب الجميل\n🛁 تنظيف الغرف يومياً\n\n📞 للطوارئ أو الخدمة: 0109 953 1272\n\nنتمنى لك إقامة ممتعة! 🌴`,
+        checkout_invoice: (b,total)=>`🧾 *Dahab Trendy — فاتورة المغادرة*\n\nعزيزنا *${b.name}*،\nشكراً جزيلاً لاختيارك Dahab Trendy 🙏\n\n📋 *ملخص الإقامة:*\n• 🛬 الوصول: ${b.ci}\n• 🛫 المغادرة: ${b.co}\n• 🌙 الليالي: ${b.nights||''}\n• 💰 إجمالي الفاتورة: *${b.cur||'USD'} ${total||b.total}*\n\nنأمل أن تكون إقامتك كانت مريحة ومتعة 😊\nسيسعدنا استقبالك مجدداً!\n\n⭐ شاركنا رأيك على Google Maps\nنتمنى لك سفراً سعيداً 🌟`,
+        payment_reminder: (b,remaining)=>`⏰ *تذكير بالدفع — Dahab Trendy*\n\nعزيزنا *${b.name}*،\n\nنود التذكير بأن المبلغ المتبقي من حجزك هو:\n💰 *${b.cur||'USD'} ${remaining}*\n\n📌 رقم الحجز: ${b.invNo||b.id}\n📅 تاريخ المغادرة: ${b.co}\n\nللدفع يرجى التواصل معنا:\n📞 0109 953 1272\n\nشكراً لتعاونكم 🙏`,
+        birthday_greet:   (name)=>`🎂 *كل سنة وأنت بخير!*\n\nعزيزنا *${name}*،\n\nبمناسبة عيد ميلادك،\nيتمنى لك فريق *Dahab Trendy* يوماً مليئاً بالسعادة والأفراح! 🎉🎊\n\n🌟 نشكرك على ثقتك بنا\n💛 نتطلع لاستضافتك مجدداً\n\n— فريق Dahab Trendy 🏨`,
+        review_request:   (b)=>`⭐ *شاركنا رأيك — Dahab Trendy*\n\nعزيزنا *${b.name}*،\n\nشكراً لإقامتك معنا من ${b.ci} إلى ${b.co} 🙏\n\nرأيك يهمنا كثيراً وسيساعدنا على تحسين خدماتنا.\nهل يمكنك تقييمنا على Google Maps؟\n\n🔗 رابط التقييم: https://g.page/r/dahabtrendy\n\n📞 لأي استفسار: 0109 953 1272\nشكراً على وقتك الكريم! 😊`
+      };
+      if(_origMap[key]) TEMPLATES[key] = _origMap[key];
+    }
+  }
+
+  // ─── تطبيق القوالب المحفوظة عند التحميل ───
+  (function _loadSavedApiTpls(){
+    try{
+      const saved = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
+      Object.keys(saved).forEach(k=>{ if(saved[k]) _applyCustomTplToEngine(k, saved[k]); });
+    }catch(e){}
+  })();
+
+  // ─── قالب الإرسال السريع من بطاقة الحجز ───
+  window.openWASendModal = function(bkIdx){
+    const bk = (window.bookings||[])[bkIdx];
+    if(!bk){ return; }
+
+    let modal = document.getElementById('wa-send-modal');
+    if(!modal){
+      modal = document.createElement('div');
+      modal.id = 'wa-send-modal';
+      modal.className = 'ovl';
+      document.body.appendChild(modal);
+    }
+
+    const templates = [
+      {key:'booking_confirm', label:'✅ تأكيد الحجز'},
+      {key:'checkin_welcome', label:'🎉 ترحيب Check-in'},
+      {key:'checkout_invoice',label:'🧾 فاتورة Check-out'},
+      {key:'payment_reminder',label:'⏰ تذكير بالدفع'},
+      {key:'review_request',  label:'⭐ طلب تقييم'},
+    ];
+
+    modal.innerHTML = `
+<div class="mdl" style="max-width:500px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <div style="color:#4cda7a;font-size:15px;font-weight:700;">💬 إرسال واتساب — ${bk.name}</div>
+    <button onclick="this.closest('.ovl').classList.remove('on')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;">✕</button>
+  </div>
+
+  <div style="background:rgba(37,211,102,0.07);border:1px solid rgba(37,211,102,0.2);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;">
+    📞 ${bk.phone||'لا يوجد رقم'} &nbsp;·&nbsp; 🏨 غرفة ${bk.room} &nbsp;·&nbsp; 📅 ${bk.ci} → ${bk.co}
+  </div>
+
+  <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">اختر القالب</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+    ${templates.map((t,i)=>`
+      <button onclick="selectWATemplate('${t.key}',${bkIdx})" 
+        style="padding:9px 10px;border-radius:8px;border:1px solid rgba(37,211,102,0.25);background:rgba(37,211,102,0.06);color:var(--text);cursor:pointer;font-size:11px;font-family:Arial,sans-serif;text-align:right;transition:all .15s;"
+        onmouseover="this.style.background='rgba(37,211,102,0.15)';this.style.borderColor='rgba(37,211,102,0.5)';"
+        onmouseout="this.style.background='rgba(37,211,102,0.06)';this.style.borderColor='rgba(37,211,102,0.25)';">
+        ${t.label}
+      </button>`).join('')}
+  </div>
+
+  <div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">✏️ رسالة مخصصة</div>
+  <textarea id="wa-custom-msg" rows="5" placeholder="اكتب رسالتك هنا..." style="width:100%;background:var(--inp);border:1px solid var(--bdr);border-radius:8px;padding:10px;color:var(--text);font-size:12px;font-family:Arial,sans-serif;outline:none;resize:vertical;">${TEMPLATES.booking_confirm(bk)}</textarea>
+
+  <!-- Preview bubble -->
+  <div style="margin-top:10px;background:#0b1418;border-radius:10px;padding:12px;max-height:160px;overflow-y:auto;">
+    <div id="wa-bubble-preview" style="background:#005c4b;border-radius:12px 12px 3px 12px;padding:10px 13px;display:inline-block;max-width:95%;font-size:11px;color:#e9edef;line-height:1.7;white-space:pre-wrap;word-break:break-word;"></div>
+  </div>
+
+  <div class="flex mt">
+    <button onclick="sendWAFromModal(${bkIdx})" class="btn bgr" style="flex:2;">
+      💬 ${bk.phone?'إرسال عبر واتساب':'فتح واتساب'}
+    </button>
+    <button onclick="copyWAMsg()" class="btn bb" style="flex:1;">📋 نسخ</button>
+    <button onclick="this.closest('.ovl').classList.remove('on')" class="btn bb" style="flex:1;">إغلاق</button>
+  </div>
+</div>`;
+    modal.classList.add('on');
+
+    // preview
+    const ta = document.getElementById('wa-custom-msg');
+    const preview = document.getElementById('wa-bubble-preview');
+    if(ta && preview){
+      preview.textContent = ta.value;
+      ta.addEventListener('input', ()=> preview.textContent = ta.value);
+    }
+  };
+
+  window.selectWATemplate = function(tpl, bkIdx){
+    const bk = (window.bookings||[])[bkIdx];
+    if(!bk) return;
+    const remaining = (bk.total||0) - (typeof calcPaid==='function'?calcPaid(bk):bk.prepay||0);
+    const msg = tpl==='checkout_invoice'
+      ? TEMPLATES[tpl](bk, remaining.toFixed(0))
+      : (TEMPLATES[tpl] ? TEMPLATES[tpl](bk) : '');
+    const ta = document.getElementById('wa-custom-msg');
+    const preview = document.getElementById('wa-bubble-preview');
+    if(ta){ ta.value = msg; }
+    if(preview){ preview.textContent = msg; }
+  };
+
+  window.sendWAFromModal = function(bkIdx){
+    const bk = (window.bookings||[])[bkIdx];
+    if(!bk) return;
+    const msg = document.getElementById('wa-custom-msg')?.value||'';
+    if(!msg.trim()){ if(typeof sNotify==='function') sNotify('⚠️','الرسالة فارغة','urgent',2000); return; }
+    const phone = bk.phone || prompt('أدخل رقم الهاتف:');
+    if(!phone) return;
+    DTA_WA.send(phone, msg, {type:'manual', bookingId: bk.id});
+    document.getElementById('wa-send-modal')?.classList.remove('on');
+  };
+
+  window.copyWAMsg = function(){
+    const msg = document.getElementById('wa-custom-msg')?.value||'';
+    navigator.clipboard.writeText(msg).then(()=>{
+      if(typeof sNotify==='function') sNotify('📋 نسخ','تم نسخ الرسالة للحافظة','success',2000);
+    }).catch(()=>{
+      const ta = document.createElement('textarea');
+      ta.value = msg; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      if(typeof sNotify==='function') sNotify('📋 نسخ','تم النسخ','success',2000);
+    });
+  };
+
+  // ─── زر WA في nav ───
+  document.addEventListener('DOMContentLoaded', function(){
+    const nav = document.querySelector('.nav');
+    if(!nav) return;
+    const btn = document.createElement('button');
+    btn.className = 'nb';
+    btn.innerHTML = '⚙️ WA API';
+    btn.title = 'إعدادات WhatsApp API';
+    btn.style.cssText = 'background:rgba(37,211,102,0.12);color:#4cda7a;border-color:rgba(37,211,102,0.35);font-weight:700;';
+    btn.onclick = ()=> DTA_WA.openSettings();
+    nav.appendChild(btn);
+
+    // إضافة زر WA في جدول الحجوزات
+    patchBookingTableWA();
+  });
+
+  // ─── patch جدول الحجوزات لإضافة زر WA ───
+  function patchBookingTableWA(){
+    const _renderBk = window.renderBookings;
+    if(typeof _renderBk !== 'function') return;
+    window.renderBookings = function(){
+      _renderBk.apply(this, arguments);
+      setTimeout(()=>{
+        document.querySelectorAll('[data-bkidx]').forEach(row=>{
+          const idx = parseInt(row.dataset.bkidx);
+          const bk  = (window.bookings||[])[idx];
+          if(!bk || !bk.phone) return;
+          if(row.querySelector('.wa-inline-btn')) return;
+          const btn = document.createElement('button');
+          btn.className = 'btn bgr bsm wa-inline-btn';
+          btn.innerHTML = '💬';
+          btn.title = 'إرسال واتساب';
+          btn.onclick = e=>{ e.stopPropagation(); window.openWASendModal(idx); };
+          row.appendChild(btn);
+        });
+      }, 300);
+    };
+  }
+
+  setupAutoSend();
+
+  return {
+    send, sendTemplate, openSettings, processQueue,
+    queueMessage, formatPhone, templates: TEMPLATES,
+    get log(){ return _log; },
+    get config(){ return _config; }
+  };
+})();
+
+window.DTA_WA = DTA_WA;
+console.log('[DTA_WA v11] ✅ WhatsApp Business API module ready');
+
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  UPGRADE 4: QR CODE للغرف — صفحة ضيف كاملة               ║
+// ╚══════════════════════════════════════════════════════════════╝
+const DTA_QR = (function(){
+
+  // ─── مولّد QR Code (بدون library خارجية) ───
+  // خوارزمية QR Code مبسطة تولد SVG
+  function generateQRSVG(text, size){
+    size = size || 200;
+    // نستخدم QR API خارجية (مجانية وموثوقة)
+    const encoded = encodeURIComponent(text);
+    const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}&format=svg&color=1a1a2e&bgcolor=fdf6e3&margin=2`;
+    return apiUrl;
+  }
+
+  // ─── صفحة الضيف (HTML مستقل) ───
+  function buildGuestPage(roomNo){
+    const room = String(roomNo);
+    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
+    // ── قراءة إعدادات QR من localStorage ──
+    const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
+    const wifiName     = qrs.wifiName     || 'DahabTrendy_Guest';
+    const wifiPass     = qrs.wifiPass     || 'dahab2024';
+    const waNum        = qrs.waNum        || '201099531272';
+    const checkinTime  = qrs.checkinTime  || '2:00 PM';
+    const checkoutTime = qrs.checkoutTime || '12:00 PM';
+
+    return `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>غرفة ${room} — ${prop.name}</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;font-family:'Tajawal',Arial,sans-serif;min-height:100vh;padding:20px;}
+.hero{text-align:center;padding:30px 20px 20px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:16px;margin-bottom:20px;}
+.room-num{font-size:64px;font-weight:800;color:#c9a84c;line-height:1;}
+.hotel-name{font-size:18px;font-weight:700;color:#f0e6cc;margin-top:8px;}
+.room-label{font-size:14px;color:#7a8fa6;margin-top:4px;}
+.section{background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.18);border-radius:12px;padding:16px;margin-bottom:16px;}
+.s-title{font-size:12px;font-weight:700;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(201,168,76,0.2);}
+.service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.svc-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;display:block;transition:all .2s;}
+.svc-btn:hover{background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.5);}
+.svc-icon{font-size:28px;display:block;margin-bottom:6px;}
+.svc-lbl{font-size:11px;color:#7a8fa6;display:block;}
+.menu-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+.menu-item:last-child{border-bottom:none;}
+.menu-name{font-size:13px;color:#f0e6cc;}
+.menu-price{font-size:13px;font-weight:700;color:#c9a84c;}
+.contact-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+.contact-icon{font-size:24px;width:36px;text-align:center;}
+.contact-info{flex:1;}
+.contact-label{font-size:10px;color:#7a8fa6;text-transform:uppercase;letter-spacing:1px;}
+.contact-val{font-size:14px;color:#f0e6cc;font-weight:700;margin-top:2px;}
+.wa-btn{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:16px;border-radius:12px;text-decoration:none;font-size:16px;font-weight:700;margin-top:16px;box-shadow:0 4px 20px rgba(37,211,102,0.3);}
+.rating-stars{display:flex;gap:8px;justify-content:center;font-size:32px;cursor:pointer;}
+.star{transition:transform .2s;}
+.star:hover{transform:scale(1.2);}
+.wifi-box{background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.3);border-radius:10px;padding:14px;text-align:center;}
+.wifi-name{font-size:18px;font-weight:700;color:#7ab8f5;margin-top:6px;}
+.wifi-pass{font-size:22px;font-weight:800;color:#c9a84c;letter-spacing:2px;margin-top:4px;}
+@media(max-width:400px){.service-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="room-num">${room}</div>
+  <div class="hotel-name">🏨 ${prop.name}</div>
+  <div class="room-label">أهلاً وسهلاً بك في غرفتك!</div>
+</div>
+
+<!-- WiFi -->
+<div class="section">
+  <div class="s-title">📡 WiFi</div>
+  <div class="wifi-box">
+    <div style="font-size:11px;color:#7a8fa6;text-transform:uppercase;letter-spacing:1px;">اسم الشبكة</div>
+    <div class="wifi-name">${wifiName}</div>
+    <div style="font-size:11px;color:#7a8fa6;margin-top:8px;text-transform:uppercase;letter-spacing:1px;">كلمة المرور</div>
+    <div class="wifi-pass">${wifiPass}</div>
+  </div>
+</div>
+
+<!-- الخدمات -->
+<div class="section">
+  <div class="s-title">🛎 الخدمات</div>
+  <div class="service-grid">
+    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب خدمة الغرفة" class="svc-btn">
+      <span class="svc-icon">🛏️</span>
+      <span class="svc-lbl">خدمة الغرفة</span>
+    </a>
+    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب تنظيف الغرفة" class="svc-btn">
+      <span class="svc-icon">🧹</span>
+      <span class="svc-lbl">تنظيف</span>
+    </a>
+    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب مناشف إضافية" class="svc-btn">
+      <span class="svc-icon">🛁</span>
+      <span class="svc-lbl">مناشف</span>
+    </a>
+    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب وجبة إفطار" class="svc-btn">
+      <span class="svc-icon">🍳</span>
+      <span class="svc-lbl">إفطار</span>
+    </a>
+    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب سيارة/توكتوك" class="svc-btn">
+      <span class="svc-icon">🚗</span>
+      <span class="svc-lbl">مواصلات</span>
+    </a>
+    <a href="https://wa.me/${waNum}?text=غرفة ${room}: عندي مشكلة طارئة" class="svc-btn">
+      <span class="svc-icon">🆘</span>
+      <span class="svc-lbl">طوارئ</span>
+    </a>
+  </div>
+</div>
+
+<!-- المطعم -->
+<div class="section">
+  <div class="s-title">🍽️ قائمة الطعام</div>
+  <div class="menu-item"><span class="menu-name">🥚 إفطار كامل</span><span class="menu-price">150 EGP</span></div>
+  <div class="menu-item"><span class="menu-name">☕ قهوة / شاي</span><span class="menu-price">30 EGP</span></div>
+  <div class="menu-item"><span class="menu-name">🥗 سلطة طازجة</span><span class="menu-price">60 EGP</span></div>
+  <div class="menu-item"><span class="menu-name">🍗 دجاج مشوي</span><span class="menu-price">180 EGP</span></div>
+  <div class="menu-item"><span class="menu-name">🐟 سمك مشوي</span><span class="menu-price">200 EGP</span></div>
+  <div class="menu-item"><span class="menu-name">🍹 عصير طازج</span><span class="menu-price">50 EGP</span></div>
+  <div style="margin-top:12px;text-align:center;">
+    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب طلب طعام" style="background:rgba(201,168,76,0.2);color:#c9a84c;border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:10px 20px;text-decoration:none;font-size:13px;font-weight:700;display:inline-block;">🛒 اطلب الآن</a>
+  </div>
+</div>
+
+<!-- التواصل -->
+<div class="section">
+  <div class="s-title">📞 للتواصل</div>
+  <div class="contact-row">
+    <div class="contact-icon">📍</div>
+    <div class="contact-info">
+      <div class="contact-label">العنوان</div>
+      <div class="contact-val">${prop.address}</div>
+    </div>
+  </div>
+  <div class="contact-row">
+    <div class="contact-icon">📞</div>
+    <div class="contact-info">
+      <div class="contact-label">هاتف</div>
+      <div class="contact-val"><a href="tel:${prop.phone}" style="color:#f0e6cc;text-decoration:none;">${prop.phone}</a></div>
+    </div>
+  </div>
+  <div class="contact-row">
+    <div class="contact-icon">📧</div>
+    <div class="contact-info">
+      <div class="contact-label">بريد</div>
+      <div class="contact-val" style="font-size:12px;">${prop.email}</div>
+    </div>
+  </div>
+  <a href="https://wa.me/${waNum}?text=مرحبا، أنا في غرفة ${room}" class="wa-btn">
+    💬 تواصل معنا عبر واتساب
+  </a>
+</div>
+
+<!-- التقييم -->
+<div class="section">
+  <div class="s-title">⭐ قيّم إقامتك</div>
+  <div class="rating-stars" id="stars">
+    <span class="star" onclick="rate(1)">⭐</span>
+    <span class="star" onclick="rate(2)">⭐</span>
+    <span class="star" onclick="rate(3)">⭐</span>
+    <span class="star" onclick="rate(4)">⭐</span>
+    <span class="star" onclick="rate(5)">⭐</span>
+  </div>
+  <div id="rate-msg" style="text-align:center;margin-top:12px;font-size:13px;color:#7a8fa6;"></div>
+</div>
+
+<div style="text-align:center;padding:20px;font-size:11px;color:#7a8fa6;line-height:2;">
+  🏨 ${prop.name}<br>
+  صفحة الضيف | غرفة ${room}
+</div>
+
+<script>
+function rate(n){
+  const msg = ['','رائع','جيد','مقبول','ممتاز','رائع جداً!'][n];
+  const stars = ['','⭐','⭐⭐','⭐⭐⭐','⭐⭐⭐⭐','⭐⭐⭐⭐⭐'][n];
+  document.getElementById('rate-msg').innerHTML = '<strong style="color:#c9a84c;">'+stars+'</strong><br>'+msg+'! شكراً على تقييمك';
+  setTimeout(()=>{
+    window.open('https://wa.me/${waNum}?text=تقييم من غرفة ${room}: '+n+'/5 نجوم — '+msg,'_blank');
+  },500);
+}
+<\/script>
+</body>
+</html>`;
+  }
+
+  // ─── Modal عرض QR لغرفة ───
+  function openQRModal(roomNo){
+    roomNo = String(roomNo);
+    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy'};
+
+    // بناء صفحة الضيف وحفظها
+    const guestPageHTML = buildGuestPage(roomNo);
+
+    // URL للـ QR — يمكن تغييره لرابط حقيقي
+    const qrText = `data:text/html;charset=utf-8,${encodeURIComponent(guestPageHTML)}`;
+    // استخدام نص بسيط للـ QR (الـ data URL طويل جداً)
+    const _qrWA = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
+    const qrDisplayText = `https://wa.me/${_qrWA}?text=غرفة ${roomNo}`;
+    const qrImageUrl = generateQRSVG(qrDisplayText, 250);
+
+    let modal = document.getElementById('qr-room-modal');
+    if(!modal){
+      modal = document.createElement('div');
+      modal.id = 'qr-room-modal';
+      modal.className = 'ovl';
+      document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+<div class="mdl" style="max-width:480px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="color:var(--gold);font-size:15px;font-weight:700;">📱 QR Code — غرفة ${roomNo}</div>
+    <button onclick="this.closest('.ovl').classList.remove('on')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;">✕</button>
+  </div>
+
+  <!-- QR Preview -->
+  <div style="text-align:center;margin-bottom:16px;">
+    <div style="background:linear-gradient(135deg,#fdf6e3,#f0e8d0);border-radius:16px;padding:24px;display:inline-block;border:3px solid #c9a84c;box-shadow:0 4px 24px rgba(201,168,76,0.3);">
+      <img src="${qrImageUrl}" width="220" height="220" alt="QR Code غرفة ${roomNo}" style="display:block;border-radius:8px;" onerror="this.src='data:image/svg+xml,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'220\\' height=\\'220\\'><rect width=\\'220\\' height=\\'220\\' fill=\\'%23fdf6e3\\'/><text x=\\'110\\' y=\\'90\\' text-anchor=\\'middle\\' font-size=\\'40\\'>📱</text><text x=\\'110\\' y=\\'130\\' text-anchor=\\'middle\\' font-size=\\'14\\' fill=\\'%23c9a84c\\'>QR</text><text x=\\'110\\' y=\\'155\\' text-anchor=\\'middle\\' font-size=\\'12\\' fill=\\'%231a1a2e\\'>غرفة ${roomNo}</text></svg>'">
+      <div style="margin-top:12px;font-size:13px;font-weight:700;color:#1a1a2e;">🏨 ${prop.name}</div>
+      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-top:2px;">غرفة ${roomNo}</div>
+      <div style="font-size:10px;color:#666;margin-top:4px;">امسح لخدمات الضيف</div>
+    </div>
+  </div>
+
+  <!-- معلومات -->
+  <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;line-height:2;">
+    <div>📋 <strong>ما يراه الضيف عند المسح:</strong></div>
+    <div style="color:var(--muted);">• كلمة مرور الـ WiFi</div>
+    <div style="color:var(--muted);">• قائمة طلب الخدمات (تنظيف، طعام، مواصلات...)</div>
+    <div style="color:var(--muted);">• قائمة المطعم بالأسعار</div>
+    <div style="color:var(--muted);">• أزرار واتساب مباشرة للخدمة</div>
+    <div style="color:var(--muted);">• تقييم الإقامة</div>
+  </div>
+
+  <!-- أزرار -->
+  <div class="flex mt" style="flex-wrap:wrap;gap:8px;">
+    <button onclick="printRoomQR('${roomNo}')" class="btn bg" style="flex:2;">🖨️ طباعة QR</button>
+    <button onclick="downloadRoomQR('${roomNo}')" class="btn bbl" style="flex:2;">💾 تحميل PNG</button>
+    <button onclick="downloadGuestPage('${roomNo}')" class="btn" style="flex:2;background:rgba(155,89,182,0.8);color:#fff;border:none;">📄 صفحة HTML</button>
+    <button onclick="this.closest('.ovl').classList.remove('on')" class="btn bb" style="flex:1;">إغلاق</button>
+  </div>
+
+  <!-- طباعة كل الغرف -->
+  <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr);text-align:center;">
+    <button onclick="printAllRoomQRs()" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:8px 20px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;">
+      🖨️ طباعة QR جميع الغرف (${(typeof ROOMS!=='undefined'?ROOMS:[]).length} غرفة)
+    </button>
+  </div>
+</div>`;
+    modal.classList.add('on');
+  }
+
+  // ─── طباعة QR لغرفة واحدة ───
+  window.printRoomQR = function(roomNo){
+    const _qrWA2 = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
+    const qrUrl  = generateQRSVG(`https://wa.me/${_qrWA2}?text=غرفة ${roomNo}`, 300);
+    const prop   = (typeof PROP!=='undefined') ? PROP : {name:'Dahab Trendy'};
+    const w = window.open('','_blank','width=500,height=700');
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR غرفة ${roomNo}</title>
+<style>body{font-family:Arial,sans-serif;text-align:center;padding:30px;background:#fff;}
+.qr-wrap{border:3px solid #c9a84c;border-radius:16px;padding:24px;display:inline-block;background:linear-gradient(135deg,#fdf6e3,#fff);}
+h2{color:#1a1a2e;margin-bottom:4px;}
+.sub{color:#c9a84c;font-weight:700;font-size:14px;margin-bottom:16px;}
+.bottom{margin-top:12px;font-size:11px;color:#666;}
+@media print{button{display:none}}</style></head>
+<body>
+<div class="qr-wrap">
+<h2>🏨 ${prop.name}</h2>
+<div class="sub">غرفة ${roomNo}</div>
+<img src="${qrUrl}" width="280" height="280" style="border-radius:8px;">
+<div class="bottom">امسح الكود للحصول على الخدمات والمعلومات<br>${prop.phone||''}</div>
+</div>
+<br><button onclick="window.print()" style="margin-top:16px;padding:8px 20px;background:#c9a84c;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;">🖨️ طباعة</button>
+</body></html>`);
+    w.document.close();
+    setTimeout(()=> w.print(), 500);
+  };
+
+  // ─── تحميل QR كـ PNG ───
+  window.downloadRoomQR = function(roomNo){
+    const _qrWA3 = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
+    const qrUrl = generateQRSVG(`https://wa.me/${_qrWA3}?text=غرفة ${roomNo}`, 400);
+    const a = document.createElement('a');
+    a.href = qrUrl;
+    a.download = `QR_Room_${roomNo}.png`;
+    // لأن SVG من domain آخر، نفتح رابطاً جديداً بدل التحميل
+    window.open(qrUrl.replace('format=svg','format=png'), '_blank');
+  };
+
+  // ─── تحميل صفحة HTML الضيف ───
+  window.downloadGuestPage = function(roomNo){
+    const html = buildGuestPage(roomNo);
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `GuestPage_Room_${roomNo}.html`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    if(typeof sNotify==='function') sNotify('💾 تحميل','تم تحميل صفحة الضيف لغرفة '+roomNo,'success',3000);
+  };
+
+  // ─── طباعة QR لجميع الغرف ───
+  window.printAllRoomQRs = function(){
+    const rooms = (typeof ROOMS !== 'undefined') ? ROOMS : [];
+    if(!rooms.length){ alert('لا توجد غرف مُعرَّفة'); return; }
+    const prop = (typeof PROP!=='undefined') ? PROP : {name:'Dahab Trendy'};
+    const w = window.open('','_blank');
+    const items = rooms.map(r=>{
+      const _qrWA4 = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
+          const qrUrl = generateQRSVG(`https://wa.me/${_qrWA4}?text=غرفة ${r}`, 200);
+      return `<div class="qr-card">
+<div class="hotel">${prop.name}</div>
+<div class="rnum">غرفة ${r}</div>
+<img src="${qrUrl}" width="180" height="180">
+<div class="scan-lbl">امسح لخدمات الضيف</div>
+</div>`;
+    }).join('');
+
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR جميع الغرف</title>
+<style>
+body{font-family:Arial,sans-serif;padding:20px;background:#fff;}
+h1{text-align:center;color:#1a1a2e;margin-bottom:20px;font-size:18px;}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.qr-card{border:2px solid #c9a84c;border-radius:12px;padding:16px;text-align:center;background:linear-gradient(135deg,#fdf6e3,#fff);page-break-inside:avoid;}
+.hotel{font-size:10px;font-weight:700;color:#1a1a2e;margin-bottom:2px;}
+.rnum{font-size:20px;font-weight:800;color:#c9a84c;margin-bottom:8px;}
+.scan-lbl{font-size:9px;color:#666;margin-top:8px;}
+@media print{button{display:none}.grid{grid-template-columns:repeat(4,1fr);}}</style></head>
+<body>
+<h1>🏨 ${prop.name} — QR جميع الغرف (${rooms.length})</h1>
+<div class="grid">${items}</div>
+<br>
+<div style="text-align:center;">
+<button onclick="window.print()" style="padding:10px 24px;background:#c9a84c;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;">🖨️ طباعة الكل</button>
+</div>
+</body></html>`);
+    w.document.close();
+  };
+
+  // ─── إضافة زر QR في صفحة الغرف ───
+  function patchRoomsPage(){
+    const _renderRooms = window.renderRooms;
+    if(typeof _renderRooms !== 'function') return;
+    window.renderRooms = function(){
+      _renderRooms.apply(this, arguments);
+      // إضافة زر QR لكل غرفة
+      setTimeout(()=>{
+        document.querySelectorAll('[data-room]').forEach(el=>{
+          const room = el.dataset.room;
+          if(!room || el.querySelector('.qr-room-btn')) return;
+          const btn = document.createElement('button');
+          btn.className = 'btn bsm qr-room-btn';
+          btn.innerHTML = '📱 QR';
+          btn.title = 'QR Code للغرفة '+room;
+          btn.style.cssText = 'background:rgba(52,152,219,0.2);color:#7ab8f5;border:1px solid rgba(52,152,219,0.4);margin-top:4px;width:100%;';
+          btn.onclick = e=>{ e.stopPropagation(); DTA_QR.openQRModal(room); };
+          el.appendChild(btn);
+        });
+      }, 300);
+    };
+  }
+
+  // ─── زر QR في الـ nav ───
+  document.addEventListener('DOMContentLoaded', function(){
+    const nav = document.querySelector('.nav');
+    if(!nav) return;
+    const btn = document.createElement('button');
+    btn.className = 'nb';
+    btn.innerHTML = '📱 QR غرف';
+    btn.title = 'QR Code لجميع الغرف';
+    btn.style.cssText = 'background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;';
+    btn.onclick = ()=>{
+      // عرض picker لاختيار غرفة
+      const rooms = (typeof ROOMS !== 'undefined') ? ROOMS : [];
+      let picker = document.getElementById('qr-room-picker');
+      if(!picker){
+        picker = document.createElement('div');
+        picker.id = 'qr-room-picker';
+        picker.className = 'ovl';
+        document.body.appendChild(picker);
+      }
+      picker.innerHTML = `
+<div class="mdl" style="max-width:460px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="color:var(--gold);font-size:15px;font-weight:700;">📱 QR Code — اختر الغرفة</div>
+    <button onclick="this.closest('.ovl').classList.remove('on')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;">✕</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px;">
+    ${rooms.map(r=>`
+      <button onclick="DTA_QR.openQRModal(${r});this.closest('.ovl').classList.remove('on');"
+        style="padding:12px 6px;border-radius:8px;border:1px solid rgba(52,152,219,0.3);background:rgba(52,152,219,0.08);color:#7ab8f5;cursor:pointer;font-size:13px;font-weight:700;font-family:Arial,sans-serif;transition:all .15s;"
+        onmouseover="this.style.background='rgba(52,152,219,0.2)'"
+        onmouseout="this.style.background='rgba(52,152,219,0.08)'">
+        ${r}
+      </button>`).join('')}
+  </div>
+  <button onclick="printAllRoomQRs();this.closest('.ovl').classList.remove('on');" class="btn bbl" style="width:100%;">
+    🖨️ طباعة QR جميع الغرف (${rooms.length})
+  </button>
+</div>`;
+      picker.classList.add('on');
+    };
+    nav.appendChild(btn);
+
+    // Patch rooms page
+    patchRoomsPage();
+  });
+
+  return { openQRModal, buildGuestPage, generateQRSVG };
+})();
+
+window.DTA_QR = DTA_QR;
+console.log('[DTA_QR v11] ✅ QR Code module ready');
+
+// ── QR Settings functions ──
+function openQRSettings(){
+  // قراءة من IDB أولاً، ثم localStorage كـ fallback
+  const _applyQRS = function(qrs){
+    qrs = qrs || {};
+    document.getElementById('qrs-wifi-name').value   = qrs.wifiName     || 'DahabTrendy_Guest';
+    document.getElementById('qrs-wifi-pass').value   = qrs.wifiPass     || 'dahab2024';
+    document.getElementById('qrs-wa-num').value      = qrs.waNum        || '201099531272';
+    document.getElementById('qrs-checkin-time').value  = qrs.checkinTime  || '2:00 PM';
+    document.getElementById('qrs-checkout-time').value = qrs.checkoutTime || '12:00 PM';
+    document.getElementById('qr-settings-modal').classList.add('on');
+  };
+  if(typeof DTA_IDB !== 'undefined' && DTA_IDB.get){
+    DTA_IDB.get('settings','dta_qr_settings').then(function(val){
+      if(val){ _applyQRS(val); }
+      else {
+        // fallback to localStorage
+        _applyQRS(JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'));
+      }
+    }).catch(function(){
+      _applyQRS(JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'));
+    });
+  } else {
+    _applyQRS(JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'));
+  }
+}
+function saveQRSettings(){
+  const qrs = {
+    wifiName:     document.getElementById('qrs-wifi-name').value.trim()   || 'DahabTrendy_Guest',
+    wifiPass:     document.getElementById('qrs-wifi-pass').value.trim()   || 'dahab2024',
+    waNum:        document.getElementById('qrs-wa-num').value.trim()      || '201099531272',
+    checkinTime:  document.getElementById('qrs-checkin-time').value.trim()  || '2:00 PM',
+    checkoutTime: document.getElementById('qrs-checkout-time').value.trim() || '12:00 PM'
+  };
+  // حفظ في localStorage للتوافق مع الكود الموجود
+  localStorage.setItem('dta_qr_settings', JSON.stringify(qrs));
+  // حفظ في IndexedDB أيضاً
+  if(typeof DTA_IDB !== 'undefined' && DTA_IDB.set){
+    DTA_IDB.set('settings','dta_qr_settings', qrs).catch(function(e){ console.warn('[QRS] IDB save error:',e); });
+  }
+  closeM('qr-settings-modal');
+  if(typeof sNotify==='function') sNotify('✅ تم الحفظ','تم حفظ إعدادات QR الغرف بنجاح','success',3000);
+}
+
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  UPGRADE 5: Offline Indicator + Storage Dashboard          ║
+// ╚══════════════════════════════════════════════════════════════╝
+(function setupOfflineUI(){
+  document.addEventListener('DOMContentLoaded', function(){
+    // شريط حالة الاتصال
+    const bar = document.createElement('div');
+    bar.id = 'offline-bar';
+    bar.style.cssText = [
+      'display:none;position:fixed;top:0;left:0;right:0;z-index:10000;',
+      'background:linear-gradient(90deg,#e74c3c,#c0392b);',
+      'color:#fff;text-align:center;padding:7px;font-size:12px;font-weight:700;',
+      'font-family:Arial,sans-serif;letter-spacing:.5px;',
+      'box-shadow:0 2px 12px rgba(231,76,60,0.5);'
+    ].join('');
+    bar.innerHTML = '📴 أنت offline — البيانات محفوظة محلياً في IndexedDB';
+    document.body.prepend(bar);
+
+    function updateBar(){
+      bar.style.display = navigator.onLine ? 'none' : 'block';
+    }
+    window.addEventListener('online',  updateBar);
+    window.addEventListener('offline', updateBar);
+    updateBar();
+
+    // Storage info في الـ settings
+    const _renderSettings = window.renderSettings;
+    if(typeof _renderSettings === 'function'){
+      window.renderSettings = function(){
+        _renderSettings.apply(this, arguments);
+        setTimeout(injectStorageCard, 200);
+      };
+    }
+
+    function injectStorageCard(){
+      const pg = document.getElementById('page-settings');
+      if(!pg || document.getElementById('storage-info-card')) return;
+      DTA_DB.getStorageInfo().then(info=>{
+        const card = document.createElement('div');
+        card.id = 'storage-info-card';
+        card.className = 'card';
+        card.style.cssText = 'margin-top:12px;border-color:rgba(52,152,219,0.3);';
+        const pct = isNaN(info.pct) ? 0 : info.pct;
+        const barColor = pct > 75 ? '#e74c3c' : pct > 50 ? '#e67e22' : '#25D366';
+        card.innerHTML = `
+<div class="ctitle" style="color:#7ab8f5;">💾 IndexedDB Storage — v11</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
+  <div style="text-align:center;background:rgba(52,152,219,0.08);border:1px solid rgba(52,152,219,0.2);border-radius:8px;padding:12px;">
+    <div style="font-size:22px;font-weight:700;color:#7ab8f5;">${info.usedMB}MB</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:3px;">مستخدم</div>
+  </div>
+  <div style="text-align:center;background:rgba(52,152,219,0.08);border:1px solid rgba(52,152,219,0.2);border-radius:8px;padding:12px;">
+    <div style="font-size:22px;font-weight:700;color:#4cda7a;">${info.quotaGB}GB</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:3px;">متاح</div>
+  </div>
+  <div style="text-align:center;background:rgba(52,152,219,0.08);border:1px solid rgba(52,152,219,0.2);border-radius:8px;padding:12px;">
+    <div style="font-size:22px;font-weight:700;color:${barColor};">${pct}%</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:3px;">نسبة الاستخدام</div>
+  </div>
+</div>
+<div style="background:rgba(0,0,0,0.2);border-radius:4px;height:8px;overflow:hidden;margin-bottom:12px;">
+  <div style="height:100%;width:${Math.min(pct,100)}%;background:${barColor};border-radius:4px;transition:width .5s;"></div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
+  <button onclick="DTA_DB.migrateFromLS().then(()=>{ if(typeof sNotify!=='undefined') sNotify('✅ Migration','تمت المزامنة مع localStorage','success',3000); })"
+    style="background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.35);border-radius:7px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;">
+    🔄 مزامنة من localStorage
+  </button>
+  <button onclick="DTA_DB.exportAllData().then(d=>{ const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='DahabTrendy_IDB_Export_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); })"
+    style="background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);border-radius:7px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;">
+    💾 تصدير IDB كامل
+  </button>
+</div>`;
+        pg.appendChild(card);
+      });
+    }
+  });
+})();
+
+// ─── تسجيل Service Worker للـ manifest ───
+(function injectManifest(){
+  const manifestData = {
+    name: 'Dahab Trendy',
+    short_name: 'DahabTrendy',
+    description: 'نظام إدارة فندق دهب ترندي',
+    start_url: './',
+    scope: './',
+    display: 'standalone',
+    background_color: '#0f0f1a',
+    theme_color: '#c9a84c',
+    orientation: 'portrait-primary',
+    icons: [
+      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230f0f1a" rx="20"/><text y=".9em" font-size="80">🏨</text></svg>',sizes:'192x192',type:'image/svg+xml'},
+      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230f0f1a" rx="20"/><text y=".9em" font-size="80">🏨</text></svg>',sizes:'512x512',type:'image/svg+xml'}
+    ],
+    categories: ['productivity','business'],
+    lang: 'ar'
+  };
+  const blob = new Blob([JSON.stringify(manifestData)], {type:'application/manifest+json'});
+  const url  = URL.createObjectURL(blob);
+  const existing = document.getElementById('pwa-manifest');
+  if(existing) existing.href = url;
+  else {
+    const link = document.createElement('link');
+    link.rel  = 'manifest';
+    link.href = url;
+    document.head.appendChild(link);
+  }
+})();
+
+console.log('[Dahab Trendy v11] ✅ FULL UPGRADE PACK loaded:');
+console.log('  🗄️  IndexedDB Complete — 50MB+ storage');
+console.log('  📴  Service Worker — Full offline support');
+console.log('  💬  WhatsApp Business API — wa.me + Cloud API');
+console.log('  📱  QR Code Rooms — Guest page with services');
+console.log('  🌐  Offline Indicator + Storage Dashboard');
 
 })();
 </script>
