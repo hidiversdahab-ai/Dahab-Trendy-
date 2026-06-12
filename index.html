@@ -110,7 +110,7 @@ select option{background:#1a1a2e;color:var(--text)}
 .btn-ci{background:#3498db;color:#fff;}
 .btn-co{background:#e67e22;color:#fff;}
 /* MODAL */
-.ovl{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;align-items:center;justify-content:center;padding:12px}
+.ovl{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1100;align-items:center;justify-content:center;padding:12px}
 .ovl.on{display:flex}
 .mdl{background:#1e2a3a;border:1px solid var(--bdr);border-radius:13px;padding:20px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto}
 .mtitle{color:var(--gold);font-size:14px;font-weight:700;margin-bottom:14px}
@@ -1368,7 +1368,7 @@ label {
     <div class="bn-more-item" onclick="openAIChat();closeBnMore()"><span class="bm-icon">🤖</span><span>AI Chat</span></div>
     <div class="bn-more-item" onclick="openWATemplates();closeBnMore()"><span class="bm-icon">💬</span><span>WA Templates</span></div>
     <div class="bn-more-item" onclick="DTA_WA.openSettings();closeBnMore()" style="border-color:rgba(37,211,102,0.4);background:rgba(37,211,102,0.07);"><span class="bm-icon" style="color:#4cda7a;">⚙️</span><span style="color:#4cda7a;" class="t" data-ar="واتساب API" data-en="WhatsApp API">واتساب API</span></div>
-    <div class="bn-more-item" onclick="document.getElementById('qr-room-picker')?(document.getElementById('qr-room-picker').classList.add('on'),closeBnMore()):(closeBnMore(),setTimeout(()=>{const b=document.querySelector('[title=\'QR Code لجميع الغرف\']');b&&b.click();},100))" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">📱</span><span style="color:#7ab8f5;" class="t" data-ar="QR الغرف" data-en="Rooms QR">QR الغرف</span></div>
+    <div class="bn-more-item" onclick="openQRRoomPicker();closeBnMore();" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">📱</span><span style="color:#7ab8f5;" class="t" data-ar="QR الغرف" data-en="Rooms QR">QR الغرف</span></div>
     <div class="bn-more-item" onclick="openQRSettings();closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">⚙️</span><span style="color:#7ab8f5;" class="t" data-ar="إعدادات QR" data-en="QR Settings">إعدادات QR</span></div>
     <div class="bn-more-item" onclick="openBlacklist();closeBnMore()" style="border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.07);"><span class="bm-icon">🚫</span><span style="color:#e74c3c;">Blacklist</span></div>
     <div class="bn-more-item" onclick="bnGo('guesthistory',null);closeBnMore()"><span class="bm-icon">👥</span><span class="t" data-ar="سجل الضيوف" data-en="Guest History">Guest History</span></div>
@@ -23600,17 +23600,33 @@ const DTA_WA = (function(){
   DTA_DB.getSetting('wa_queue',  []).then(q=>  { if(q)   _queue = q; });
   DTA_DB.getSetting('wa_log',    []).then(l=>  { if(l)   _log   = l; });
 
-  // ─── تنسيق رقم الهاتف ───
+  // ─── تنسيق رقم الهاتف (ذكي — يتجنب تكرار كود الدولة) ───
   function formatPhone(phone){
     if(!phone) return '';
-    let p = phone.replace(/[\s\-\(\)]/g,'');
-    if(p.startsWith('0')) p = _config.prefix + p.slice(1);
-    if(!p.startsWith('+')) p = _config.prefix + p;
-    return p.replace(/\+/g,'');
+    let p = String(phone).replace(/[\s\-\(\)]/g,'');
+    const prefixDigits = _config.prefix.replace('+','');
+
+    // 1) لو الرقم يبدأ بـ + → فقط شيل الـ +
+    if(p.startsWith('+')) return p.replace(/^\+/,'');
+
+    // 2) لو الرقم يبدأ بـ 00 (صيغة دولية بديلة) → شيل الـ 00
+    if(p.startsWith('00')) return p.slice(2);
+
+    // 3) لو الرقم يبدأ أصلاً بكود الدولة الافتراضي (مثلاً 20...) ولا يبدأ بـ 0
+    //    وطوله مناسب لرقم دولي كامل → اعتبره دولي جاهز ولا تضيف الكود مرة ثانية
+    if(p.startsWith(prefixDigits) && p.length >= prefixDigits.length + 9){
+      return p;
+    }
+
+    // 4) لو الرقم محلي يبدأ بـ 0 (مثل 01060430307) → استبدل الـ 0 بكود الدولة
+    if(p.startsWith('0')) return prefixDigits + p.slice(1);
+
+    // 5) أي حالة أخرى → أضف كود الدولة الافتراضي في البداية
+    return prefixDigits + p;
   }
 
-  // ─── القوالب الجاهزة ───
-  const TEMPLATES = {
+  // ─── القوالب الجاهزة — ثنائية اللغة (عربي/إنجليزي) ───
+  const TEMPLATES_AR = {
     booking_confirm: (b)=>`🏨 *Dahab Trendy — تأكيد الحجز*
 
 مرحباً *${b.name}* 👋
@@ -23709,6 +23725,158 @@ const DTA_WA = (function(){
 
     custom: (text)=> text
   };
+
+  const TEMPLATES_EN = {
+    booking_confirm: (b)=>`🏨 *Dahab Trendy — Booking Confirmation*
+
+Hello *${b.name}* 👋
+
+Your booking has been confirmed ✅
+
+📋 *Booking Details:*
+• Room: *${b.room}* (${b.type||'Standard'})
+• 🛬 Check-in: *${b.ci}*
+• 🛫 Check-out: *${b.co}*
+• 🌙 Nights: *${b.nights||''}*
+• 💰 Total Amount: *${b.cur||'USD'} ${b.total||''}*
+• 💵 Paid: *${b.cur||'USD'} ${b.prepay||0}*
+• 📌 Reference No: *${b.invNo||b.id}*
+
+📍 Address: Dahab, South Sinai, Egypt
+📞 WhatsApp: +20 109 953 1272
+
+Thank you for choosing Dahab Trendy 🙏
+We look forward to welcoming you!`,
+
+    checkin_welcome: (b)=>`🌟 *Welcome to Dahab Trendy!*
+
+Dear *${b.name}*,
+We're happy to welcome you today! 🎉
+
+🏨 Your room: *${b.room}*
+🕐 Check-in time: *${new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}*
+
+*Our services:*
+🍽️ Restaurant open from 7 AM to 11 PM
+🌊 Close to Dahab's beautiful beach
+🛁 Daily room cleaning
+
+📞 For emergencies or service: 0109 953 1272
+
+We wish you a pleasant stay! 🌴`,
+
+    checkout_invoice: (b, total)=>`🧾 *Dahab Trendy — Checkout Invoice*
+
+Dear *${b.name}*,
+Thank you so much for choosing Dahab Trendy 🙏
+
+📋 *Stay Summary:*
+• 🛬 Check-in: ${b.ci}
+• 🛫 Check-out: ${b.co}
+• 🌙 Nights: ${b.nights||''}
+• 💰 Total Invoice: *${b.cur||'USD'} ${total||b.total}*
+
+We hope you had a comfortable and enjoyable stay 😊
+We'd love to welcome you again!
+
+⭐ Share your feedback on Google Maps
+Have a safe trip 🌟`,
+
+    payment_reminder: (b, remaining)=>`⏰ *Payment Reminder — Dahab Trendy*
+
+Dear *${b.name}*,
+
+This is a reminder that the remaining balance for your booking is:
+💰 *${b.cur||'USD'} ${remaining}*
+
+📌 Booking No: ${b.invNo||b.id}
+📅 Check-out date: ${b.co}
+
+To pay, please contact us:
+📞 0109 953 1272
+
+Thank you for your cooperation 🙏`,
+
+    birthday_greet: (name)=>`🎂 *Happy Birthday!*
+
+Dear *${name}*,
+
+On the occasion of your birthday,
+the *Dahab Trendy* team wishes you a day full of happiness and joy! 🎉🎊
+
+🌟 Thank you for trusting us
+💛 We look forward to hosting you again
+
+— Dahab Trendy Team 🏨`,
+
+    review_request: (b)=>`⭐ *Share Your Feedback — Dahab Trendy*
+
+Dear *${b.name}*,
+
+Thank you for staying with us from ${b.ci} to ${b.co} 🙏
+
+Your feedback matters to us and helps us improve our services.
+Could you rate us on Google Maps?
+
+🔗 Review link: https://g.page/r/dahabtrendy
+
+📞 For any inquiry: 0109 953 1272
+Thank you for your time! 😊`,
+
+    custom: (text)=> text
+  };
+
+  // ─── محرك القوالب — يختار اللغة تلقائياً حسب currentLang ───
+  const TEMPLATES = new Proxy({}, {
+    get(_, key){
+      const isAr = (typeof currentLang === 'undefined') || currentLang === 'ar';
+      const src = isAr ? TEMPLATES_AR : TEMPLATES_EN;
+      return src[key];
+    },
+    set(_, key, val){
+      // عند تطبيق قالب مخصص — نطبّقه على اللغتين معاً
+      TEMPLATES_AR[key] = val;
+      TEMPLATES_EN[key] = val;
+      return true;
+    }
+  });
+
+  // ─── نسخ أصلية محفوظة من القوالب (للاستعادة لكل لغة على حدة) ───
+  const _ORIGINAL_TEMPLATES_AR = Object.assign({}, TEMPLATES_AR);
+  const _ORIGINAL_TEMPLATES_EN = Object.assign({}, TEMPLATES_EN);
+
+  // ─── النصوص الأصلية الخام (بصيغة {var}) — تُستخدم في خانات التعديل والاستعادة ───
+  const _ORIGINAL_TPL_TEXT_AR = {
+    booking_confirm: `🏨 *Dahab Trendy — تأكيد الحجز*\n\nمرحباً *{name}* 👋\n\nتم تأكيد حجزك بنجاح ✅\n\n📋 *تفاصيل الحجز:*\n• غرفة: *{room}* ({type})\n• 🛬 الوصول: *{ci}*\n• 🛫 المغادرة: *{co}*\n• 🌙 عدد الليالي: *{nights}*\n• 💰 المبلغ الإجمالي: *{cur} {total}*\n• 💵 المدفوع: *{cur} {prepay}*\n• 📌 الرقم المرجعي: *{invNo}*\n\n📍 العنوان: Dahab, South Sinai, Egypt\n📞 واتساب: +20 109 953 1272\n\nشكراً لاختيارك Dahab Trendy 🙏\nنتطلع لاستقبالك!`,
+    checkin_welcome: `🌟 *أهلاً وسهلاً في Dahab Trendy!*\n\nعزيزنا *{name}*،\nيسعدنا استقبالك اليوم! 🎉\n\n🏨 غرفتك: *{room}*\n\n*خدماتنا:*\n🍽️ مطعم متاح من 7 صباحاً حتى 11 مساءً\n🌊 قريبون من شاطئ دهب الجميل\n🛁 تنظيف الغرف يومياً\n\n📞 للطوارئ أو الخدمة: 0109 953 1272\n\nنتمنى لك إقامة ممتعة! 🌴`,
+    checkout_invoice: `🧾 *Dahab Trendy — فاتورة المغادرة*\n\nعزيزنا *{name}*،\nشكراً جزيلاً لاختيارك Dahab Trendy 🙏\n\n📋 *ملخص الإقامة:*\n• 🛬 الوصول: {ci}\n• 🛫 المغادرة: {co}\n• 🌙 الليالي: {nights}\n• 💰 إجمالي الفاتورة: *{cur} {total}*\n\nنأمل أن تكون إقامتك كانت مريحة ومتعة 😊\nسيسعدنا استقبالك مجدداً!\n\n⭐ شاركنا رأيك على Google Maps\nنتمنى لك سفراً سعيداً 🌟`,
+    payment_reminder: `⏰ *تذكير بالدفع — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nنود التذكير بأن المبلغ المتبقي من حجزك هو:\n💰 *{cur} {remaining}*\n\n📌 رقم الحجز: {invNo}\n📅 تاريخ المغادرة: {co}\n\nللدفع يرجى التواصل معنا:\n📞 0109 953 1272\n\nشكراً لتعاونكم 🙏`,
+    birthday_greet: `🎂 *كل سنة وأنت بخير!*\n\nعزيزنا *{name}*،\n\nبمناسبة عيد ميلادك،\nيتمنى لك فريق *Dahab Trendy* يوماً مليئاً بالسعادة والأفراح! 🎉🎊\n\n🌟 نشكرك على ثقتك بنا\n💛 نتطلع لاستضافتك مجدداً\n\n— فريق Dahab Trendy 🏨`,
+    review_request: `⭐ *شاركنا رأيك — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nشكراً لإقامتك معنا من {ci} إلى {co} 🙏\n\nرأيك يهمنا كثيراً وسيساعدنا على تحسين خدماتنا.\nهل يمكنك تقييمنا على Google Maps؟\n\n🔗 رابط التقييم: https://g.page/r/dahabtrendy\n\n📞 لأي استفسار: 0109 953 1272\nشكراً على وقتك الكريم! 😊`
+  };
+
+  const _ORIGINAL_TPL_TEXT_EN = {
+    booking_confirm: `🏨 *Dahab Trendy — Booking Confirmation*\n\nHello *{name}* 👋\n\nYour booking has been confirmed ✅\n\n📋 *Booking Details:*\n• Room: *{room}* ({type})\n• 🛬 Check-in: *{ci}*\n• 🛫 Check-out: *{co}*\n• 🌙 Nights: *{nights}*\n• 💰 Total Amount: *{cur} {total}*\n• 💵 Paid: *{cur} {prepay}*\n• 📌 Reference No: *{invNo}*\n\n📍 Address: Dahab, South Sinai, Egypt\n📞 WhatsApp: +20 109 953 1272\n\nThank you for choosing Dahab Trendy 🙏\nWe look forward to welcoming you!`,
+    checkin_welcome: `🌟 *Welcome to Dahab Trendy!*\n\nDear *{name}*,\nWe're happy to welcome you today! 🎉\n\n🏨 Your room: *{room}*\n\n*Our services:*\n🍽️ Restaurant open from 7 AM to 11 PM\n🌊 Close to Dahab's beautiful beach\n🛁 Daily room cleaning\n\n📞 For emergencies or service: 0109 953 1272\n\nWe wish you a pleasant stay! 🌴`,
+    checkout_invoice: `🧾 *Dahab Trendy — Checkout Invoice*\n\nDear *{name}*,\nThank you so much for choosing Dahab Trendy 🙏\n\n📋 *Stay Summary:*\n• 🛬 Check-in: {ci}\n• 🛫 Check-out: {co}\n• 🌙 Nights: {nights}\n• 💰 Total Invoice: *{cur} {total}*\n\nWe hope you had a comfortable and enjoyable stay 😊\nWe'd love to welcome you again!\n\n⭐ Share your feedback on Google Maps\nHave a safe trip 🌟`,
+    payment_reminder: `⏰ *Payment Reminder — Dahab Trendy*\n\nDear *{name}*,\n\nThis is a reminder that the remaining balance for your booking is:\n💰 *{cur} {remaining}*\n\n📌 Booking No: {invNo}\n📅 Check-out date: {co}\n\nTo pay, please contact us:\n📞 0109 953 1272\n\nThank you for your cooperation 🙏`,
+    birthday_greet: `🎂 *Happy Birthday!*\n\nDear *{name}*,\n\nOn the occasion of your birthday,\nthe *Dahab Trendy* team wishes you a day full of happiness and joy! 🎉🎊\n\n🌟 Thank you for trusting us\n💛 We look forward to hosting you again\n\n— Dahab Trendy Team 🏨`,
+    review_request: `⭐ *Share Your Feedback — Dahab Trendy*\n\nDear *{name}*,\n\nThank you for staying with us from {ci} to {co} 🙏\n\nYour feedback matters to us and helps us improve our services.\nCould you rate us on Google Maps?\n\n🔗 Review link: https://g.page/r/dahabtrendy\n\n📞 For any inquiry: 0109 953 1272\nThank you for your time! 😊`
+  };
+
+  // ─── تطبيق القوالب المخصصة المحفوظة عند التحميل (بنية ثنائية اللغة) ───
+  (function _loadSavedApiTpls(){
+    try{
+      const raw = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
+      Object.keys(raw).forEach(k=>{
+        const v = raw[k];
+        if(!v) return;
+        // ترقية من البنية القديمة (نص واحد = عربي فقط)
+        const obj = (typeof v === 'string') ? {ar: v, en:''} : v;
+        if(obj.ar || obj.en) _applyCustomTplToEngine(k, obj);
+      });
+    }catch(e){}
+  })();
 
   // ─── إرسال عبر wa.me (فتح واتساب) ───
   function sendViaWaMe(phone, message){
@@ -23862,8 +24030,7 @@ const DTA_WA = (function(){
         modal.className = 'ovl';
         document.body.appendChild(modal);
       }
-      // تحميل القوالب المخصصة المحفوظة
-      const _savedApiTpls = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
+      // تحميل القوالب المخصصة المحفوظة — سيتم تعريفها بعد _apiTplDefaultsEn (بنية ثنائية اللغة)
       const _apiTplDefs = {
         booking_confirm:  { label:'✅ تأكيد حجز',        vars:'{name} {room} {type} {ci} {co} {nights} {cur} {total} {prepay} {invNo}' },
         checkin_welcome:  { label:'🎉 ترحيب وصول',       vars:'{name} {room}' },
@@ -23872,18 +24039,22 @@ const DTA_WA = (function(){
         birthday_greet:   { label:'🎂 تهنئة عيد ميلاد',  vars:'{name}' },
         review_request:   { label:'⭐ طلب تقييم',         vars:'{name} {ci} {co}' }
       };
-      // القوالب الافتراضية كنص (للعرض والتعديل)
-      const _apiTplDefaults = {
-        booking_confirm: `🏨 *Dahab Trendy — تأكيد الحجز*\n\nمرحباً *{name}* 👋\n\nتم تأكيد حجزك بنجاح ✅\n\n📋 *تفاصيل الحجز:*\n• غرفة: *{room}* ({type})\n• 🛬 الوصول: *{ci}*\n• 🛫 المغادرة: *{co}*\n• 🌙 عدد الليالي: *{nights}*\n• 💰 المبلغ الإجمالي: *{cur} {total}*\n• 💵 المدفوع: *{cur} {prepay}*\n• 📌 الرقم المرجعي: *{invNo}*\n\n📍 العنوان: Dahab, South Sinai, Egypt\n📞 واتساب: +20 109 953 1272\n\nشكراً لاختيارك Dahab Trendy 🙏\nنتطلع لاستقبالك!`,
-        checkin_welcome: `🌟 *أهلاً وسهلاً في Dahab Trendy!*\n\nعزيزنا *{name}*،\nيسعدنا استقبالك اليوم! 🎉\n\n🏨 غرفتك: *{room}*\n\n*خدماتنا:*\n🍽️ مطعم متاح من 7 صباحاً حتى 11 مساءً\n🌊 قريبون من شاطئ دهب الجميل\n🛁 تنظيف الغرف يومياً\n\n📞 للطوارئ أو الخدمة: 0109 953 1272\n\nنتمنى لك إقامة ممتعة! 🌴`,
-        checkout_invoice: `🧾 *Dahab Trendy — فاتورة المغادرة*\n\nعزيزنا *{name}*،\nشكراً جزيلاً لاختيارك Dahab Trendy 🙏\n\n📋 *ملخص الإقامة:*\n• 🛬 الوصول: {ci}\n• 🛫 المغادرة: {co}\n• 🌙 الليالي: {nights}\n• 💰 إجمالي الفاتورة: *{cur} {total}*\n\nنأمل أن تكون إقامتك كانت مريحة ومتعة 😊\nسيسعدنا استقبالك مجدداً!\n\n⭐ شاركنا رأيك على Google Maps\nنتمنى لك سفراً سعيداً 🌟`,
-        payment_reminder: `⏰ *تذكير بالدفع — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nنود التذكير بأن المبلغ المتبقي من حجزك هو:\n💰 *{cur} {remaining}*\n\n📌 رقم الحجز: {invNo}\n📅 تاريخ المغادرة: {co}\n\nللدفع يرجى التواصل معنا:\n📞 0109 953 1272\n\nشكراً لتعاونكم 🙏`,
-        birthday_greet: `🎂 *كل سنة وأنت بخير!*\n\nعزيزنا *{name}*،\n\nبمناسبة عيد ميلادك،\nيتمنى لك فريق *Dahab Trendy* يوماً مليئاً بالسعادة والأفراح! 🎉🎊\n\n🌟 نشكرك على ثقتك بنا\n💛 نتطلع لاستضافتك مجدداً\n\n— فريق Dahab Trendy 🏨`,
-        review_request: `⭐ *شاركنا رأيك — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nشكراً لإقامتك معنا من {ci} إلى {co} 🙏\n\nرأيك يهمنا كثيراً وسيساعدنا على تحسين خدماتنا.\nهل يمكنك تقييمنا على Google Maps؟\n\n🔗 رابط التقييم: https://g.page/r/dahabtrendy\n\n📞 لأي استفسار: 0109 953 1272\nشكراً على وقتك الكريم! 😊`
-      };
+      // القوالب الافتراضية كنص (للعرض والتعديل) — مرجع للنصوص الأصلية على مستوى الموديول
+      const _apiTplDefaults   = _ORIGINAL_TPL_TEXT_AR;
+      const _apiTplDefaultsEn = _ORIGINAL_TPL_TEXT_EN;      // القوالب المخصصة المحفوظة — بنية ثنائية اللغة {key: {ar:'', en:''}}
+      const _savedApiTplsBi = (function(){
+        const raw = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
+        const out = {};
+        Object.keys(raw).forEach(k=>{
+          // ترقية من البنية القديمة (نص واحد فقط = عربي)
+          if(typeof raw[k] === 'string'){ out[k] = {ar: raw[k], en:''}; }
+          else out[k] = {ar: raw[k]?.ar||'', en: raw[k]?.en||''};
+        });
+        return out;
+      })();
 
       modal.innerHTML = `
-<div class="mdl" style="max-width:560px;">
+<div class="mdl" style="max-width:560px;max-height:88vh;overflow-y:auto;padding-bottom:80px;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
     <div style="color:var(--gold);font-size:15px;font-weight:700;">💬 إعدادات WhatsApp Business API</div>
     <button onclick="this.closest('.ovl').classList.remove('on')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;">✕</button>
@@ -23929,12 +24100,75 @@ const DTA_WA = (function(){
     <!-- Common settings -->
     <div class="fld"><label>🌍 بادئة الأرقام الافتراضية</label>
       <select id="wa-prefix">
-        <option value="+20" ${_config.prefix==='+20'?'selected':''}>🇪🇬 مصر (+20)</option>
-        <option value="+966" ${_config.prefix==='+966'?'selected':''}>🇸🇦 السعودية (+966)</option>
-        <option value="+971" ${_config.prefix==='+971'?'selected':''}>🇦🇪 الإمارات (+971)</option>
-        <option value="+44"  ${_config.prefix==='+44'?'selected':''}>🇬🇧 UK (+44)</option>
-        <option value="+1"   ${_config.prefix==='+1'?'selected':''}>🇺🇸 USA (+1)</option>
-        <option value="+49"  ${_config.prefix==='+49'?'selected':''}>🇩🇪 Germany (+49)</option>
+        <optgroup label="── شمال أفريقيا والشرق الأوسط ──">
+          <option value="+20"  ${_config.prefix==='+20'?'selected':''}>🇪🇬 مصر (+20)</option>
+          <option value="+966" ${_config.prefix==='+966'?'selected':''}>🇸🇦 السعودية (+966)</option>
+          <option value="+971" ${_config.prefix==='+971'?'selected':''}>🇦🇪 الإمارات (+971)</option>
+          <option value="+965" ${_config.prefix==='+965'?'selected':''}>🇰🇼 الكويت (+965)</option>
+          <option value="+974" ${_config.prefix==='+974'?'selected':''}>🇶🇦 قطر (+974)</option>
+          <option value="+973" ${_config.prefix==='+973'?'selected':''}>🇧🇭 البحرين (+973)</option>
+          <option value="+968" ${_config.prefix==='+968'?'selected':''}>🇴🇲 عُمان (+968)</option>
+          <option value="+962" ${_config.prefix==='+962'?'selected':''}>🇯🇴 الأردن (+962)</option>
+          <option value="+961" ${_config.prefix==='+961'?'selected':''}>🇱🇧 لبنان (+961)</option>
+          <option value="+963" ${_config.prefix==='+963'?'selected':''}>🇸🇾 سوريا (+963)</option>
+          <option value="+964" ${_config.prefix==='+964'?'selected':''}>🇮🇶 العراق (+964)</option>
+          <option value="+970" ${_config.prefix==='+970'?'selected':''}>🇵🇸 فلسطين (+970)</option>
+          <option value="+212" ${_config.prefix==='+212'?'selected':''}>🇲🇦 المغرب (+212)</option>
+          <option value="+216" ${_config.prefix==='+216'?'selected':''}>🇹🇳 تونس (+216)</option>
+          <option value="+213" ${_config.prefix==='+213'?'selected':''}>🇩🇿 الجزائر (+213)</option>
+          <option value="+218" ${_config.prefix==='+218'?'selected':''}>🇱🇾 ليبيا (+218)</option>
+          <option value="+249" ${_config.prefix==='+249'?'selected':''}>🇸🇩 السودان (+249)</option>
+          <option value="+967" ${_config.prefix==='+967'?'selected':''}>🇾🇪 اليمن (+967)</option>
+          <option value="+972" ${_config.prefix==='+972'?'selected':''}>🇮🇱 إسرائيل (+972)</option>
+          <option value="+90"  ${_config.prefix==='+90'?'selected':''}>🇹🇷 تركيا (+90)</option>
+          <option value="+98"  ${_config.prefix==='+98'?'selected':''}>🇮🇷 إيران (+98)</option>
+        </optgroup>
+        <optgroup label="── أفريقيا جنوب الصحراء ──">
+          <option value="+251" ${_config.prefix==='+251'?'selected':''}>🇪🇹 إثيوبيا (+251)</option>
+          <option value="+254" ${_config.prefix==='+254'?'selected':''}>🇰🇪 كينيا (+254)</option>
+          <option value="+255" ${_config.prefix==='+255'?'selected':''}>🇹🇿 تنزانيا (+255)</option>
+          <option value="+27"  ${_config.prefix==='+27'?'selected':''}>🇿🇦 جنوب أفريقيا (+27)</option>
+          <option value="+234" ${_config.prefix==='+234'?'selected':''}>🇳🇬 نيجيريا (+234)</option>
+        </optgroup>
+        <optgroup label="── أوروبا ──">
+          <option value="+44"  ${_config.prefix==='+44'?'selected':''}>🇬🇧 UK (+44)</option>
+          <option value="+49"  ${_config.prefix==='+49'?'selected':''}>🇩🇪 Germany (+49)</option>
+          <option value="+33"  ${_config.prefix==='+33'?'selected':''}>🇫🇷 France (+33)</option>
+          <option value="+39"  ${_config.prefix==='+39'?'selected':''}>🇮🇹 Italy (+39)</option>
+          <option value="+34"  ${_config.prefix==='+34'?'selected':''}>🇪🇸 Spain (+34)</option>
+          <option value="+31"  ${_config.prefix==='+31'?'selected':''}>🇳🇱 Netherlands (+31)</option>
+          <option value="+32"  ${_config.prefix==='+32'?'selected':''}>🇧🇪 Belgium (+32)</option>
+          <option value="+41"  ${_config.prefix==='+41'?'selected':''}>🇨🇭 Switzerland (+41)</option>
+          <option value="+43"  ${_config.prefix==='+43'?'selected':''}>🇦🇹 Austria (+43)</option>
+          <option value="+48"  ${_config.prefix==='+48'?'selected':''}>🇵🇱 Poland (+48)</option>
+          <option value="+420" ${_config.prefix==='+420'?'selected':''}>🇨🇿 Czech Rep. (+420)</option>
+          <option value="+36"  ${_config.prefix==='+36'?'selected':''}>🇭🇺 Hungary (+36)</option>
+          <option value="+30"  ${_config.prefix==='+30'?'selected':''}>🇬🇷 Greece (+30)</option>
+          <option value="+40"  ${_config.prefix==='+40'?'selected':''}>🇷🇴 Romania (+40)</option>
+          <option value="+7"   ${_config.prefix==='+7'?'selected':''}>🇷🇺 Russia (+7)</option>
+          <option value="+380" ${_config.prefix==='+380'?'selected':''}>🇺🇦 Ukraine (+380)</option>
+          <option value="+46"  ${_config.prefix==='+46'?'selected':''}>🇸🇪 Sweden (+46)</option>
+          <option value="+47"  ${_config.prefix==='+47'?'selected':''}>🇳🇴 Norway (+47)</option>
+          <option value="+45"  ${_config.prefix==='+45'?'selected':''}>🇩🇰 Denmark (+45)</option>
+          <option value="+358" ${_config.prefix==='+358'?'selected':''}>🇫🇮 Finland (+358)</option>
+        </optgroup>
+        <optgroup label="── أمريكا وأستراليا ──">
+          <option value="+1"   ${_config.prefix==='+1'?'selected':''}>🇺🇸 USA / Canada (+1)</option>
+          <option value="+61"  ${_config.prefix==='+61'?'selected':''}>🇦🇺 Australia (+61)</option>
+          <option value="+64"  ${_config.prefix==='+64'?'selected':''}>🇳🇿 New Zealand (+64)</option>
+        </optgroup>
+        <optgroup label="── آسيا ──">
+          <option value="+91"  ${_config.prefix==='+91'?'selected':''}>🇮🇳 India (+91)</option>
+          <option value="+86"  ${_config.prefix==='+86'?'selected':''}>🇨🇳 China (+86)</option>
+          <option value="+81"  ${_config.prefix==='+81'?'selected':''}>🇯🇵 Japan (+81)</option>
+          <option value="+82"  ${_config.prefix==='+82'?'selected':''}>🇰🇷 Korea (+82)</option>
+          <option value="+66"  ${_config.prefix==='+66'?'selected':''}>🇹🇭 Thailand (+66)</option>
+          <option value="+60"  ${_config.prefix==='+60'?'selected':''}>🇲🇾 Malaysia (+60)</option>
+          <option value="+65"  ${_config.prefix==='+65'?'selected':''}>🇸🇬 Singapore (+65)</option>
+          <option value="+62"  ${_config.prefix==='+62'?'selected':''}>🇮🇩 Indonesia (+62)</option>
+          <option value="+63"  ${_config.prefix==='+63'?'selected':''}>🇵🇭 Philippines (+63)</option>
+          <option value="+92"  ${_config.prefix==='+92'?'selected':''}>🇵🇰 Pakistan (+92)</option>
+        </optgroup>
       </select>
     </div>
 
@@ -23985,24 +24219,32 @@ const DTA_WA = (function(){
 
     <!-- قائمة القوالب -->
     <div id="waset-tpl-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
-      ${Object.entries(_apiTplDefs).map(([key,def])=>`
+      ${Object.entries(_apiTplDefs).map(([key,def])=>{
+        const hasCustom = !!(_savedApiTplsBi[key] && (_savedApiTplsBi[key].ar || _savedApiTplsBi[key].en));
+        return `
         <div style="background:rgba(255,255,255,0.04);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;">
           <div onclick="waSetToggleTpl('${key}')" style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;cursor:pointer;user-select:none;">
-            <span style="font-size:13px;font-weight:700;color:${_savedApiTpls[key]?'#4cda7a':'var(--text)'};">${def.label}${_savedApiTpls[key]?' ✏️':''}</span>
+            <span style="font-size:13px;font-weight:700;color:${hasCustom?'#4cda7a':'var(--text)'};">${def.label}${hasCustom?' ✏️':''}</span>
             <span id="waset-tpl-arrow-${key}" style="color:var(--muted);font-size:12px;">▼</span>
           </div>
           <div id="waset-tpl-body-${key}" style="display:none;padding:0 12px 12px;">
-            <textarea id="waset-tpl-ta-${key}" style="width:100%;min-height:130px;font-size:11px;line-height:1.6;background:rgba(0,0,0,0.25);border:1px solid rgba(37,211,102,0.25);border-radius:6px;padding:8px;color:var(--text);resize:vertical;font-family:Arial,sans-serif;direction:rtl;" placeholder="اكتب نص القالب هنا...">${(_savedApiTpls[key]||_apiTplDefaults[key]||'').replace(/</g,'&lt;')}</textarea>
+            <!-- AR/EN sub-tabs -->
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+              <button id="waset-lang-${key}-ar" onclick="waSetSwitchTplLang('${key}','ar')" style="flex:1;padding:6px;border-radius:6px;border:1px solid rgba(201,168,76,0.6);background:rgba(201,168,76,0.15);color:var(--gold);cursor:pointer;font-size:11px;font-weight:700;font-family:Arial,sans-serif;">🇸🇦 عربي</button>
+              <button id="waset-lang-${key}-en" onclick="waSetSwitchTplLang('${key}','en')" style="flex:1;padding:6px;border-radius:6px;border:1px solid var(--bdr);background:transparent;color:var(--muted);cursor:pointer;font-size:11px;font-weight:700;font-family:Arial,sans-serif;">🇬🇧 English</button>
+            </div>
+            <textarea id="waset-tpl-ta-${key}-ar" data-lang="ar" style="width:100%;min-height:130px;font-size:11px;line-height:1.6;background:rgba(0,0,0,0.25);border:1px solid rgba(37,211,102,0.25);border-radius:6px;padding:8px;color:var(--text);resize:vertical;font-family:Arial,sans-serif;direction:rtl;unicode-bidi:plaintext;" placeholder="اكتب نص القالب بالعربي...">${(_savedApiTplsBi[key]?.ar || _apiTplDefaults[key] || '').replace(/</g,'&lt;')}</textarea>
+            <textarea id="waset-tpl-ta-${key}-en" data-lang="en" style="display:none;width:100%;min-height:130px;font-size:11px;line-height:1.6;background:rgba(0,0,0,0.25);border:1px solid rgba(37,211,102,0.25);border-radius:6px;padding:8px;color:var(--text);resize:vertical;font-family:Arial,sans-serif;direction:ltr;unicode-bidi:plaintext;" placeholder="Write the template text in English...">${(_savedApiTplsBi[key]?.en || _apiTplDefaultsEn[key] || '').replace(/</g,'&lt;')}</textarea>
             <div style="font-size:10px;color:#4cda7a;margin-top:5px;direction:ltr;">📎 ${def.vars}</div>
             <div style="display:flex;gap:6px;margin-top:8px;">
               <button onclick="waSetSaveTpl('${key}')" class="btn bg bsm" style="flex:1;justify-content:center;">💾 حفظ</button>
               <button onclick="waSetResetTpl('${key}')" class="btn br bsm" style="flex:1;justify-content:center;">↩ استعادة الأصلي</button>
             </div>
           </div>
-        </div>`).join('')}
+        </div>`;}).join('')}
     </div>
 
-    <div style="display:flex;gap:8px;">
+    <div style="display:flex;gap:8px;position:sticky;bottom:0;background:#1e2a3a;padding:12px 0 4px;margin-top:8px;border-top:1px solid var(--bdr);">
       <button onclick="waSetSaveAllTpls()" class="btn bgr" style="flex:2;">💾 حفظ جميع القوالب</button>
       <button onclick="waSetResetAllTpls()" class="btn br" style="flex:1;">↩ استعادة الكل</button>
     </div>
@@ -24076,61 +24318,73 @@ const DTA_WA = (function(){
     if(open){ body.style.display = ''; if(arrow) arrow.textContent = '▲'; }
   };
 
-  // ─── حفظ قالب واحد ───
+  // ─── تبديل بين تبويب عربي/إنجليزي لقالب معيّن ───
+  window.waSetSwitchTplLang = function(key, lang){
+    ['ar','en'].forEach(l=>{
+      const ta  = document.getElementById('waset-tpl-ta-'+key+'-'+l);
+      const btn = document.getElementById('waset-lang-'+key+'-'+l);
+      const active = (l===lang);
+      if(ta)  ta.style.display = active ? '' : 'none';
+      if(btn){
+        btn.style.borderColor = active ? 'rgba(201,168,76,0.6)' : 'var(--bdr)';
+        btn.style.background  = active ? 'rgba(201,168,76,0.15)' : 'transparent';
+        btn.style.color       = active ? 'var(--gold)' : 'var(--muted)';
+      }
+    });
+  };
+
+  // ─── حفظ قالب واحد (عربي + إنجليزي معاً) ───
   window.waSetSaveTpl = function(key){
-    const ta = document.getElementById('waset-tpl-ta-'+key);
-    if(!ta) return;
+    const taAr = document.getElementById('waset-tpl-ta-'+key+'-ar');
+    const taEn = document.getElementById('waset-tpl-ta-'+key+'-en');
+    if(!taAr && !taEn) return;
     const saved = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
-    saved[key] = ta.value;
+    saved[key] = { ar: taAr?.value||'', en: taEn?.value||'' };
     localStorage.setItem('dta_wa_api_tpls', JSON.stringify(saved));
     // تحديث لون العنوان
     const header = document.querySelector('#waset-tpl-body-'+key)?.previousElementSibling?.querySelector('span');
     if(header && !header.textContent.includes('✏️')) header.textContent += ' ✏️';
     if(header) header.style.color = '#4cda7a';
-    if(typeof sNotify==='function') sNotify('💾 تم الحفظ','تم حفظ القالب بنجاح','success',2000);
+    if(typeof sNotify==='function') sNotify('💾 تم الحفظ','تم حفظ القالب (عربي/English) بنجاح','success',2000);
     // تطبيق فوري على TEMPLATES
-    _applyCustomTplToEngine(key, ta.value);
+    _applyCustomTplToEngine(key, saved[key]);
   };
 
-  // ─── استعادة قالب واحد للأصلي ───
+  // ─── استعادة قالب واحد للأصلي (عربي + إنجليزي) ───
   window.waSetResetTpl = function(key){
-    const _defaults = {
-      booking_confirm: `🏨 *Dahab Trendy — تأكيد الحجز*\n\nمرحباً *{name}* 👋\n\nتم تأكيد حجزك بنجاح ✅\n\n📋 *تفاصيل الحجز:*\n• غرفة: *{room}* ({type})\n• 🛬 الوصول: *{ci}*\n• 🛫 المغادرة: *{co}*\n• 🌙 عدد الليالي: *{nights}*\n• 💰 المبلغ الإجمالي: *{cur} {total}*\n• 💵 المدفوع: *{cur} {prepay}*\n• 📌 الرقم المرجعي: *{invNo}*\n\n📍 العنوان: Dahab, South Sinai, Egypt\n📞 واتساب: +20 109 953 1272\n\nشكراً لاختيارك Dahab Trendy 🙏\nنتطلع لاستقبالك!`,
-      checkin_welcome: `🌟 *أهلاً وسهلاً في Dahab Trendy!*\n\nعزيزنا *{name}*،\nيسعدنا استقبالك اليوم! 🎉\n\n🏨 غرفتك: *{room}*\n\n*خدماتنا:*\n🍽️ مطعم متاح من 7 صباحاً حتى 11 مساءً\n🌊 قريبون من شاطئ دهب الجميل\n🛁 تنظيف الغرف يومياً\n\n📞 للطوارئ أو الخدمة: 0109 953 1272\n\nنتمنى لك إقامة ممتعة! 🌴`,
-      checkout_invoice: `🧾 *Dahab Trendy — فاتورة المغادرة*\n\nعزيزنا *{name}*،\nشكراً جزيلاً لاختيارك Dahab Trendy 🙏\n\n📋 *ملخص الإقامة:*\n• 🛬 الوصول: {ci}\n• 🛫 المغادرة: {co}\n• 🌙 الليالي: {nights}\n• 💰 إجمالي الفاتورة: *{cur} {total}*\n\nنأمل أن تكون إقامتك كانت مريحة ومتعة 😊\nسيسعدنا استقبالك مجدداً!\n\n⭐ شاركنا رأيك على Google Maps\nنتمنى لك سفراً سعيداً 🌟`,
-      payment_reminder: `⏰ *تذكير بالدفع — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nنود التذكير بأن المبلغ المتبقي من حجزك هو:\n💰 *{cur} {remaining}*\n\n📌 رقم الحجز: {invNo}\n📅 تاريخ المغادرة: {co}\n\nللدفع يرجى التواصل معنا:\n📞 0109 953 1272\n\nشكراً لتعاونكم 🙏`,
-      birthday_greet: `🎂 *كل سنة وأنت بخير!*\n\nعزيزنا *{name}*،\n\nبمناسبة عيد ميلادك،\nيتمنى لك فريق *Dahab Trendy* يوماً مليئاً بالسعادة والأفراح! 🎉🎊\n\n🌟 نشكرك على ثقتك بنا\n💛 نتطلع لاستضافتك مجدداً\n\n— فريق Dahab Trendy 🏨`,
-      review_request: `⭐ *شاركنا رأيك — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nشكراً لإقامتك معنا من {ci} إلى {co} 🙏\n\nرأيك يهمنا كثيراً وسيساعدنا على تحسين خدماتنا.\nهل يمكنك تقييمنا على Google Maps؟\n\n🔗 رابط التقييم: https://g.page/r/dahabtrendy\n\n📞 لأي استفسار: 0109 953 1272\nشكراً على وقتك الكريم! 😊`
-    };
-    const ta = document.getElementById('waset-tpl-ta-'+key);
-    if(ta) ta.value = _defaults[key]||'';
+    const taAr = document.getElementById('waset-tpl-ta-'+key+'-ar');
+    const taEn = document.getElementById('waset-tpl-ta-'+key+'-en');
+    if(taAr) taAr.value = _ORIGINAL_TPL_TEXT_AR[key]||'';
+    if(taEn) taEn.value = _ORIGINAL_TPL_TEXT_EN[key]||'';
     const saved = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
     delete saved[key];
     localStorage.setItem('dta_wa_api_tpls', JSON.stringify(saved));
     const header = document.querySelector('#waset-tpl-body-'+key)?.previousElementSibling?.querySelector('span');
     if(header){ header.textContent = header.textContent.replace(' ✏️',''); header.style.color = 'var(--text)'; }
-    if(typeof sNotify==='function') sNotify('↩ تمت الاستعادة','تم استعادة القالب الأصلي','info',2000);
-    _applyCustomTplToEngine(key, null);
+    if(typeof sNotify==='function') sNotify('↩ تمت الاستعادة','تم استعادة القالب الأصلي (عربي/English)','info',2000);
+    _applyCustomTplToEngine(key, {ar:'', en:''});
   };
 
-  // ─── حفظ جميع القوالب دفعة واحدة ───
+  // ─── حفظ جميع القوالب دفعة واحدة (عربي + إنجليزي) ───
   window.waSetSaveAllTpls = function(){
     const keys = ['booking_confirm','checkin_welcome','checkout_invoice','payment_reminder','birthday_greet','review_request'];
     const saved = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
     keys.forEach(key=>{
-      const ta = document.getElementById('waset-tpl-ta-'+key);
-      if(ta && ta.value.trim()){ saved[key] = ta.value; _applyCustomTplToEngine(key, ta.value); }
+      const taAr = document.getElementById('waset-tpl-ta-'+key+'-ar');
+      const taEn = document.getElementById('waset-tpl-ta-'+key+'-en');
+      const obj = { ar: taAr?.value||'', en: taEn?.value||'' };
+      if(obj.ar.trim() || obj.en.trim()){ saved[key] = obj; _applyCustomTplToEngine(key, obj); }
     });
     localStorage.setItem('dta_wa_api_tpls', JSON.stringify(saved));
-    if(typeof sNotify==='function') sNotify('💾 تم الحفظ','تم حفظ جميع القوالب','success',2500);
+    if(typeof sNotify==='function') sNotify('💾 تم الحفظ','تم حفظ جميع القوالب (عربي/English)','success',2500);
   };
 
   // ─── استعادة جميع القوالب ───
   window.waSetResetAllTpls = function(){
-    if(!confirm('هل تريد استعادة جميع القوالب للنصوص الأصلية؟')) return;
+    if(!confirm('هل تريد استعادة جميع القوالب للنصوص الأصلية (عربي وإنجليزي)؟')) return;
     localStorage.removeItem('dta_wa_api_tpls');
     ['booking_confirm','checkin_welcome','checkout_invoice','payment_reminder','birthday_greet','review_request'].forEach(k=>{
-      _applyCustomTplToEngine(k, null);
+      _applyCustomTplToEngine(k, {ar:'', en:''});
     });
     if(typeof sNotify==='function') sNotify('↩ تمت الاستعادة','تم استعادة جميع القوالب الأصلية','info',2500);
     // أعد فتح الـ modal لتحديث النصوص
@@ -24138,12 +24392,12 @@ const DTA_WA = (function(){
     setTimeout(()=> DTA_WA.openSettings(), 300);
   };
 
-  // ─── تطبيق القالب المخصص على محرك TEMPLATES ───
-  function _applyCustomTplToEngine(key, customText){
+  // ─── تطبيق القالب المخصص على محرك TEMPLATES (ثنائي اللغة) ───
+  // customObj = {ar:'...', en:'...'} — أي قيمة فاضية تعني استعادة الأصلي لتلك اللغة
+  function _applyCustomTplToEngine(key, customObj){
     // دالة تحويل النص + {vars} إلى template function
-    const _makeVarFn = (text, key)=>{
+    const _makeVarFn = (text)=>{
       if(!text) return null;
-      // بناء function تستبدل {var} بقيم الـ object
       return (b, extra)=>{
         const vals = Object.assign({
           name: b.name||'', room: b.room||'', type: b.type||'Standard',
@@ -24154,29 +24408,23 @@ const DTA_WA = (function(){
         return text.replace(/\{(\w+)\}/g, (_,k)=> vals[k]!==undefined ? vals[k] : '{'+k+'}');
       };
     };
-    if(customText){
-      TEMPLATES[key] = _makeVarFn(customText, key);
-    } else {
-      // استعادة الدالة الأصلية من الـ defaults
-      const _origMap = {
-        booking_confirm:  (b)=>`🏨 *Dahab Trendy — تأكيد الحجز*\n\nمرحباً *${b.name}* 👋\n\nتم تأكيد حجزك بنجاح ✅\n\n📋 *تفاصيل الحجز:*\n• غرفة: *${b.room}* (${b.type||'Standard'})\n• 🛬 الوصول: *${b.ci}*\n• 🛫 المغادرة: *${b.co}*\n• 🌙 عدد الليالي: *${b.nights||''}*\n• 💰 المبلغ الإجمالي: *${b.cur||'USD'} ${b.total||''}*\n• 💵 المدفوع: *${b.cur||'USD'} ${b.prepay||0}*\n• 📌 الرقم المرجعي: *${b.invNo||b.id}*\n\n📍 العنوان: Dahab, South Sinai, Egypt\n📞 واتساب: +20 109 953 1272\n\nشكراً لاختيارك Dahab Trendy 🙏\nنتطلع لاستقبالك!`,
-        checkin_welcome:  (b)=>`🌟 *أهلاً وسهلاً في Dahab Trendy!*\n\nعزيزنا *${b.name}*،\nيسعدنا استقبالك اليوم! 🎉\n\n🏨 غرفتك: *${b.room}*\n\n*خدماتنا:*\n🍽️ مطعم متاح من 7 صباحاً حتى 11 مساءً\n🌊 قريبون من شاطئ دهب الجميل\n🛁 تنظيف الغرف يومياً\n\n📞 للطوارئ أو الخدمة: 0109 953 1272\n\nنتمنى لك إقامة ممتعة! 🌴`,
-        checkout_invoice: (b,total)=>`🧾 *Dahab Trendy — فاتورة المغادرة*\n\nعزيزنا *${b.name}*،\nشكراً جزيلاً لاختيارك Dahab Trendy 🙏\n\n📋 *ملخص الإقامة:*\n• 🛬 الوصول: ${b.ci}\n• 🛫 المغادرة: ${b.co}\n• 🌙 الليالي: ${b.nights||''}\n• 💰 إجمالي الفاتورة: *${b.cur||'USD'} ${total||b.total}*\n\nنأمل أن تكون إقامتك كانت مريحة ومتعة 😊\nسيسعدنا استقبالك مجدداً!\n\n⭐ شاركنا رأيك على Google Maps\nنتمنى لك سفراً سعيداً 🌟`,
-        payment_reminder: (b,remaining)=>`⏰ *تذكير بالدفع — Dahab Trendy*\n\nعزيزنا *${b.name}*،\n\nنود التذكير بأن المبلغ المتبقي من حجزك هو:\n💰 *${b.cur||'USD'} ${remaining}*\n\n📌 رقم الحجز: ${b.invNo||b.id}\n📅 تاريخ المغادرة: ${b.co}\n\nللدفع يرجى التواصل معنا:\n📞 0109 953 1272\n\nشكراً لتعاونكم 🙏`,
-        birthday_greet:   (name)=>`🎂 *كل سنة وأنت بخير!*\n\nعزيزنا *${name}*،\n\nبمناسبة عيد ميلادك،\nيتمنى لك فريق *Dahab Trendy* يوماً مليئاً بالسعادة والأفراح! 🎉🎊\n\n🌟 نشكرك على ثقتك بنا\n💛 نتطلع لاستضافتك مجدداً\n\n— فريق Dahab Trendy 🏨`,
-        review_request:   (b)=>`⭐ *شاركنا رأيك — Dahab Trendy*\n\nعزيزنا *${b.name}*،\n\nشكراً لإقامتك معنا من ${b.ci} إلى ${b.co} 🙏\n\nرأيك يهمنا كثيراً وسيساعدنا على تحسين خدماتنا.\nهل يمكنك تقييمنا على Google Maps؟\n\n🔗 رابط التقييم: https://g.page/r/dahabtrendy\n\n📞 لأي استفسار: 0109 953 1272\nشكراً على وقتك الكريم! 😊`
-      };
-      if(_origMap[key]) TEMPLATES[key] = _origMap[key];
+
+    // النصوص الأصلية (دوال) لكل لغة — تُستخدم للاستعادة
+    const _origAr = _ORIGINAL_TEMPLATES_AR[key];
+    const _origEn = _ORIGINAL_TEMPLATES_EN[key];
+
+    if(customObj && customObj.ar){
+      TEMPLATES_AR[key] = _makeVarFn(customObj.ar);
+    } else if(_origAr){
+      TEMPLATES_AR[key] = _origAr;
+    }
+
+    if(customObj && customObj.en){
+      TEMPLATES_EN[key] = _makeVarFn(customObj.en);
+    } else if(_origEn){
+      TEMPLATES_EN[key] = _origEn;
     }
   }
-
-  // ─── تطبيق القوالب المحفوظة عند التحميل ───
-  (function _loadSavedApiTpls(){
-    try{
-      const saved = JSON.parse(localStorage.getItem('dta_wa_api_tpls')||'{}');
-      Object.keys(saved).forEach(k=>{ if(saved[k]) _applyCustomTplToEngine(k, saved[k]); });
-    }catch(e){}
-  })();
 
   // ─── قالب الإرسال السريع من بطاقة الحجز ───
   window.openWASendModal = function(bkIdx){
@@ -24760,30 +25008,39 @@ window.DTA_QR = DTA_QR;
 console.log('[DTA_QR v11] ✅ QR Code module ready');
 
 // ── QR Settings functions ──
-function openQRSettings(){
-  // قراءة من IDB أولاً، ثم localStorage كـ fallback
-  const _applyQRS = function(qrs){
-    qrs = qrs || {};
-    document.getElementById('qrs-wifi-name').value   = qrs.wifiName     || 'DahabTrendy_Guest';
-    document.getElementById('qrs-wifi-pass').value   = qrs.wifiPass     || 'dahab2024';
-    document.getElementById('qrs-wa-num').value      = qrs.waNum        || '201099531272';
-    document.getElementById('qrs-checkin-time').value  = qrs.checkinTime  || '2:00 PM';
-    document.getElementById('qrs-checkout-time').value = qrs.checkoutTime || '12:00 PM';
-    document.getElementById('qr-settings-modal').classList.add('on');
-  };
-  if(typeof DTA_IDB !== 'undefined' && DTA_IDB.get){
-    DTA_IDB.get('settings','dta_qr_settings').then(function(val){
-      if(val){ _applyQRS(val); }
-      else {
-        // fallback to localStorage
-        _applyQRS(JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'));
-      }
-    }).catch(function(){
-      _applyQRS(JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'));
-    });
-  } else {
-    _applyQRS(JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'));
+function openQRRoomPicker(){
+  const rooms = (typeof ROOMS !== 'undefined') ? ROOMS : [];
+  let picker = document.getElementById('qr-room-picker');
+  if(!picker){
+    picker = document.createElement('div');
+    picker.id = 'qr-room-picker';
+    picker.className = 'ovl';
+    document.body.appendChild(picker);
   }
+  let btns = rooms.map(function(r){
+    return '<button onclick="DTA_QR.openQRModal('+r+');document.getElementById(\'qr-room-picker\').classList.remove(\'on\');" style="padding:12px 6px;border-radius:8px;border:1px solid rgba(52,152,219,0.3);background:rgba(52,152,219,0.08);color:#7ab8f5;cursor:pointer;font-size:13px;font-weight:700;font-family:Arial,sans-serif;">'+r+'</button>';
+  }).join('');
+  picker.innerHTML = '<div class="mdl" style="max-width:460px;">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+    + '<div style="color:var(--gold);font-size:15px;font-weight:700;">📱 QR Code — اختر الغرفة</div>'
+    + '<button onclick="document.getElementById(\'qr-room-picker\').classList.remove(\'on\')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;">✕</button>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px;">' + btns + '</div>'
+    + '<button onclick="printAllRoomQRs();document.getElementById(\'qr-room-picker\').classList.remove(\'on\');" class="btn bbl" style="width:100%;">🖨️ طباعة QR جميع الغرف (' + rooms.length + ')</button>'
+    + '</div>';
+  picker.classList.add('on');
+}
+function openQRSettings(){
+  var qrs = {};
+  try { qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'); } catch(e){}
+  var el;
+  el = document.getElementById('qrs-wifi-name');     if(el) el.value = qrs.wifiName     || '';
+  el = document.getElementById('qrs-wifi-pass');     if(el) el.value = qrs.wifiPass     || '';
+  el = document.getElementById('qrs-wa-num');        if(el) el.value = qrs.waNum        || '201099531272';
+  el = document.getElementById('qrs-checkin-time');  if(el) el.value = qrs.checkinTime  || '2:00 PM';
+  el = document.getElementById('qrs-checkout-time'); if(el) el.value = qrs.checkoutTime || '12:00 PM';
+  var modal = document.getElementById('qr-settings-modal');
+  if(modal) modal.classList.add('on');
 }
 function saveQRSettings(){
   const qrs = {
@@ -24920,6 +25177,11 @@ console.log('  📴  Service Worker — Full offline support');
 console.log('  💬  WhatsApp Business API — wa.me + Cloud API');
 console.log('  📱  QR Code Rooms — Guest page with services');
 console.log('  🌐  Offline Indicator + Storage Dashboard');
+
+// Expose QR Settings functions to global scope
+window.openQRSettings = openQRSettings;
+window.saveQRSettings = saveQRSettings;
+window.openQRRoomPicker = openQRRoomPicker;
 
 })();
 </script>
