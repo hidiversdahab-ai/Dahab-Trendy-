@@ -23407,7 +23407,7 @@ console.log('[DTA_DB v11] ✅ Full IndexedDB engine ready — Primary storage');
 
   // كود الـ Service Worker — يُحفظ كـ Blob URL
   const SW_CODE = `
-const CACHE_NAME = 'dahab-trendy-v11';
+const CACHE_NAME = 'dahab-trendy-v12';
 const OFFLINE_URL = 'offline.html';
 
 // الملفات الأساسية التي تُحفظ دائماً
@@ -23459,9 +23459,9 @@ self.addEventListener('fetch', e=>{
     return;
   }
 
-  // للطلبات المحلية: Network-first
+  // للطلبات المحلية: Network-first مع تجاوز الكاش المتصفح
   e.respondWith(
-    fetch(e.request).then(resp=>{
+    fetch(e.request, {cache:'no-store'}).then(resp=>{
       if(!resp || !resp.ok || e.request.method !== 'GET') return resp;
       const cloned = resp.clone();
       caches.open(CACHE_NAME).then(cache=> cache.put(e.request, cloned));
