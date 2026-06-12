@@ -3216,6 +3216,13 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 
 <!-- ══ MENU BROWSE VIEW (NEW!) ══ -->
 <div id="rest-view-menu-browse" style="display:none;">
+  <!-- Language Toggle -->
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+    <div style="display:flex;border:1.5px solid var(--bdr);border-radius:10px;overflow:hidden;">
+      <button onclick="setMenuLang('ar',this)" class="menu-lang-btn act" data-lang="ar" style="padding:6px 14px;border:none;background:rgba(201,168,76,0.2);color:var(--gold);cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;">🇪🇬 عربي</button>
+      <button onclick="setMenuLang('en',this)" class="menu-lang-btn" data-lang="en" style="padding:6px 14px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;">🇬🇧 English</button>
+    </div>
+  </div>
   <!-- Stats Bar -->
   <div class="rest-stats-bar" id="menu-browse-stats" style="margin-bottom:16px;"></div>
   <!-- Category Tabs -->
@@ -3223,6 +3230,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   <!-- Menu Items Grid -->
   <div id="menu-browse-content"></div>
 </div>
+
 
 <!-- ══ POS VIEW ══ -->
 <div id="rest-view-pos" style="display:none;">
@@ -3397,6 +3405,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 
   <div class="g2">
     <div class="fld s2"><label>اسم الصنف *</label><input id="mi-name" placeholder="مثال: كباب، عصير مانجو، بيتزا..."></div>
+    <div class="fld s2"><label>الاسم بالإنجليزي (اختياري)</label><input id="mi-name-en" placeholder="e.g. Kebab, Mango Juice, Pizza..." style="direction:ltr;text-align:left;"></div>
     <div class="fld"><label>السعر (EGP) *</label><input id="mi-price" type="number" min="0" step="0.5" placeholder="0"></div>
     <div class="fld"><label>رمز / إيموجي</label><input id="mi-emoji" placeholder="🍕" maxlength="4" style="font-size:20px;text-align:center;"></div>
     <div class="fld s2"><label>ملاحظة (اختياري)</label><input id="mi-note" placeholder="مثال: متاح فقط الليل، حار جداً..."></div>
@@ -18454,6 +18463,23 @@ function getCatMeta(){
   };
 }
 
+function setMenuLang(lang, btn){
+  window._menuLang = lang;
+  document.querySelectorAll(".menu-lang-btn").forEach(b=>{
+    const act = b.dataset.lang === lang;
+    b.classList.toggle("act", act);
+    b.style.background = act ? "rgba(201,168,76,0.2)" : "transparent";
+    b.style.color = act ? "var(--gold)" : "var(--muted)";
+  });
+  renderMenuBrowse();
+  renderPOSMenu();
+}
+
+function _dispName(item){
+  if(window._menuLang === "en" && item.nameEn && item.nameEn.trim()) return item.nameEn;
+  return item.name;
+}
+
 function renderMenuBrowse(){
   const statsEl = document.getElementById("menu-browse-stats");
   const tabsEl = document.getElementById("menu-cat-tabs");
@@ -18524,7 +18550,7 @@ function renderMenuBrowse(){
               ? `<img src="${item.img}" style="width:54px;height:54px;object-fit:cover;border-radius:10px;margin-bottom:2px;">`
               : item.emoji||"🍽️"}
           </span>
-            <div class="menu-item-name">${item.name}</div>
+            <div class="menu-item-name">${_dispName(item)}</div>
             <div class="menu-item-price">£${item.price}</div>
             ${item.note?`<div class="menu-item-note-tag">${item.note}</div>`:""}
           </div>`;
@@ -18569,19 +18595,27 @@ function renderPOSMenu(){
   if(!grid) return;
   const catMeta = getCatMeta();
   const cats = [...new Set(restMenu.map(i=>i.cat).filter(Boolean))];
+  // أعد بناء الـ select بس لو الـ options اتغيرت (منع re-render غير ضروري)
   if(catSel){
     const cur = catSel.value;
-    catSel.innerHTML = '<option value="">كل الأصناف</option>' + cats.map(c=>`<option ${c===cur?"selected":""}>${c}</option>`).join("");
+    const expected = ['', ...cats];
+    const current = Array.from(catSel.options).map(o=>o.value);
+    const changed = expected.length !== current.length || expected.some((v,i)=>v!==current[i]);
+    if(changed){
+      catSel.innerHTML = '<option value="">كل الأصناف</option>' + cats.map(c=>`<option ${c===cur?"selected":""}>${c}</option>`).join("");
+      catSel.value = cur;
+    }
   }
   const fCat = catSel ? catSel.value : "";
-  const filtered = fCat ? restMenu.filter(i=>i.cat===fCat) : restMenu;
+  // استخدم الـ index الأصلي مباشرة بدل indexOf
+  const indexedMenu = restMenu.map((item,i)=>({item,i}));
+  const filtered = fCat ? indexedMenu.filter(({item})=>item.cat===fCat) : indexedMenu;
   if(!filtered.length){
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:24px;font-size:12px;">
       لا توجد أصناف — اذهب لـ إدارة القائمة لإضافة أصناف
     </div>`; return;
   }
-  grid.innerHTML = filtered.map((item,fi)=>{
-    const i = restMenu.indexOf(item);
+  grid.innerHTML = filtered.map(({item,i})=>{
     const inCart = posCart.find(c=>c.idx===i);
     const meta = catMeta[item.cat]||{color:"#95a5a6"};
     return `<div onclick="addToCart(${i})" class="menu-item-card ${inCart?"in-cart":""}" style="padding:10px 8px;">
@@ -18591,7 +18625,7 @@ function renderPOSMenu(){
           ? `<img src="${item.img}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;border:2px solid var(--bdr);">`
           : item.emoji||"🍽️"}
       </div>
-      <div style="font-weight:700;font-size:11px;color:var(--text);margin-bottom:3px;line-height:1.3;">${item.name}</div>
+      <div style="font-weight:700;font-size:11px;color:var(--text);margin-bottom:3px;line-height:1.3;">${_dispName(item)}</div>
       <div style="font-size:13px;font-weight:800;color:var(--gold);">£${item.price}</div>
     </div>`;
   }).join("");
@@ -19053,6 +19087,7 @@ function openMenuItemM(idx){
   document.getElementById("menu-item-title").textContent = menuItemEdit!==null ? "✏️ تعديل صنف" : "🍴 إضافة صنف";
   const item = menuItemEdit!==null ? restMenu[menuItemEdit] : null;
   document.getElementById("mi-name").value = item ? item.name : "";
+  document.getElementById("mi-name-en").value = item ? (item.nameEn||"") : "";
   document.getElementById("mi-price").value = item ? item.price : "";
   document.getElementById("mi-emoji").value = item ? (item.emoji||"") : "";
   document.getElementById("mi-cat").value = item ? (item.cat||"أكل 🍽️") : "أكل 🍽️";
@@ -19081,6 +19116,7 @@ function saveMenuItem(){
   if(!price){ alert("أدخل السعر"); return; }
   const item = {
     name, price,
+    nameEn: document.getElementById("mi-name-en").value.trim(),
     emoji: document.getElementById("mi-emoji").value.trim()||"🍽️",
     cat: document.getElementById("mi-cat").value || "أكل 🍽️",
     note: document.getElementById("mi-note").value.trim(),
@@ -19105,47 +19141,47 @@ function deleteMenuItem(i){
 // ══ DRINKS IMPORT ══════════════════════════════════════════════
 const DRINKS_CATALOG = [
   // ── عصائر طازجة ──
-  {cat:"عصائر طازجة 🍊", emoji:"🍊", name:"عصير برتقال",       price:25, note:"طازج"},
-  {cat:"عصائر طازجة 🍊", emoji:"🥭", name:"عصير مانجو",         price:30, note:""},
-  {cat:"عصائر طازجة 🍊", emoji:"🍋", name:"عصير ليمون",         price:20, note:"بالنعناع"},
-  {cat:"عصائر طازجة 🍊", emoji:"🍓", name:"عصير فراولة",        price:30, note:""},
-  {cat:"عصائر طازجة 🍊", emoji:"🍉", name:"عصير بطيخ",          price:20, note:""},
-  {cat:"عصائر طازجة 🍊", emoji:"🍑", name:"عصير خوخ",           price:30, note:""},
-  {cat:"عصائر طازجة 🍊", emoji:"🍍", name:"عصير أناناس",        price:30, note:""},
-  {cat:"عصائر طازجة 🍊", emoji:"🥝", name:"عصير كيوي",          price:35, note:""},
-  {cat:"عصائر طازجة 🍊", emoji:"🍇", name:"عصير عنب",           price:30, note:""},
-  {cat:"عصائر طازجة 🍊", emoji:"🥕", name:"عصير جزر",           price:20, note:""},
-  {cat:"عصائر طازجة 🍊", emoji:"🍹", name:"كوكتيل فواكه",       price:40, note:"مشكل"},
+  {cat:"عصائر طازجة 🍊", emoji:"🍊", name:"عصير برتقال",       price:25, note:"طازج", nameEn:"Orange Juice"},
+  {cat:"عصائر طازجة 🍊", emoji:"🥭", name:"عصير مانجو",         price:30, note:"", nameEn:"Mango Juice"},
+  {cat:"عصائر طازجة 🍊", emoji:"🍋", name:"عصير ليمون",         price:20, note:"بالنعناع", nameEn:"Lemon Juice"},
+  {cat:"عصائر طازجة 🍊", emoji:"🍓", name:"عصير فراولة",        price:30, note:"", nameEn:"Strawberry Juice"},
+  {cat:"عصائر طازجة 🍊", emoji:"🍉", name:"عصير بطيخ",          price:20, note:"", nameEn:"Watermelon Juice"},
+  {cat:"عصائر طازجة 🍊", emoji:"🍑", name:"عصير خوخ",           price:30, note:"", nameEn:"Peach Juice"},
+  {cat:"عصائر طازجة 🍊", emoji:"🍍", name:"عصير أناناس",        price:30, note:"", nameEn:"Pineapple Juice"},
+  {cat:"عصائر طازجة 🍊", emoji:"🥝", name:"عصير كيوي",          price:35, note:"", nameEn:"Kiwi Juice"},
+  {cat:"عصائر طازجة 🍊", emoji:"🍇", name:"عصير عنب",           price:30, note:"", nameEn:"Grape Juice"},
+  {cat:"عصائر طازجة 🍊", emoji:"🥕", name:"عصير جزر",           price:20, note:"", nameEn:"Carrot Juice"},
+  {cat:"عصائر طازجة 🍊", emoji:"🍹", name:"كوكتيل فواكه",       price:40, note:"مشكل", nameEn:"Fruit Cocktail"},
   // ── مشروبات ساخنة ──
-  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"قهوة عربي",          price:20, note:""},
-  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"نسكافيه",            price:25, note:""},
-  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"شاي أحمر",           price:15, note:""},
-  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"شاي بالحليب",        price:20, note:""},
-  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"شاي أخضر",           price:20, note:""},
-  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"كركديه ساخن",        price:20, note:""},
-  {cat:"مشروبات ساخنة ☕", emoji:"🍵", name:"زنجبيل بليمون",      price:25, note:""},
-  {cat:"مشروبات ساخنة ☕", emoji:"🍫", name:"كاكاو بالحليب",      price:30, note:""},
-  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"كابتشينو",           price:35, note:""},
-  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"لاتيه",              price:35, note:""},
+  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"قهوة عربي",          price:20, note:"", nameEn:"Arabic Coffee"},
+  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"نسكافيه",            price:25, note:"", nameEn:"Instant Coffee"},
+  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"شاي أحمر",           price:15, note:"", nameEn:"Black Tea"},
+  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"شاي بالحليب",        price:20, note:"", nameEn:"Tea with Milk"},
+  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"شاي أخضر",           price:20, note:"", nameEn:"Green Tea"},
+  {cat:"مشروبات ساخنة ☕", emoji:"🫖", name:"كركديه ساخن",        price:20, note:"", nameEn:"Hot Hibiscus Tea"},
+  {cat:"مشروبات ساخنة ☕", emoji:"🍵", name:"زنجبيل بليمون",      price:25, note:"", nameEn:"Ginger Lemon Tea"},
+  {cat:"مشروبات ساخنة ☕", emoji:"🍫", name:"كاكاو بالحليب",      price:30, note:"", nameEn:"Hot Chocolate"},
+  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"كابتشينو",           price:35, note:"", nameEn:"Cappuccino"},
+  {cat:"مشروبات ساخنة ☕", emoji:"☕", name:"لاتيه",              price:35, note:"", nameEn:"Latte"},
   // ── مياه ومشروبات باردة ──
-  {cat:"مياه وبارد 💧",   emoji:"💧", name:"مياه معدنية صغيرة",  price:10, note:""},
-  {cat:"مياه وبارد 💧",   emoji:"💧", name:"مياه معدنية كبيرة",  price:15, note:""},
-  {cat:"مياه وبارد 💧",   emoji:"🧊", name:"مياه بالثلج",        price:12, note:""},
-  {cat:"مياه وبارد 💧",   emoji:"🫗", name:"عصير علبة مشكل",     price:20, note:""},
-  {cat:"مياه وبارد 💧",   emoji:"🧃", name:"ريد بول",            price:35, note:""},
+  {cat:"مياه وبارد 💧",   emoji:"💧", name:"مياه معدنية صغيرة",  price:10, note:"", nameEn:"Mineral Water (Small)"},
+  {cat:"مياه وبارد 💧",   emoji:"💧", name:"مياه معدنية كبيرة",  price:15, note:"", nameEn:"Mineral Water (Large)"},
+  {cat:"مياه وبارد 💧",   emoji:"🧊", name:"مياه بالثلج",        price:12, note:"", nameEn:"Iced Water"},
+  {cat:"مياه وبارد 💧",   emoji:"🫗", name:"عصير علبة مشكل",     price:20, note:"", nameEn:"Assorted Juice Box"},
+  {cat:"مياه وبارد 💧",   emoji:"🧃", name:"ريد بول",            price:35, note:"", nameEn:"Red Bull"},
   // ── مشروبات غازية ──
-  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"بيبسي",              price:15, note:""},
-  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"سفن أب",             price:15, note:""},
-  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"ميرندا برتقال",      price:15, note:""},
-  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"كوكاكولا",           price:15, note:""},
-  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"مياه غازية",         price:15, note:""},
+  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"بيبسي",              price:15, note:"", nameEn:"Pepsi"},
+  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"سفن أب",             price:15, note:"", nameEn:"7Up"},
+  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"ميرندا برتقال",      price:15, note:"", nameEn:"Mirinda Orange"},
+  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"كوكاكولا",           price:15, note:"", nameEn:"Coca-Cola"},
+  {cat:"مشروبات غازية 🥤", emoji:"🥤", name:"مياه غازية",         price:15, note:"", nameEn:"Soda Water"},
   // ── سموزي ومثلجات ──
-  {cat:"سموزي ومثلجات 🧋", emoji:"🧋", name:"سموزي فراولة وموز", price:45, note:""},
-  {cat:"سموزي ومثلجات 🧋", emoji:"🧋", name:"سموزي مانجو",        price:45, note:""},
-  {cat:"سموزي ومثلجات 🧋", emoji:"🍦", name:"ميلك شيك فانيليا",  price:40, note:""},
-  {cat:"سموزي ومثلجات 🧋", emoji:"🍦", name:"ميلك شيك شوكولاتة", price:40, note:""},
-  {cat:"سموزي ومثلجات 🧋", emoji:"🧃", name:"تمر هندي",           price:20, note:""},
-  {cat:"سموزي ومثلجات 🧋", emoji:"🧃", name:"كركديه بارد",        price:20, note:""},
+  {cat:"سموزي ومثلجات 🧋", emoji:"🧋", name:"سموزي فراولة وموز", price:45, note:"", nameEn:"Strawberry Banana Smoothie"},
+  {cat:"سموزي ومثلجات 🧋", emoji:"🧋", name:"سموزي مانجو",        price:45, note:"", nameEn:"Mango Smoothie"},
+  {cat:"سموزي ومثلجات 🧋", emoji:"🍦", name:"ميلك شيك فانيليا",  price:40, note:"", nameEn:"Vanilla Milkshake"},
+  {cat:"سموزي ومثلجات 🧋", emoji:"🍦", name:"ميلك شيك شوكولاتة", price:40, note:"", nameEn:"Chocolate Milkshake"},
+  {cat:"سموزي ومثلجات 🧋", emoji:"🧃", name:"تمر هندي",           price:20, note:"", nameEn:"Tamarind Drink"},
+  {cat:"سموزي ومثلجات 🧋", emoji:"🧃", name:"كركديه بارد",        price:20, note:"", nameEn:"Cold Hibiscus Drink"},
 ];
 
 let _drinksActiveCat = "الكل";
@@ -19262,6 +19298,7 @@ function importSelectedDrinks(){
     if(dupName){ skipped++; return; }
     restMenu.push({
       name: d.name,
+      nameEn: d.nameEn||"",
       price: d.price,
       emoji: d.emoji,
       cat: "مشروبات 🥤",
