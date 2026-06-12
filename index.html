@@ -19109,11 +19109,30 @@ function openMenuItemM(idx){
   document.getElementById("menu-item-modal").classList.add("on");
 }
 
+function _parsePrice(raw){
+  if(raw==null) return NaN;
+  let s = String(raw).trim();
+  // تحويل الأرقام العربية/الفارسية إلى أرقام إنجليزية
+  const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+  const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
+  s = s.replace(/[٠-٩]/g, d => arabicDigits.indexOf(d))
+       .replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
+  // توحيد الفاصلة العشرية واستبعاد فواصل الآلاف
+  s = s.replace(/,/g, ".");
+  const parts = s.split(".");
+  if(parts.length > 2) s = parts[0] + "." + parts.slice(1).join("");
+  return parseFloat(s);
+}
+
 function saveMenuItem(){
+ try{
   const name = document.getElementById("mi-name").value.trim();
-  const price = parseFloat(document.getElementById("mi-price").value)||0;
-  if(!name){ alert("أدخل اسم الصنف"); return; }
-  if(!price){ alert("أدخل السعر"); return; }
+  const priceEl = document.getElementById("mi-price");
+  const priceRaw = priceEl.value;
+  let price = _parsePrice(priceRaw);
+  if(isNaN(price)) price = 0;
+  if(!name){ sNotify("⚠️","أدخل اسم الصنف","info",3000); return; }
+  if(!price){ sNotify("⚠️","أدخل السعر — القيمة المقروءة: \""+priceRaw+"\"","info",4000); return; }
   const item = {
     name, price,
     nameEn: document.getElementById("mi-name-en").value.trim(),
@@ -19126,7 +19145,11 @@ function saveMenuItem(){
   sv("dta_rest_menu", restMenu);
   closeM("menu-item-modal");
   renderMenuEditor();
-  sNotify("✅ تم الحفظ","تم حفظ الصنف في القائمة","success",2500);
+  sNotify("✅ تم الحفظ","تم حفظ الصنف — السعر: "+price,"success",3500);
+ }catch(err){
+  sNotify("⚠️ خطأ عند الحفظ", err.message, "info", 5000);
+  console.error("saveMenuItem error:", err);
+ }
 }
 
 function deleteMenuItem(i){
