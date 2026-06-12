@@ -15130,28 +15130,6 @@ function printHKPDFReport(){
 // ═══════════════════════════════════════════════════════════
 let _pwaInstallPrompt = null;
 
-// Create manifest dynamically
-(function(){
-  const manifest = {
-    name: 'Dahab Trendy',
-    short_name: 'DahabTrendy',
-    description: 'نظام إدارة فندق Dahab Trendy',
-    start_url: window.location.href,
-    display: 'standalone',
-    orientation: 'any',
-    background_color: '#0f0f1a',
-    theme_color: '#c9a84c',
-    icons: [
-      { src: 'https://api.dicebear.com/7.x/initials/svg?seed=DT&backgroundColor=c9a84c&textColor=1a1a2e&size=192', sizes: '192x192', type: 'image/svg+xml' },
-      { src: 'https://api.dicebear.com/7.x/initials/svg?seed=DT&backgroundColor=c9a84c&textColor=1a1a2e&size=512', sizes: '512x512', type: 'image/svg+xml' }
-    ]
-  };
-  const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const link = document.getElementById('pwa-manifest');
-  if(link) link.href = url;
-})();
-
 // Listen for install prompt (Android Chrome / Desktop)
 window.addEventListener('beforeinstallprompt', (e)=>{
   e.preventDefault();
@@ -21280,65 +21258,7 @@ function loadAllGuestData(b){
 function updateCoGuestFields(){ rebuildGuestRows(); }
 function loadCoGuestFields(savedGuests, adults){ rebuildGuestRows(); }
 
-// ═══════════════════════════════════════════════════════════
-// ══ SERVICE WORKER — OFFLINE SUPPORT ══
-// ═══════════════════════════════════════════════════════════
-(function registerServiceWorker(){
-  if(!('serviceWorker' in navigator)) return;
-  const swCode = `
-const CACHE = 'dahab-trendy-v1';
-const ASSETS = [self.location.href.replace('/sw-inline.js','')];
-
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => {
-      return fetch(self.location.href.replace('/sw-inline.js',''))
-        .then(r => c.put(self.location.href.replace('/sw-inline.js',''), r))
-        .catch(()=>{});
-    }).then(()=> self.skipWaiting())
-  );
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
-    ).then(()=> self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', e => {
-  if(e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      const fetchFresh = fetch(e.request).then(res => {
-        if(res && res.status === 200 && res.type === 'basic'){
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
-        return res;
-      }).catch(()=> cached);
-      return cached || fetchFresh;
-    })
-  );
-});
-`;
-  const blob = new Blob([swCode], {type:'text/javascript'});
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl, {scope: '/'})
-    .then(reg => {
-      console.log('[PWA] Service Worker registered ✓');
-      reg.addEventListener('updatefound', ()=>{
-        const newWorker = reg.installing;
-        newWorker.addEventListener('statechange', ()=>{
-          if(newWorker.state==='installed' && navigator.serviceWorker.controller){
-            sNotify('🔄 تحديث متاح','أعد تحميل الصفحة للحصول على آخر تحديث','info',6000);
-          }
-        });
-      });
-    })
-    .catch(err => console.warn('[PWA] SW registration failed:', err));
-})();
+// (Service Worker v1 removed — replaced by v11 below)
 
 // ═══════════════════════════════════════════════════════════
 // ══ GOOGLE DRIVE AUTO-SYNC (نسخ يومية — 7 أيام) ══
@@ -24611,28 +24531,35 @@ const DTA_QR = (function(){
     const waNum        = qrs.waNum        || '201099531272';
     const checkinTime  = qrs.checkinTime  || '2:00 PM';
     const checkoutTime = qrs.checkoutTime || '12:00 PM';
+    // ── قراءة قائمة المطعم الحقيقية من localStorage ──
+    const _restMenuRaw = JSON.parse(localStorage.getItem('dta_rest_menu')||'[]');
+    const _menuHTML = _restMenuRaw.length
+      ? _restMenuRaw.map(it=>'<div class="menu-item"><span class="menu-name">'+(it.emoji||'🍽️')+' '+it.name+'</span><span class="menu-price">'+(it.price||0)+' EGP</span></div>').join('')
+      : '<div style="color:#7a8fa6;font-size:12px;text-align:center;padding:10px;">لا توجد أصناف في القائمة حالياً</div>';
 
     return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>غرفة ${room} — ${prop.name}</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<title>Room ${room} — ${prop.name}</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;font-family:'Tajawal',Arial,sans-serif;min-height:100vh;padding:20px;}
+body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;font-family:'Tajawal','Inter',Arial,sans-serif;min-height:100vh;padding:20px;}
 .hero{text-align:center;padding:30px 20px 20px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:16px;margin-bottom:20px;}
 .room-num{font-size:64px;font-weight:800;color:#c9a84c;line-height:1;}
 .hotel-name{font-size:18px;font-weight:700;color:#f0e6cc;margin-top:8px;}
-.room-label{font-size:14px;color:#7a8fa6;margin-top:4px;}
+.room-label{font-size:13px;color:#7a8fa6;margin-top:4px;line-height:1.8;}
 .section{background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.18);border-radius:12px;padding:16px;margin-bottom:16px;}
-.s-title{font-size:12px;font-weight:700;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(201,168,76,0.2);}
+.s-title{font-size:11px;font-weight:700;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(201,168,76,0.2);display:flex;justify-content:space-between;align-items:center;}
+.s-title .en{font-size:10px;color:#7a8fa6;font-weight:400;letter-spacing:1px;}
 .service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .svc-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;display:block;transition:all .2s;}
 .svc-btn:hover{background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.5);}
-.svc-icon{font-size:28px;display:block;margin-bottom:6px;}
-.svc-lbl{font-size:11px;color:#7a8fa6;display:block;}
+.svc-icon{font-size:28px;display:block;margin-bottom:4px;}
+.svc-lbl{font-size:11px;color:#f0e6cc;display:block;font-weight:700;margin-bottom:2px;}
+.svc-lbl-en{font-size:9px;color:#7a8fa6;display:block;}
 .menu-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
 .menu-item:last-child{border-bottom:none;}
 .menu-name{font-size:13px;color:#f0e6cc;}
@@ -24640,15 +24567,16 @@ body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;fo
 .contact-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
 .contact-icon{font-size:24px;width:36px;text-align:center;}
 .contact-info{flex:1;}
-.contact-label{font-size:10px;color:#7a8fa6;text-transform:uppercase;letter-spacing:1px;}
+.contact-label{font-size:9px;color:#7a8fa6;text-transform:uppercase;letter-spacing:1px;}
 .contact-val{font-size:14px;color:#f0e6cc;font-weight:700;margin-top:2px;}
-.wa-btn{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:16px;border-radius:12px;text-decoration:none;font-size:16px;font-weight:700;margin-top:16px;box-shadow:0 4px 20px rgba(37,211,102,0.3);}
+.wa-btn{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:16px;border-radius:12px;text-decoration:none;font-size:15px;font-weight:700;margin-top:16px;box-shadow:0 4px 20px rgba(37,211,102,0.3);}
 .rating-stars{display:flex;gap:8px;justify-content:center;font-size:32px;cursor:pointer;}
 .star{transition:transform .2s;}
 .star:hover{transform:scale(1.2);}
 .wifi-box{background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.3);border-radius:10px;padding:14px;text-align:center;}
 .wifi-name{font-size:18px;font-weight:700;color:#7ab8f5;margin-top:6px;}
 .wifi-pass{font-size:22px;font-weight:800;color:#c9a84c;letter-spacing:2px;margin-top:4px;}
+.bilabel{font-size:10px;color:#7a8fa6;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;}
 @media(max-width:400px){.service-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -24657,97 +24585,103 @@ body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;fo
 <div class="hero">
   <div class="room-num">${room}</div>
   <div class="hotel-name">🏨 ${prop.name}</div>
-  <div class="room-label">أهلاً وسهلاً بك في غرفتك!</div>
+  <div class="room-label">
+    أهلاً وسهلاً بك في غرفتك!<br>
+    <span style="font-size:12px;color:#7a8fa6;">Welcome to your room!</span>
+  </div>
 </div>
 
 <!-- WiFi -->
 <div class="section">
-  <div class="s-title">📡 WiFi</div>
+  <div class="s-title">📡 WiFi <span class="en">Wireless Internet</span></div>
   <div class="wifi-box">
-    <div style="font-size:11px;color:#7a8fa6;text-transform:uppercase;letter-spacing:1px;">اسم الشبكة</div>
+    <div class="bilabel"><span>اسم الشبكة</span><span>Network Name</span></div>
     <div class="wifi-name">${wifiName}</div>
-    <div style="font-size:11px;color:#7a8fa6;margin-top:8px;text-transform:uppercase;letter-spacing:1px;">كلمة المرور</div>
+    <div class="bilabel" style="margin-top:10px;"><span>كلمة المرور</span><span>Password</span></div>
     <div class="wifi-pass">${wifiPass}</div>
   </div>
 </div>
 
 <!-- الخدمات -->
 <div class="section">
-  <div class="s-title">🛎 الخدمات</div>
+  <div class="s-title">🛎 الخدمات <span class="en">Services</span></div>
   <div class="service-grid">
-    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب خدمة الغرفة" class="svc-btn">
+    <a href="https://wa.me/${waNum}?text=Room ${room}: Room service request" class="svc-btn">
       <span class="svc-icon">🛏️</span>
       <span class="svc-lbl">خدمة الغرفة</span>
+      <span class="svc-lbl-en">Room Service</span>
     </a>
-    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب تنظيف الغرفة" class="svc-btn">
+    <a href="https://wa.me/${waNum}?text=Room ${room}: Cleaning request" class="svc-btn">
       <span class="svc-icon">🧹</span>
       <span class="svc-lbl">تنظيف</span>
+      <span class="svc-lbl-en">Cleaning</span>
     </a>
-    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب مناشف إضافية" class="svc-btn">
+    <a href="https://wa.me/${waNum}?text=Room ${room}: Extra towels request" class="svc-btn">
       <span class="svc-icon">🛁</span>
       <span class="svc-lbl">مناشف</span>
+      <span class="svc-lbl-en">Towels</span>
     </a>
-    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب وجبة إفطار" class="svc-btn">
+    <a href="https://wa.me/${waNum}?text=Room ${room}: Breakfast request" class="svc-btn">
       <span class="svc-icon">🍳</span>
       <span class="svc-lbl">إفطار</span>
+      <span class="svc-lbl-en">Breakfast</span>
     </a>
-    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب سيارة/توكتوك" class="svc-btn">
+    <a href="https://wa.me/${waNum}?text=Room ${room}: Transportation request" class="svc-btn">
       <span class="svc-icon">🚗</span>
       <span class="svc-lbl">مواصلات</span>
+      <span class="svc-lbl-en">Transport</span>
     </a>
-    <a href="https://wa.me/${waNum}?text=غرفة ${room}: عندي مشكلة طارئة" class="svc-btn">
+    <a href="https://wa.me/${waNum}?text=Room ${room}: EMERGENCY" class="svc-btn">
       <span class="svc-icon">🆘</span>
       <span class="svc-lbl">طوارئ</span>
+      <span class="svc-lbl-en">Emergency</span>
     </a>
   </div>
 </div>
 
 <!-- المطعم -->
 <div class="section">
-  <div class="s-title">🍽️ قائمة الطعام</div>
-  <div class="menu-item"><span class="menu-name">🥚 إفطار كامل</span><span class="menu-price">150 EGP</span></div>
-  <div class="menu-item"><span class="menu-name">☕ قهوة / شاي</span><span class="menu-price">30 EGP</span></div>
-  <div class="menu-item"><span class="menu-name">🥗 سلطة طازجة</span><span class="menu-price">60 EGP</span></div>
-  <div class="menu-item"><span class="menu-name">🍗 دجاج مشوي</span><span class="menu-price">180 EGP</span></div>
-  <div class="menu-item"><span class="menu-name">🐟 سمك مشوي</span><span class="menu-price">200 EGP</span></div>
-  <div class="menu-item"><span class="menu-name">🍹 عصير طازج</span><span class="menu-price">50 EGP</span></div>
-  <div style="margin-top:12px;text-align:center;">
-    <a href="https://wa.me/${waNum}?text=غرفة ${room}: أطلب طلب طعام" style="background:rgba(201,168,76,0.2);color:#c9a84c;border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:10px 20px;text-decoration:none;font-size:13px;font-weight:700;display:inline-block;">🛒 اطلب الآن</a>
+  <div class="s-title">🍽️ قائمة الطعام <span class="en">Food Menu</span></div>
+  <div id="guest-menu-items">${_menuHTML}</div>
+  <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+    <a href="https://wa.me/${waNum}?text=Room ${room}: Food order request" style="background:rgba(201,168,76,0.2);color:#c9a84c;border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:10px 18px;text-decoration:none;font-size:13px;font-weight:700;display:inline-block;">🛒 اطلب الآن / Order Now</a>
+    <a href="https://wa.me/${waNum}?text=${encodeURIComponent('🍽️ ' + prop.name + ' — Food Menu:\n' + (_restMenuRaw.length ? _restMenuRaw.map(it=>(it.emoji||'🍽️')+' '+it.name+' — '+(it.price||0)+' EGP').join('\n') : 'No items available') + '\n\nTo order, send your room number 🏨')}" style="background:rgba(37,211,102,0.15);color:#25D366;border:1px solid rgba(37,211,102,0.4);border-radius:8px;padding:10px 18px;text-decoration:none;font-size:13px;font-weight:700;display:inline-block;">📲 أرسل المنيو / Share Menu</a>
   </div>
 </div>
 
 <!-- التواصل -->
 <div class="section">
-  <div class="s-title">📞 للتواصل</div>
+  <div class="s-title">📞 للتواصل <span class="en">Contact Us</span></div>
   <div class="contact-row">
     <div class="contact-icon">📍</div>
     <div class="contact-info">
-      <div class="contact-label">العنوان</div>
+      <div class="contact-label"><span>العنوان</span> · <span>Address</span></div>
       <div class="contact-val">${prop.address}</div>
     </div>
   </div>
   <div class="contact-row">
     <div class="contact-icon">📞</div>
     <div class="contact-info">
-      <div class="contact-label">هاتف</div>
-      <div class="contact-val"><a href="tel:${prop.phone}" style="color:#f0e6cc;text-decoration:none;">${prop.phone}</a></div>
+      <div class="contact-label"><span>هاتف</span> · <span>Phone</span></div>
+      <div class="contact-val" dir="ltr" style="text-align:right;"><a href="tel:${prop.phone}" style="color:#f0e6cc;text-decoration:none;">${prop.phone}</a></div>
     </div>
   </div>
   <div class="contact-row">
     <div class="contact-icon">📧</div>
     <div class="contact-info">
-      <div class="contact-label">بريد</div>
+      <div class="contact-label"><span>بريد</span> · <span>Email</span></div>
       <div class="contact-val" style="font-size:12px;">${prop.email}</div>
     </div>
   </div>
-  <a href="https://wa.me/${waNum}?text=مرحبا، أنا في غرفة ${room}" class="wa-btn">
-    💬 تواصل معنا عبر واتساب
+  <a href="https://wa.me/${waNum}?text=Hello, I am in Room ${room}" class="wa-btn">
+    💬 تواصل معنا · Contact Us via WhatsApp
   </a>
 </div>
 
 <!-- التقييم -->
 <div class="section">
-  <div class="s-title">⭐ قيّم إقامتك</div>
+  <div class="s-title">⭐ قيّم إقامتك <span class="en">Rate Your Stay</span></div>
+  <div style="text-align:center;font-size:12px;color:#7a8fa6;margin-bottom:10px;">اضغط على النجوم · Tap the stars</div>
   <div class="rating-stars" id="stars">
     <span class="star" onclick="rate(1)">⭐</span>
     <span class="star" onclick="rate(2)">⭐</span>
@@ -24760,16 +24694,17 @@ body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;fo
 
 <div style="text-align:center;padding:20px;font-size:11px;color:#7a8fa6;line-height:2;">
   🏨 ${prop.name}<br>
-  صفحة الضيف | غرفة ${room}
+  صفحة الضيف · Guest Page | غرفة · Room ${room}
 </div>
 
 <script>
 function rate(n){
-  const msg = ['','رائع','جيد','مقبول','ممتاز','رائع جداً!'][n];
+  const arMsg = ['','رائع','جيد','مقبول','ممتاز','رائع جداً!'][n];
+  const enMsg = ['','Great','Good','Fair','Excellent','Amazing!'][n];
   const stars = ['','⭐','⭐⭐','⭐⭐⭐','⭐⭐⭐⭐','⭐⭐⭐⭐⭐'][n];
-  document.getElementById('rate-msg').innerHTML = '<strong style="color:#c9a84c;">'+stars+'</strong><br>'+msg+'! شكراً على تقييمك';
+  document.getElementById('rate-msg').innerHTML = '<strong style="color:#c9a84c;">'+stars+'</strong><br>'+arMsg+' · '+enMsg+'!<br><span style="font-size:11px;color:#7a8fa6;">شكراً على تقييمك · Thank you!</span>';
   setTimeout(()=>{
-    window.open('https://wa.me/${waNum}?text=تقييم من غرفة ${room}: '+n+'/5 نجوم — '+msg,'_blank');
+    window.open('https://wa.me/${waNum}?text=Rating from Room ${room}: '+n+'/5 stars — '+enMsg,'_blank');
   },500);
 }
 <\/script>
@@ -24789,7 +24724,7 @@ function rate(n){
     const qrText = `data:text/html;charset=utf-8,${encodeURIComponent(guestPageHTML)}`;
     // استخدام نص بسيط للـ QR (الـ data URL طويل جداً)
     const _qrWA = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
-    const qrDisplayText = `https://wa.me/${_qrWA}?text=غرفة ${roomNo}`;
+    const qrDisplayText = 'https://wa.me/'+_qrWA+'?text=Room+'+encodeURIComponent(roomNo);
     const qrImageUrl = generateQRSVG(qrDisplayText, 250);
 
     let modal = document.getElementById('qr-room-modal');
@@ -24848,7 +24783,7 @@ function rate(n){
   // ─── طباعة QR لغرفة واحدة ───
   window.printRoomQR = function(roomNo){
     const _qrWA2 = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
-    const qrUrl  = generateQRSVG(`https://wa.me/${_qrWA2}?text=غرفة ${roomNo}`, 300);
+    const qrUrl  = generateQRSVG('https://wa.me/'+_qrWA2+'?text=Room+'+encodeURIComponent(roomNo), 300);
     const prop   = (typeof PROP!=='undefined') ? PROP : {name:'Dahab Trendy'};
     const w = window.open('','_blank','width=500,height=700');
     w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR غرفة ${roomNo}</title>
@@ -24874,7 +24809,7 @@ h2{color:#1a1a2e;margin-bottom:4px;}
   // ─── تحميل QR كـ PNG ───
   window.downloadRoomQR = function(roomNo){
     const _qrWA3 = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
-    const qrUrl = generateQRSVG(`https://wa.me/${_qrWA3}?text=غرفة ${roomNo}`, 400);
+    const qrUrl = generateQRSVG('https://wa.me/'+_qrWA3+'?text=Room+'+encodeURIComponent(roomNo), 400);
     const a = document.createElement('a');
     a.href = qrUrl;
     a.download = `QR_Room_${roomNo}.png`;
@@ -24902,7 +24837,7 @@ h2{color:#1a1a2e;margin-bottom:4px;}
     const w = window.open('','_blank');
     const items = rooms.map(r=>{
       const _qrWA4 = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
-          const qrUrl = generateQRSVG(`https://wa.me/${_qrWA4}?text=غرفة ${r}`, 200);
+          const qrUrl = generateQRSVG('https://wa.me/'+_qrWA4+'?text=Room+'+encodeURIComponent(r), 200);
       return `<div class="qr-card">
 <div class="hotel">${prop.name}</div>
 <div class="rnum">غرفة ${r}</div>
