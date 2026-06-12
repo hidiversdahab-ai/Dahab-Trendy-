@@ -15144,20 +15144,20 @@ window.addEventListener('beforeinstallprompt', (e)=>{
   }
 });
 
-// Show banner on all devices if not installed and not dismissed
+// Show banner on iOS only (Android gets beforeinstallprompt)
 (function(){
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isInStandalone = window.navigator.standalone === true;
-  if(isInStandalone) return; // مش بيظهر لو التطبيق متثبت بالفعل
+  const isInStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  if(isInStandalone) return;
+  if(!isIOS) return; // Android: يستخدم beforeinstallprompt بس
+  if(localStorage.getItem('pwa-dismissed')) return;
   setTimeout(()=>{
     const bar = document.getElementById('pwa-install-bar');
     if(!bar) return;
-    if(isIOS){
-      const span = bar.querySelector('span');
-      if(span) span.textContent = '📱 أضف التطبيق لشاشتك الرئيسية: اضغط Share ثم "Add to Home Screen"';
-      const installBtn = bar.querySelector('button.bg');
-      if(installBtn) installBtn.style.display = 'none';
-    }
+    const span = bar.querySelector('span');
+    if(span) span.textContent = '📱 أضف التطبيق لشاشتك الرئيسية: اضغط Share ثم "Add to Home Screen"';
+    const installBtn = bar.querySelector('button.bg');
+    if(installBtn) installBtn.style.display = 'none';
     bar.classList.add('show');
   }, 3000);
 })();
@@ -25077,6 +25077,40 @@ function saveQRSettings(){
 
 // ─── تسجيل Service Worker للـ manifest ───
 (function injectManifest(){
+  // Generate PNG icons using Canvas (required for Chrome PWA install)
+  function makeIconPNG(size){
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    // Background
+    const r = size * 0.18;
+    ctx.beginPath();
+    ctx.moveTo(r, 0); ctx.lineTo(size - r, 0);
+    ctx.quadraticCurveTo(size, 0, size, r);
+    ctx.lineTo(size, size - r);
+    ctx.quadraticCurveTo(size, size, size - r, size);
+    ctx.lineTo(r, size);
+    ctx.quadraticCurveTo(0, size, 0, size - r);
+    ctx.lineTo(0, r);
+    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fillStyle = '#0f0f1a';
+    ctx.fill();
+    // Gold border
+    ctx.strokeStyle = '#c9a84c';
+    ctx.lineWidth = size * 0.03;
+    ctx.stroke();
+    // Hotel emoji
+    ctx.font = `${size * 0.62}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🏨', size / 2, size / 2 + size * 0.04);
+    return canvas.toDataURL('image/png');
+  }
+
+  const icon192 = makeIconPNG(192);
+  const icon512 = makeIconPNG(512);
+
   const manifestData = {
     name: 'Dahab Trendy',
     short_name: 'DahabTrendy',
@@ -25088,8 +25122,8 @@ function saveQRSettings(){
     theme_color: '#c9a84c',
     orientation: 'portrait-primary',
     icons: [
-      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230f0f1a" rx="20"/><text y=".9em" font-size="80">🏨</text></svg>',sizes:'192x192',type:'image/svg+xml'},
-      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230f0f1a" rx="20"/><text y=".9em" font-size="80">🏨</text></svg>',sizes:'512x512',type:'image/svg+xml'}
+      {src: icon192, sizes:'192x192', type:'image/png', purpose:'any maskable'},
+      {src: icon512, sizes:'512x512', type:'image/png', purpose:'any maskable'}
     ],
     categories: ['productivity','business'],
     lang: 'ar'
