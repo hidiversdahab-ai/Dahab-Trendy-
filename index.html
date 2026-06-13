@@ -3345,6 +3345,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   <div class="flex" style="margin-bottom:12px;flex-wrap:wrap;gap:8px;">
     <button class="btn bg" onclick="openMenuItemM()">+ إضافة صنف</button>
     <button class="btn" onclick="openDrinksImport()" style="background:linear-gradient(135deg,rgba(26,188,156,0.2),rgba(22,160,133,0.2));color:#1abc9c;border:1px solid rgba(26,188,156,0.5);font-weight:700;">🥤 استيراد قائمة مشروبات</button>
+    <button class="btn" onclick="dtaDebugMenu()" style="background:linear-gradient(135deg,rgba(231,76,60,0.2),rgba(192,57,43,0.2));color:#e74c3c;border:1px solid rgba(231,76,60,0.5);font-weight:700;">🔍 فحص المنيو</button>
     <!-- Category filter for editor -->
     <select id="menu-editor-cat-filter" onchange="renderMenuEditor()" style="width:auto;padding:6px 10px;font-size:12px;">
       <option value="">كل الفئات</option>
@@ -18507,6 +18508,35 @@ let menuItemEdit = null;
 let currentRestView = "ledger";
 let lastPOSOrder = null;
 
+// ── 🔍 أداة تشخيص: فحص حالة منيو المطعم وما سيظهر في صفحة الضيف ──
+window.dtaDebugMenu = async function(){
+  try{
+    const memCount = Array.isArray(restMenu) ? restMenu.length : -1;
+    let lsCount = -1;
+    try{ lsCount = JSON.parse(localStorage.getItem("dta_rest_menu")||"[]").length; }catch(e){ lsCount = "خطأ: "+e.message; }
+
+    let idbCount = -1;
+    try{
+      if(window.DTA_DB && typeof DTA_DB.getSetting === "function"){
+        const idbVal = await DTA_DB.getSetting("dta_rest_menu", null);
+        idbCount = Array.isArray(idbVal) ? idbVal.length : (idbVal===null ? "غير موجود" : "نوع غير متوقع");
+      } else { idbCount = "غير متاح"; }
+    }catch(e){ idbCount = "خطأ: "+e.message; }
+
+    const memNames = memCount>0 ? restMenu.slice(0,5).map(i=>i.name).join("، ") : "—";
+
+    alert(
+      "🔍 تشخيص منيو المطعم\n\n"+
+      "1) في الذاكرة (restMenu) — هذا ما سيظهر في صفحة الضيف: "+memCount+" صنف\n"+
+      "   أمثلة: "+memNames+"\n\n"+
+      "2) في localStorage: "+lsCount+" صنف\n\n"+
+      "3) في IndexedDB: "+idbCount+" صنف"
+    );
+  }catch(err){
+    alert("خطأ في الفحص: "+err.message);
+  }
+};
+
 function switchRestView(view, btn){
   currentRestView = view;
   ["ledger","pos","menu","menu-browse"].forEach(v=>{
@@ -24793,8 +24823,14 @@ const DTA_QR = (function(){
     const waNum        = qrs.waNum        || '201099531272';
     const checkinTime  = qrs.checkinTime  || '2:00 PM';
     const checkoutTime = qrs.checkoutTime || '12:00 PM';
-    // ── قراءة قائمة المطعم الحقيقية من localStorage ──
-    const _restMenuRaw = JSON.parse(localStorage.getItem('dta_rest_menu')||'[]');
+    // ── قراءة قائمة المطعم الحقيقية: نعتمد على المتغير الحي restMenu أولاً (الأضمن والأحدث) ──
+    // ثم localStorage كنسخة احتياطية إن لم يكن restMenu متاحاً لأي سبب
+    let _restMenuRaw = [];
+    if (typeof restMenu !== 'undefined' && Array.isArray(restMenu) && restMenu.length) {
+      _restMenuRaw = restMenu;
+    } else {
+      try { _restMenuRaw = JSON.parse(localStorage.getItem('dta_rest_menu')||'[]'); } catch(e){ _restMenuRaw = []; }
+    }
     // ── تضمين DRINKS_CATALOG الكامل كـ fallback ──
     const _drinksCatalogEmbed = (typeof DRINKS_CATALOG !== 'undefined' && DRINKS_CATALOG.length)
       ? DRINKS_CATALOG
@@ -24846,7 +24882,8 @@ const DTA_QR = (function(){
     const _menuItemsJSON = JSON.stringify(_menuArr);
     // نستخدم btoa مع encodeURIComponent لأمان كامل
     let _menuB64 = '';
-    try { _menuB64 = btoa(unescape(encodeURIComponent(_menuItemsJSON))); } catch(e){ _menuB64 = ''; }
+    try { _menuB64 = btoa(unescape(encodeURIComponent(_menuItemsJSON))); } catch(e){ _menuB64 = 'W10='; /* '[]' base64 */ }
+    if(!_menuB64) _menuB64 = 'W10=';
 
     return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -25074,6 +25111,10 @@ body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;fo
   function renderGrid(){
     var mg=document.getElementById('food-grid-wrap');
     if(!mg) return;
+    if(!MI.length){
+      mg.innerHTML='<p style="color:#7a8fa6;text-align:center;padding:20px;grid-column:1/-1;">قائمة الطعام والمشروبات قيد التحديث، يرجى التواصل معنا مباشرة 💬</p>';
+      return;
+    }
     var filtered=MI.map(function(it,i){return {it:it,i:i};}).filter(function(o){
       return window._activeCat==='all'||o.it.c===window._activeCat;
     });
