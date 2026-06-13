@@ -3200,6 +3200,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     <button class="btn bg" onclick="openRestM()" id="rest-add-btn">+ <span class="t" data-ar="معاملة" data-en="Transaction">معاملة</span></button>
     <button class="btn" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.4);" onclick="switchRestView('pos', document.getElementById('rtab-pos'))">🧾 POS</button>
     <button class="btn" style="background:rgba(37,211,102,0.12);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);" onclick="switchRestView('menu', document.getElementById('rtab-menu'))">🍴 <span class="t" data-ar="تعديل المنيو" data-en="Edit Menu">تعديل المنيو</span></button>
+    <button class="btn" style="background:rgba(37,211,102,0.18);color:#25D366;border:1px solid rgba(37,211,102,0.5);font-weight:700;" onclick="openSendMenuModal()">📱 <span class="t" data-ar="إرسال للضيف" data-en="Send to Guest">إرسال للضيف</span></button>
   </div>
 </div>
 
@@ -3473,6 +3474,67 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   </div>
 </div>
 </div>
+<!-- ══ SEND MENU TO GUEST MODAL ══ -->
+<div class="ovl" id="send-menu-modal">
+<div class="mdl" style="max-width:480px;">
+  <div class="mtitle">📱 إرسال صفحة الضيف (منيو + خدمات)</div>
+
+  <!-- اختيار طريقة الإرسال -->
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <button class="send-menu-mode-btn" data-mode="room" onclick="setSendMenuMode('room',this)"
+      style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid rgba(201,168,76,0.5);background:rgba(201,168,76,0.15);color:var(--gold);cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;transition:all .2s;">
+      🏨 اختيار غرفة نشطة
+    </button>
+    <button class="send-menu-mode-btn" data-mode="manual" onclick="setSendMenuMode('manual',this)"
+      style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid rgba(201,168,76,0.2);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;transition:all .2s;">
+      ✏️ إدخال يدوي
+    </button>
+  </div>
+
+  <!-- قسم الغرفة النشطة -->
+  <div id="send-menu-room-section">
+    <div class="fld">
+      <label>الغرفة النشطة</label>
+      <select id="send-menu-room-select" onchange="onSendMenuRoomChange(this.value)" style="font-size:13px;">
+        <option value="">-- اختر الغرفة --</option>
+      </select>
+    </div>
+    <div id="send-menu-guest-info" style="display:none;background:rgba(37,211,102,0.07);border:1px solid rgba(37,211,102,0.25);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:2;">
+    </div>
+  </div>
+
+  <!-- قسم الإدخال اليدوي -->
+  <div id="send-menu-manual-section" style="display:none;">
+    <div class="g2">
+      <div class="fld">
+        <label>رقم الغرفة</label>
+        <input id="send-menu-manual-room" type="text" placeholder="مثال: 5 أو 12" style="font-size:14px;">
+      </div>
+      <div class="fld">
+        <label>واتساب الضيف (اختياري)</label>
+        <input id="send-menu-manual-phone" type="tel" placeholder="مثال: 201012345678" dir="ltr" style="font-size:13px;">
+      </div>
+    </div>
+  </div>
+
+  <!-- معاينة ما سيُرسل -->
+  <div style="background:rgba(255,255,255,0.04);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--muted);line-height:2;">
+    <div style="color:var(--gold);font-weight:700;margin-bottom:4px;">📋 ما سيشوفه الضيف في الصفحة:</div>
+    <div>📡 كلمة مرور الـ WiFi</div>
+    <div>🛎️ قائمة الخدمات (تنظيف، مناشف، إفطار، مواصلات، طوارئ)</div>
+    <div>🍽️ المنيو الكامل مع أزرار + و − للكمية</div>
+    <div>💬 زر الإرسال المباشر على واتساب عند الاختيار</div>
+    <div>⭐ تقييم الإقامة</div>
+  </div>
+
+  <div class="flex mt" style="flex-wrap:wrap;gap:8px;">
+    <button class="btn bgr" onclick="doSendMenuToGuest()" style="flex:3;font-size:14px;padding:13px;">💬 فتح واتساب وإرسال</button>
+    <button class="btn" onclick="doPreviewGuestPageFromModal()" style="flex:2;background:rgba(26,188,156,0.2);color:#1abc9c;border:1px solid rgba(26,188,156,0.4);font-size:13px;">👁️ معاينة</button>
+    <button class="btn bb" onclick="closeM('send-menu-modal')" style="flex:1;">إغلاق</button>
+  </div>
+</div>
+</div>
+
 <div class="ovl" id="rest-modal">
 <div class="mdl" style="max-width:460px;">
 <div class="mtitle" id="rest-m-title">+ إضافة معاملة</div>
@@ -19230,6 +19292,127 @@ function sendPOSReceiptWA(){
   window.open(url,"_blank");
 }
 
+// ══ إرسال صفحة الضيف (منيو + خدمات) من صفحة المطعم ══
+
+function openSendMenuModal(){
+  // ملء قائمة الغرف النشطة
+  const sel = document.getElementById('send-menu-room-select');
+  const td = toDay();
+  const activeBookings = bookings.filter(b=>b.ci<=td && b.co>td && b.status!=='Cancelled' && b.room);
+  sel.innerHTML = '<option value="">-- اختر الغرفة --</option>' +
+    activeBookings.map(b=>`<option value="${b.room}" data-phone="${(b.whatsapp||b.phone||'').replace(/[^0-9+]/g,'')}" data-name="${b.name||''}">`
+      +`غرفة ${b.room} — ${b.name||'ضيف'}`
+      +`</option>`).join('');
+
+  // إخفاء معلومات الضيف + reset
+  document.getElementById('send-menu-guest-info').style.display='none';
+  document.getElementById('send-menu-guest-info').innerHTML='';
+  // وضع mode الغرفة افتراضياً
+  setSendMenuMode('room', document.querySelector('.send-menu-mode-btn[data-mode="room"]'));
+  openM('send-menu-modal');
+}
+
+function setSendMenuMode(mode, btn){
+  // تحديث الأزرار
+  document.querySelectorAll('.send-menu-mode-btn').forEach(b=>{
+    const active = b.dataset.mode===mode;
+    b.style.background = active ? 'rgba(201,168,76,0.18)' : 'transparent';
+    b.style.borderColor = active ? 'rgba(201,168,76,0.6)' : 'rgba(201,168,76,0.2)';
+    b.style.color = active ? 'var(--gold)' : 'var(--muted)';
+  });
+  document.getElementById('send-menu-room-section').style.display = mode==='room' ? '' : 'none';
+  document.getElementById('send-menu-manual-section').style.display = mode==='manual' ? '' : 'none';
+}
+
+function onSendMenuRoomChange(room){
+  const info = document.getElementById('send-menu-guest-info');
+  if(!room){ info.style.display='none'; return; }
+  const sel = document.getElementById('send-menu-room-select');
+  const opt = sel.querySelector(`option[value="${room}"]`);
+  const phone = opt ? opt.dataset.phone : '';
+  const name = opt ? opt.dataset.name : '';
+  info.innerHTML =
+    `<div>🏨 <strong>غرفة ${room}</strong>`+(name?` — 👤 ${name}`:'')+`</div>`+
+    (phone?`<div>📱 واتساب: <strong dir="ltr">${phone}</strong></div>`:`<div style="color:#e67e22;">⚠️ لا يوجد رقم واتساب — سيتم فتح واتساب بدون تحديد رقم</div>`);
+  info.style.display='';
+}
+
+function _getSendMenuRoomAndPhone(){
+  const mode = document.querySelector('.send-menu-mode-btn[style*="0.18"]')?.dataset.mode || 'room';
+  let room='', phone='';
+  if(mode==='room'){
+    const sel = document.getElementById('send-menu-room-select');
+    room = sel.value;
+    const opt = sel.querySelector(`option[value="${room}"]`);
+    phone = opt ? opt.dataset.phone : '';
+  } else {
+    room = (document.getElementById('send-menu-manual-room').value||'').trim();
+    phone = (document.getElementById('send-menu-manual-phone').value||'').replace(/[^0-9+]/g,'');
+  }
+  return {room, phone};
+}
+
+async function doSendMenuToGuest(){
+  const {room, phone} = _getSendMenuRoomAndPhone();
+  if(!room){ sNotify('⚠️','يرجى اختيار أو إدخال رقم الغرفة','info',3000); return; }
+
+  // تأكيد تحميل المنيو
+  if(typeof restMenu!=='undefined' && !restMenu.length){
+    try{
+      const idbMenu = await DTA_DB.getSetting('dta_rest_menu',[]);
+      if(Array.isArray(idbMenu)&&idbMenu.length){ restMenu=idbMenu; LSS('dta_rest_menu',idbMenu); }
+    }catch(e){}
+  }
+
+  const prop = (typeof PROP!=='undefined'&&PROP) ? PROP : {name:'Dahab Trendy',phone:''};
+  const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
+  const waNum = qrs.waNum || '201099531272';
+
+  // بناء رابط صفحة الضيف كـ Blob
+  const html = buildGuestPage(room);
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const blobUrl = URL.createObjectURL(blob);
+
+  // رسالة واتساب
+  const msg =
+    `🏨 *${prop.name}*\n`+
+    `📋 *صفحة خدمات الغرفة ${room}*\n\n`+
+    `مرحباً بك! 🌟\n`+
+    `يمكنك من خلال الصفحة التالية:\n`+
+    `🛎️ طلب خدمات الغرفة (تنظيف، مناشف، إفطار...)\n`+
+    `🍽️ الاطلاع على قائمة الطعام والمشروبات وتقديم طلبك\n`+
+    `📡 الحصول على بيانات الـ WiFi\n`+
+    `⭐ تقييم إقامتك\n\n`+
+    `📎 افتح الرابط لتصفح الخدمات:\n${blobUrl}\n\n`+
+    `للتواصل المباشر: 📞 ${prop.phone||waNum}`;
+
+  const url = phone
+    ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+    : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+
+  window.open(url,'_blank');
+
+  // تأخير صغير قبل إلغاء الـ blob
+  setTimeout(()=>URL.revokeObjectURL(blobUrl), 30000);
+
+  closeM('send-menu-modal');
+  sNotify('💬 تم','تم فتح واتساب لإرسال صفحة الضيف لغرفة '+room,'success',3000);
+}
+
+async function doPreviewGuestPageFromModal(){
+  const {room} = _getSendMenuRoomAndPhone();
+  if(!room){ sNotify('⚠️','يرجى اختيار أو إدخال رقم الغرفة','info',3000); return; }
+  if(typeof previewGuestPage==='function'){
+    previewGuestPage(room);
+  } else {
+    const html = buildGuestPage(room);
+    const blob = new Blob([html],{type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    window.open(url,'_blank');
+    setTimeout(()=>URL.revokeObjectURL(url),10000);
+  }
+}
+
 function renderPOSTodayOrders(){
   const el = document.getElementById("pos-today-orders");
   if(!el) return;
@@ -24823,13 +25006,18 @@ const DTA_QR = (function(){
     const waNum        = qrs.waNum        || '201099531272';
     const checkinTime  = qrs.checkinTime  || '2:00 PM';
     const checkoutTime = qrs.checkoutTime || '12:00 PM';
-    // ── قراءة قائمة المطعم الحقيقية: نعتمد على المتغير الحي restMenu أولاً (الأضمن والأحدث) ──
-    // ثم localStorage كنسخة احتياطية إن لم يكن restMenu متاحاً لأي سبب
+    // ── قراءة المنيو: المتغير الحي أولاً (الأضمن) ثم localStorage ──
     let _restMenuRaw = [];
+    // 1) المتغير الحي restMenu (دايماً محدّث في نفس الـ session)
     if (typeof restMenu !== 'undefined' && Array.isArray(restMenu) && restMenu.length) {
-      _restMenuRaw = restMenu;
-    } else {
-      try { _restMenuRaw = JSON.parse(localStorage.getItem('dta_rest_menu')||'[]'); } catch(e){ _restMenuRaw = []; }
+      _restMenuRaw = restMenu.slice();
+    }
+    // 2) localStorage كـ fallback
+    if (!_restMenuRaw.length) {
+      try {
+        const _ls = localStorage.getItem('dta_rest_menu');
+        if (_ls) _restMenuRaw = JSON.parse(_ls) || [];
+      } catch(e){ _restMenuRaw = []; }
     }
     // ── تضمين DRINKS_CATALOG الكامل كـ fallback ──
     const _drinksCatalogEmbed = (typeof DRINKS_CATALOG !== 'undefined' && DRINKS_CATALOG.length)
@@ -24869,21 +25057,18 @@ const DTA_QR = (function(){
     const _srcMenu = _restMenuRaw.length
       ? _restMenuRaw.concat(_drinksToAdd)
       : _drinksCatalogEmbed;
-    // encode مع الفئة
+    // بناء مصفوفة المنيو (JSON.stringify يتولى الـ escaping تلقائياً)
     const _menuArr = _srcMenu.map(function(it){
-      const safeName = (it.name||'').replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/"/g,'\\"');
       return {
-        n: safeName,
+        n: it.name||'',
         p: it.price||0,
         e: it.emoji||'🍽️',
-        c: (it.cat||'أخرى')
+        c: it.cat||'أخرى'
       };
     });
-    const _menuItemsJSON = JSON.stringify(_menuArr);
-    // نستخدم btoa مع encodeURIComponent لأمان كامل
-    let _menuB64 = '';
-    try { _menuB64 = btoa(unescape(encodeURIComponent(_menuItemsJSON))); } catch(e){ _menuB64 = 'W10='; /* '[]' base64 */ }
-    if(!_menuB64) _menuB64 = 'W10=';
+    // نضمّن البيانات مباشرة كـ JSON بدل base64 لتفادي مشاكل الـ emoji
+    const _menuItemsJSON = JSON.stringify(_menuArr).replace(/<\/script>/gi, '<\\/script>');
+
 
     return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -25009,6 +25194,7 @@ body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;fo
 <!-- المطعم -->
 <div class="section">
   <div class="s-title">🥤 المشروبات والطعام <span class="en">Food & Drinks</span></div>
+  <div id="menu-debug" style="font-size:10px;color:#1abc9c;margin-bottom:8px;text-align:center;"></div>
   <!-- تبويب الفئات -->
   <div class="cat-tabs" id="food-cat-tabs"></div>
   <!-- grid الأصناف -->
@@ -25074,7 +25260,7 @@ body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;fo
 (function(){
   var RM='${room}', WA='${waNum}';
   var MI=[];
-  try{ MI=JSON.parse(decodeURIComponent(escape(atob('${_menuB64}')))); }catch(e){ MI=[]; }
+  try{ MI=${_menuItemsJSON}; }catch(e){ MI=[]; }
   window._MI=MI;
   window._QS=new Array(MI.length).fill(0);
   window._activeCat='all';
@@ -25191,6 +25377,8 @@ body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;fo
   };
 
   // init
+  var dbg=document.getElementById('menu-debug');
+  if(dbg) dbg.textContent='✅ عدد الأصناف: '+MI.length+' صنف';
   buildTabs();
   renderGrid();
 })();
@@ -25251,6 +25439,7 @@ body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;fo
 
   <!-- أزرار -->
   <div class="flex mt" style="flex-wrap:wrap;gap:8px;">
+    <button onclick="previewGuestPage('${roomNo}')" class="btn" style="flex:2;background:linear-gradient(135deg,#1abc9c,#16a085);color:#fff;border:none;font-size:13px;">👁️ معاينة صفحة الضيف</button>
     <button onclick="printRoomQR('${roomNo}')" class="btn bg" style="flex:2;">🖨️ طباعة QR</button>
     <button onclick="downloadRoomQR('${roomNo}')" class="btn bbl" style="flex:2;">💾 تحميل PNG</button>
     <button onclick="downloadGuestPage('${roomNo}')" class="btn" style="flex:2;background:rgba(155,89,182,0.8);color:#fff;border:none;">📄 صفحة HTML</button>
@@ -25305,7 +25494,34 @@ h2{color:#1a1a2e;margin-bottom:4px;}
   };
 
   // ─── تحميل صفحة HTML الضيف ───
-  window.downloadGuestPage = function(roomNo){
+  window.previewGuestPage = async function(roomNo){
+    // نحاول نجيب المنيو من IDB لو restMenu فاضي
+    if (typeof restMenu !== 'undefined' && !restMenu.length) {
+      try {
+        const idbMenu = await DTA_DB.getSetting('dta_rest_menu', []);
+        if (Array.isArray(idbMenu) && idbMenu.length) {
+          restMenu = idbMenu;
+          LSS('dta_rest_menu', idbMenu);
+        }
+      } catch(e){}
+    }
+    const html = buildGuestPage(roomNo);
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(()=>URL.revokeObjectURL(url), 10000);
+  };
+
+  window.downloadGuestPage = async function(roomNo){
+    if (typeof restMenu !== 'undefined' && !restMenu.length) {
+      try {
+        const idbMenu = await DTA_DB.getSetting('dta_rest_menu', []);
+        if (Array.isArray(idbMenu) && idbMenu.length) {
+          restMenu = idbMenu;
+          LSS('dta_rest_menu', idbMenu);
+        }
+      } catch(e){}
+    }
     const html = buildGuestPage(roomNo);
     const blob = new Blob([html], {type:'text/html;charset=utf-8'});
     const a = document.createElement('a');
