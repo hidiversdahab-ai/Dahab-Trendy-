@@ -3083,24 +3083,13 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
       <option value="room">🏨 على الغرفة</option>
     </select>
   </div>
-  <button class="btn bb bsm" onclick="clearTourFilters()" style="width:100%;padding:7px;border:1px solid var(--bdr);justify-content:center;">✕ <span class="t" data-ar="مسح" data-en="Clear">مسح</span></button>
+  <button class="btn bsm" onclick="clearTourFilters()" style="width:100%;padding:8px;justify-content:center;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--gold);font-weight:700;font-size:13px;">✕ <span class="t" data-ar="مسح" data-en="Clear">مسح</span></button>
 </div>
 <!-- Tours Table -->
-<div class="card" style="padding:0;overflow:hidden;">
-  <table style="width:100%;border-collapse:collapse;font-size:12px;">
-    <thead>
-      <tr style="background:rgba(201,168,76,0.1);color:var(--gold);">
-        <th style="padding:8px 10px;text-align:right;font-size:10px;letter-spacing:1px;">الرحلة</th>
-        <th style="padding:8px 10px;text-align:right;font-size:10px;letter-spacing:1px;">الضيف / المرشد</th>
-        <th style="padding:8px 10px;text-align:right;font-size:10px;letter-spacing:1px;">التاريخ</th>
-        <th style="padding:8px 10px;text-align:right;font-size:10px;letter-spacing:1px;">سعر الفرد</th>
-        <th style="padding:8px 10px;text-align:right;font-size:10px;letter-spacing:1px;">الإجمالي</th>
-        <th style="padding:8px 10px;text-align:right;font-size:10px;letter-spacing:1px;">الدفع</th>
-        <th style="padding:8px 4px;text-align:center;font-size:10px;">⚙️</th>
-      </tr>
-    </thead>
+<div class="card" style="padding:0;overflow:hidden;margin-bottom:80px;">
+  <table style="width:100%;border-collapse:collapse;">
     <tbody id="tours-tbody">
-      <tr><td colspan="6"><div class="empty">لا توجد رحلات. أضف رحلة جديدة.</div></td></tr>
+      <tr><td colspan="7"><div class="empty">لا توجد رحلات. أضف رحلة جديدة.</div></td></tr>
     </tbody>
   </table>
 </div>
@@ -13144,7 +13133,7 @@ function renderTours(){
   const tbody = document.getElementById("tours-tbody");
   if(!tbody) return;
   if(!list.length){
-    tbody.innerHTML = "<tr><td colspan='6'><div class='empty'>لا توجد رحلات.</div></td></tr>";
+    tbody.innerHTML = "<tr><td colspan='7'><div class='empty'>لا توجد رحلات.</div></td></tr>";
     return;
   }
   tbody.innerHTML = list.slice().reverse().map((t,ri)=>{
@@ -13153,30 +13142,34 @@ function renderTours(){
       ? "<span style='background:rgba(245,197,24,0.15);color:#f5c518;border:1px solid rgba(245,197,24,0.3);padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;'>💵 كاش</span>"
       : "<span style='background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.3);padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;'>🏨 غرفة "+t.room+"</span>";
     const statusBadge = t.payStatus==="paid"
-      ? "<span style='background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;display:block;margin-top:3px;'>✅ Paid</span>"
+      ? "<span style='background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;'>✅ Paid</span>"
       : t.payStatus==="partial"
-      ? "<span style='background:rgba(241,196,15,0.15);color:#f1c40f;border:1px solid rgba(241,196,15,0.3);padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;display:block;margin-top:3px;'>🔶 Partial<br><span style='font-size:8px;font-weight:400;'>£"+(t.paidAmount||0).toLocaleString()+" / £"+(t.price||0).toLocaleString()+"</span></span>"
-      : "<span style='background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;display:block;margin-top:3px;'>🔴 Pending</span>";
+      ? "<span style='background:rgba(241,196,15,0.15);color:#f1c40f;border:1px solid rgba(241,196,15,0.3);padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;'>🔶 Partial £"+(t.paidAmount||0).toLocaleString()+"</span>"
+      : "<span style='background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;'>🔴 Pending</span>";
     const ppLabel = t.pricePerPerson ? "£"+(t.pricePerPerson).toLocaleString() : (t.persons>0?"£"+Math.round((t.price||0)/(t.persons||1)).toLocaleString():"—");
     return `<tr style="border-bottom:1px solid var(--bdr);">
-      <td style="padding:8px 10px;">
-        <div style="font-weight:700;font-size:12px;">🏔️ ${t.name||"—"}</div>
-        <div style="font-size:10px;color:var(--muted);">👥 ${t.persons||1} شخص${t.guide?" · 🧭 "+t.guide:""}</div>
-        ${t.notes?`<div style="font-size:9px;color:var(--muted);margin-top:2px;">📝 ${t.notes}</div>`:""}
-      </td>
-      <td style="padding:8px 10px;">
-        <div style="font-weight:600;">${t.guest||"—"}</div>
-        ${t.guide?`<div style="font-size:10px;color:#c39bd3;">🧭 ${t.guide}</div>`:""}
-      </td>
-      <td style="padding:8px 10px;white-space:nowrap;color:var(--muted);font-size:11px;">${fmtD(t.date)}</td>
-      <td style="padding:8px 10px;font-size:11px;color:var(--muted);">${ppLabel}<span style="font-size:8px;display:block;color:var(--muted);">/ فرد</span></td>
-      <td style="padding:8px 10px;font-weight:700;color:#2ecc71;white-space:nowrap;">£${(t.price||0).toLocaleString()}</td>
-      <td style="padding:8px 10px;">${payBadge}${statusBadge}</td>
-      <td style="padding:4px;text-align:center;">
-        <button class="btn bg bsm" onclick="editTour(${idx})" style="margin-bottom:3px;display:block;width:100%;">✏️</button>
-        ${t.payMethod==="cash"?`<button class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.3);display:block;width:100%;margin-bottom:3px;" onclick="openTourInvoice(${idx})">📄</button>`:""}
-        <button class="btn bsm" style="background:#25D366;color:#fff;display:block;width:100%;margin-bottom:3px;" onclick="waTourDirect(${idx})">📱</button>
-        <button class="btn bsm" style="background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);display:block;width:100%;" onclick="deleteTourDirect(${idx})">🗑</button>
+      <td colspan="7" style="padding:10px 12px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <!-- Action Buttons - على اليسار عشان مش يتغطى بالـ FAB -->
+          <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+            <button class="btn bg bsm" onclick="editTour(${idx})" style="padding:7px 14px;font-size:13px;">✏️</button>
+            ${t.payMethod==="cash"?`<button class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.4);padding:7px 14px;font-size:13px;" onclick="openTourInvoice(${idx})">📄</button>`:""}
+            <button class="btn bsm" style="background:#25D366;color:#fff;padding:7px 14px;font-size:13px;" onclick="waTourDirect(${idx})">📱</button>
+            <button class="btn bsm" style="background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.4);padding:7px 14px;font-size:13px;" onclick="deleteTourDirect(${idx})">🗑</button>
+          </div>
+          <!-- Info -->
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:13px;color:var(--gold);">🏔️ ${t.name||"—"}</div>
+            <div style="font-size:11px;margin-top:3px;">👤 ${t.guest||"—"}${t.guide?" · 🧭 "+t.guide:""}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">📅 ${fmtD(t.date)} · 👥 ${t.persons||1} شخص</div>
+            <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              ${payBadge} ${statusBadge}
+              <span style="font-weight:700;color:#2ecc71;font-size:13px;">£${(t.price||0).toLocaleString()}</span>
+              <span style="font-size:10px;color:var(--muted);">(${ppLabel}/فرد)</span>
+            </div>
+            ${t.notes?`<div style="font-size:10px;color:var(--muted);margin-top:3px;">📝 ${t.notes}</div>`:""}
+          </div>
+        </div>
       </td>
     </tr>`;
   }).join("");
