@@ -152,6 +152,13 @@ select option{background:#1a1a2e;color:var(--text)}
 
 /* ══ RESTAURANT ENHANCED ══ */
 .menu-cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;padding:12px;background:rgba(0,0,0,0.2);border-radius:12px;border:1px solid var(--bdr);}
+/* Browse Menu — guest-style cards */
+.browse-food-card{background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:14px 8px 10px;text-align:center;transition:all .2s;position:relative;}
+.browse-food-card.has-qty{border-color:rgba(26,188,156,0.7)!important;background:rgba(26,188,156,0.08)!important;box-shadow:0 0 0 2px rgba(26,188,156,0.2);}
+.food-qty-badge{position:absolute;top:5px;left:5px;background:#1abc9c;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;line-height:1.5;display:none;}
+/* cat-tab for browse (same style as guest page) */
+.cat-tab{background:transparent;border:1.5px solid rgba(201,168,76,0.3);color:var(--muted);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .2s;white-space:nowrap;}
+.cat-tab.act{background:rgba(201,168,76,0.2);border-color:var(--gold);color:var(--gold);}
 .menu-cat-tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 14px;border-radius:10px;border:1.5px solid var(--bdr);background:transparent;color:var(--muted);cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .2s;min-width:70px;}
 .menu-cat-tab .cat-emoji{font-size:22px;line-height:1;}
 .menu-cat-tab .cat-count{font-size:9px;opacity:.7;font-weight:400;}
@@ -14890,6 +14897,51 @@ function sendAIWToWA(){
 
 // PDF period custom range toggle
 document.addEventListener('DOMContentLoaded',()=>{
+  // ── Guest Mode: ?guest=ROOM_NUMBER#gd=BASE64_DATA ──
+  // لو الرابط فيه ?guest=5 يعرض صفحة الضيف مباشرة
+  (function checkGuestMode(){
+    try{
+      const params = new URLSearchParams(window.location.search);
+      const guestRoom = params.get('guest');
+      if(!guestRoom) return;
+
+      document.body.style.visibility='hidden';
+
+      setTimeout(async function(){
+        try{
+          // استخراج البيانات المضمّنة في الـ hash (#gd=...)
+          const hash = window.location.hash || '';
+          const gdMatch = hash.match(/#gd=([A-Za-z0-9+/=]+)/);
+          if(gdMatch){
+            try{
+              const decoded = JSON.parse(decodeURIComponent(escape(atob(gdMatch[1]))));
+              // تحميل المنيو في localStorage الضيف مؤقتاً
+              if(decoded.menu && decoded.menu.length){
+                localStorage.setItem('dta_rest_menu', JSON.stringify(decoded.menu));
+                window.restMenu = decoded.menu;
+              }
+              // تحميل إعدادات QR
+              const qrSettings = {
+                wifiName: decoded.wifi&&decoded.wifi.name || 'DahabTrendy_Guest',
+                wifiPass: decoded.wifi&&decoded.wifi.pass || 'dahab2024',
+                waNum: decoded.wa || '201099531272'
+              };
+              localStorage.setItem('dta_qr_settings', JSON.stringify(qrSettings));
+            }catch(e){ console.warn('[GuestMode] hash decode error:',e); }
+          }
+          // بناء صفحة الضيف
+          const html = DTA_QR.buildGuestPage(guestRoom);
+          document.open();
+          document.write(html);
+          document.close();
+        }catch(e){
+          document.body.style.visibility='';
+          console.warn('[GuestMode] error:',e);
+        }
+      }, 600);
+    }catch(e){}
+  })();
+
   loadAIKeyToSettings();
   setTimeout(updateBirthdayBadge,500);
   setTimeout(updateBirthdayBadge,2000);
@@ -18804,14 +18856,188 @@ function renderMenuBrowse(){
   }).join("");
 }
 
-function setBrowseCat(cat, btn){
-  window._browseCat = cat;
+function renderMenuBrowse(){
+  const tabsEl  = document.getElementById("menu-cat-tabs");
+  const contentEl = document.getElementById("menu-browse-content");
+  const statsEl = document.getElementById("menu-browse-stats");
+  if(!tabsEl || !contentEl) return;
+
+  // إنشاء cart للـ Browse (مستقل عن POS cart)
+  if(!window._browseCart) window._browseCart = {};
+  const cart = window._browseCart;
+
+  const cats = [...new Set(restMenu.map(i=>i.cat).filter(Boolean))];
+  const activeCat = window._browseCat || "all";
+  const catMeta = getCatMeta();
+
+  // Stats bar
+  if(statsEl){
+    const total = Object.keys(cart).reduce((s,k)=>s+(cart[k]||0),0);
+    const amt   = Object.keys(cart).reduce((s,k)=>s+((cart[k]||0)*((restMenu[+k]||{}).price||0)),0);
+    statsEl.innerHTML = total > 0
+      ? `<div style="background:rgba(26,188,156,0.1);border:1px solid rgba(26,188,156,0.3);border-radius:8px;padding:8px 14px;font-size:12px;color:#1abc9c;font-weight:700;">🛒 ${total} صنف · إجمالي £${amt}</div>`
+      : `<div style="font-size:11px;color:var(--muted);">اختر الأصناف — سيظهر ملخص طلبك تلقائياً</div>`;
+  }
+
+  // Category tabs
+  tabsEl.innerHTML =
+    `<button class="cat-tab${activeCat==="all"?" act":""}" onclick="setBrowseCat('all',this)" style="${activeCat==="all"?"background:rgba(26,188,156,0.2);border-color:#1abc9c;color:#1abc9c;":""}">🍽️ الكل</button>` +
+    cats.map(cat=>{
+      const meta = catMeta[cat]||{emoji:"🍽️"};
+      const cnt  = Object.keys(cart).reduce((s,k)=>{
+        return s + (restMenu[+k]&&restMenu[+k].cat===cat ? (cart[k]||0) : 0);
+      }, 0);
+      const act  = activeCat===cat;
+      return `<button class="cat-tab${act?" act":""}" onclick="setBrowseCat('${cat.replace(/'/g,"\\'")}',this)" style="${act?"background:rgba(26,188,156,0.2);border-color:#1abc9c;color:#1abc9c;":""}">` +
+        `${meta.emoji} ${cat.split(" ")[0]}` +
+        (cnt>0?` <span style="background:#1abc9c;color:#fff;border-radius:10px;padding:0 6px;font-size:10px;">${cnt}</span>`:"") +
+        `</button>`;
+    }).join("");
+
+  // Grid content
+  if(!restMenu.length){
+    contentEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);">
+      <div style="font-size:48px;margin-bottom:12px;">🍽️</div>
+      <div>لا توجد أصناف — أضف من تبويب "إدارة القائمة"</div>
+      <button class="btn bg" style="margin-top:14px;" onclick="switchRestView('menu',document.getElementById('rtab-menu'))">+ إضافة أصناف</button>
+    </div>`;
+    _updateBrowseBar();
+    return;
+  }
+
+  const filtered = activeCat==="all"
+    ? restMenu.map((it,i)=>({it,i}))
+    : restMenu.map((it,i)=>({it,i})).filter(o=>o.it.cat===activeCat);
+
+  contentEl.innerHTML =
+    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px;">` +
+    filtered.map(({it,i})=>{
+      const qty = cart[i]||0;
+      const hasQty = qty>0;
+      return `<div class="browse-food-card${hasQty?" has-qty":""}" id="bfc-${i}">
+        <div class="food-qty-badge" id="bbadge-${i}" style="${hasQty?"display:block":""}">${qty||""}</div>
+        <div style="font-size:32px;margin-bottom:4px;">${it.img?`<img src="${it.img}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;">`:it.emoji||"🍽️"}</div>
+        <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:3px;line-height:1.3;">${it.name}</div>
+        <div style="font-size:13px;font-weight:800;color:var(--gold);margin-bottom:8px;">£${it.price}</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+          <button onclick="browseQty(${i},-1)" style="background:rgba(26,188,156,0.18);border:1.5px solid rgba(26,188,156,0.4);color:#1abc9c;border-radius:7px;width:28px;height:28px;font-size:18px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;${qty===0?"opacity:.35":""}">−</button>
+          <span id="bqty-${i}" style="font-size:14px;font-weight:800;color:var(--text);min-width:18px;text-align:center;">${qty}</span>
+          <button onclick="browseQty(${i},1)" style="background:rgba(26,188,156,0.25);border:1.5px solid #1abc9c;color:#1abc9c;border-radius:7px;width:28px;height:28px;font-size:18px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;">+</button>
+        </div>
+      </div>`;
+    }).join("") + `</div>`;
+
+  // Order bar
+  if(!document.getElementById("browse-order-bar")){
+    const bar = document.createElement("div");
+    bar.id = "browse-order-bar";
+    bar.style.cssText = "display:none;background:rgba(26,188,156,0.06);border:1.5px solid rgba(26,188,156,0.3);border-radius:12px;padding:14px;margin-top:6px;";
+    bar.innerHTML = `
+      <div style="font-size:11px;color:#1abc9c;font-weight:700;letter-spacing:1px;margin-bottom:8px;">🛒 الطلب</div>
+      <div id="browse-order-summary" style="font-size:12px;color:var(--text);margin-bottom:10px;line-height:2;"></div>
+      <div id="browse-order-total" style="font-size:16px;font-weight:800;color:#1abc9c;margin-bottom:12px;"></div>
+      <a id="browse-order-wa-btn" href="#" target="_blank" style="display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:13px;border-radius:10px;text-decoration:none;font-size:14px;font-weight:700;box-shadow:0 4px 16px rgba(37,211,102,0.3);margin-bottom:8px;">💬 إرسال الطلب عبر واتساب</a>
+      <button onclick="browseClearOrder()" style="background:transparent;border:none;color:var(--muted);font-size:11px;cursor:pointer;width:100%;text-align:center;padding:4px 0;font-family:Arial,sans-serif;">🗑️ مسح الطلب</button>`;
+    contentEl.parentNode.appendChild(bar);
+  }
+  _updateBrowseBar();
+}
+
+function browseQty(i, delta){
+  if(!window._browseCart) window._browseCart = {};
+  window._browseCart[i] = Math.max(0,(window._browseCart[i]||0)+delta);
+  if(window._browseCart[i]===0) delete window._browseCart[i];
+
+  // تحديث الكارت بدون re-render كامل
+  const qty = window._browseCart[i]||0;
+  const hasQty = qty>0;
+  const card = document.getElementById("bfc-"+i);
+  const badge = document.getElementById("bbadge-"+i);
+  const qtyEl = document.getElementById("bqty-"+i);
+  if(card){
+    card.className = "browse-food-card"+(hasQty?" has-qty":"");
+  }
+  if(badge){
+    badge.textContent = qty||"";
+    badge.style.display = hasQty?"block":"none";
+  }
+  if(qtyEl) qtyEl.textContent = qty;
+
+  // تحديث الـ - button opacity
+  const btns = card ? card.querySelectorAll("button") : [];
+  if(btns[0]) btns[0].style.opacity = qty===0?"0.35":"1";
+
+  renderMenuBrowse_tabs(); // تحديث tabs فقط
+  _updateBrowseBar();
+}
+
+function renderMenuBrowse_tabs(){
+  // تحديث تبويب الفئات فقط (عداد الكميات)
+  const tabsEl = document.getElementById("menu-cat-tabs");
+  if(!tabsEl) return;
+  const cart = window._browseCart||{};
+  const cats = [...new Set(restMenu.map(i=>i.cat).filter(Boolean))];
+  const activeCat = window._browseCat||"all";
+  const catMeta = getCatMeta();
+  const totalAll = Object.values(cart).reduce((s,v)=>s+v,0);
+  tabsEl.innerHTML =
+    `<button class="cat-tab${activeCat==="all"?" act":""}" onclick="setBrowseCat('all',this)" style="${activeCat==="all"?"background:rgba(26,188,156,0.2);border-color:#1abc9c;color:#1abc9c;":""}">🍽️ الكل${totalAll>0?` <span style="background:#1abc9c;color:#fff;border-radius:10px;padding:0 6px;font-size:10px;">${totalAll}</span>`:""}</button>` +
+    cats.map(cat=>{
+      const meta = catMeta[cat]||{emoji:"🍽️"};
+      const cnt  = Object.keys(cart).reduce((s,k)=>s+(restMenu[+k]&&restMenu[+k].cat===cat?(cart[k]||0):0),0);
+      const act  = activeCat===cat;
+      return `<button class="cat-tab${act?" act":""}" onclick="setBrowseCat('${cat.replace(/'/g,"\\'")}',this)" style="${act?"background:rgba(26,188,156,0.2);border-color:#1abc9c;color:#1abc9c;":""}">` +
+        `${meta.emoji} ${cat.split(" ")[0]}${cnt>0?` <span style="background:#1abc9c;color:#fff;border-radius:10px;padding:0 6px;font-size:10px;">${cnt}</span>`:""}</button>`;
+    }).join("");
+}
+
+function _updateBrowseBar(){
+  const cart = window._browseCart||{};
+  const bar  = document.getElementById("browse-order-bar");
+  const statsEl = document.getElementById("menu-browse-stats");
+  const items = Object.keys(cart).filter(k=>cart[k]>0).map(k=>({
+    it: restMenu[+k], qty: cart[k], i: +k
+  })).filter(o=>o.it);
+
+  if(statsEl){
+    const total = items.reduce((s,o)=>s+o.qty,0);
+    const amt   = items.reduce((s,o)=>s+o.qty*o.it.price,0);
+    statsEl.innerHTML = total > 0
+      ? `<div style="background:rgba(26,188,156,0.1);border:1px solid rgba(26,188,156,0.3);border-radius:8px;padding:8px 14px;font-size:12px;color:#1abc9c;font-weight:700;">🛒 ${total} صنف · إجمالي £${amt}</div>`
+      : `<div style="font-size:11px;color:var(--muted);">اختر الأصناف — سيظهر ملخص طلبك تلقائياً</div>`;
+  }
+
+  if(!bar) return;
+  if(!items.length){ bar.style.display="none"; return; }
+  bar.style.display="block";
+
+  const total = items.reduce((s,o)=>s+o.qty,0);
+  const amt   = items.reduce((s,o)=>s+o.qty*o.it.price,0);
+
+  document.getElementById("browse-order-summary").innerHTML =
+    items.map(o=>`${o.it.emoji||"🍽️"} ${o.it.name} ×${o.qty} = <strong style="color:#1abc9c;">£${o.qty*o.it.price}</strong>`).join("<br>");
+  document.getElementById("browse-order-total").textContent = `الإجمالي: £${amt}`;
+
+  // بناء رسالة واتساب
+  const qrs  = JSON.parse(localStorage.getItem("dta_qr_settings")||"{}");
+  const waNum = qrs.waNum || "201099531272";
+  const now  = new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"});
+  let msg = `🍽️ طلب من المطعم\n⏰ ${now}\n\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\n`;
+  msg += items.map(o=>`${o.it.emoji||""} ${o.it.name} ×${o.qty} = £${o.qty*o.it.price}`).join("\n");
+  msg += `\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\n*الإجمالي: £${amt}*`;
+  document.getElementById("browse-order-wa-btn").href =
+    `https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`;
+}
+
+function browseClearOrder(){
+  window._browseCart = {};
   renderMenuBrowse();
 }
 
-function quickAddFromBrowse(idx){
-  addToCart(idx);
-  sNotify("🛒 تمت الإضافة", restMenu[idx]?.name + " — تم إضافته للطلب", "success", 1800);
+function setBrowseCat(cat, btn){
+  window._browseCat = cat;
+  window._browseCart = window._browseCart || {};
+  renderMenuBrowse();
 }
 
 function renderPOSCatQuick(){
@@ -19357,47 +19583,53 @@ async function doSendMenuToGuest(){
   const {room, phone} = _getSendMenuRoomAndPhone();
   if(!room){ sNotify('⚠️','يرجى اختيار أو إدخال رقم الغرفة','info',3000); return; }
 
-  // تأكيد تحميل المنيو قبل بناء الصفحة
-  if(typeof restMenu!=='undefined' && !restMenu.length){
-    try{
-      const idbMenu = await DTA_DB.getSetting('dta_rest_menu',[]);
-      if(Array.isArray(idbMenu)&&idbMenu.length){ restMenu=idbMenu; LSS('dta_rest_menu',idbMenu); }
-    }catch(e){}
-  }
-
   const prop = (typeof PROP!=='undefined'&&PROP) ? PROP : {name:'Dahab Trendy',phone:''};
   const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
-  const waNum = qrs.waNum || '201099531272';
+  const waNum = (qrs.waNum || '201099531272');
 
-  // بناء صفحة الضيف عبر DTA_QR module
-  const html = DTA_QR.buildGuestPage(room);
-  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-  const blobUrl = URL.createObjectURL(blob);
+  // بناء رابط صفحة الضيف مع تضمين المنيو فيه (لأن الضيف جهازه فارغ من localStorage)
+  const baseUrl = (window.location.origin + window.location.pathname).replace(/\/$/, '');
+  
+  // تضمين بيانات المنيو + الإعدادات في الـ hash (#) لتجنب حد URL
+  const guestData = {
+    room: room,
+    menu: (window.restMenu && window.restMenu.length) ? window.restMenu : [],
+    wifi: { name: qrs.wifiName||'DahabTrendy_Guest', pass: qrs.wifiPass||'dahab2024' },
+    wa: waNum,
+    hotel: prop.name||'Dahab Trendy',
+    phone: prop.phone||''
+  };
+  
+  // ضغط البيانات كـ base64 في الـ hash
+  let guestUrl;
+  try {
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(guestData))));
+    guestUrl = baseUrl + '?guest=' + encodeURIComponent(room) + '#gd=' + encoded;
+  } catch(e) {
+    // fallback: رابط بسيط بدون بيانات
+    guestUrl = baseUrl + '?guest=' + encodeURIComponent(room);
+  }
 
   // رسالة واتساب
   const msg =
     `🏨 *${prop.name}*\n`+
-    `📋 *صفحة خدمات الغرفة ${room}*\n\n`+
+    `📋 *خدمات الغرفة ${room}*\n\n`+
     `مرحباً بك! 🌟\n`+
-    `يمكنك من خلال الصفحة التالية:\n`+
-    `🛎️ طلب خدمات الغرفة (تنظيف، مناشف، إفطار...)\n`+
-    `🍽️ الاطلاع على قائمة الطعام والمشروبات وتقديم طلبك\n`+
-    `📡 الحصول على بيانات الـ WiFi\n`+
+    `اضغط الرابط أدناه لتصفح:\n`+
+    `🛎️ خدمات الغرفة (تنظيف، مناشف، إفطار...)\n`+
+    `🍽️ قائمة الطعام والمشروبات مع إمكانية الطلب\n`+
+    `📡 بيانات الـ WiFi\n`+
     `⭐ تقييم إقامتك\n\n`+
-    `📎 افتح الرابط لتصفح الخدمات:\n${blobUrl}\n\n`+
-    `للتواصل المباشر: 📞 ${prop.phone||waNum}`;
+    `🔗 ${guestUrl}\n\n`+
+    `للتواصل المباشر: 📞 ${prop.phone||'+20'+waNum}`;
 
   const url = phone
     ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
     : `https://wa.me/?text=${encodeURIComponent(msg)}`;
 
   window.open(url,'_blank');
-
-  // تأخير صغير قبل إلغاء الـ blob
-  setTimeout(()=>URL.revokeObjectURL(blobUrl), 30000);
-
   closeM('send-menu-modal');
-  sNotify('💬 تم','تم فتح واتساب لإرسال صفحة الضيف لغرفة '+room,'success',3000);
+  sNotify('💬 تم','تم فتح واتساب لإرسال رابط صفحة الضيف لغرفة '+room,'success',3000);
 }
 
 async function doPreviewGuestPageFromModal(){
