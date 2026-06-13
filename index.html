@@ -3072,16 +3072,18 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 <!-- Summary Strip -->
 <div id="tours-summary-strip" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px;"></div>
 <!-- Filter Bar -->
-<div class="card" style="padding:8px 12px;margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;">
-  <select id="tour-filter-month" onchange="renderTours()" style="width:100%;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
-    <option value="">📅 كل الشهور</option>
-  </select>
-  <select id="tour-filter-pay" onchange="renderTours()" style="width:100%;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
-    <option value="">💳 كل أنواع الدفع</option>
-    <option value="cash">💵 كاش</option>
-    <option value="room">🏨 على الغرفة</option>
-  </select>
-  <button class="btn bb bsm" onclick="clearTourFilters()" style="white-space:nowrap;padding:6px 12px;">✕ مسح</button>
+<div class="card" style="padding:8px 12px;margin-bottom:10px;">
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+    <select id="tour-filter-month" onchange="renderTours()" style="flex:1;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
+      <option value="">📅 كل الشهور</option>
+    </select>
+    <select id="tour-filter-pay" onchange="renderTours()" style="flex:1;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
+      <option value="">💳 كل أنواع الدفع</option>
+      <option value="cash">💵 كاش</option>
+      <option value="room">🏨 على الغرفة</option>
+    </select>
+  </div>
+  <button class="btn bb bsm" onclick="clearTourFilters()" style="width:100%;padding:7px;border:1px solid var(--bdr);justify-content:center;">✕ <span class="t" data-ar="مسح" data-en="Clear">مسح</span></button>
 </div>
 <!-- Tours Table -->
 <div class="card" style="padding:0;overflow:hidden;">
