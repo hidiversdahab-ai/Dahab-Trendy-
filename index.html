@@ -18564,6 +18564,7 @@ document.addEventListener('click', function(e){
 // ══════════════════════════════════════════════
 
 let restMenu = LS("dta_rest_menu", []);
+window.restMenu = restMenu; // expose globally for DTA_QR module
 let posCart = [];
 let posPayMethod = "cash";
 let menuItemEdit = null;
@@ -19309,7 +19310,7 @@ function openSendMenuModal(){
   document.getElementById('send-menu-guest-info').innerHTML='';
   // وضع mode الغرفة افتراضياً
   setSendMenuMode('room', document.querySelector('.send-menu-mode-btn[data-mode="room"]'));
-  openM('send-menu-modal');
+  document.getElementById('send-menu-modal').classList.add('on');
 }
 
 function setSendMenuMode(mode, btn){
@@ -19356,7 +19357,7 @@ async function doSendMenuToGuest(){
   const {room, phone} = _getSendMenuRoomAndPhone();
   if(!room){ sNotify('⚠️','يرجى اختيار أو إدخال رقم الغرفة','info',3000); return; }
 
-  // تأكيد تحميل المنيو
+  // تأكيد تحميل المنيو قبل بناء الصفحة
   if(typeof restMenu!=='undefined' && !restMenu.length){
     try{
       const idbMenu = await DTA_DB.getSetting('dta_rest_menu',[]);
@@ -19368,8 +19369,8 @@ async function doSendMenuToGuest(){
   const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
   const waNum = qrs.waNum || '201099531272';
 
-  // بناء رابط صفحة الضيف كـ Blob
-  const html = buildGuestPage(room);
+  // بناء صفحة الضيف عبر DTA_QR module
+  const html = DTA_QR.buildGuestPage(room);
   const blob = new Blob([html], {type:'text/html;charset=utf-8'});
   const blobUrl = URL.createObjectURL(blob);
 
@@ -19402,15 +19403,20 @@ async function doSendMenuToGuest(){
 async function doPreviewGuestPageFromModal(){
   const {room} = _getSendMenuRoomAndPhone();
   if(!room){ sNotify('⚠️','يرجى اختيار أو إدخال رقم الغرفة','info',3000); return; }
-  if(typeof previewGuestPage==='function'){
-    previewGuestPage(room);
-  } else {
-    const html = buildGuestPage(room);
-    const blob = new Blob([html],{type:'text/html;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    window.open(url,'_blank');
-    setTimeout(()=>URL.revokeObjectURL(url),10000);
+
+  // تأكيد تحميل المنيو
+  if(typeof restMenu!=='undefined' && !restMenu.length){
+    try{
+      const idbMenu = await DTA_DB.getSetting('dta_rest_menu',[]);
+      if(Array.isArray(idbMenu)&&idbMenu.length){ restMenu=idbMenu; LSS('dta_rest_menu',idbMenu); }
+    }catch(e){}
   }
+
+  const html = DTA_QR.buildGuestPage(room);
+  const blob = new Blob([html],{type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
 
 function renderPOSTodayOrders(){
@@ -19507,6 +19513,7 @@ function saveMenuItem(){
     img: document.getElementById("mi-img").value || "",
   };
   if(menuItemEdit!==null) restMenu[menuItemEdit]=item; else restMenu.push(item);
+  window.restMenu = restMenu; // sync global reference
   sv("dta_rest_menu", restMenu);
   closeM("menu-item-modal");
   renderMenuEditor();
@@ -19520,6 +19527,7 @@ function saveMenuItem(){
 function deleteMenuItem(i){
   if(!confirm("حذف هذا الصنف من القائمة؟")) return;
   restMenu.splice(i,1);
+  window.restMenu = restMenu; // sync global reference
   sv("dta_rest_menu", restMenu);
   renderMenuEditor();
   renderPOSMenu();
@@ -19740,6 +19748,7 @@ function importSelectedDrinks(){
     added++;
   });
   sv("dta_rest_menu", restMenu);
+  window.restMenu = restMenu; // sync global reference
   closeM("drinks-import-modal");
   renderMenuEditor();
   renderPOSMenu();
@@ -25008,9 +25017,9 @@ const DTA_QR = (function(){
     const checkoutTime = qrs.checkoutTime || '12:00 PM';
     // ── قراءة المنيو: المتغير الحي أولاً (الأضمن) ثم localStorage ──
     let _restMenuRaw = [];
-    // 1) المتغير الحي restMenu (دايماً محدّث في نفس الـ session)
-    if (typeof restMenu !== 'undefined' && Array.isArray(restMenu) && restMenu.length) {
-      _restMenuRaw = restMenu.slice();
+    // 1) المتغير الحي restMenu عبر window (دايماً محدّث في نفس الـ session)
+    if (window.restMenu && Array.isArray(window.restMenu) && window.restMenu.length) {
+      _restMenuRaw = window.restMenu.slice();
     }
     // 2) localStorage كـ fallback
     if (!_restMenuRaw.length) {
