@@ -586,6 +586,8 @@ select option{background:#1a1a2e;color:var(--text)}
 @media print{
   .gr-noprint{display:none!important;}
   #gr-print-area{border:none!important;padding:0!important;}
+  /* إخفاء الخط المتقطع عند الطباعة */
+  #gr-print-area [contenteditable]{border-bottom:none!important;outline:none!important;}
 }
 @media(max-width:768px){
   #page-guestsreg{padding:4px;}
@@ -1428,6 +1430,10 @@ label {
 
 <div class="nav">
 <span class="ntitle">🌊 Dahab Trendy</span>
+<div id="nav-clock" style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;margin-left:6px;border-left:2px solid rgba(201,168,76,0.3);padding-left:8px;">
+  <span id="nav-clock-time" style="font-size:15px;font-weight:700;color:var(--gold);font-family:monospace;letter-spacing:2px;"></span>
+  <span id="nav-clock-date" style="font-size:9px;color:var(--muted);font-family:Arial,sans-serif;white-space:nowrap;"></span>
+</div>
 <button class="nb act" onclick="goPage('dashboard',this)">📊 <span class="t" data-ar="الرئيسية" data-en="Dashboard">Dashboard</span></button>
 <button class="nb" onclick="goPage('calendar',this)">🗓️ <span class="t" data-ar="التقويم" data-en="Calendar">Calendar</span></button>
 <button class="nb" onclick="goPage('bookings',this)">📋 <span class="t" data-ar="الحجوزات" data-en="Bookings">Bookings</span></button>
@@ -1493,6 +1499,18 @@ label {
 </div>
 <div id="page-dashboard" class="page on">
 <h2 style="color:var(--gold);margin-bottom:14px;font-size:18px;">📊 <span class="t" data-ar="الرئيسية" data-en="Dashboard">Dashboard</span></h2>
+
+<!-- ساعة الـ Dashboard -->
+<div id="dash-clock-card" style="background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.05));border:1px solid rgba(201,168,76,0.35);border-radius:12px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+  <div>
+    <div id="dash-clock-time" style="font-size:36px;font-weight:700;color:var(--gold);font-family:monospace;letter-spacing:3px;line-height:1;"></div>
+    <div id="dash-clock-date" style="font-size:13px;color:var(--muted);margin-top:4px;font-family:Arial,sans-serif;"></div>
+  </div>
+  <div style="text-align:left;opacity:0.6;">
+    <div style="font-size:28px;">🌊</div>
+    <div style="font-size:10px;color:var(--muted);letter-spacing:1px;font-weight:700;">DAHAB TRENDY</div>
+  </div>
+</div>
 
 <!-- 🔴 LIVE ANIMATED DASHBOARD STRIP -->
 <div id="live-dash-strip" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px;"></div>
@@ -2437,8 +2455,17 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
     <button class="btn bb bsm" onclick="exportGuestsRegister()">⬇️ تصدير CSV</button>
     <span id="gr-count" style="margin-right:auto;font-size:12px;color:#1abc9c;font-weight:700;"></span>
   </div>
+  <!-- فلتر الشهر -->
+  <div class="flex" style="gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+    <label style="font-size:12px;color:var(--muted);font-weight:700;">📅 عرض شهر:</label>
+    <select id="gr-month-filter" onchange="renderGuestsRegister()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--bdr);background:var(--card);color:var(--text);font-size:12px;font-family:Arial,sans-serif;">
+      <option value="current">المقيمون الآن</option>
+    </select>
+    <select id="gr-year-filter" onchange="grBuildMonthOptions()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--bdr);background:var(--card);color:var(--text);font-size:12px;font-family:Arial,sans-serif;"></select>
+    <button class="btn bsm" style="background:rgba(22,160,133,0.15);color:#1abc9c;border-color:rgba(22,160,133,0.4);" onclick="document.getElementById('gr-month-filter').value='current';renderGuestsRegister()">🔄 الحاليون</button>
+  </div>
   <div style="background:rgba(22,160,133,0.1);border:1px solid rgba(22,160,133,0.3);border-radius:8px;padding:9px 14px;font-size:12px;color:#1abc9c;">
-    💡 النموذج يعرض <strong>المقيمين حالياً فقط</strong> — الخلايا قابلة للتعديل مباشرة قبل الطباعة
+    💡 النموذج يعرض <strong>المقيمين حالياً</strong> أو <strong>ضيوف أي شهر سابق</strong> — الخلايا قابلة للتعديل مباشرة قبل الطباعة
   </div>
 </div>
 
@@ -2447,13 +2474,13 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 
   <!-- Header رأس النموذج -->
   <div style="text-align:center;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #c9a84c;">
-    <div style="font-size:20px;font-weight:700;color:#1a1a2e;letter-spacing:1px;">Dahab Trendy Accommodation</div>
-    <div style="font-size:13px;color:#555;margin-top:3px;">دهب تريندي للإقامة — وسط مدينة دهب، جنوب سيناء، مصر</div>
-    <div style="font-size:11px;color:#888;margin-top:2px;">📞 +20 109 953 1272 &nbsp;|&nbsp; ✉️ dahabtrendyinn@gmail.com</div>
-    <div style="margin-top:10px;display:flex;justify-content:center;gap:30px;font-size:12px;color:#333;">
-      <span><strong>نموذج:</strong> كشف المقيمين</span>
-      <span><strong>التاريخ:</strong> <span id="gr-print-date"></span></span>
-      <span><strong>إجمالي المقيمين:</strong> <span id="gr-print-total"></span></span>
+    <div contenteditable="true" style="font-size:20px;font-weight:700;color:#1a1a2e;letter-spacing:1px;outline:none;border-bottom:1px dashed #c9a84c;display:inline-block;min-width:200px;padding:2px 6px;cursor:text;" title="اضغط للتعديل">Dahab Trendy Accommodation</div>
+    <div contenteditable="true" style="font-size:13px;color:#555;margin-top:6px;outline:none;border-bottom:1px dashed #ccc;display:inline-block;min-width:300px;padding:2px 6px;cursor:text;" title="اضغط للتعديل">دهب تريندي للإقامة — وسط مدينة دهب، جنوب سيناء، مصر</div>
+    <div contenteditable="true" style="font-size:11px;color:#888;margin-top:6px;outline:none;border-bottom:1px dashed #ccc;display:inline-block;min-width:280px;padding:2px 6px;cursor:text;" title="اضغط للتعديل">📞 +20 109 953 1272 &nbsp;|&nbsp; ✉️ dahabtrendyinn@gmail.com</div>
+    <div style="margin-top:10px;display:flex;justify-content:center;gap:30px;font-size:12px;color:#333;flex-wrap:wrap;">
+      <span><strong>نموذج:</strong> <span contenteditable="true" style="outline:none;border-bottom:1px dashed #c9a84c;padding:1px 4px;cursor:text;min-width:80px;display:inline-block;" title="اضغط للتعديل">كشف المقيمين</span></span>
+      <span><strong>التاريخ:</strong> <span id="gr-print-date" contenteditable="true" style="outline:none;border-bottom:1px dashed #c9a84c;padding:1px 4px;cursor:text;min-width:80px;display:inline-block;"></span></span>
+      <span><strong>إجمالي المقيمين:</strong> <span id="gr-print-total" contenteditable="true" style="outline:none;border-bottom:1px dashed #c9a84c;padding:1px 4px;cursor:text;min-width:40px;display:inline-block;"></span></span>
     </div>
   </div>
 
@@ -2482,11 +2509,11 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 
   <!-- Signature Footer توقيع -->
   <div style="margin-top:28px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;font-size:11px;color:#333;">
-    <div style="text-align:center;border-top:1px solid #999;padding-top:6px;">توقيع المسؤول</div>
-    <div style="text-align:center;border-top:1px solid #999;padding-top:6px;">الختم الرسمي</div>
-    <div style="text-align:center;border-top:1px solid #999;padding-top:6px;">تاريخ التسليم</div>
+    <div style="text-align:center;border-top:1px solid #999;padding-top:6px;" contenteditable="true" title="اضغط للتعديل" style="outline:none;cursor:text;">توقيع المسؤول</div>
+    <div style="text-align:center;border-top:1px solid #999;padding-top:6px;" contenteditable="true" title="اضغط للتعديل" style="outline:none;cursor:text;">الختم الرسمي</div>
+    <div style="text-align:center;border-top:1px solid #999;padding-top:6px;" contenteditable="true" title="اضغط للتعديل" style="outline:none;cursor:text;">تاريخ التسليم</div>
   </div>
-  <div style="margin-top:16px;text-align:center;font-size:9px;color:#aaa;border-top:1px solid #eee;padding-top:8px;">
+  <div contenteditable="true" title="اضغط للتعديل" style="margin-top:16px;text-align:center;font-size:9px;color:#aaa;border-top:1px solid #eee;padding-top:8px;outline:none;cursor:text;">
     تم إنشاؤه بواسطة نظام Dahab Trendy الإلكتروني
   </div>
 
@@ -3079,7 +3106,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 
 <!-- ═══════ TOUR MODAL ═══════ -->
 <div class="ovl" id="tour-modal">
-<div class="mdl" style="max-width:480px;">
+<div class="mdl" style="max-width:480px;display:flex;flex-direction:column;">
   <div class="mtitle">🏔️ <span id="tour-modal-title">إضافة رحلة جديدة</span></div>
 
   <div class="g2">
@@ -3152,9 +3179,9 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     </div>
   </div>
 
-  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-    <button class="btn bg" style="flex:1;" onclick="saveTour()">💾 حفظ الرحلة</button>
-    <button class="btn bb" onclick="closeTourModal()">إلغاء</button>
+  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--bg2);padding:10px 0 4px;border-top:1px solid var(--bdr);z-index:10;">
+    <button class="btn bg" style="flex:1;padding:14px 10px;font-size:14px;" onclick="saveTour()">💾 حفظ الرحلة</button>
+    <button class="btn bb" style="padding:14px 10px;font-size:14px;" onclick="closeTourModal()">إلغاء</button>
   </div>
   <button id="tm-delete-btn" class="btn" style="display:none;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);width:100%;margin-top:6px;" onclick="deleteTour()">🗑 حذف الرحلة</button>
 </div>
@@ -3162,13 +3189,13 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 
 <!-- ═══════ TOUR INVOICE MODAL (كاش) ═══════ -->
 <div class="ovl" id="tour-inv-modal">
-<div class="mdl" style="max-width:480px;">
+<div class="mdl" style="max-width:480px;display:flex;flex-direction:column;">
   <div class="mtitle">📄 فاتورة رحلة</div>
   <div id="tour-inv-preview" class="invp" style="margin-bottom:12px;"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-    <button class="btn bg" onclick="printTourInvoice()">🖨️ طباعة / PDF</button>
-    <button class="btn" style="background:#25D366;color:#fff;" onclick="waTourInvoice()">📱 WhatsApp</button>
-    <button class="btn bb" onclick="closeM('tour-inv-modal')">إغلاق</button>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;position:sticky;bottom:0;background:var(--bg2);padding:10px 0 4px;border-top:1px solid var(--bdr);z-index:10;">
+    <button class="btn bg" style="padding:13px 10px;font-size:14px;" onclick="printTourInvoice()">🖨️ طباعة / PDF</button>
+    <button class="btn" style="background:#25D366;color:#fff;padding:13px 10px;font-size:14px;" onclick="waTourInvoice()">📱 WhatsApp</button>
+    <button class="btn bb" style="grid-column:1/-1;padding:13px 10px;font-size:14px;" onclick="closeM('tour-inv-modal')">إغلاق</button>
   </div>
 </div>
 </div>
@@ -4844,7 +4871,8 @@ function renderEmptyRoomAlerts(){
 
   const threshold = parseInt(localStorage.getItem('dta_empty_alert_days')||'7');
   const td = toDay();
-  const todayD = new Date(td);
+  // استخدام noon لتجنب مشاكل timezone
+  const todayD = new Date(td + 'T12:00:00');
 
   const emptyRooms = [];
 
@@ -4852,11 +4880,11 @@ function renderEmptyRoomAlerts(){
     // تجاهل غرف الصيانة
     if(roomSt[r] === 'maintenance') return;
 
-    // آخر حجز انتهى في هذه الغرفة
+    // آخر حجز انتهى في هذه الغرفة (checkout قبل اليوم)
     const pastBks = bookings.filter(b =>
       String(b.room) === String(r) &&
       b.status !== 'Cancelled' &&
-      b.co <= td
+      b.co < td
     );
     // الحجوزات القادمة أو الحالية
     const futureBks = bookings.filter(b =>
@@ -4874,7 +4902,7 @@ function renderEmptyRoomAlerts(){
     if(pastBks.length){
       // آخر يوم مغادرة
       const lastCO = pastBks.sort((a,b)=>b.co.localeCompare(a.co))[0].co;
-      emptyFrom = new Date(lastCO);
+      emptyFrom = new Date(lastCO + 'T12:00:00');
     } else {
       // مفيش حجوزات خالص — اعتبر من بداية السنة أو 365 يوم
       emptyFrom = new Date(todayD);
@@ -13143,8 +13171,10 @@ function renderTours(){
       <td style="padding:8px 10px;font-weight:700;color:#2ecc71;white-space:nowrap;">£${(t.price||0).toLocaleString()}</td>
       <td style="padding:8px 10px;">${payBadge}${statusBadge}</td>
       <td style="padding:4px;text-align:center;">
-        <button class="btn bg bsm" onclick="editTour(${idx})" style="margin-bottom:3px;">✏️</button><br>
-        ${t.payMethod==="cash"?`<button class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.3);" onclick="openTourInvoice(${idx})">📄</button>`:""}
+        <button class="btn bg bsm" onclick="editTour(${idx})" style="margin-bottom:3px;display:block;width:100%;">✏️</button>
+        ${t.payMethod==="cash"?`<button class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.3);display:block;width:100%;margin-bottom:3px;" onclick="openTourInvoice(${idx})">📄</button>`:""}
+        <button class="btn bsm" style="background:#25D366;color:#fff;display:block;width:100%;margin-bottom:3px;" onclick="waTourDirect(${idx})">📱</button>
+        <button class="btn bsm" style="background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);display:block;width:100%;" onclick="deleteTourDirect(${idx})">🗑</button>
       </td>
     </tr>`;
   }).join("");
@@ -13329,9 +13359,14 @@ function saveTour(){
 
   if(tourEdit!==null) tours[tourEdit]=tour; else tours.push(tour);
   sv("dta_tours", tours);
+  const savedIdx = tourEdit!==null ? tourEdit : tours.length-1;
   closeTourModal();
   renderTours();
   sNotify("🏔️ تم حفظ الرحلة", tour.payMethod==="room"?"تمت إضافتها لفاتورة غرفة "+tour.room:"محفوظة كفاتورة كاش مستقلة","success",3000);
+  // لو كاش — افتح الفاتورة تلقائي
+  if(tour.payMethod==="cash"){
+    setTimeout(()=>openTourInvoice(savedIdx), 400);
+  }
 }
 
 function _attachTourToBooking(bkIdx, tour){
@@ -13469,21 +13504,72 @@ function openTourInvoice(idx){
 
 function printTourInvoice(){
   const content = document.getElementById("tour-inv-preview").innerHTML;
-  const w = window.open("","_blank","width=600,height=800");
-  w.document.write(`<html><head><title>Tour Invoice</title>
-  <style>body{font-family:Arial,sans-serif;direction:rtl;padding:20px;}
-  .invp-hdr{display:flex;justify-content:space-between;align-items:flex-start;padding:16px;background:#1a1a2e;color:#fff;border-radius:8px 8px 0 0;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
-  .invp-badge{padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;}
+  const printWin = window.open("","_blank","width=700,height=900");
+  printWin.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Tour Invoice</title>
+  <style>
+  *{box-sizing:border-box;}
+  body{font-family:Arial,sans-serif;direction:rtl;padding:24px;background:#fff;color:#111;}
+  .invp-hdr{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 18px;background:#1a1a2e;color:#fff;border-radius:8px 8px 0 0;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+  .invp-badge{padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:1px;}
   .invp-sec{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;border-bottom:2px solid #f0e8cc;padding-bottom:5px;margin:14px 0 8px;}
   .invp-gbox{background:#f9f5ea;border:1px solid #e0d0a0;border-radius:6px;padding:8px 12px;font-size:12px;margin-bottom:8px;}
   .invp-tbl{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px;}
-  .invp-tbl th,.invp-tbl td{padding:6px 8px;border-bottom:1px solid #eee;text-align:right;}
+  .invp-tbl th,.invp-tbl td{padding:7px 8px;border-bottom:1px solid #eee;text-align:right;}
   .invp-tbl thead tr{background:#f9f5ea;}
+  .invp-tbl thead th{font-weight:700;color:#1a1a2e;border-bottom:2px solid #c9a84c;}
   .invp-totbox{background:#f9f5ea;border:1px solid #e0d0a0;border-radius:8px;padding:10px 14px;min-width:160px;}
   .invp-tr{display:flex;justify-content:space-between;gap:16px;font-size:11px;padding:3px 0;}
-  @media print{body{padding:0;} button{display:none;}}</style>
-  </head><body>${content}<br><button onclick="window.print()">🖨️ طباعة</button></body></html>`);
-  w.document.close();
+  .invp-tr.grd{border-top:2px solid #c9a84c;margin-top:6px;padding-top:6px;font-size:14px;font-weight:700;}
+  .no-print{text-align:center;margin-top:20px;}
+  .no-print button{padding:10px 28px;background:#1a1a2e;color:#c9a84c;border:2px solid #c9a84c;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;}
+  @media print{.no-print{display:none;}body{padding:0;}}
+  </style>
+  </head><body>
+  ${content}
+  <div class="no-print">
+    <button onclick="window.print()">🖨️ اطبع الفاتورة</button>
+  </div>
+  <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`);
+  printWin.document.close();
+}
+
+function deleteTourDirect(idx){
+  const t = tours[idx];
+  if(!t) return;
+  if(!confirm("🗑 حذف رحلة \""+t.name+"\"؟\nهذا الإجراء لا يمكن التراجع عنه.")) return;
+  if(t.payMethod==="room" && t.room) _removeTourRoomCharge(t.id, t.room);
+  tours.splice(idx,1);
+  sv("dta_tours",tours);
+  renderTours();
+  sNotify("🗑 تم الحذف","تم حذف الرحلة بنجاح","info",2000);
+}
+
+function waTourDirect(idx){
+  const t = tours[idx];
+  if(!t) return;
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", phone:"+20 109 953 1272"};
+  const pricePerPerson = t.pricePerPerson || (t.persons>0 ? Math.round((t.price||0)/(t.persons||1)) : 0);
+  const paid = t.paidAmount||0;
+  const remaining = Math.max(0,(t.price||0)-paid);
+  const psLabel = t.payStatus==="paid" ? "✅ مدفوع بالكامل" : t.payStatus==="partial" ? "🔶 دفع جزئي" : "🔴 لم يُدفع";
+  const msg = `🏔️ *تفاصيل الرحلة — ${prop.name}*\n\n`+
+    `*الرحلة:* ${t.name}\n`+
+    `*التاريخ:* ${fmtD(t.date)}\n`+
+    `*الضيف:* ${t.guest||"—"}\n`+
+    (t.guide?`*المرشد:* ${t.guide}\n`:"")+
+    `*عدد الأشخاص:* ${t.persons||1}\n`+
+    `*سعر الفرد:* £${pricePerPerson.toLocaleString()}\n`+
+    `*الإجمالي:* £${(t.price||0).toLocaleString()}\n`+
+    (paid>0?`*المدفوع:* £${paid.toLocaleString()}\n`:"")+
+    (t.payStatus!=="paid"?`*المتبقي:* £${remaining.toLocaleString()}\n`:"")+
+    `*حالة الدفع:* ${psLabel}\n`+
+    (t.notes?`*ملاحظات:* ${t.notes}\n`:"")+
+    `\nشكراً لاختياركم خدماتنا 🙏\n${prop.phone}`;
+  // لو عنده رقم واتس نروح عليه مباشرة
+  const phone = t.phone || t.whatsapp || "";
+  const waNum = phone.replace(/\D/g,"");
+  window.open("https://wa.me/"+(waNum||"")+"?text="+encodeURIComponent(msg),"_blank");
 }
 
 function waTourInvoice(){
@@ -18178,11 +18264,70 @@ goPage = function(id, btn){
 // ══════════════════════════════════════════════
 // GUESTS REGISTER PAGE — نموذج المقيمين الرسمي
 // ══════════════════════════════════════════════
+function grBuildMonthOptions(){
+  const monthSel = document.getElementById('gr-month-filter');
+  const yearSel  = document.getElementById('gr-year-filter');
+  if(!monthSel || !yearSel) return;
+  const selYear = parseInt(yearSel.value) || new Date().getFullYear();
+  const monthsAr = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const cur = monthSel.value;
+  monthSel.innerHTML = '<option value="current">المقيمون الآن</option>';
+  for(let m=0;m<12;m++){
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = monthsAr[m] + ' ' + selYear;
+    monthSel.appendChild(opt);
+  }
+  // استعادة الاختيار لو لسه موجود
+  if(cur !== 'current') monthSel.value = cur;
+  renderGuestsRegister();
+}
+
+function grInitFilters(){
+  const yearSel = document.getElementById('gr-year-filter');
+  if(!yearSel || yearSel.options.length > 0) return;
+  const now = new Date().getFullYear();
+  // السنوات المتاحة من الحجوزات
+  const years = new Set();
+  years.add(now);
+  (bookings||[]).forEach(b => {
+    if(b.ci) years.add(new Date(b.ci).getFullYear());
+    if(b.co) years.add(new Date(b.co).getFullYear());
+  });
+  const sorted = [...years].sort((a,b)=>b-a);
+  yearSel.innerHTML = sorted.map(y=>`<option value="${y}"${y===now?' selected':''}>${y}</option>`).join('');
+  grBuildMonthOptions();
+}
+
 function renderGuestsRegister(){
+  // تهيئة الفلاتر عند أول تشغيل
+  grInitFilters();
+
   const td = toDay();
-  // Only currently checked-in guests
-  let list = (bookings||[]).filter(b => b.status !== 'Cancelled' && b.ci <= td && b.co > td);
-  // Sort by room number
+  const monthSel = document.getElementById('gr-month-filter');
+  const yearSel  = document.getElementById('gr-year-filter');
+  const filterVal = monthSel ? monthSel.value : 'current';
+  const selYear   = yearSel  ? parseInt(yearSel.value) : new Date().getFullYear();
+
+  let list;
+  if(filterVal === 'current'){
+    // المقيمون الآن فقط
+    list = (bookings||[]).filter(b => b.status !== 'Cancelled' && b.ci <= td && b.co > td);
+  } else {
+    // ضيوف الشهر المختار: أي حجز تداخل مع هذا الشهر
+    const selMonth = parseInt(filterVal);
+    const monthStart = new Date(selYear, selMonth, 1);
+    const monthEnd   = new Date(selYear, selMonth+1, 0); // آخر يوم في الشهر
+    const msStr = monthStart.toISOString().slice(0,10);
+    const meStr = monthEnd.toISOString().slice(0,10);
+    list = (bookings||[]).filter(b =>
+      b.status !== 'Cancelled' &&
+      b.ci <= meStr &&
+      b.co >= msStr
+    );
+  }
+
+  // ترتيب حسب رقم الغرفة
   list = list.slice().sort((a,b) => parseInt(a.room||0) - parseInt(b.room||0));
 
   const body = document.getElementById('gr-body');
@@ -18193,14 +18338,21 @@ function renderGuestsRegister(){
   const printTotal = document.getElementById('gr-print-total');
 
   // Set date
-  if(printDate) printDate.textContent = new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  if(printDate){
+    if(filterVal === 'current'){
+      printDate.textContent = new Date().toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    } else {
+      const monthsAr = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+      printDate.textContent = monthsAr[parseInt(filterVal)] + ' ' + selYear;
+    }
+  }
 
   if(!list.length){
     if(body) body.innerHTML='';
     if(empty) empty.style.display='block';
     if(printArea) printArea.style.display='none';
     if(printTotal) printTotal.textContent = '0 ضيف';
-    if(count) count.textContent = '0 مقيم حالياً';
+    if(count) count.textContent = filterVal==='current' ? '0 مقيم حالياً' : '0 ضيف في هذا الشهر';
     return;
   }
   if(empty) empty.style.display='none';
@@ -18284,7 +18436,8 @@ function renderGuestsRegister(){
   });
 
   if(printTotal) printTotal.textContent = rowNum + ' ضيف';
-  if(count) count.textContent = rowNum + ' مقيم حالياً';
+  const filterVal2 = (document.getElementById('gr-month-filter')||{}).value || 'current';
+  if(count) count.textContent = rowNum + (filterVal2==='current' ? ' مقيم حالياً' : ' ضيف في هذا الشهر');
   if(body) body.innerHTML = rows.join('');
 }
 function clearGRFilters(){
@@ -25214,5 +25367,38 @@ window.openQRSettings = openQRSettings;
 window.saveQRSettings = saveQRSettings;
 window.openQRRoomPicker = openQRRoomPicker;
 
+})();
+
+// ══ NAVBAR CLOCK ══
+(function(){
+  const daysAr = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const daysEn = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const monthsAr = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const monthsEn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function updateClock(){
+    const now = new Date();
+    let h = now.getHours();
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    const hStr = String(h).padStart(2,'0');
+    const timeEl = document.getElementById('nav-clock-time');
+    const dateEl = document.getElementById('nav-clock-date');
+    const dashTime = document.getElementById('dash-clock-time');
+    const dashDate = document.getElementById('dash-clock-date');
+    if(!timeEl && !dashTime) return;
+    const lang = (typeof currentLang !== 'undefined') ? currentLang : 'ar';
+    const timeStr = hStr+':'+m+':'+s+' '+ampm;
+    const dateStr = lang === 'en'
+      ? daysEn[now.getDay()]+' '+now.getDate()+' '+monthsEn[now.getMonth()]+' '+now.getFullYear()
+      : daysAr[now.getDay()]+' '+now.getDate()+' '+monthsAr[now.getMonth()]+' '+now.getFullYear();
+    if(timeEl) timeEl.textContent = timeStr;
+    if(dateEl) dateEl.textContent = dateStr;
+    if(dashTime) dashTime.textContent = timeStr;
+    if(dashDate) dashDate.textContent = dateStr;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
 })();
 </script>
