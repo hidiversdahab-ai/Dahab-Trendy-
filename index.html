@@ -3587,7 +3587,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 </div>
 <div class="fld s2"><label>ملاحظات</label><textarea id="rest-notes" rows="2"></textarea></div>
 </div>
-<div class="flex mt">
+<div class="flex mt" style="position:sticky;bottom:0;background:#1e2a3a;padding:12px 0 4px;margin-top:10px;z-index:2;">
 <button class="btn bg" onclick="saveRestM()">💾 حفظ</button>
 <button class="btn bb" onclick="closeM('rest-modal')">إلغاء</button>
 </div>
@@ -12364,7 +12364,8 @@ btn.disabled=false;
 // ═══════════ EXPORT / IMPORT (HTML FORMAT) ═══════════
 function exportAll(){
 localStorage.setItem("dta_last_export",String(Date.now()));
-const data={bookings,prices,duPrices,roomSt,policies,expenses,exRate,savedAt:new Date().toISOString()};
+const qrSettings=JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
+const data={bookings,prices,duPrices,roomSt,policies,expenses,exRate,restaurantTx,tours,restMenu,roomPhotos,waitlist,qrSettings,savedAt:new Date().toISOString()};
 const dataStr=JSON.stringify(data,null,2);
 const html=`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -12484,7 +12485,8 @@ a.click();
 showToast("✓ Exported as HTML!");
 }
 async function shareBackupWA(){
-const data={bookings,prices,duPrices,roomSt,policies,expenses,exRate,savedAt:new Date().toISOString()};
+const qrSettings2=JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
+const data={bookings,prices,duPrices,roomSt,policies,expenses,exRate,restaurantTx,tours,restMenu,roomPhotos,waitlist,qrSettings:qrSettings2,savedAt:new Date().toISOString()};
 const dataStr=JSON.stringify(data,null,2);
 const html=`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -23539,7 +23541,10 @@ const DTA_BACKUP = (function(){
       if(data.duPrices)    { duPrices=data.duPrices;           sv('dta_du',duPrices); }
       if(data.policies)    { policies=data.policies;           sv('dta_pol',policies); }
       if(data.exRate)      { exRate=parseFloat(data.exRate);   localStorage.setItem('dta_rate',exRate); }
-      if(data.restMenu)    { restMenu=data.restMenu;           sv('dta_rest_menu',restMenu); }
+      if(data.restMenu)    { restMenu=data.restMenu;           sv('dta_rest_menu',restMenu); window.restMenu=restMenu; }
+      if(data.roomPhotos)  { roomPhotos=data.roomPhotos;       sv('dta_room_photos',roomPhotos); }
+      if(data.waitlist)    { waitlist=data.waitlist;           sv('dta_wl',waitlist); }
+      if(data.qrSettings)  { localStorage.setItem('dta_qr_settings', JSON.stringify(data.qrSettings)); }
       renderDashboard(); renderBookings();
       sNotify('\u2705 استيراد ناجح','تم استيراد '+bookings.length+' حجز بنجاح','success',4000);
     }catch(e){
