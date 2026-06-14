@@ -157,7 +157,7 @@ select option{background:#1a1a2e;color:var(--text)}
 .browse-food-card.has-qty{border-color:rgba(26,188,156,0.7)!important;background:rgba(26,188,156,0.08)!important;box-shadow:0 0 0 2px rgba(26,188,156,0.2);}
 .food-qty-badge{position:absolute;top:5px;left:5px;background:#1abc9c;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;line-height:1.5;display:none;}
 /* cat-tab for browse (same style as guest page) */
-.cat-tab{background:transparent;border:1.5px solid rgba(201,168,76,0.3);color:var(--muted);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .2s;white-space:nowrap;}
+.cat-tab{background:transparent;border:1.5px solid rgba(201,168,76,0.3);color:var(--muted);border-radius:14px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .2s;white-space:nowrap;text-align:center;line-height:1.6;}
 .cat-tab.act{background:rgba(201,168,76,0.2);border-color:var(--gold);color:var(--gold);}
 .menu-cat-tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 14px;border-radius:10px;border:1.5px solid var(--bdr);background:transparent;color:var(--muted);cursor:pointer;font-size:11px;font-family:Arial,sans-serif;font-weight:700;transition:all .2s;min-width:70px;}
 .menu-cat-tab .cat-emoji{font-size:22px;line-height:1;}
@@ -18801,25 +18801,36 @@ function toggleMenuItemAvailable(i){
 
 function getCatMeta(){
   return {
-    "لحوم 🥩":        {color:"#e74c3c", color2:"#c0392b", cls:"cat-meat",        emoji:"🥩"},
-    "فراخ 🍗":        {color:"#e67e22", color2:"#f39c12", cls:"cat-chicken",     emoji:"🍗"},
-    "أسماك 🐟":       {color:"#3498db", color2:"#2980b9", cls:"cat-fish",        emoji:"🐟"},
-    "مشروبات 🥤":     {color:"#1abc9c", color2:"#16a085", cls:"cat-drinks",      emoji:"🥤"},
-    "حلويات 🍰":      {color:"#9b59b6", color2:"#8e44ad", cls:"cat-sweets",      emoji:"🍰"},
-    "وجبات خفيفة 🥪": {color:"#27ae60", color2:"#2ecc71", cls:"cat-snacks",      emoji:"🥪"},
-    "شيشة 💨":        {color:"#8e44ad", color2:"#5d3a8e", cls:"cat-shisha",      emoji:"💨"},
-    "أكل 🍽️":        {color:"#c9a84c", color2:"#a07830", cls:"cat-other",       emoji:"🍽️"},
-    "شوربة 🍲":       {color:"#d35400", color2:"#e67e22", cls:"cat-soup",        emoji:"🍲"},
-    "سلطات 🥗":       {color:"#27ae60", color2:"#52be80", cls:"cat-salad",       emoji:"🥗"},
-    "باستا 🍝":       {color:"#c0392b", color2:"#e74c3c", cls:"cat-pasta",       emoji:"🍝"},
-    "مشويات 🔥":      {color:"#922b21", color2:"#e74c3c", cls:"cat-grill",       emoji:"🔥"},
-    "إفطار 🍳":       {color:"#d4ac0d", color2:"#f1c40f", cls:"cat-breakfast",   emoji:"🍳"},
-    "بيتزا 🍕":       {color:"#a93226", color2:"#e74c3c", cls:"cat-pizza",       emoji:"🍕"},
-    "سندوتشات 🥙":    {color:"#1f618d", color2:"#2980b9", cls:"cat-sandwiches",  emoji:"🥙"},
-    "أرز وحبوب 🍚":   {color:"#b7950b", color2:"#d4ac0d", cls:"cat-rice",        emoji:"🍚"},
-    "أخرى 📌":        {color:"#95a5a6", color2:"#7f8c8d", cls:"cat-other",       emoji:"📌"},
+    "لحوم 🥩":        {color:"#e74c3c", color2:"#c0392b", cls:"cat-meat",        emoji:"🥩", en:"Meat"},
+    "فراخ 🍗":        {color:"#e67e22", color2:"#f39c12", cls:"cat-chicken",     emoji:"🍗", en:"Chicken"},
+    "أسماك 🐟":       {color:"#3498db", color2:"#2980b9", cls:"cat-fish",        emoji:"🐟", en:"Fish"},
+    "مشروبات 🥤":     {color:"#1abc9c", color2:"#16a085", cls:"cat-drinks",      emoji:"🥤", en:"Drinks"},
+    "حلويات 🍰":      {color:"#9b59b6", color2:"#8e44ad", cls:"cat-sweets",      emoji:"🍰", en:"Desserts"},
+    "وجبات خفيفة 🥪": {color:"#27ae60", color2:"#2ecc71", cls:"cat-snacks",      emoji:"🥪", en:"Snacks"},
+    "شيشة 💨":        {color:"#8e44ad", color2:"#5d3a8e", cls:"cat-shisha",      emoji:"💨", en:"Shisha"},
+    "أكل 🍽️":        {color:"#c9a84c", color2:"#a07830", cls:"cat-other",       emoji:"🍽️", en:"Food"},
+    "شوربة 🍲":       {color:"#d35400", color2:"#e67e22", cls:"cat-soup",        emoji:"🍲", en:"Soup"},
+    "سلطات 🥗":       {color:"#27ae60", color2:"#52be80", cls:"cat-salad",       emoji:"🥗", en:"Salads"},
+    "باستا 🍝":       {color:"#c0392b", color2:"#e74c3c", cls:"cat-pasta",       emoji:"🍝", en:"Pasta"},
+    "مشويات 🔥":      {color:"#922b21", color2:"#e74c3c", cls:"cat-grill",       emoji:"🔥", en:"Grill"},
+    "إفطار 🍳":       {color:"#d4ac0d", color2:"#f1c40f", cls:"cat-breakfast",   emoji:"🍳", en:"Breakfast"},
+    "بيتزا 🍕":       {color:"#a93226", color2:"#e74c3c", cls:"cat-pizza",       emoji:"🍕", en:"Pizza"},
+    "سندوتشات 🥙":    {color:"#1f618d", color2:"#2980b9", cls:"cat-sandwiches",  emoji:"🥙", en:"Sandwiches"},
+    "أرز وحبوب 🍚":   {color:"#b7950b", color2:"#d4ac0d", cls:"cat-rice",        emoji:"🍚", en:"Rice & Grains"},
+    "عصائر طازجة 🍊": {color:"#f39c12", color2:"#e67e22", cls:"cat-juice",       emoji:"🍊", en:"Fresh Juices"},
+    "مشروبات ساخنة ☕": {color:"#a0522d", color2:"#8b4513", cls:"cat-hotdrinks", emoji:"☕", en:"Hot Drinks"},
+    "مياه وبارد 💧":  {color:"#3498db", color2:"#2980b9", cls:"cat-water",       emoji:"💧", en:"Water & Cold"},
+    "مشروبات غازية 🥤": {color:"#16a085", color2:"#1abc9c", cls:"cat-soda",      emoji:"🥤", en:"Soft Drinks"},
+    "أخرى 📌":        {color:"#95a5a6", color2:"#7f8c8d", cls:"cat-other",       emoji:"📌", en:"Other"},
   };
 }
+
+// يرجع الاسم الإنجليزي لفئة المنيو (لو معروف) أو null
+function _catEn(cat){
+  const meta = getCatMeta()[cat];
+  return meta && meta.en ? meta.en : null;
+}
+
 
 function setMenuLang(lang, btn){
   window._menuLang = lang;
@@ -18943,16 +18954,18 @@ function renderMenuBrowse(){
 
   // Category tabs
   tabsEl.innerHTML =
-    `<button class="cat-tab${activeCat==="all"?" act":""}" onclick="setBrowseCat('all',this)" style="${activeCat==="all"?"background:rgba(26,188,156,0.2);border-color:#1abc9c;color:#1abc9c;":""}">🍽️ الكل</button>` +
+    `<button class="cat-tab${activeCat==="all"?" act":""}" onclick="setBrowseCat('all',this)" style="${activeCat==="all"?"background:rgba(26,188,156,0.2);border-color:#1abc9c;color:#1abc9c;":""}">🍽️ الكل<br><span style="font-size:9px;opacity:.7;font-weight:400;">All</span></button>` +
     cats.map(cat=>{
       const meta = catMeta[cat]||{emoji:"🍽️"};
       const cnt  = Object.keys(cart).reduce((s,k)=>{
         return s + (restMenu[+k]&&restMenu[+k].cat===cat ? (cart[k]||0) : 0);
       }, 0);
       const act  = activeCat===cat;
+      const enLbl = meta.en ? `<br><span style="font-size:9px;opacity:.7;font-weight:400;">${meta.en}</span>` : "";
       return `<button class="cat-tab${act?" act":""}" onclick="setBrowseCat('${cat.replace(/'/g,"\\'")}',this)" style="${act?"background:rgba(26,188,156,0.2);border-color:#1abc9c;color:#1abc9c;":""}">` +
         `${meta.emoji} ${cat.split(" ")[0]}` +
         (cnt>0?` <span style="background:#1abc9c;color:#fff;border-radius:10px;padding:0 6px;font-size:10px;">${cnt}</span>`:"") +
+        enLbl +
         `</button>`;
     }).join("");
 
@@ -25450,7 +25463,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 /* ── MENU ── */
 .cat-scroll{display:flex;gap:7px;overflow-x:auto;padding-bottom:10px;margin-bottom:14px;scrollbar-width:none;}
 .cat-scroll::-webkit-scrollbar{display:none;}
-.cat-chip{background:transparent;border:1.5px solid var(--bdr);color:var(--muted);border-radius:20px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Tajawal',Arial,sans-serif;transition:all .18s;white-space:nowrap;flex-shrink:0;}
+.cat-chip{background:transparent;border:1.5px solid var(--bdr);color:var(--muted);border-radius:14px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Tajawal',Arial,sans-serif;transition:all .18s;white-space:nowrap;flex-shrink:0;text-align:center;line-height:1.6;}
 .cat-chip.act{background:rgba(26,188,156,0.15);border-color:var(--teal);color:var(--teal);}
 .cat-chip .cnt{background:var(--teal);color:#fff;border-radius:10px;padding:0 6px;font-size:9px;margin-right:3px;}
 .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
@@ -25656,15 +25669,26 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
   MI.forEach(function(it){ if(it.c && cats.indexOf(it.c)===-1) cats.push(it.c); });
 
   var catLabels={'all':'🍽️ الكل'};
+  var catEnMap={
+    'لحوم 🥩':'Meat','فراخ 🍗':'Chicken','أسماك 🐟':'Fish','مشروبات 🥤':'Drinks',
+    'حلويات 🍰':'Desserts','وجبات خفيفة 🥪':'Snacks','شيشة 💨':'Shisha','أكل 🍽️':'Food',
+    'شوربة 🍲':'Soup','سلطات 🥗':'Salads','باستا 🍝':'Pasta','مشويات 🔥':'Grill',
+    'إفطار 🍳':'Breakfast','بيتزا 🍕':'Pizza','سندوتشات 🥙':'Sandwiches','أرز وحبوب 🍚':'Rice & Grains',
+    'عصائر طازجة 🍊':'Fresh Juices','مشروبات ساخنة ☕':'Hot Drinks','مياه وبارد 💧':'Water & Cold',
+    'مشروبات غازية 🥤':'Soft Drinks','أخرى 📌':'Other'
+  };
 
   function buildCats(){
     var el=document.getElementById('cat-scroll'); if(!el) return;
     el.innerHTML=cats.map(function(cat){
       var lbl=catLabels[cat]||(cat.length>10?cat.substring(0,10)+'…':cat);
+      var enLbl = cat==='all' ? 'All' : (catEnMap[cat]||'');
       var total=0; QS.forEach(function(q,i){ if(q>0&&(cat==='all'||MI[i].c===cat)) total+=q; });
       var act=activeCat===cat;
       return '<button class="cat-chip'+(act?' act':'')+'" onclick="setCat(\\''+cat+'\\')">'
-        +(total>0?'<span class="cnt">'+total+'</span>':'')+lbl+'</button>';
+        +(total>0?'<span class="cnt">'+total+'</span>':'')+lbl
+        +(enLbl?'<br><span style="font-size:9px;opacity:.7;font-weight:400;">'+enLbl+'</span>':'')
+        +'</button>';
     }).join('');
   }
 
