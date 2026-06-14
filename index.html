@@ -12627,27 +12627,19 @@ async function _importFileAsync(file){
 // قراءة الملف
 const content = await file.text();
 let data = null;
-// محاولة 1: HTML قديم — ابحث عن const _DATA =
+// استخراج JSON من ملف HTML أو JSON مباشر
 const SM = 'const _DATA = ';
-const EM = ';\nfunction restoreData';
 const si = content.indexOf(SM);
 if(si !== -1){
   const js = si + SM.length;
-  const ei = content.indexOf(EM, js);
-  const jsonStr = ei !== -1 ? content.slice(js, ei) : content.slice(js, js+5000000);
+  // جرب كل End Markers الممكنة
+  const endMarkers = [';\nfunction restoreData', ';\nvar _d', ';function restoreData', ';\n//'];
+  let ei = -1;
+  for(const em of endMarkers){ ei = content.indexOf(em, js); if(ei !== -1) break; }
+  const jsonStr = ei !== -1 ? content.slice(js, ei) : content.slice(js, js+10000000);
   try{ data = JSON.parse(jsonStr); }catch(ex){ console.warn('[import] HTML parse failed:',ex.message); }
 }
-// محاولة 2: HTML قديم بدون سطر جديد قبل function
-if(!data){
-  const EM2 = ';function restoreData';
-  const si2 = content.indexOf(SM);
-  if(si2 !== -1){
-    const js2 = si2 + SM.length;
-    const ei2 = content.indexOf(EM2, js2);
-    if(ei2 !== -1){ try{ data = JSON.parse(content.slice(js2, ei2)); }catch(ex){} }
-  }
-}
-// محاولة 3: JSON مباشر
+// محاولة 2: JSON مباشر
 if(!data){ try{ data = JSON.parse(content); }catch(ex){} }
 if(!data || !data.bookings) throw new Error("لم يتم العثور على بيانات صحيحة في الملف");
 if(!confirm("سيتم استبدال كل البيانات الحالية. هل أنت متأكد؟\nThis will overwrite all data. Are you sure?")) return;
@@ -23521,14 +23513,17 @@ const DTA_BACKUP = (function(){
     try{
       let data = null;
       // محاولة 1: HTML قديم — indexOf بدل regex لتجنب stack overflow
-      const _sm='const _DATA = ', _em=';\nfunction restoreData';
+      const _sm='const _DATA = ';
       const _si=text.indexOf(_sm);
       if(_si!==-1){
-        const _js=_si+_sm.length, _ei=text.indexOf(_em,_js);
-        if(_ei!==-1){ try{ data=JSON.parse(text.slice(_js,_ei)); }catch(ex){} }
+        const _js=_si+_sm.length;
+        const _ends=[';\nfunction restoreData',';\nvar _d',';function restoreData',';\n//'];
+        let _ei=-1; for(const _e of _ends){_ei=text.indexOf(_e,_js);if(_ei!==-1)break;}
+        const _jsonStr=_ei!==-1?text.slice(_js,_ei):text.slice(_js,_js+10000000);
+        try{ data=JSON.parse(_jsonStr); }catch(ex){}
       }
       // محاولة 2: JSON عادي
-      if(!data) data=JSON.parse(text);
+      if(!data) try{ data=JSON.parse(text); }catch(ex){}
       if(!data||!data.bookings) throw new Error('invalid format');
       if(!confirm('سيتم استبدال كل البيانات الحالية بالبيانات المستوردة. هل أنت متأكد؟')) return;
       pushUndo('قبل الاستيراد', getUndoSnapshot());
