@@ -19901,6 +19901,14 @@ const DRINKS_CATALOG = [
 ];
 window.DRINKS_CATALOG = DRINKS_CATALOG; // expose globally for DTA_QR module
 
+// ── مصدر المشروبات: restMenu لو موجود، غير كده DRINKS_CATALOG ──
+function _getDrinksSrc(){
+  const rm = window.restMenu && Array.isArray(window.restMenu) && window.restMenu.length
+    ? window.restMenu
+    : (()=>{ try{ const p=JSON.parse(localStorage.getItem('dta_rest_menu')||'[]'); return Array.isArray(p)&&p.length?p:[]; }catch(e){return [];} })();
+  return rm.length ? rm : DRINKS_CATALOG;
+}
+
 // ═══════════ DRINKS ORDER SYSTEM (Services-Style Grid + Qty + WhatsApp) ═══════════
 let _drinksActiveCat = "الكل";
 let _drinksOrder = new Map(); // idx → qty
@@ -19922,7 +19930,7 @@ function openDrinksImport(){
 function _renderDrinksCatTabs(){
   const el = document.getElementById("drinks-cat-filter-tabs");
   if(!el) return;
-  const cats = ["الكل", ...new Set(DRINKS_CATALOG.map(d=>d.cat))];
+  const _DS=_getDrinksSrc(); const cats = ["الكل", ...new Set(_DS.map(d=>d.cat))];
   el.innerHTML = cats.map(cat=>{
     const isAll = cat==="الكل";
     const color = isAll ? "var(--gold)" : (_DRINKS_CAT_COLORS[cat]||"#95a5a6");
@@ -19930,7 +19938,7 @@ function _renderDrinksCatTabs(){
     // show count badge if has ordered items in this cat
     const catOrderCount = isAll
       ? [..._drinksOrder.values()].reduce((s,q)=>s+q,0)
-      : DRINKS_CATALOG.reduce((s,d,i)=>d.cat===cat&&_drinksOrder.has(i)?s+(_drinksOrder.get(i)||0):s,0);
+      : _DS.reduce((s,d,i)=>d.cat===cat&&_drinksOrder.has(i)?s+(_drinksOrder.get(i)||0):s,0);
     return `<button type="button" onclick="_setDrinksCat('${cat}')"
       style="padding:5px 12px;border-radius:20px;border:1.5px solid ${act?color:color+'55'};
       background:${act?color+'33':'transparent'};color:${act?color:color+'bb'};
@@ -19950,9 +19958,10 @@ function _setDrinksCat(cat){
 function _renderDrinksItems(){
   const el = document.getElementById("drinks-items-list");
   if(!el) return;
+  const _DS2=_getDrinksSrc();
   const filtered = _drinksActiveCat==="الكل"
-    ? DRINKS_CATALOG.map((d,i)=>({d,i}))
-    : DRINKS_CATALOG.map((d,i)=>({d,i})).filter(({d})=>d.cat===_drinksActiveCat);
+    ? _DS2.map((d,i)=>({d,i}))
+    : _DS2.map((d,i)=>({d,i})).filter(({d})=>d.cat===_drinksActiveCat);
 
   el.innerHTML = filtered.map(({d, i})=>{
     const qty = _drinksOrder.get(i)||0;
@@ -20002,7 +20011,7 @@ function _renderDrinksItems(){
 
 function _drinksPriceChange(idx, newPrice){
   const p = parseFloat(newPrice);
-  if(!isNaN(p) && p>=0){ DRINKS_CATALOG[idx].price = p; }
+  if(!isNaN(p) && p>=0){ _getDrinksSrc()[idx].price = p; }
   _updateDrinksOrderBadge();
 }
 
@@ -20019,7 +20028,7 @@ function _drinksQtyChange(idx, delta){
 function _updateDrinksOrderBadge(){
   const totalItems = [..._drinksOrder.values()].reduce((s,q)=>s+q,0);
   const totalPrice = [..._drinksOrder.entries()].reduce((s,[i,q])=>{
-    const d = DRINKS_CATALOG[i]; return d ? s+(d.price*q) : s;
+    const d = _getDrinksSrc()[i]; return d ? s+(d.price*q) : s;
   },0);
   const badgeTotal = document.getElementById("drinks-order-total-badge");
   const badgeItems = document.getElementById("drinks-order-items-badge");
@@ -20039,9 +20048,10 @@ function drinksClearOrder(){
 }
 
 function drinksSelectAll(){
+  const _DS3=_getDrinksSrc();
   const target = _drinksActiveCat==="الكل"
-    ? DRINKS_CATALOG.map((d,i)=>i)
-    : DRINKS_CATALOG.map((d,i)=>i).filter(i=>DRINKS_CATALOG[i].cat===_drinksActiveCat);
+    ? _DS3.map((d,i)=>i)
+    : _DS3.map((d,i)=>i).filter(i=>_DS3[i].cat===_drinksActiveCat);
   target.forEach(i=>{ if(!_drinksOrder.has(i)) _drinksOrder.set(i,1); });
   _renderDrinksItems();
   _renderDrinksCatTabs();
@@ -20061,7 +20071,7 @@ function sendDrinksOrderWA(){
   ];
   let total = 0;
   _drinksOrder.forEach((qty, idx)=>{
-    const d = DRINKS_CATALOG[idx];
+    const d = _getDrinksSrc()[idx];
     if(!d) return;
     const sub = d.price * qty;
     total += sub;
@@ -20082,7 +20092,7 @@ function importSelectedDrinks(){
   if(!_drinksOrder.size){ sNotify("⚠️","اختار صنف واحد على الأقل","info",2500); return; }
   let added = 0, skipped = 0;
   _drinksOrder.forEach((qty, idx)=>{
-    const d = DRINKS_CATALOG[idx];
+    const d = _getDrinksSrc()[idx];
     if(!d) return;
     const dupName = restMenu.find(m=>m.name===d.name);
     if(dupName){ skipped++; return; }
