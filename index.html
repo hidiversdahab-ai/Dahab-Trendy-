@@ -3362,6 +3362,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     <button class="btn" onclick="openDrinksImport()" style="background:linear-gradient(135deg,rgba(26,188,156,0.2),rgba(22,160,133,0.2));color:#1abc9c;border:1px solid rgba(26,188,156,0.5);font-weight:700;">🥤 استيراد قائمة مشروبات</button>
     <button class="btn" onclick="dtaDebugMenu()" style="background:linear-gradient(135deg,rgba(231,76,60,0.2),rgba(192,57,43,0.2));color:#e74c3c;border:1px solid rgba(231,76,60,0.5);font-weight:700;">🔍 فحص المنيو</button>
     <button class="btn" onclick="dtaFixDrinkNames()" style="background:linear-gradient(135deg,rgba(155,89,182,0.2),rgba(142,68,173,0.2));color:#9b59b6;border:1px solid rgba(155,89,182,0.5);font-weight:700;">🛠️ إصلاح الأسماء العربية</button>
+    <button class="btn" onclick="dtaRemoveDupDrinks()" style="background:linear-gradient(135deg,rgba(241,196,15,0.2),rgba(243,156,18,0.2));color:#f1c40f;border:1px solid rgba(241,196,15,0.5);font-weight:700;">🧹 حذف الأصناف المكررة</button>
     <!-- Category filter for editor -->
     <select id="menu-editor-cat-filter" onchange="renderMenuEditor()" style="width:auto;padding:6px 10px;font-size:12px;">
       <option value="">كل الفئات</option>
@@ -18697,6 +18698,71 @@ window.dtaFixDrinkNames = async function(){
   }
 };
 
+// إزالة الأصناف المكررة (نفس الاسم عربي أو إنجليزي) — يُبقي أول صنف وله سعر غير صفري إن وُجد
+window.dtaRemoveDupDrinks = async function(){
+  try{
+    const norm = s => (s||"").trim().toLowerCase();
+    const groups = new Map(); // key -> [items]
+    restMenu.forEach(item=>{
+      const key = norm(item.name) || norm(item.nameEn);
+      if(!key) return;
+      if(!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+      // كذلك اعتبر الاسم الإنجليزي كمفتاح بديل لربط "Lemon Juice" مع "عصير ليمون"
+      const altKey = norm(item.nameEn);
+      if(altKey && altKey !== key){
+        if(!groups.has(altKey)) groups.set(altKey, []);
+        groups.get(altKey).push(item);
+      }
+    });
+
+    // اجمع كل العناصر التي تتشارك مجموعة (عن طريق name أو nameEn) في عناقيد فعلية
+    const seen = new Set();
+    const clusters = [];
+    restMenu.forEach(item=>{
+      if(seen.has(item)) return;
+      const keys = [norm(item.name), norm(item.nameEn)].filter(Boolean);
+      let cluster = [item];
+      seen.add(item);
+      keys.forEach(k=>{
+        (groups.get(k)||[]).forEach(other=>{
+          if(!seen.has(other)){ cluster.push(other); seen.add(other); }
+        });
+      });
+      clusters.push(cluster);
+    });
+
+    let removed = 0;
+    const newMenu = [];
+    clusters.forEach(cluster=>{
+      if(cluster.length === 1){ newMenu.push(cluster[0]); return; }
+      // اختار الأفضل: عربي صحيح + سعر غير صفري
+      let best = cluster.find(it => /[\u0600-\u06FF]/.test(it.name||"") && (parseInt(it.price,10)||0) > 0)
+              || cluster.find(it => (parseInt(it.price,10)||0) > 0)
+              || cluster.find(it => /[\u0600-\u06FF]/.test(it.name||""))
+              || cluster[0];
+      newMenu.push(best);
+      removed += cluster.length - 1;
+    });
+
+    if(removed){
+      restMenu.length = 0;
+      newMenu.forEach(it=>restMenu.push(it));
+      sv("dta_rest_menu", restMenu);
+      window.restMenu = restMenu;
+      renderMenuEditor();
+      renderMenuBrowse();
+      renderPOSMenu();
+      renderPOSCatQuick();
+      sNotify("✅ تم الإصلاح", "تم حذف "+removed+" صنف مكرر", "success", 4000);
+    } else {
+      sNotify("ℹ️", "لا توجد أصناف مكررة", "info", 2500);
+    }
+  }catch(err){
+    alert("خطأ في إزالة التكرار: "+err.message);
+  }
+};
+
 function switchRestView(view, btn){
   currentRestView = view;
   ["ledger","pos","menu","menu-browse"].forEach(v=>{
@@ -19903,10 +19969,8 @@ window.DRINKS_CATALOG = DRINKS_CATALOG; // expose globally for DTA_QR module
 
 // ── مصدر المشروبات: restMenu لو موجود، غير كده DRINKS_CATALOG ──
 function _getDrinksSrc(){
-  const rm = window.restMenu && Array.isArray(window.restMenu) && window.restMenu.length
-    ? window.restMenu
-    : (()=>{ try{ const p=JSON.parse(localStorage.getItem('dta_rest_menu')||'[]'); return Array.isArray(p)&&p.length?p:[]; }catch(e){return [];} })();
-  return rm.length ? rm : DRINKS_CATALOG;
+  // قائمة استيراد المشروبات يجب أن تعرض دائمًا كتالوج المشروبات الجاهز
+  return DRINKS_CATALOG;
 }
 
 // ═══════════ DRINKS ORDER SYSTEM (Services-Style Grid + Qty + WhatsApp) ═══════════
@@ -19967,7 +20031,13 @@ function _renderDrinksItems(){
     const qty = _drinksOrder.get(i)||0;
     const color = _DRINKS_CAT_COLORS[d.cat]||"#95a5a6";
     const hasQty = qty > 0;
-    const inMenu = restMenu.some(m=>m.name===d.name);
+    const inMenu = restMenu.some(m=>{
+      const mName = (m.name||"").trim().toLowerCase();
+      const mNameEn = (m.nameEn||"").trim().toLowerCase();
+      const dName = (d.name||"").trim().toLowerCase();
+      const dNameEn = (d.nameEn||"").trim().toLowerCase();
+      return (dName && mName===dName) || (dNameEn && mNameEn && mNameEn===dNameEn) || (dNameEn && mName===dNameEn) || (dName && mNameEn===dName);
+    });
     return `<div style="background:var(--card);border:2px solid ${hasQty?color:color+'33'};border-radius:14px;
       padding:12px 8px 10px;transition:all .2s;position:relative;
       ${hasQty?'box-shadow:0 0 0 2px '+color+'44;background:'+color+'0d;':''}
@@ -20094,14 +20164,20 @@ function importSelectedDrinks(){
   _drinksOrder.forEach((qty, idx)=>{
     const d = _getDrinksSrc()[idx];
     if(!d) return;
-    const dupName = restMenu.find(m=>m.name===d.name);
-    if(dupName){ skipped++; return; }
+    const dup = restMenu.find(m=>{
+      const mName = (m.name||"").trim().toLowerCase();
+      const mNameEn = (m.nameEn||"").trim().toLowerCase();
+      const dName = (d.name||"").trim().toLowerCase();
+      const dNameEn = (d.nameEn||"").trim().toLowerCase();
+      return (dName && mName===dName) || (dNameEn && mNameEn && mNameEn===dNameEn) || (dNameEn && mName===dNameEn) || (dName && mNameEn===dName);
+    });
+    if(dup){ skipped++; return; }
     restMenu.push({
       name: d.name,
       nameEn: d.nameEn||"",
       price: d.price,
       emoji: d.emoji,
-      cat: "مشروبات 🥤",
+      cat: d.cat||"مشروبات 🥤",
       note: d.note||"",
       img: "",
     });
@@ -25379,38 +25455,24 @@ const DTA_QR = (function(){
     const waNum        = qrs.waNum        || '201099531272';
     const checkoutTime = qrs.checkoutTime || '12:00 PM';
 
-    // ── قراءة المنيو ──
+    // ── قراءة المنيو من restMenu فقط ──
     let _restMenuRaw = [];
+    // محاولة 1: من window.restMenu
     if (window.restMenu && Array.isArray(window.restMenu) && window.restMenu.length) {
       _restMenuRaw = window.restMenu.slice();
     }
+    // محاولة 2: من localStorage مباشرة
     if (!_restMenuRaw.length) {
       try {
         const _ls = localStorage.getItem('dta_rest_menu');
         if (_ls) { const _p = JSON.parse(_ls); if(Array.isArray(_p)&&_p.length) _restMenuRaw = _p; }
       } catch(e){}
     }
-    // لو في منيو محفوظ استخدمه بس — بدون إضافة افتراضي
-    // لو مفيش خالص استخدم الافتراضي
-    const _DC = window.DRINKS_CATALOG;
-    const _drinksCatalogEmbed = (_DC && Array.isArray(_DC) && _DC.length)
-      ? _DC.map(function(d){ return {name:d.name,price:d.price,emoji:d.emoji,cat:d.cat}; })
-      : [
-          {name:'قهوة عربي',price:0,emoji:'☕',cat:'مشروبات ساخنة ☕'},
-          {name:'نسكافيه',price:0,emoji:'☕',cat:'مشروبات ساخنة ☕'},
-          {name:'شاي أحمر',price:0,emoji:'🫖',cat:'مشروبات ساخنة ☕'},
-          {name:'شاي بالحليب',price:0,emoji:'🫖',cat:'مشروبات ساخنة ☕'},
-          {name:'كابتشينو',price:0,emoji:'☕',cat:'مشروبات ساخنة ☕'},
-          {name:'عصير برتقال',price:0,emoji:'🍊',cat:'عصائر طازجة 🍊'},
-          {name:'عصير مانجو',price:0,emoji:'🥭',cat:'عصائر طازجة 🍊'},
-          {name:'ليمون بالنعناع',price:0,emoji:'🍋',cat:'عصائر طازجة 🍊'},
-          {name:'مياه معدنية',price:0,emoji:'💧',cat:'مياه وبارد 💧'},
-          {name:'بيبسي',price:0,emoji:'🥤',cat:'مشروبات غازية 🥤'},
-          {name:'كوكاكولا',price:0,emoji:'🥤',cat:'مشروبات غازية 🥤'},
-        ];
-    // لو في restMenu → استخدمه بس (بدون دمج)
-    // لو مفيش → استخدم الافتراضي
-    const _srcMenu = _restMenuRaw.length ? _restMenuRaw : _drinksCatalogEmbed;
+    // محاولة 3: من المتغير العام restMenu
+    if (!_restMenuRaw.length && typeof restMenu !== 'undefined' && Array.isArray(restMenu) && restMenu.length) {
+      _restMenuRaw = restMenu.slice();
+    }
+    const _srcMenu = _restMenuRaw;
     const _menuArr = _srcMenu.map(function(it){
       return { n: it.name||'', ne: it.nameEn||'', p: parseInt(it.price,10)||0, e: it.emoji||'🍽️', c: it.cat||'أخرى', a: it.available!==false };
     });
@@ -25808,6 +25870,16 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy'};
 
     // ── تأكّد إن المنيو محمَّل قبل بناء صفحة الضيف ──
+    // محاولة من localStorage أولاً
+    if (typeof restMenu !== 'undefined' && !restMenu.length) {
+      try {
+        const _lsMenu = JSON.parse(localStorage.getItem('dta_rest_menu')||'[]');
+        if (Array.isArray(_lsMenu) && _lsMenu.length) {
+          restMenu = _lsMenu; window.restMenu = restMenu;
+        }
+      } catch(e){}
+    }
+    // محاولة من IDB لو لسه فاضي
     if (typeof restMenu !== 'undefined' && !restMenu.length) {
       try {
         const idbMenu = await DTA_DB.getSetting('dta_rest_menu', []);
