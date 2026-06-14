@@ -23497,7 +23497,11 @@ const DTA_BACKUP = (function(){
       if(done) break;
       chunks.push(value);
     }
-    const compressed = new Uint8Array(chunks.reduce((acc,c)=>[...acc,...c],[]));
+    let totalLen = 0;
+    chunks.forEach(c=>totalLen+=c.length);
+    const compressed = new Uint8Array(totalLen);
+    let offset = 0;
+    chunks.forEach(c=>{ compressed.set(c, offset); offset += c.length; });
     return compressed;
   }
 
@@ -23527,8 +23531,11 @@ const DTA_BACKUP = (function(){
       bookings, expenses, roomSt, restaurantTx, tours,
       blacklist, prices, duPrices, policies,
       reviews: typeof reviews!=='undefined'?reviews:[],
-      waitlist: typeof waitList!=='undefined'?waitList:[],
-      restMenu: typeof restMenu!=='undefined'?restMenu:[]
+      waitlist: typeof waitlist!=='undefined'?waitlist:[],
+      restMenu: typeof restMenu!=='undefined'?restMenu:[],
+      roomPhotos: typeof roomPhotos!=='undefined'?roomPhotos:{},
+      exRate: typeof exRate!=='undefined'?exRate:null,
+      qrSettings: (function(){ try{ return JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'); }catch(e){ return {}; } })()
     };
     const json = JSON.stringify(data, null, 2);
     const date = new Date().toISOString().slice(0,10);
