@@ -25260,27 +25260,23 @@ const DTA_QR = (function(){
   function buildGuestPage(roomNo){
     const room = String(roomNo);
     const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
-    // ── قراءة إعدادات QR من localStorage ──
     const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
     const wifiName     = qrs.wifiName     || 'DahabTrendy_Guest';
     const wifiPass     = qrs.wifiPass     || 'dahab2024';
     const waNum        = qrs.waNum        || '201099531272';
-    const checkinTime  = qrs.checkinTime  || '2:00 PM';
     const checkoutTime = qrs.checkoutTime || '12:00 PM';
-    // ── قراءة المنيو: عدة مصادر بالترتيب ──
+
+    // ── قراءة المنيو ──
     let _restMenuRaw = [];
-    // 1) المتغير الحي window.restMenu (الأحدث دايماً)
     if (window.restMenu && Array.isArray(window.restMenu) && window.restMenu.length) {
       _restMenuRaw = window.restMenu.slice();
     }
-    // 2) localStorage كـ fallback
     if (!_restMenuRaw.length) {
       try {
         const _ls = localStorage.getItem('dta_rest_menu');
         if (_ls) { const _p = JSON.parse(_ls); if(Array.isArray(_p)&&_p.length) _restMenuRaw = _p; }
       } catch(e){}
     }
-    // ── DRINKS_CATALOG المضمّن مباشرة — يُقرأ من window عشان يكون متاح دايماً ──
     const _DC = window.DRINKS_CATALOG;
     const _drinksCatalogEmbed = (_DC && Array.isArray(_DC) && _DC.length)
       ? _DC.map(function(d){ return {name:d.name,price:d.price,emoji:d.emoji,cat:d.cat}; })
@@ -25289,355 +25285,374 @@ const DTA_QR = (function(){
           {name:'نسكافيه',price:25,emoji:'☕',cat:'مشروبات ساخنة ☕'},
           {name:'شاي أحمر',price:15,emoji:'🫖',cat:'مشروبات ساخنة ☕'},
           {name:'شاي بالحليب',price:20,emoji:'🫖',cat:'مشروبات ساخنة ☕'},
-          {name:'شاي أخضر',price:20,emoji:'🫖',cat:'مشروبات ساخنة ☕'},
-          {name:'كركديه ساخن',price:20,emoji:'🫖',cat:'مشروبات ساخنة ☕'},
           {name:'كابتشينو',price:35,emoji:'☕',cat:'مشروبات ساخنة ☕'},
-          {name:'لاتيه',price:35,emoji:'☕',cat:'مشروبات ساخنة ☕'},
-          {name:'كاكاو بالحليب',price:30,emoji:'🍫',cat:'مشروبات ساخنة ☕'},
           {name:'عصير برتقال',price:30,emoji:'🍊',cat:'عصائر طازجة 🍊'},
           {name:'عصير مانجو',price:35,emoji:'🥭',cat:'عصائر طازجة 🍊'},
-          {name:'عصير فراولة',price:35,emoji:'🍓',cat:'عصائر طازجة 🍊'},
           {name:'ليمون بالنعناع',price:25,emoji:'🍋',cat:'عصائر طازجة 🍊'},
           {name:'مياه معدنية',price:10,emoji:'💧',cat:'مياه وبارد 💧'},
-          {name:'مياه غازية',price:15,emoji:'💧',cat:'مياه وبارد 💧'},
-          {name:'كركديه بارد',price:20,emoji:'🧃',cat:'مياه وبارد 💧'},
           {name:'بيبسي',price:15,emoji:'🥤',cat:'مشروبات غازية 🥤'},
           {name:'كوكاكولا',price:15,emoji:'🥤',cat:'مشروبات غازية 🥤'},
-          {name:'سفن أب',price:15,emoji:'🥤',cat:'مشروبات غازية 🥤'},
-          {name:'سموزي مانجو',price:45,emoji:'🧋',cat:'سموزي ومثلجات 🧋'},
-          {name:'ميلك شيك فانيليا',price:40,emoji:'🍦',cat:'سموزي ومثلجات 🧋'},
-          {name:'ميلك شيك شوكولاتة',price:40,emoji:'🍦',cat:'سموزي ومثلجات 🧋'},
         ];
-    // ── دمج المنيو الحقيقي + DRINKS_CATALOG (بدون تكرار بالاسم) ──
     const _realNames = new Set(_restMenuRaw.map(function(it){ return it.name; }));
     const _drinksToAdd = _drinksCatalogEmbed.filter(function(d){ return !_realNames.has(d.name); });
     const _srcMenu = _restMenuRaw.length ? _restMenuRaw.concat(_drinksToAdd) : _drinksCatalogEmbed;
-    // ── بناء مصفوفة المنيو المضغوطة ──
     const _menuArr = _srcMenu.map(function(it){
-      return { n: it.name||'', p: it.price||0, e: it.emoji||'🍽️', c: it.cat||'أخرى' };
+      return { n: it.name||'', p: parseInt(it.price,10)||0, e: it.emoji||'🍽️', c: it.cat||'أخرى' };
     });
-    // ── تضمين JSON مباشرة في الصفحة (أضمن من base64 مع الـ emoji) ──
-    const _menuJSON = JSON.stringify(_menuArr).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
-    const _menuB64 = (function(){ try { return btoa(unescape(encodeURIComponent(JSON.stringify(_menuArr)))); } catch(e){ return ''; } })();
-
+    const _menuB64 = (function(){
+      try { return btoa(unescape(encodeURIComponent(JSON.stringify(_menuArr)))); } catch(e){ return ''; }
+    })();
 
     return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Room ${room} — ${prop.name}</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>غرفة ${room} — ${prop.name}</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;font-family:'Tajawal','Inter',Arial,sans-serif;min-height:100vh;padding:20px;}
-.hero{text-align:center;padding:30px 20px 20px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:16px;margin-bottom:20px;}
-.room-num{font-size:64px;font-weight:800;color:#c9a84c;line-height:1;}
-.hotel-name{font-size:18px;font-weight:700;color:#f0e6cc;margin-top:8px;}
-.room-label{font-size:13px;color:#7a8fa6;margin-top:4px;line-height:1.8;}
-.section{background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.18);border-radius:12px;padding:16px;margin-bottom:16px;}
-.s-title{font-size:11px;font-weight:700;color:#c9a84c;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(201,168,76,0.2);display:flex;justify-content:space-between;align-items:center;}
-.s-title .en{font-size:10px;color:#7a8fa6;font-weight:400;letter-spacing:1px;}
-.service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.svc-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:14px 8px;text-align:center;cursor:pointer;text-decoration:none;color:inherit;display:block;transition:all .2s;}
-.svc-btn:hover{background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.5);}
-.svc-icon{font-size:28px;display:block;margin-bottom:4px;}
-.svc-lbl{font-size:11px;color:#f0e6cc;display:block;font-weight:700;margin-bottom:2px;}
-.svc-lbl-en{font-size:9px;color:#7a8fa6;display:block;}
-.food-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
-.food-card{background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:14px 8px 10px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
-.food-card:hover{background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.5);}
-.food-card.has-qty{border-color:rgba(26,188,156,0.7)!important;background:rgba(26,188,156,0.08)!important;box-shadow:0 0 0 2px rgba(26,188,156,0.2);}
-.food-qty-badge{position:absolute;top:5px;left:5px;background:#1abc9c;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;line-height:1.5;display:none;}
-.food-card.has-qty .food-qty-badge{display:block;}
-.food-emoji{font-size:28px;display:block;line-height:1;margin-bottom:4px;}
-.food-name{font-size:11px;font-weight:700;color:#f0e6cc;margin-bottom:3px;line-height:1.3;}
-.food-price{font-size:12px;font-weight:800;color:#c9a84c;margin-bottom:8px;}
-.qty-row{display:flex;align-items:center;justify-content:center;gap:6px;}
-.qty-btn{background:rgba(26,188,156,0.18);border:1.5px solid rgba(26,188,156,0.4);color:#1abc9c;border-radius:7px;width:28px;height:28px;font-size:18px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;font-family:Arial,sans-serif;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
-.qty-btn.plus{background:rgba(26,188,156,0.25);border-color:#1abc9c;}
-.qty-btn:active{background:rgba(26,188,156,0.5);}
-.qty-val{font-size:14px;font-weight:800;color:#f0e6cc;min-width:18px;text-align:center;}
-.cat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
-.cat-tab{background:transparent;border:1.5px solid rgba(201,168,76,0.3);color:#7a8fa6;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Tajawal',Arial,sans-serif;transition:all .2s;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
-.cat-tab.act{background:rgba(201,168,76,0.2);border-color:#c9a84c;color:#c9a84c;}
-.order-bar{background:rgba(26,188,156,0.06);border:1.5px solid rgba(26,188,156,0.3);border-radius:12px;padding:14px;margin-top:6px;display:none;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--gold:#c9a84c;--gold2:#e0c068;--bg1:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;--card:rgba(255,255,255,0.05);--bdr:rgba(201,168,76,0.2);--muted:#7a8fa6;--text:#f0e6cc;--green:#25D366;--teal:#1abc9c}
+body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:var(--text);font-family:'Tajawal',Arial,sans-serif;min-height:100vh;padding-bottom:30px;}
+
+/* ── HERO ── */
+.hero{position:relative;overflow:hidden;text-align:center;padding:36px 20px 28px;background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04));border-bottom:1px solid var(--bdr);}
+.hero::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(201,168,76,0.15),transparent 70%);border-radius:50%;}
+.hero-badge{display:inline-block;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:20px;padding:4px 14px;font-size:11px;color:var(--gold);font-weight:700;letter-spacing:2px;margin-bottom:14px;}
+.hero-room{font-size:72px;font-weight:800;color:var(--gold);line-height:1;text-shadow:0 0 40px rgba(201,168,76,0.3);}
+.hero-name{font-size:17px;font-weight:700;margin-top:8px;color:var(--text);}
+.hero-welcome{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.7;}
+.hero-info{display:flex;justify-content:center;gap:16px;margin-top:16px;flex-wrap:wrap;}
+.hero-pill{background:rgba(255,255,255,0.06);border:1px solid var(--bdr);border-radius:20px;padding:5px 14px;font-size:11px;color:var(--muted);}
+.hero-pill span{color:var(--text);font-weight:700;}
+
+/* ── WRAPPER ── */
+.wrap{padding:16px;max-width:480px;margin:0 auto;}
+
+/* ── SECTION ── */
+.sec{background:var(--card);border:1px solid var(--bdr);border-radius:16px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;}
+.sec::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold2));opacity:0.5;}
+.sec-title{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.sec-title .ico{font-size:20px;}
+.sec-title .ar{font-size:14px;font-weight:800;color:var(--gold);}
+.sec-title .en{font-size:10px;color:var(--muted);font-weight:400;margin-right:auto;letter-spacing:1px;}
+
+/* ── WIFI ── */
+.wifi-wrap{background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:12px;padding:16px;text-align:center;}
+.wifi-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:8px;}
+.wifi-row:last-child{margin-bottom:0;}
+.wifi-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.wifi-val{font-size:15px;font-weight:800;color:#7ab8f5;letter-spacing:1px;}
+.wifi-pass-val{color:var(--gold);font-size:18px;letter-spacing:3px;}
+
+/* ── SERVICES ── */
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.svc-card{background:rgba(255,255,255,0.04);border:1.5px solid var(--bdr);border-radius:14px;padding:16px 8px 12px;text-align:center;text-decoration:none;color:inherit;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .18s;position:relative;overflow:hidden;}
+.svc-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(201,168,76,0.12),transparent);opacity:0;transition:opacity .2s;}
+.svc-card:active::after{opacity:1;}
+.svc-card:hover{border-color:rgba(201,168,76,0.5);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3);}
+.svc-ico{font-size:30px;line-height:1;}
+.svc-ar{font-size:11px;font-weight:700;color:var(--text);}
+.svc-en{font-size:9px;color:var(--muted);}
+.svc-card.emergency{border-color:rgba(231,76,60,0.35);background:rgba(231,76,60,0.05);}
+.svc-card.emergency:hover{border-color:rgba(231,76,60,0.7);}
+
+/* ── MENU ── */
+.cat-scroll{display:flex;gap:7px;overflow-x:auto;padding-bottom:10px;margin-bottom:14px;scrollbar-width:none;}
+.cat-scroll::-webkit-scrollbar{display:none;}
+.cat-chip{background:transparent;border:1.5px solid var(--bdr);color:var(--muted);border-radius:20px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Tajawal',Arial,sans-serif;transition:all .18s;white-space:nowrap;flex-shrink:0;}
+.cat-chip.act{background:rgba(26,188,156,0.15);border-color:var(--teal);color:var(--teal);}
+.cat-chip .cnt{background:var(--teal);color:#fff;border-radius:10px;padding:0 6px;font-size:9px;margin-right:3px;}
+.menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+.mi-card{background:rgba(255,255,255,0.04);border:1.5px solid var(--bdr);border-radius:14px;padding:14px 8px 10px;text-align:center;position:relative;transition:border-color .15s;}
+.mi-card.active{border-color:var(--teal);background:rgba(26,188,156,0.07);box-shadow:0 0 0 2px rgba(26,188,156,0.15);}
+.mi-badge{position:absolute;top:6px;left:6px;background:var(--teal);color:#fff;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:800;display:none;}
+.mi-card.active .mi-badge{display:block;}
+.mi-emoji{font-size:30px;display:block;line-height:1;margin-bottom:5px;}
+.mi-name{font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px;line-height:1.4;}
+.mi-price{font-size:13px;font-weight:800;color:var(--gold);margin-bottom:8px;}
+.qty-row{display:flex;align-items:center;justify-content:center;gap:7px;}
+.qbtn{width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(26,188,156,0.4);background:rgba(26,188,156,0.12);color:var(--teal);font-size:20px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-family:Arial,sans-serif;touch-action:manipulation;transition:all .12s;}
+.qbtn.plus{background:rgba(26,188,156,0.22);border-color:var(--teal);}
+.qbtn:active{background:rgba(26,188,156,0.45);transform:scale(0.9);}
+.qbtn.minus{opacity:0.35;}
+.qbtn.minus.has{opacity:1;}
+.qval{font-size:15px;font-weight:800;color:var(--text);min-width:20px;text-align:center;}
+
+/* ── ORDER BAR ── */
+.order-bar{display:none;background:rgba(26,188,156,0.07);border:1.5px solid rgba(26,188,156,0.35);border-radius:14px;padding:16px;margin-top:4px;}
 .order-bar.show{display:block;}
-.order-summary{font-size:12px;color:#f0e6cc;margin-bottom:10px;line-height:2;}
-.order-total-line{font-size:16px;font-weight:800;color:#1abc9c;margin-bottom:12px;}
-.order-send-btn{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:13px;border-radius:10px;text-decoration:none;font-size:14px;font-weight:700;box-shadow:0 4px 16px rgba(37,211,102,0.3);margin-bottom:8px;}
-.order-clear-btn{background:transparent;border:none;color:#7a8fa6;font-size:11px;cursor:pointer;width:100%;text-align:center;padding:4px 0;font-family:'Tajawal',Arial,sans-serif;}
-.contact-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
-.contact-icon{font-size:24px;width:36px;text-align:center;}
-.contact-info{flex:1;}
-.contact-label{font-size:9px;color:#7a8fa6;text-transform:uppercase;letter-spacing:1px;}
-.contact-val{font-size:14px;color:#f0e6cc;font-weight:700;margin-top:2px;}
-.wa-btn{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:16px;border-radius:12px;text-decoration:none;font-size:15px;font-weight:700;margin-top:16px;box-shadow:0 4px 20px rgba(37,211,102,0.3);}
-.rating-stars{display:flex;gap:8px;justify-content:center;font-size:32px;cursor:pointer;}
-.star{transition:transform .2s;}
-.star:hover{transform:scale(1.2);}
-.wifi-box{background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.3);border-radius:10px;padding:14px;text-align:center;}
-.wifi-name{font-size:18px;font-weight:700;color:#7ab8f5;margin-top:6px;}
-.wifi-pass{font-size:22px;font-weight:800;color:#c9a84c;letter-spacing:2px;margin-top:4px;}
-.bilabel{font-size:10px;color:#7a8fa6;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;}
-@media(max-width:400px){.service-grid{grid-template-columns:repeat(2,1fr)}}
+.order-title{font-size:12px;font-weight:800;color:var(--teal);letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.order-items{font-size:12px;color:var(--text);line-height:2.1;margin-bottom:10px;}
+.order-total{font-size:17px;font-weight:800;color:var(--teal);padding-top:10px;border-top:1px solid rgba(26,188,156,0.25);margin-bottom:14px;}
+.order-wa{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:14px;border-radius:12px;text-decoration:none;font-size:15px;font-weight:700;box-shadow:0 4px 16px rgba(37,211,102,0.25);margin-bottom:8px;}
+.order-clear{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;width:100%;text-align:center;padding:4px;font-family:'Tajawal',Arial,sans-serif;}
+
+/* ── CONTACT ── */
+.contact-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.contact-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.03);border:1px solid var(--bdr);border-radius:10px;padding:12px 14px;}
+.contact-ico{font-size:22px;width:32px;text-align:center;flex-shrink:0;}
+.contact-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.contact-val{font-size:13px;color:var(--text);font-weight:700;margin-top:2px;}
+.wa-main{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:16px;border-radius:14px;text-decoration:none;font-size:16px;font-weight:700;box-shadow:0 4px 20px rgba(37,211,102,0.25);}
+
+/* ── RATING ── */
+.stars{display:flex;gap:10px;justify-content:center;font-size:36px;cursor:pointer;margin:10px 0;}
+.star-btn{transition:transform .15s;cursor:pointer;user-select:none;}
+.star-btn:active{transform:scale(1.3);}
+.rate-msg{text-align:center;font-size:13px;color:var(--muted);margin-top:8px;min-height:40px;}
+
+/* ── FOOTER ── */
+.footer{text-align:center;padding:24px 20px 10px;font-size:11px;color:var(--muted);line-height:2;}
+.footer a{color:var(--muted);text-decoration:none;}
 </style>
 </head>
 <body>
 
+<!-- HERO -->
 <div class="hero">
-  <div class="room-num">${room}</div>
-  <div class="hotel-name">🏨 ${prop.name}</div>
-  <div class="room-label">
-    أهلاً وسهلاً بك في غرفتك!<br>
-    <span style="font-size:12px;color:#7a8fa6;">Welcome to your room!</span>
+  <div class="hero-badge">🏨 DAHAB TRENDY</div>
+  <div class="hero-room">${room}</div>
+  <div class="hero-name">${prop.name}</div>
+  <div class="hero-welcome">أهلاً وسهلاً بك! · Welcome!</div>
+  <div class="hero-info">
+    <div class="hero-pill">🕐 Check-out: <span>${checkoutTime}</span></div>
+    <div class="hero-pill">📍 <span>Dahab, Sinai</span></div>
   </div>
 </div>
 
+<div class="wrap">
+
 <!-- WiFi -->
-<div class="section">
-  <div class="s-title">📡 WiFi <span class="en">Wireless Internet</span></div>
-  <div class="wifi-box">
-    <div class="bilabel"><span>اسم الشبكة</span><span>Network Name</span></div>
-    <div class="wifi-name">${wifiName}</div>
-    <div class="bilabel" style="margin-top:10px;"><span>كلمة المرور</span><span>Password</span></div>
-    <div class="wifi-pass">${wifiPass}</div>
+<div class="sec">
+  <div class="sec-title">
+    <span class="ico">📡</span>
+    <span class="ar">واي فاي</span>
+    <span class="en">WiFi</span>
+  </div>
+  <div class="wifi-wrap">
+    <div class="wifi-row">
+      <div><div class="wifi-lbl">اسم الشبكة · Network</div><div class="wifi-val">${wifiName}</div></div>
+    </div>
+    <div class="wifi-row">
+      <div><div class="wifi-lbl">كلمة المرور · Password</div><div class="wifi-val wifi-pass-val">${wifiPass}</div></div>
+    </div>
   </div>
 </div>
 
 <!-- الخدمات -->
-<div class="section">
-  <div class="s-title">🛎 الخدمات <span class="en">Services</span></div>
-  <div class="service-grid">
-    <a href="https://wa.me/${waNum}?text=Room ${room}: Room service request" class="svc-btn">
-      <span class="svc-icon">🛏️</span>
-      <span class="svc-lbl">خدمة الغرفة</span>
-      <span class="svc-lbl-en">Room Service</span>
+<div class="sec">
+  <div class="sec-title">
+    <span class="ico">🛎️</span>
+    <span class="ar">الخدمات</span>
+    <span class="en">SERVICES</span>
+  </div>
+  <div class="svc-grid">
+    <a href="https://wa.me/${waNum}?text=${encodeURIComponent('🛏️ طلب خدمة غرفة — Room '+room)}" class="svc-card">
+      <span class="svc-ico">🛏️</span><span class="svc-ar">خدمة الغرفة</span><span class="svc-en">Room Service</span>
     </a>
-    <a href="https://wa.me/${waNum}?text=Room ${room}: Cleaning request" class="svc-btn">
-      <span class="svc-icon">🧹</span>
-      <span class="svc-lbl">تنظيف</span>
-      <span class="svc-lbl-en">Cleaning</span>
+    <a href="https://wa.me/${waNum}?text=${encodeURIComponent('🧹 طلب تنظيف — Room '+room)}" class="svc-card">
+      <span class="svc-ico">🧹</span><span class="svc-ar">تنظيف</span><span class="svc-en">Cleaning</span>
     </a>
-    <a href="https://wa.me/${waNum}?text=Room ${room}: Extra towels request" class="svc-btn">
-      <span class="svc-icon">🛁</span>
-      <span class="svc-lbl">مناشف</span>
-      <span class="svc-lbl-en">Towels</span>
+    <a href="https://wa.me/${waNum}?text=${encodeURIComponent('🛁 طلب مناشف إضافية — Room '+room)}" class="svc-card">
+      <span class="svc-ico">🛁</span><span class="svc-ar">مناشف</span><span class="svc-en">Towels</span>
     </a>
-    <a href="https://wa.me/${waNum}?text=Room ${room}: Breakfast request" class="svc-btn">
-      <span class="svc-icon">🍳</span>
-      <span class="svc-lbl">إفطار</span>
-      <span class="svc-lbl-en">Breakfast</span>
+    <a href="https://wa.me/${waNum}?text=${encodeURIComponent('🍳 طلب إفطار — Room '+room)}" class="svc-card">
+      <span class="svc-ico">🍳</span><span class="svc-ar">إفطار</span><span class="svc-en">Breakfast</span>
     </a>
-    <a href="https://wa.me/${waNum}?text=Room ${room}: Transportation request" class="svc-btn">
-      <span class="svc-icon">🚗</span>
-      <span class="svc-lbl">مواصلات</span>
-      <span class="svc-lbl-en">Transport</span>
+    <a href="https://wa.me/${waNum}?text=${encodeURIComponent('🚗 طلب مواصلات — Room '+room)}" class="svc-card">
+      <span class="svc-ico">🚗</span><span class="svc-ar">مواصلات</span><span class="svc-en">Transport</span>
     </a>
-    <a href="https://wa.me/${waNum}?text=Room ${room}: EMERGENCY" class="svc-btn">
-      <span class="svc-icon">🆘</span>
-      <span class="svc-lbl">طوارئ</span>
-      <span class="svc-lbl-en">Emergency</span>
+    <a href="https://wa.me/${waNum}?text=${encodeURIComponent('🤿 رحلة غوص/سنوركل — Room '+room)}" class="svc-card">
+      <span class="svc-ico">🤿</span><span class="svc-ar">غوص</span><span class="svc-en">Diving</span>
+    </a>
+    <a href="https://wa.me/${waNum}?text=${encodeURIComponent('🐪 رحلة سفاري — Room '+room)}" class="svc-card">
+      <span class="svc-ico">🐪</span><span class="svc-ar">سفاري</span><span class="svc-en">Safari</span>
+    </a>
+    <a href="https://wa.me/${waNum}?text=${encodeURIComponent('🧺 طلب غسيل ملابس — Room '+room)}" class="svc-card">
+      <span class="svc-ico">🧺</span><span class="svc-ar">غسيل</span><span class="svc-en">Laundry</span>
+    </a>
+    <a href="https://wa.me/${waNum}?text=${encodeURIComponent('🆘 طوارئ — Room '+room+' EMERGENCY')}" class="svc-card emergency">
+      <span class="svc-ico">🆘</span><span class="svc-ar">طوارئ</span><span class="svc-en">Emergency</span>
     </a>
   </div>
 </div>
 
-<!-- المطعم -->
-<div class="section">
-  <div class="s-title">🥤 المشروبات والطعام <span class="en">Food & Drinks</span></div>
-  <div id="menu-debug" style="font-size:10px;color:#1abc9c;margin-bottom:8px;text-align:center;"></div>
-  <!-- تبويب الفئات -->
-  <div class="cat-tabs" id="food-cat-tabs"></div>
-  <!-- grid الأصناف -->
-  <div class="food-grid" id="food-grid-wrap"></div>
+<!-- المنيو -->
+<div class="sec">
+  <div class="sec-title">
+    <span class="ico">🍽️</span>
+    <span class="ar">الطعام والمشروبات</span>
+    <span class="en">FOOD & DRINKS</span>
+  </div>
+  <div class="cat-scroll" id="cat-scroll"></div>
+  <div class="menu-grid" id="menu-grid"></div>
   <div class="order-bar" id="order-bar">
-    <div style="font-size:11px;color:#1abc9c;font-weight:700;letter-spacing:1px;margin-bottom:8px;">🛒 طلبك · Your Order</div>
-    <div class="order-summary" id="order-summary"></div>
-    <div class="order-total-line" id="order-total"></div>
-    <a class="order-send-btn" id="order-send-btn" href="#">💬 أرسل الطلب عبر واتساب · Send via WhatsApp</a>
-    <button class="order-clear-btn" onclick="clearOrder()">🗑️ مسح الطلب · Clear Order</button>
+    <div class="order-title">🛒 طلبك · Your Order</div>
+    <div class="order-items" id="order-items"></div>
+    <div class="order-total" id="order-total"></div>
+    <a class="order-wa" id="order-wa" href="#">💬 أرسل الطلب عبر واتساب</a>
+    <button class="order-clear" onclick="clearOrd()">🗑️ مسح الطلب · Clear</button>
   </div>
 </div>
 
 <!-- التواصل -->
-<div class="section">
-  <div class="s-title">📞 للتواصل <span class="en">Contact Us</span></div>
-  <div class="contact-row">
-    <div class="contact-icon">📍</div>
-    <div class="contact-info">
-      <div class="contact-label"><span>العنوان</span> · <span>Address</span></div>
-      <div class="contact-val">${prop.address}</div>
+<div class="sec">
+  <div class="sec-title">
+    <span class="ico">📞</span>
+    <span class="ar">تواصل معنا</span>
+    <span class="en">CONTACT</span>
+  </div>
+  <div class="contact-list">
+    <div class="contact-item">
+      <div class="contact-ico">📍</div>
+      <div><div class="contact-lbl">العنوان · Address</div><div class="contact-val">${prop.address}</div></div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-ico">📞</div>
+      <div><div class="contact-lbl">هاتف · Phone</div><div class="contact-val"><a href="tel:${prop.phone}" style="color:inherit;text-decoration:none;" dir="ltr">${prop.phone}</a></div></div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-ico">📧</div>
+      <div><div class="contact-lbl">بريد · Email</div><div class="contact-val" style="font-size:12px;">${prop.email}</div></div>
     </div>
   </div>
-  <div class="contact-row">
-    <div class="contact-icon">📞</div>
-    <div class="contact-info">
-      <div class="contact-label"><span>هاتف</span> · <span>Phone</span></div>
-      <div class="contact-val" dir="ltr" style="text-align:right;"><a href="tel:${prop.phone}" style="color:#f0e6cc;text-decoration:none;">${prop.phone}</a></div>
-    </div>
-  </div>
-  <div class="contact-row">
-    <div class="contact-icon">📧</div>
-    <div class="contact-info">
-      <div class="contact-label"><span>بريد</span> · <span>Email</span></div>
-      <div class="contact-val" style="font-size:12px;">${prop.email}</div>
-    </div>
-  </div>
-  <a href="https://wa.me/${waNum}?text=Hello, I am in Room ${room}" class="wa-btn">
-    💬 تواصل معنا · Contact Us via WhatsApp
+  <a href="https://wa.me/${waNum}?text=${encodeURIComponent('مرحباً، أنا في الغرفة '+room+' · Hello from Room '+room)}" class="wa-main">
+    💬 تواصل معنا · WhatsApp
   </a>
 </div>
 
 <!-- التقييم -->
-<div class="section">
-  <div class="s-title">⭐ قيّم إقامتك <span class="en">Rate Your Stay</span></div>
-  <div style="text-align:center;font-size:12px;color:#7a8fa6;margin-bottom:10px;">اضغط على النجوم · Tap the stars</div>
-  <div class="rating-stars" id="stars">
-    <span class="star" onclick="rate(1)">⭐</span>
-    <span class="star" onclick="rate(2)">⭐</span>
-    <span class="star" onclick="rate(3)">⭐</span>
-    <span class="star" onclick="rate(4)">⭐</span>
-    <span class="star" onclick="rate(5)">⭐</span>
+<div class="sec">
+  <div class="sec-title">
+    <span class="ico">⭐</span>
+    <span class="ar">قيّم إقامتك</span>
+    <span class="en">RATE YOUR STAY</span>
   </div>
-  <div id="rate-msg" style="text-align:center;margin-top:12px;font-size:13px;color:#7a8fa6;"></div>
+  <p style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:4px;">اضغط على النجوم · Tap the stars</p>
+  <div class="stars">
+    <span class="star-btn" onclick="doRate(1)">⭐</span>
+    <span class="star-btn" onclick="doRate(2)">⭐</span>
+    <span class="star-btn" onclick="doRate(3)">⭐</span>
+    <span class="star-btn" onclick="doRate(4)">⭐</span>
+    <span class="star-btn" onclick="doRate(5)">⭐</span>
+  </div>
+  <div class="rate-msg" id="rate-msg"></div>
 </div>
 
-<div style="text-align:center;padding:20px;font-size:11px;color:#7a8fa6;line-height:2;">
-  🏨 ${prop.name}<br>
-  صفحة الضيف · Guest Page | غرفة · Room ${room}
+</div><!-- /wrap -->
+
+<div class="footer">
+  🏨 ${prop.name} · غرفة ${room}<br>
+  <a href="https://wa.me/${waNum}">واتساب الاستقبال</a>
 </div>
 
 <script>
 (function(){
   var RM='${room}', WA='${waNum}';
   var MI=[];
-  // أولاً: تحميل من JSON مباشر (الأضمن)
-  try{ MI=${_menuJSON}; }catch(e){ MI=[]; }
-  // ثانياً: fallback للـ base64 لو JSON فشل
-  if(!MI.length){
-    var _b64='${_menuB64}';
-    try{ MI=_b64?JSON.parse(decodeURIComponent(escape(atob(_b64)))):[];  }catch(e){ MI=[]; }
-  }
-  window._MI=MI;
-  window._QS=new Array(MI.length).fill(0);
-  window._activeCat='all';
-
-  // بناء تبويب الفئات
-  var tabsEl=document.getElementById('food-cat-tabs');
+  try{ var b='${_menuB64}'; if(b) MI=JSON.parse(decodeURIComponent(escape(atob(b)))); }catch(e){}
+  var QS=new Array(MI.length).fill(0);
+  var activeCat='all';
   var cats=['all'];
   MI.forEach(function(it){ if(it.c && cats.indexOf(it.c)===-1) cats.push(it.c); });
 
-  var catLabels={'all':'🍽️ الكل','مشروبات ساخنة ☕':'☕ ساخنة','عصائر طازجة 🍊':'🍊 عصائر',
-    'مياه وبارد 💧':'💧 مياه','مشروبات غازية 🥤':'🥤 غازية','سموزي ومثلجات 🧋':'🧋 سموزي',
-    'لحوم 🥩':'🥩 لحوم','فراخ 🍗':'🍗 فراخ','أسماك 🐟':'🐟 أسماك','حلويات 🍰':'🍰 حلويات',
-    'وجبات خفيفة 🥪':'🥪 خفيفة','إفطار 🍳':'🍳 إفطار','شيشة 💨':'💨 شيشة'};
+  var catLabels={'all':'🍽️ الكل'};
 
-  function buildTabs(){
-    if(!tabsEl) return;
-    tabsEl.innerHTML=cats.map(function(cat){
-      var lbl=catLabels[cat]||(cat.split(' ')[0]);
-      var act=window._activeCat===cat;
-      // count ordered in cat
-      var cnt=0;
-      MI.forEach(function(it,i){ if((cat==='all'||it.c===cat)&&window._QS[i]>0) cnt+=window._QS[i]; });
-      return '<button class="cat-tab'+(act?' act':'')+'" onclick="setCat(\''+cat+'\')" style="'+(act?'background:rgba(26,188,156,0.2);border-color:#1abc9c;color:#1abc9c;':'')+'">'
-        +lbl+(cnt>0?' <span style="background:#1abc9c;color:#fff;border-radius:10px;padding:0 6px;font-size:10px;">'+cnt+'</span>':'')
-        +'</button>';
+  function buildCats(){
+    var el=document.getElementById('cat-scroll'); if(!el) return;
+    el.innerHTML=cats.map(function(cat){
+      var lbl=catLabels[cat]||(cat.length>10?cat.substring(0,10)+'…':cat);
+      var total=0; QS.forEach(function(q,i){ if(q>0&&(cat==='all'||MI[i].c===cat)) total+=q; });
+      var act=activeCat===cat;
+      return '<button class="cat-chip'+(act?' act':'')+'" onclick="setCat(\''+cat+'\')">'
+        +(total>0?'<span class="cnt">'+total+'</span>':'')+lbl+'</button>';
     }).join('');
   }
 
-  window.setCat=function(cat){
-    window._activeCat=cat;
-    buildTabs();
-    renderGrid();
-  };
-
-  function renderGrid(){
-    var mg=document.getElementById('food-grid-wrap');
-    if(!mg) return;
+  function buildGrid(){
+    var el=document.getElementById('menu-grid'); if(!el) return;
     if(!MI.length){
-      mg.innerHTML='<p style="color:#7a8fa6;text-align:center;padding:20px;grid-column:1/-1;">قائمة الطعام والمشروبات قيد التحديث، يرجى التواصل معنا مباشرة 💬</p>';
+      el.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px;grid-column:1/-1;font-size:12px;">لا توجد أصناف حالياً — تواصل معنا مباشرة 💬</p>';
       return;
     }
-    var filtered=MI.map(function(it,i){return {it:it,i:i};}).filter(function(o){
-      return window._activeCat==='all'||o.it.c===window._activeCat;
+    var list=MI.map(function(it,i){return{it:it,i:i};}).filter(function(o){
+      return activeCat==='all'||o.it.c===activeCat;
     });
-    if(!filtered.length){
-      mg.innerHTML='<p style="color:#7a8fa6;text-align:center;padding:20px;grid-column:1/-1;">لا توجد أصناف في هذه الفئة</p>';
-      return;
-    }
-    mg.innerHTML=filtered.map(function(o){
-      var it=o.it, i=o.i, qty=window._QS[i]||0;
-      var hasQty=qty>0;
-      return '<div class="food-card'+(hasQty?' has-qty':'')+'" id="fc-'+i+'">'
-        +'<div class="food-qty-badge" id="badge-'+i+'">'+(hasQty?qty:'')+'</div>'
-        +'<div class="food-emoji">'+it.e+'</div>'
-        +'<div class="food-name">'+it.n+'</div>'
-        +'<div class="food-price">'+it.p+' EGP</div>'
+    if(!list.length){ el.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px;grid-column:1/-1;font-size:12px;">لا يوجد في هذه الفئة</p>'; return; }
+    el.innerHTML=list.map(function(o){
+      var it=o.it,i=o.i,q=QS[i]||0,has=q>0;
+      return '<div class="mi-card'+(has?' active':'')+'" id="mc'+i+'">'
+        +'<div class="mi-badge" id="mb'+i+'">'+(has?q:'')+'</div>'
+        +'<span class="mi-emoji">'+it.e+'</span>'
+        +'<div class="mi-name">'+it.n+'</div>'
+        +'<div class="mi-price">'+it.p+' ج</div>'
         +'<div class="qty-row">'
-        +'<button class="qty-btn" onclick="changeQty('+i+',-1)" style="'+(qty===0?'opacity:.3;':'')+'">&#8722;</button>'
-        +'<span class="qty-val" id="qty-'+i+'">'+qty+'</span>'
-        +'<button class="qty-btn plus" onclick="changeQty('+i+',1)">+</button>'
-        +'</div>'
-        +'</div>';
+        +'<button class="qbtn minus'+(has?' has':'')+'" onclick="chg('+i+',-1)">&#8722;</button>'
+        +'<span class="qval" id="qv'+i+'">'+q+'</span>'
+        +'<button class="qbtn plus" onclick="chg('+i+',1)">+</button>'
+        +'</div></div>';
     }).join('');
   }
 
-  window.changeQty=function(i,delta){
-    window._QS[i]=Math.max(0,(window._QS[i]||0)+delta);
-    buildTabs();
-    renderGrid();
+  window.setCat=function(cat){ activeCat=cat; buildCats(); buildGrid(); };
+
+  window.chg=function(i,d){
+    QS[i]=Math.max(0,(QS[i]||0)+d);
+    var q=QS[i];
+    var qvEl=document.getElementById('qv'+i);
+    var mbEl=document.getElementById('mb'+i);
+    var mcEl=document.getElementById('mc'+i);
+    var minus=mcEl?mcEl.querySelector('.qbtn.minus'):null;
+    if(qvEl) qvEl.textContent=q;
+    if(mbEl){ mbEl.textContent=q>0?q:''; }
+    if(mcEl){ if(q>0){mcEl.classList.add('active');}else{mcEl.classList.remove('active');} }
+    if(minus){ if(q>0){minus.classList.add('has');}else{minus.classList.remove('has');} }
+    buildCats();
     updateBar();
   };
 
   function updateBar(){
     var bar=document.getElementById('order-bar');
-    var items=[]; var total=0;
+    var items=[],total=0;
     MI.forEach(function(it,i){
-      if(window._QS[i]>0){
-        items.push({n:it.n,q:window._QS[i],p:it.p,e:it.e});
-        total+=window._QS[i]*it.p;
-      }
+      if(QS[i]>0){ var p=parseInt(it.p,10)||0; items.push({n:it.n,q:QS[i],p:p,e:it.e}); total+=QS[i]*p; }
     });
-    if(!items.length){ if(bar) bar.classList.remove('show'); return; }
-    if(bar) bar.classList.add('show');
-    document.getElementById('order-summary').innerHTML=items.map(function(it){
-      return it.e+' '+it.n+' \xd7'+it.q+' = <strong style="color:#1abc9c;">'+(it.q*it.p)+' EGP</strong>';
+    if(!items.length){ bar.classList.remove('show'); return; }
+    bar.classList.add('show');
+    document.getElementById('order-items').innerHTML=items.map(function(it){
+      return it.e+' '+it.n+' \xd7'+it.q+' = <strong style="color:var(--teal);">'+(it.q*it.p)+' EGP</strong>';
     }).join('<br>');
-    document.getElementById('order-total').textContent='المجموع / Total: '+total+' EGP';
-    var now=new Date();
-    var timeStr=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
-    var msg='🥤 طلب مشروبات — غرفة '+RM+'\n⏰ '+timeStr+'\n\n';
-    msg+='〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\n';
+    document.getElementById('order-total').textContent='💰 الإجمالي: '+total+' EGP';
+    var t=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+    var dk=['مشروبات ساخنة ☕','عصائر طازجة 🍊','مياه وبارد 💧','مشروبات غازية 🥤','سموزي ومثلجات 🧋'];
+    var hf=false,hd=false;
+    MI.forEach(function(it,i){ if(QS[i]>0){ if(dk.indexOf(it.c)>=0) hd=true; else hf=true; } });
+    var ttl=(hf&&hd)?'🍽️🥤 طلب طعام ومشروبات':hf?'🍽️ طلب طعام':'🥤 طلب مشروبات';
+    var msg=ttl+' — غرفة '+RM+'\n⏰ '+t+'\n\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\n';
     msg+=items.map(function(it){ return it.e+' '+it.n+' \xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\n');
-    msg+='\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\n';
-    msg+='*الإجمالي / Total: '+total+' EGP*';
-    document.getElementById('order-send-btn').href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);
+    msg+='\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\n*الإجمالي: '+total+' EGP*';
+    document.getElementById('order-wa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);
   }
 
-  window.clearOrder=function(){
-    window._QS=new Array(MI.length).fill(0);
-    buildTabs();
-    renderGrid();
-    var bar=document.getElementById('order-bar');
-    if(bar) bar.classList.remove('show');
+  window.clearOrd=function(){
+    QS=new Array(MI.length).fill(0);
+    buildCats(); buildGrid();
+    document.getElementById('order-bar').classList.remove('show');
   };
 
-  window.rate=function(n){
-    var arMsg=['','رائع','جيد','مقبول','ممتاز','رائع جداً!'][n];
-    var enMsg=['','Great','Good','Fair','Excellent','Amazing!'][n];
+  window.doRate=function(n){
+    var ar=['','رائع 😊','جيد 👍','مقبول 🙂','ممتاز 🌟','رائع جداً! 🎉'][n];
+    var en=['','Great','Good','Fair','Excellent','Amazing!'][n];
     var st=['','⭐','⭐⭐','⭐⭐⭐','⭐⭐⭐⭐','⭐⭐⭐⭐⭐'][n];
-    document.getElementById('rate-msg').innerHTML='<strong style="color:#c9a84c;">'+st+'</strong><br>'+arMsg+' · '+enMsg+'<br><small style="color:#7a8fa6;">شكراً · Thank you</small>';
+    document.getElementById('rate-msg').innerHTML='<strong style="color:var(--gold);font-size:18px;">'+st+'</strong><br><span style="color:var(--text);font-weight:700;">'+ar+'</span><br><small style="color:var(--muted);">شكراً · Thank you</small>';
     setTimeout(function(){
-      window.open('https://wa.me/'+WA+'?text='+encodeURIComponent('Rating Room '+RM+': '+n+'/5 - '+enMsg),'_blank');
-    },500);
+      window.open('https://wa.me/'+WA+'?text='+encodeURIComponent('⭐ تقييم الإقامة — غرفة '+RM+'\nالتقييم: '+n+'/5 — '+ar+' / '+en),'_blank');
+    },600);
   };
 
-  // init
-  var dbg=document.getElementById('menu-debug');
-  if(dbg) dbg.textContent='✅ عدد الأصناف: '+MI.length+' صنف';
-  buildTabs();
-  renderGrid();
+  buildCats();
+  buildGrid();
 })();
 <\/script>
 </body>
