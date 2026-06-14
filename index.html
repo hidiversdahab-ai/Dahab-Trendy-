@@ -25364,13 +25364,16 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 .cat-chip.act{background:rgba(26,188,156,0.15);border-color:var(--teal);color:var(--teal);}
 .cat-chip .cnt{background:var(--teal);color:#fff;border-radius:10px;padding:0 6px;font-size:9px;margin-right:3px;}
 .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
-.mi-card{background:rgba(255,255,255,0.04);border:1.5px solid var(--bdr);border-radius:14px;padding:14px 8px 10px;text-align:center;position:relative;transition:border-color .15s;}
+.mi-card{background:rgba(255,255,255,0.04);border:1.5px solid var(--bdr);border-radius:14px;padding:16px 8px 12px;text-align:center;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .18s;}
+.mi-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(201,168,76,0.12),transparent);opacity:0;transition:opacity .2s;}
+.mi-card:active::after{opacity:1;}
+.mi-card:hover{border-color:rgba(201,168,76,0.5);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3);}
 .mi-card.active{border-color:var(--teal);background:rgba(26,188,156,0.07);box-shadow:0 0 0 2px rgba(26,188,156,0.15);}
-.mi-badge{position:absolute;top:6px;left:6px;background:var(--teal);color:#fff;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:800;display:none;}
+.mi-badge{position:absolute;top:6px;left:6px;background:var(--teal);color:#fff;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:800;display:none;z-index:2;}
 .mi-card.active .mi-badge{display:block;}
-.mi-emoji{font-size:30px;display:block;line-height:1;margin-bottom:5px;}
-.mi-name{font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px;line-height:1.4;}
-.mi-price{font-size:13px;font-weight:800;color:var(--gold);margin-bottom:8px;}
+.mi-emoji{font-size:30px;line-height:1;}
+.mi-name{font-size:11px;font-weight:700;color:var(--text);line-height:1.4;}
+.mi-price{font-size:13px;font-weight:800;color:var(--gold);margin-bottom:3px;}
 .qty-row{display:flex;align-items:center;justify-content:center;gap:7px;}
 .qbtn{width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(26,188,156,0.4);background:rgba(26,188,156,0.12);color:var(--teal);font-size:20px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-family:Arial,sans-serif;touch-action:manipulation;transition:all .12s;}
 .qbtn.plus{background:rgba(26,188,156,0.22);border-color:var(--teal);}
@@ -25565,7 +25568,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
       var lbl=catLabels[cat]||(cat.length>10?cat.substring(0,10)+'…':cat);
       var total=0; QS.forEach(function(q,i){ if(q>0&&(cat==='all'||MI[i].c===cat)) total+=q; });
       var act=activeCat===cat;
-      return '<button class="cat-chip'+(act?' act':'')+'" onclick="setCat(\''+cat+'\')">'
+      return '<button class="cat-chip'+(act?' act':'')+'" onclick="setCat(\\''+cat+'\\')">'
         +(total>0?'<span class="cnt">'+total+'</span>':'')+lbl+'</button>';
     }).join('');
   }
@@ -25629,9 +25632,9 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var hf=false,hd=false;
     MI.forEach(function(it,i){ if(QS[i]>0){ if(dk.indexOf(it.c)>=0) hd=true; else hf=true; } });
     var ttl=(hf&&hd)?'🍽️🥤 طلب طعام ومشروبات':hf?'🍽️ طلب طعام':'🥤 طلب مشروبات';
-    var msg=ttl+' — غرفة '+RM+'\n⏰ '+t+'\n\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\n';
-    msg+=items.map(function(it){ return it.e+' '+it.n+' \xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\n');
-    msg+='\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\n*الإجمالي: '+total+' EGP*';
+    var msg=ttl+' — غرفة '+RM+'\\n⏰ '+t+'\\n\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n';
+    msg+=items.map(function(it){ return it.e+' '+it.n+' \\xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\\n');
+    msg+='\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n*الإجمالي: '+total+' EGP*';
     document.getElementById('order-wa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);
   }
 
@@ -25647,7 +25650,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var st=['','⭐','⭐⭐','⭐⭐⭐','⭐⭐⭐⭐','⭐⭐⭐⭐⭐'][n];
     document.getElementById('rate-msg').innerHTML='<strong style="color:var(--gold);font-size:18px;">'+st+'</strong><br><span style="color:var(--text);font-weight:700;">'+ar+'</span><br><small style="color:var(--muted);">شكراً · Thank you</small>';
     setTimeout(function(){
-      window.open('https://wa.me/'+WA+'?text='+encodeURIComponent('⭐ تقييم الإقامة — غرفة '+RM+'\nالتقييم: '+n+'/5 — '+ar+' / '+en),'_blank');
+      window.open('https://wa.me/'+WA+'?text='+encodeURIComponent('⭐ تقييم الإقامة — غرفة '+RM+'\\nالتقييم: '+n+'/5 — '+ar+' / '+en),'_blank');
     },600);
   };
 
