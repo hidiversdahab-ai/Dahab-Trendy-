@@ -19522,14 +19522,32 @@ function sendPOSReceiptWA(){
 // ══ إرسال صفحة الضيف (منيو + خدمات) من صفحة المطعم ══
 
 function openSendMenuModal(){
-  // ملء قائمة الغرف النشطة
+  // ملء قائمة الغرف — الحجوزات النشطة أولاً + كل الغرف كـ fallback
   const sel = document.getElementById('send-menu-room-select');
   const td = toDay();
   const activeBookings = bookings.filter(b=>b.ci<=td && b.co>td && b.status!=='Cancelled' && b.room);
-  sel.innerHTML = '<option value="">-- اختر الغرفة --</option>' +
-    activeBookings.map(b=>`<option value="${b.room}" data-phone="${(b.whatsapp||b.phone||'').replace(/[^0-9+]/g,'')}" data-name="${b.name||''}">`
+
+  // بناء الـ options: الحجوزات النشطة مع اسم الضيف، ثم باقي الغرف بدون حجز
+  const occupiedRooms = new Set(activeBookings.map(b=>String(b.room)));
+  const allRooms = (typeof ROOMS!=='undefined'&&ROOMS.length) ? ROOMS : ['101','102','103','104','105','106','107','108','109','110','111','112','113','114'];
+
+  let opts = '<option value="">-- اختر الغرفة --</option>';
+  // أولاً: الغرف المحجوزة مع اسم الضيف
+  if(activeBookings.length){
+    opts += '<optgroup label="✅ حجوزات نشطة">';
+    opts += activeBookings.map(b=>`<option value="${b.room}" data-phone="${(b.whatsapp||b.phone||'').replace(/[^0-9+]/g,'')}" data-name="${b.name||''}">`
       +`غرفة ${b.room} — ${b.name||'ضيف'}`
       +`</option>`).join('');
+    opts += '</optgroup>';
+  }
+  // ثانياً: باقي الغرف (بدون حجز نشط)
+  const freeRooms = allRooms.filter(r=>!occupiedRooms.has(String(r)));
+  if(freeRooms.length){
+    opts += '<optgroup label="🔑 غرف أخرى">';
+    opts += freeRooms.map(r=>`<option value="${r}" data-phone="" data-name="">غرفة ${r}</option>`).join('');
+    opts += '</optgroup>';
+  }
+  sel.innerHTML = opts;
 
   // إخفاء معلومات الضيف + reset
   document.getElementById('send-menu-guest-info').style.display='none';
@@ -19587,49 +19605,50 @@ async function doSendMenuToGuest(){
   const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
   const waNum = (qrs.waNum || '201099531272');
 
-  // بناء رابط صفحة الضيف مع تضمين المنيو فيه (لأن الضيف جهازه فارغ من localStorage)
-  const baseUrl = (window.location.origin + window.location.pathname).replace(/\/$/, '');
-  
-  // تضمين بيانات المنيو + الإعدادات في الـ hash (#) لتجنب حد URL
-  const guestData = {
-    room: room,
-    menu: (window.restMenu && window.restMenu.length) ? window.restMenu : [],
-    wifi: { name: qrs.wifiName||'DahabTrendy_Guest', pass: qrs.wifiPass||'dahab2024' },
-    wa: waNum,
-    hotel: prop.name||'Dahab Trendy',
-    phone: prop.phone||''
-  };
-  
-  // ضغط البيانات كـ base64 في الـ hash
-  let guestUrl;
-  try {
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(guestData))));
-    guestUrl = baseUrl + '?guest=' + encodeURIComponent(room) + '#gd=' + encoded;
-  } catch(e) {
-    // fallback: رابط بسيط بدون بيانات
-    guestUrl = baseUrl + '?guest=' + encodeURIComponent(room);
+  // ── تأكّد إن المنيو محمَّل من IDB قبل بناء الصفحة ──
+  if (typeof restMenu !== 'undefined' && !restMenu.length) {
+    try {
+      const idbMenu = await DTA_DB.getSetting('dta_rest_menu', []);
+      if (Array.isArray(idbMenu) && idbMenu.length) {
+        restMenu = idbMenu;
+        window.restMenu = restMenu;
+        try { localStorage.setItem('dta_rest_menu', JSON.stringify(idbMenu)); } catch(e){}
+      }
+    } catch(e){}
   }
 
-  // رسالة واتساب
+  // ── بناء صفحة الضيف الكاملة مع المنيو مضمّن فيها ──
+  const guestHTML = DTA_QR.buildGuestPage(room);
+
+  // ── تحميل الصفحة كـ HTML للإرسال اليدوي عبر واتساب ──
+  const blob = new Blob([guestHTML], {type:'text/html;charset=utf-8'});
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = `GuestPage_Room_${room}.html`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(blobUrl), 15000);
+
+  // ── رسالة واتساب مع الإشارة لإرسال الملف ──
   const msg =
     `🏨 *${prop.name}*\n`+
     `📋 *خدمات الغرفة ${room}*\n\n`+
-    `مرحباً بك! 🌟\n`+
-    `اضغط الرابط أدناه لتصفح:\n`+
+    `مرحباً بك في ${prop.name}! 🌟\n\n`+
+    `أرسل لك ملف صفحة الغرفة الخاصة بك — افتحه من هاتفك لتجد:\n`+
     `🛎️ خدمات الغرفة (تنظيف، مناشف، إفطار...)\n`+
     `🍽️ قائمة الطعام والمشروبات مع إمكانية الطلب\n`+
     `📡 بيانات الـ WiFi\n`+
     `⭐ تقييم إقامتك\n\n`+
-    `🔗 ${guestUrl}\n\n`+
-    `للتواصل المباشر: 📞 ${prop.phone||'+20'+waNum}`;
+    `📲 للتواصل المباشر: ${prop.phone||'+20'+waNum}`;
 
-  const url = phone
+  const waUrl = phone
     ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
     : `https://wa.me/?text=${encodeURIComponent(msg)}`;
 
-  window.open(url,'_blank');
+  setTimeout(()=>{ window.open(waUrl,'_blank'); }, 800);
+
   closeM('send-menu-modal');
-  sNotify('💬 تم','تم فتح واتساب لإرسال رابط صفحة الضيف لغرفة '+room,'success',3000);
+  sNotify('✅ تم','تم تحميل صفحة الضيف — أرسل الملف HTML للضيف عبر واتساب','success',5000);
 }
 
 async function doPreviewGuestPageFromModal(){
@@ -19811,6 +19830,7 @@ const DRINKS_CATALOG = [
   {cat:"سموزي ومثلجات 🧋", emoji:"🧃", name:"تمر هندي",           price:20, note:"", nameEn:"Tamarind Drink"},
   {cat:"سموزي ومثلجات 🧋", emoji:"🧃", name:"كركديه بارد",        price:20, note:"", nameEn:"Cold Hibiscus Drink"},
 ];
+window.DRINKS_CATALOG = DRINKS_CATALOG; // expose globally for DTA_QR module
 
 // ═══════════ DRINKS ORDER SYSTEM (Services-Style Grid + Qty + WhatsApp) ═══════════
 let _drinksActiveCat = "الكل";
@@ -25247,9 +25267,9 @@ const DTA_QR = (function(){
     const waNum        = qrs.waNum        || '201099531272';
     const checkinTime  = qrs.checkinTime  || '2:00 PM';
     const checkoutTime = qrs.checkoutTime || '12:00 PM';
-    // ── قراءة المنيو: المتغير الحي أولاً (الأضمن) ثم localStorage ──
+    // ── قراءة المنيو: عدة مصادر بالترتيب ──
     let _restMenuRaw = [];
-    // 1) المتغير الحي restMenu عبر window (دايماً محدّث في نفس الـ session)
+    // 1) المتغير الحي window.restMenu (الأحدث دايماً)
     if (window.restMenu && Array.isArray(window.restMenu) && window.restMenu.length) {
       _restMenuRaw = window.restMenu.slice();
     }
@@ -25257,12 +25277,13 @@ const DTA_QR = (function(){
     if (!_restMenuRaw.length) {
       try {
         const _ls = localStorage.getItem('dta_rest_menu');
-        if (_ls) _restMenuRaw = JSON.parse(_ls) || [];
-      } catch(e){ _restMenuRaw = []; }
+        if (_ls) { const _p = JSON.parse(_ls); if(Array.isArray(_p)&&_p.length) _restMenuRaw = _p; }
+      } catch(e){}
     }
-    // ── تضمين DRINKS_CATALOG الكامل كـ fallback ──
-    const _drinksCatalogEmbed = (typeof DRINKS_CATALOG !== 'undefined' && DRINKS_CATALOG.length)
-      ? DRINKS_CATALOG
+    // ── DRINKS_CATALOG المضمّن مباشرة — يُقرأ من window عشان يكون متاح دايماً ──
+    const _DC = window.DRINKS_CATALOG;
+    const _drinksCatalogEmbed = (_DC && Array.isArray(_DC) && _DC.length)
+      ? _DC.map(function(d){ return {name:d.name,price:d.price,emoji:d.emoji,cat:d.cat}; })
       : [
           {name:'قهوة عربي',price:20,emoji:'☕',cat:'مشروبات ساخنة ☕'},
           {name:'نسكافيه',price:25,emoji:'☕',cat:'مشروبات ساخنة ☕'},
@@ -25275,7 +25296,6 @@ const DTA_QR = (function(){
           {name:'كاكاو بالحليب',price:30,emoji:'🍫',cat:'مشروبات ساخنة ☕'},
           {name:'عصير برتقال',price:30,emoji:'🍊',cat:'عصائر طازجة 🍊'},
           {name:'عصير مانجو',price:35,emoji:'🥭',cat:'عصائر طازجة 🍊'},
-          {name:'عصير جوافة',price:30,emoji:'🍹',cat:'عصائر طازجة 🍊'},
           {name:'عصير فراولة',price:35,emoji:'🍓',cat:'عصائر طازجة 🍊'},
           {name:'ليمون بالنعناع',price:25,emoji:'🍋',cat:'عصائر طازجة 🍊'},
           {name:'مياه معدنية',price:10,emoji:'💧',cat:'مياه وبارد 💧'},
@@ -25284,31 +25304,21 @@ const DTA_QR = (function(){
           {name:'بيبسي',price:15,emoji:'🥤',cat:'مشروبات غازية 🥤'},
           {name:'كوكاكولا',price:15,emoji:'🥤',cat:'مشروبات غازية 🥤'},
           {name:'سفن أب',price:15,emoji:'🥤',cat:'مشروبات غازية 🥤'},
-          {name:'ميرندا برتقال',price:15,emoji:'🥤',cat:'مشروبات غازية 🥤'},
           {name:'سموزي مانجو',price:45,emoji:'🧋',cat:'سموزي ومثلجات 🧋'},
           {name:'ميلك شيك فانيليا',price:40,emoji:'🍦',cat:'سموزي ومثلجات 🧋'},
           {name:'ميلك شيك شوكولاتة',price:40,emoji:'🍦',cat:'سموزي ومثلجات 🧋'},
-          {name:'تمر هندي',price:20,emoji:'🧃',cat:'سموزي ومثلجات 🧋'},
         ];
-    // دمج: أصناف المنيو الحقيقي + DRINKS_CATALOG (بدون تكرار)
+    // ── دمج المنيو الحقيقي + DRINKS_CATALOG (بدون تكرار بالاسم) ──
     const _realNames = new Set(_restMenuRaw.map(function(it){ return it.name; }));
     const _drinksToAdd = _drinksCatalogEmbed.filter(function(d){ return !_realNames.has(d.name); });
-    // لو المنيو فيه أصناف → استخدمه + المشروبات اللي مش موجودة
-    // لو المنيو فارغ → استخدم DRINKS_CATALOG كاملاً
-    const _srcMenu = _restMenuRaw.length
-      ? _restMenuRaw.concat(_drinksToAdd)
-      : _drinksCatalogEmbed;
-    // بناء مصفوفة المنيو (JSON.stringify يتولى الـ escaping تلقائياً)
+    const _srcMenu = _restMenuRaw.length ? _restMenuRaw.concat(_drinksToAdd) : _drinksCatalogEmbed;
+    // ── بناء مصفوفة المنيو المضغوطة ──
     const _menuArr = _srcMenu.map(function(it){
-      return {
-        n: it.name||'',
-        p: it.price||0,
-        e: it.emoji||'🍽️',
-        c: it.cat||'أخرى'
-      };
+      return { n: it.name||'', p: it.price||0, e: it.emoji||'🍽️', c: it.cat||'أخرى' };
     });
-    // نضمّن البيانات مباشرة كـ JSON بدل base64 لتفادي مشاكل الـ emoji
-    const _menuItemsJSON = JSON.stringify(_menuArr).replace(/<\/script>/gi, '<\\/script>');
+    // ── تضمين JSON مباشرة في الصفحة (أضمن من base64 مع الـ emoji) ──
+    const _menuJSON = JSON.stringify(_menuArr).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
+    const _menuB64 = (function(){ try { return btoa(unescape(encodeURIComponent(JSON.stringify(_menuArr)))); } catch(e){ return ''; } })();
 
 
     return `<!DOCTYPE html>
@@ -25501,7 +25511,13 @@ body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;fo
 (function(){
   var RM='${room}', WA='${waNum}';
   var MI=[];
-  try{ MI=${_menuItemsJSON}; }catch(e){ MI=[]; }
+  // أولاً: تحميل من JSON مباشر (الأضمن)
+  try{ MI=${_menuJSON}; }catch(e){ MI=[]; }
+  // ثانياً: fallback للـ base64 لو JSON فشل
+  if(!MI.length){
+    var _b64='${_menuB64}';
+    try{ MI=_b64?JSON.parse(decodeURIComponent(escape(atob(_b64)))):[];  }catch(e){ MI=[]; }
+  }
   window._MI=MI;
   window._QS=new Array(MI.length).fill(0);
   window._activeCat='all';
@@ -25629,9 +25645,21 @@ body{background:linear-gradient(135deg,#0f0f1a,#1a1a2e,#16213e);color:#f0e6cc;fo
   }
 
   // ─── Modal عرض QR لغرفة ───
-  function openQRModal(roomNo){
+  async function openQRModal(roomNo){
     roomNo = String(roomNo);
     const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy'};
+
+    // ── تأكّد إن المنيو محمَّل قبل بناء صفحة الضيف ──
+    if (typeof restMenu !== 'undefined' && !restMenu.length) {
+      try {
+        const idbMenu = await DTA_DB.getSetting('dta_rest_menu', []);
+        if (Array.isArray(idbMenu) && idbMenu.length) {
+          restMenu = idbMenu;
+          window.restMenu = restMenu;
+          try { localStorage.setItem('dta_rest_menu', JSON.stringify(idbMenu)); } catch(e){}
+        }
+      } catch(e){}
+    }
 
     // بناء صفحة الضيف وحفظها
     const guestPageHTML = buildGuestPage(roomNo);
