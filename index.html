@@ -3371,9 +3371,9 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 
 <!-- ══ DRINKS IMPORT MODAL ══ -->
 <div class="ovl" id="drinks-import-modal">
-<div class="mdl" style="max-width:660px;padding:0;overflow:hidden;">
+<div class="mdl" style="max-width:660px;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:92vh;">
   <!-- Header -->
-  <div style="background:linear-gradient(135deg,rgba(26,188,156,0.25),rgba(22,160,133,0.15));padding:16px 18px 14px;border-bottom:1px solid rgba(26,188,156,0.2);">
+  <div style="background:linear-gradient(135deg,rgba(26,188,156,0.25),rgba(22,160,133,0.15));padding:16px 18px 14px;border-bottom:1px solid rgba(26,188,156,0.2);flex-shrink:0;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
       <div class="mtitle" style="margin-bottom:0;color:#1abc9c;">🥤 قائمة المشروبات</div>
       <button onclick="closeM('drinks-import-modal')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;">✕</button>
@@ -3386,17 +3386,21 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   </div>
 
   <!-- فلتر الفئات -->
-  <div id="drinks-cat-filter-tabs" style="display:flex;gap:5px;flex-wrap:wrap;padding:12px 16px 10px;border-bottom:1px solid rgba(255,255,255,0.06);"></div>
+  <div id="drinks-cat-filter-tabs" style="display:flex;gap:5px;flex-wrap:wrap;padding:12px 16px 10px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;"></div>
 
   <!-- قائمة الأصناف - Services Style Grid -->
-  <div id="drinks-items-list" style="max-height:420px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;padding:14px 16px;"></div>
+  <div id="drinks-items-list" style="flex:1 1 auto;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;padding:14px 16px;"></div>
 
   <!-- Footer Actions -->
-  <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:8px;flex-wrap:wrap;">
-    <button class="btn" onclick="drinksClearOrder()" style="flex:1;min-width:80px;background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);font-weight:700;">🗑 مسح</button>
-    <button class="btn" onclick="sendDrinksOrderWA()" style="flex:2;min-width:120px;background:linear-gradient(135deg,rgba(37,211,102,0.2),rgba(18,140,126,0.2));color:#25d366;border:1px solid rgba(37,211,102,0.4);font-weight:700;font-size:13px;">💬 إرسال واتساب</button>
-    <button class="btn bg" onclick="importSelectedDrinks()" style="flex:2;min-width:120px;font-weight:700;font-size:13px;">💾 إضافة للمنيو</button>
+  <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="drinksClearOrder()" style="flex:1;background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);font-weight:700;">🗑 مسح</button>
+      <button class="btn" onclick="drinksSelectAll()" style="flex:1;background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.3);font-weight:700;">✅ تحديد الكل</button>
+      <button class="btn" onclick="sendDrinksOrderWA()" style="flex:1;background:linear-gradient(135deg,rgba(37,211,102,0.2),rgba(18,140,126,0.2));color:#25d366;border:1px solid rgba(37,211,102,0.4);font-weight:700;font-size:13px;">💬 واتساب</button>
+    </div>
+    <button class="btn bg" onclick="importSelectedDrinks()" style="width:100%;font-weight:700;font-size:13px;">💾 إضافة للمنيو (المحدد)</button>
   </div>
+</div>
 </div>
 </div>
 <!-- ══ MENU ITEM MODAL ══ -->
@@ -18716,9 +18720,11 @@ function renderMenuEditor(){
   if(grid) grid.innerHTML = filtered.map((item)=>{
     const i = restMenu.indexOf(item);
     const meta = catMeta[item.cat] || {color:"#95a5a6", cls:"cat-other"};
+    const avail = item.available !== false; // default true if undefined
     return `
-    <div class="menu-editor-card">
+    <div class="menu-editor-card" style="${avail?'':'opacity:0.5;'}">
       <div class="menu-editor-cat-stripe ${meta.cls}" style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,${meta.color},${meta.color2||meta.color});border-radius:14px 14px 0 0;"></div>
+      <button onclick="toggleMenuItemAvailable(${i})" style="position:absolute;top:6px;left:6px;z-index:2;border:1px solid ${avail?'rgba(26,188,156,0.5)':'rgba(231,76,60,0.5)'};background:${avail?'rgba(26,188,156,0.15)':'rgba(231,76,60,0.15)'};color:${avail?'var(--teal)':'#e74c3c'};border-radius:20px;padding:2px 8px;font-size:9px;font-weight:800;cursor:pointer;font-family:Arial,sans-serif;">${avail?'✅ متوفر':'🚫 غير متوفر'}</button>
       <div style="margin-top:6px;">
         <div style="font-size:32px;margin-bottom:6px;">
           ${item.img
@@ -18736,6 +18742,14 @@ function renderMenuEditor(){
       </div>
     </div>`;
   }).join("");
+}
+
+function toggleMenuItemAvailable(i){
+  if(!restMenu[i]) return;
+  restMenu[i].available = restMenu[i].available === false ? true : false;
+  sv("dta_rest_menu", restMenu);
+  window.restMenu = restMenu;
+  renderMenuEditor();
 }
 
 function getCatMeta(){
@@ -19889,6 +19903,7 @@ function _renderDrinksItems(){
     const qty = _drinksOrder.get(i)||0;
     const color = _DRINKS_CAT_COLORS[d.cat]||"#95a5a6";
     const hasQty = qty > 0;
+    const inMenu = restMenu.some(m=>m.name===d.name);
     return `<div style="background:var(--card);border:2px solid ${hasQty?color:color+'33'};border-radius:14px;
       padding:12px 8px 10px;transition:all .2s;position:relative;
       ${hasQty?'box-shadow:0 0 0 2px '+color+'44;background:'+color+'0d;':''}
@@ -19898,12 +19913,24 @@ function _renderDrinksItems(){
         border-radius:10px;padding:1px 7px;font-size:11px;font-weight:800;line-height:1.4;">
         ${qty}
       </div>`:''}
+      <!-- in-menu badge -->
+      ${inMenu?`<div style="position:absolute;top:6px;left:6px;background:rgba(26,188,156,0.18);color:#1abc9c;
+        border:1px solid rgba(26,188,156,0.4);border-radius:10px;padding:1px 6px;font-size:9px;font-weight:800;line-height:1.4;">
+        ✅ موجود
+      </div>`:''}
       <!-- emoji -->
       <div style="font-size:30px;margin-bottom:6px;">${d.emoji}</div>
       <!-- name -->
       <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.3;">${d.name}</div>
-      <!-- price -->
-      <div style="font-size:12px;font-weight:800;color:${color};margin-bottom:8px;">£${d.price}</div>
+      <!-- price (editable) -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:3px;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:800;color:${color};">£</span>
+        <input type="number" min="0" step="0.5" value="${d.price}"
+          onchange="_drinksPriceChange(${i},this.value)"
+          onclick="event.stopPropagation()"
+          style="width:54px;background:rgba(255,255,255,0.06);border:1px solid ${color}55;border-radius:6px;
+          color:${color};font-size:12px;font-weight:800;text-align:center;padding:2px 4px;font-family:Arial,sans-serif;">
+      </div>
       <!-- +/- controls -->
       <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
         ${hasQty?`<button onclick="_drinksQtyChange(${i},-1)" style="background:#e74c3c;color:#fff;border:none;
@@ -19916,6 +19943,12 @@ function _renderDrinksItems(){
       </div>
     </div>`;
   }).join("");
+}
+
+function _drinksPriceChange(idx, newPrice){
+  const p = parseFloat(newPrice);
+  if(!isNaN(p) && p>=0){ DRINKS_CATALOG[idx].price = p; }
+  _updateDrinksOrderBadge();
 }
 
 function _drinksQtyChange(idx, delta){
@@ -19945,6 +19978,16 @@ function _updateDrinksOrderBadge(){
 
 function drinksClearOrder(){
   _drinksOrder = new Map();
+  _renderDrinksItems();
+  _renderDrinksCatTabs();
+  _updateDrinksOrderBadge();
+}
+
+function drinksSelectAll(){
+  const target = _drinksActiveCat==="الكل"
+    ? DRINKS_CATALOG.map((d,i)=>i)
+    : DRINKS_CATALOG.map((d,i)=>i).filter(i=>DRINKS_CATALOG[i].cat===_drinksActiveCat);
+  target.forEach(i=>{ if(!_drinksOrder.has(i)) _drinksOrder.set(i,1); });
   _renderDrinksItems();
   _renderDrinksCatTabs();
   _updateDrinksOrderBadge();
@@ -20011,7 +20054,6 @@ function importSelectedDrinks(){
 }
 
 // compat stubs (kept for any old references)
-function drinksSelectAll(){}
 function drinksSelectNone(){}
 // ══════════════════════════════════════════════════════════════
 
@@ -25297,7 +25339,7 @@ const DTA_QR = (function(){
     const _drinksToAdd = _drinksCatalogEmbed.filter(function(d){ return !_realNames.has(d.name); });
     const _srcMenu = _restMenuRaw.length ? _restMenuRaw.concat(_drinksToAdd) : _drinksCatalogEmbed;
     const _menuArr = _srcMenu.map(function(it){
-      return { n: it.name||'', p: parseInt(it.price,10)||0, e: it.emoji||'🍽️', c: it.cat||'أخرى' };
+      return { n: it.name||'', ne: it.nameEn||'', p: parseInt(it.price,10)||0, e: it.emoji||'🍽️', c: it.cat||'أخرى', a: it.available!==false };
     });
     const _menuB64 = (function(){
       try { return btoa(unescape(encodeURIComponent(JSON.stringify(_menuArr)))); } catch(e){ return ''; }
@@ -25365,7 +25407,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 .cat-chip .cnt{background:var(--teal);color:#fff;border-radius:10px;padding:0 6px;font-size:9px;margin-right:3px;}
 .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
 .mi-card{background:rgba(255,255,255,0.04);border:1.5px solid var(--bdr);border-radius:14px;padding:16px 8px 12px;text-align:center;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .18s;}
-.mi-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(201,168,76,0.12),transparent);opacity:0;transition:opacity .2s;}
+.mi-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(201,168,76,0.12),transparent);opacity:0;transition:opacity .2s;pointer-events:none;}
 .mi-card:active::after{opacity:1;}
 .mi-card:hover{border-color:rgba(201,168,76,0.5);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3);}
 .mi-card.active{border-color:var(--teal);background:rgba(26,188,156,0.07);box-shadow:0 0 0 2px rgba(26,188,156,0.15);}
@@ -25373,7 +25415,12 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 .mi-card.active .mi-badge{display:block;}
 .mi-emoji{font-size:30px;line-height:1;}
 .mi-name{font-size:11px;font-weight:700;color:var(--text);line-height:1.4;}
+.mi-name-en{font-size:9px;font-weight:400;color:var(--muted);direction:ltr;display:inline-block;}
 .mi-price{font-size:13px;font-weight:800;color:var(--gold);margin-bottom:3px;}
+.mi-card.unavail{opacity:0.45;}
+.mi-card.unavail:hover{transform:none;box-shadow:none;border-color:var(--bdr);}
+.mi-unavail-tag{font-size:10px;font-weight:800;color:#e74c3c;background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);border-radius:8px;padding:3px 8px;text-align:center;line-height:1.6;}
+.mi-unavail-tag .en{font-size:8px;font-weight:400;direction:ltr;display:inline-block;color:#e7807a;}
 .qty-row{display:flex;align-items:center;justify-content:center;gap:7px;}
 .qbtn{width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(26,188,156,0.4);background:rgba(26,188,156,0.12);color:var(--teal);font-size:20px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-family:Arial,sans-serif;touch-action:manipulation;transition:all .12s;}
 .qbtn.plus{background:rgba(26,188,156,0.22);border-color:var(--teal);}
@@ -25584,11 +25631,20 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     });
     if(!list.length){ el.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px;grid-column:1/-1;font-size:12px;">لا يوجد في هذه الفئة</p>'; return; }
     el.innerHTML=list.map(function(o){
-      var it=o.it,i=o.i,q=QS[i]||0,has=q>0;
+      var it=o.it,i=o.i,q=QS[i]||0,has=q>0,avail=it.a!==false;
+      var nameHtml='<div class="mi-name">'+it.n+(it.ne?'<br><span class="mi-name-en">'+it.ne+'</span>':'')+'</div>';
+      if(!avail){
+        return '<div class="mi-card unavail" id="mc'+i+'">'
+          +'<span class="mi-emoji">'+it.e+'</span>'
+          +nameHtml
+          +'<div class="mi-price">'+it.p+' ج</div>'
+          +'<div class="mi-unavail-tag">غير متوفر<br><span class="en">Not Available</span></div>'
+          +'</div>';
+      }
       return '<div class="mi-card'+(has?' active':'')+'" id="mc'+i+'">'
         +'<div class="mi-badge" id="mb'+i+'">'+(has?q:'')+'</div>'
         +'<span class="mi-emoji">'+it.e+'</span>'
-        +'<div class="mi-name">'+it.n+'</div>'
+        +nameHtml
         +'<div class="mi-price">'+it.p+' ج</div>'
         +'<div class="qty-row">'
         +'<button class="qbtn minus'+(has?' has':'')+'" onclick="chg('+i+',-1)">&#8722;</button>'
