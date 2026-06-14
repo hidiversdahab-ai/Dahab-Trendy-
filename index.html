@@ -4257,8 +4257,9 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 </div>
 </div>
 <div class="ovl" id="ex-modal">
-<div class="mdl" style="max-width:460px;">
-<div class="mtitle" id="em-title">+ Add Expense</div>
+<div class="mdl" style="max-width:460px;max-height:92vh;display:flex;flex-direction:column;padding:20px 20px 0 20px;overflow:hidden;">
+<div class="mtitle" id="em-title" style="flex-shrink:0;">+ Add Expense</div>
+<div style="flex:1 1 auto;min-height:0;overflow-y:auto;padding-bottom:14px;">
 <div class="g2">
 <div class="fld"><label>Date *</label><input id="em-date" type="date"></div>
 <div class="fld"><label>Category *</label>
@@ -4286,7 +4287,8 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
   <div style="font-size:10px;color:var(--muted);margin-top:3px;">اكتب نفس الـ Tag في مصروفات تريد ربطها لعرض مجموعها</div>
 </div>
 </div>
-<div class="flex mt" style="gap:10px;">
+</div>
+<div class="flex" style="gap:10px;flex-shrink:0;padding:12px 0;border-top:1px solid var(--bdr);background:inherit;">
 <button class="btn bg" onclick="saveEM()" style="flex:2;padding:12px;font-size:15px;justify-content:center;">💾 حفظ</button>
 <button class="btn bb" onclick="closeM('ex-modal')" style="flex:1;padding:12px;justify-content:center;">إلغاء</button>
 </div>
