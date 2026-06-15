@@ -26636,6 +26636,50 @@ window.openQRRoomPicker = openQRRoomPicker;
 
 })();
 
+// ══ AUTO CLOSE PAST CO ══
+// يغلق تلقائياً أي حجز انتهى تاريخه ولم يُسجَّل check-out يدوياً
+(function autoClosePastCO(){
+  function runAutoClose(){
+    if(typeof bookings === 'undefined' || !Array.isArray(bookings)) return;
+    const td = (typeof toDay === 'function') ? toDay() : new Date().toISOString().split('T')[0];
+    let changed = false;
+    bookings.forEach(function(b){
+      if(
+        b.status !== 'Cancelled' &&
+        !b.coConfirmed &&
+        b.co < td           // تاريخ الخروج مر
+      ){
+        b.coConfirmed = true;
+        b.coTime = b.coTime || (b.co + 'T12:00:00.000Z'); // وقت تقديري 12:00 يوم المغادرة
+        b._autoClosedCO = true; // علامة للتمييز من الإغلاق التلقائي
+        changed = true;
+      }
+    });
+    if(changed){
+      if(typeof sv === 'function') sv('dta_bk', bookings);
+      if(typeof renderBookings === 'function') renderBookings();
+      if(typeof renderDashboard === 'function') renderDashboard();
+      if(typeof autoUpdateRooms === 'function') autoUpdateRooms(false);
+      console.log('[AutoCloseCO] ✅ تم إغلاق حجوزات منتهية تلقائياً');
+    }
+  }
+
+  // تشغيل عند فتح التطبيق (بعد تحميل البيانات بثانيتين)
+  setTimeout(runAutoClose, 2500);
+
+  // تشغيل يومي في منتصف الليل
+  function scheduleMidnight(){
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 1, 0);
+    const ms = nextMidnight - now;
+    setTimeout(function(){
+      runAutoClose();
+      setInterval(runAutoClose, 24 * 60 * 60 * 1000);
+    }, ms);
+  }
+  scheduleMidnight();
+})();
+
 // ══ NAVBAR CLOCK ══
 (function(){
   const daysAr = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
