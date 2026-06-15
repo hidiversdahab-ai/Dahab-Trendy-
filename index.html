@@ -23753,6 +23753,22 @@ async function importData(file){
     if(!confirm('سيتم استبدال كل البيانات الحالية بالبيانات المستوردة. هل أنت متأكد؟')) return;
     pushUndo('قبل استيراد IDB', getUndoSnapshot());
 
+    // ✅ FIX: احفظ حالة CO/CI الحالية قبل الاستيراد عشان متتضيعش
+    const existingBK = Array.isArray(bookings) ? bookings : [];
+    const confirmedMap = {};
+    existingBK.forEach(b=>{
+      if(b && b.id){
+        confirmedMap[b.id] = {
+          coConfirmed: b.coConfirmed || false,
+          coTime:      b.coTime      || null,
+          ciConfirmed: b.ciConfirmed || false,
+          ciTime:      b.ciTime      || null,
+          earlyCO:     b.earlyCO     || false,
+          earlyCOTime: b.earlyCOTime || null,
+        };
+      }
+    });
+
     // استيراد IDB stores
     const storeMap = {
       bookings:     'bookings',
@@ -23763,17 +23779,60 @@ async function importData(file){
       blacklist:    'blacklist',
       reviews:      'reviews',
       waitlist:     'waitlist',
+      housekeeping: 'housekeeping',
     };
     let totalImported = 0;
+
+    // ✅ FIX: bookings أولاً مع merge
+    {
+      const arr = data['bookings'] || [];
+      if(Array.isArray(arr) && arr.length > 0){
+        const merged = arr.map(b=>{
+          if(b && b.id && confirmedMap[b.id]){
+            const saved = confirmedMap[b.id];
+            return Object.assign({}, b, {
+              coConfirmed: b.coConfirmed || saved.coConfirmed,
+              coTime:      b.coTime      || saved.coTime,
+              ciConfirmed: b.ciConfirmed || saved.ciConfirmed,
+              ciTime:      b.ciTime      || saved.ciTime,
+              earlyCO:     b.earlyCO     || saved.earlyCO,
+              earlyCOTime: b.earlyCOTime || saved.earlyCOTime,
+            });
+          }
+          return b;
+        });
+        bookings = merged;
+        LSS('dta_bk', merged);
+        await DTA_DB.clear('bookings').catch(()=>{});
+        await DTA_DB.bulkSave('bookings', merged).catch(e=>console.warn('[importData] bookings',e));
+        totalImported += merged.length;
+      }
+    }
+
+    // ✅ FIX: roomSt هو object مش array
+    {
+      const rsVal = data['roomSt'] || data['rooms'];
+      if(rsVal && typeof rsVal === 'object' && !Array.isArray(rsVal)){
+        roomSt = rsVal;
+        LSS('dta_rs', rsVal);
+        await DTA_DB.setSetting('dta_rs', rsVal).catch(()=>{});
+      } else if(Array.isArray(rsVal) && rsVal.length > 0){
+        // نسخة قديمة كانت بتحفظ rooms كـ array
+        roomSt = rsVal;
+        LSS('dta_rs', rsVal);
+        await DTA_DB.clear('rooms').catch(()=>{});
+        await DTA_DB.bulkSave('rooms', rsVal).catch(()=>{});
+      }
+    }
+
     for(const [dataKey, idbStore] of Object.entries(storeMap)){
+      if(dataKey === 'bookings') continue; // تم أعلاه
+      if(dataKey === 'roomSt')   continue; // تم أعلاه
       const arr = data[dataKey] || data[idbStore];
       if(Array.isArray(arr) && arr.length>0){
         await DTA_DB.clear(idbStore).catch(()=>{});
         await DTA_DB.bulkSave(idbStore, arr).catch(e=>console.warn('[importData]',idbStore,e));
-        // تحديث المتغيرات في الذاكرة
-        if(dataKey==='bookings')     { bookings=arr;      LSS('dta_bk',arr); }
         if(dataKey==='expenses')     { expenses=arr;      LSS('dta_ex',arr); }
-        if(dataKey==='roomSt')       { roomSt=arr;        LSS('dta_rs',arr); }
         if(dataKey==='restaurantTx') { restaurantTx=arr;  LSS('dta_rest',arr); }
         if(dataKey==='tours')        { tours=arr;         LSS('dta_tours',arr); }
         if(dataKey==='blacklist')    { blacklist=arr;     LSS('dta_bl',arr); }
@@ -23788,14 +23847,14 @@ async function importData(file){
         if(s.key) await DTA_DB.setSetting(s.key, s.value).catch(()=>{});
       }
     }
-    // استيراد حقول أخرى
-    if(data.exRate)     { exRate=parseFloat(data.exRate); localStorage.setItem('dta_rate',exRate); }
-    if(data.restMenu)   { restMenu=data.restMenu;   LSS('dta_rest_menu',restMenu); window.restMenu=restMenu; }
-    if(data.roomPhotos) { roomPhotos=data.roomPhotos; LSS('dta_room_photos',roomPhotos); }
-    if(data.prices)     { prices=data.prices;       LSS('dta_pr',prices); }
-    if(data.duPrices)   { duPrices=data.duPrices;   LSS('dta_du',duPrices); }
-    if(data.policies)   { policies=data.policies;   LSS('dta_pol',policies); }
-    if(data.qrSettings) { localStorage.setItem('dta_qr_settings', JSON.stringify(data.qrSettings)); }
+    // استيراد حقول أخرى — نحفظ في IDB كمان مش بس localStorage
+    if(data.exRate)     { exRate=parseFloat(data.exRate); localStorage.setItem('dta_rate',exRate); await DTA_DB.setSetting('dta_rate',exRate).catch(()=>{}); }
+    if(data.restMenu)   { restMenu=data.restMenu;   LSS('dta_rest_menu',restMenu); window.restMenu=restMenu; await DTA_DB.setSetting('dta_rest_menu',restMenu).catch(()=>{}); }
+    if(data.roomPhotos) { roomPhotos=data.roomPhotos; LSS('dta_room_photos',roomPhotos); await DTA_DB.setSetting('dta_room_photos',roomPhotos).catch(()=>{}); }
+    if(data.prices)     { prices=data.prices;       LSS('dta_pr',prices);   await DTA_DB.setSetting('dta_pr',prices).catch(()=>{}); }
+    if(data.duPrices)   { duPrices=data.duPrices;   LSS('dta_du',duPrices); await DTA_DB.setSetting('dta_du',duPrices).catch(()=>{}); }
+    if(data.policies)   { policies=data.policies;   LSS('dta_pol',policies); await DTA_DB.setSetting('dta_pol',policies).catch(()=>{}); }
+    if(data.qrSettings) { localStorage.setItem('dta_qr_settings', JSON.stringify(data.qrSettings)); await DTA_DB.setSetting('dta_qr_settings',data.qrSettings).catch(()=>{}); }
 
     renderDashboard(); renderBookings();
     sNotify('✅ استيراد IDB ناجح','تم استيراد '+bookings.length+' حجز ('+totalImported+' سجل إجمالي)','success',5000);
@@ -24301,7 +24360,9 @@ const DTA_DB = (function(){
       const os = tx.objectStore(store);
       os.clear();
       arr.forEach(item=>{
-        if(item && item.id) os.put(Object.assign({},item,{_ts:Date.now()}));
+        if(!item) return;
+        if(!item.id) item = Object.assign({}, item, {id: 'gen_'+Date.now()+'_'+Math.random().toString(36).slice(2)});
+        os.put(Object.assign({},item,{_ts:Date.now()}));
       });
       tx.oncomplete = ()=> res(true);
       tx.onerror    = ()=> res(false);
@@ -24436,9 +24497,14 @@ if(typeof sv === 'function'){
     // حفظ في IDB بشكل parallel
     const storeMap = {
       'dta_bk':'bookings','dta_ex':'expenses','dta_rest':'restaurantTx',
-      'dta_tours':'tours','dta_blacklist':'blacklist'
+      'dta_tours':'tours','dta_blacklist':'blacklist',
+      'dta_wl':'waitlist','dta_rev':'reviews','dta_reviews':'reviews',
+      'dta_bl':'blacklist','dta_hk':'housekeeping'
     };
-    if(storeMap[key] && Array.isArray(val)){
+    // dta_rs هو object (roomSt) مش array — نحفظه كـ setting
+    if(key === 'dta_rs'){
+      DTA_DB.setSetting('dta_rs', val).catch(()=>{});
+    } else if(storeMap[key] && Array.isArray(val)){
       DTA_DB.bulkSave(storeMap[key], val).catch(()=>{});
     } else {
       DTA_DB.setSetting(key, val).catch(()=>{});
