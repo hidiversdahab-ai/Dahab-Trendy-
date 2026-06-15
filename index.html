@@ -24070,7 +24070,12 @@ const DTA_DB = (function(){
         console.error('[DTA_DB] open failed:', e.target.error);
         reject(e.target.error);
       };
-      req.onblocked = ()=>{ console.warn('[DTA_DB] blocked — close other tabs'); };
+      req.onblocked = ()=>{
+        console.warn('[DTA_DB] blocked — close other tabs');
+        if(typeof sNotify!=='undefined') sNotify('⚠️ قاعدة البيانات مشغولة','أغلق التابات الأخرى لهذا الموقع وأعد المحاولة','urgent',5000);
+      };
+      // أمان: لو الفتح علّق (onblocked بدون onsuccess/onerror) لمدة طويلة، نرفض الـ Promise
+      setTimeout(()=>{ if(!_db) reject(new Error('DB open timeout — قاعدة البيانات لم تُفتح')); }, 8000);
     });
   }
 
@@ -26273,7 +26278,24 @@ function saveQRSettings(){
     style="background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.35);border-radius:7px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;">
     🔄 مزامنة من localStorage
   </button>
-  <button onclick="DTA_DB.exportAllData().then(d=>{ const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='DahabTrendy_IDB_Export_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); })"
+  <button onclick="
+    if(typeof sNotify!=='undefined') sNotify('⏳ جاري التصدير','يتم تجميع البيانات...','info',2000);
+    DTA_DB.exportAllData().then(d=>{
+      const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(b);
+      a.download='DahabTrendy_IDB_Export_'+new Date().toISOString().slice(0,10)+'.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      if(typeof sNotify!=='undefined') sNotify('✅ تم التصدير','تم حفظ ملف IDB Export','success',3000);
+    }).catch(err=>{
+      console.error('[Export IDB] error:', err);
+      if(typeof sNotify!=='undefined') sNotify('❌ فشل التصدير', err.message||'حدث خطأ غير معروف — جرب إغلاق التابات الأخرى وإعادة المحاولة','urgent',5000);
+      else alert('فشل التصدير: '+(err.message||err));
+    })
+  "
     style="background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);border-radius:7px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;">
     💾 تصدير IDB كامل
   </button>
