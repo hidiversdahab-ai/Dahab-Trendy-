@@ -23771,14 +23771,14 @@ async function importData(file){
         await DTA_DB.clear(idbStore).catch(()=>{});
         await DTA_DB.bulkSave(idbStore, arr).catch(e=>console.warn('[importData]',idbStore,e));
         // تحديث المتغيرات في الذاكرة
-        if(dataKey==='bookings')     { bookings=arr;      sv('dta_bk',arr); }
-        if(dataKey==='expenses')     { expenses=arr;      sv('dta_ex',arr); }
-        if(dataKey==='roomSt')       { roomSt=arr;        sv('dta_rs',arr); }
-        if(dataKey==='restaurantTx') { restaurantTx=arr;  sv('dta_rest',arr); }
-        if(dataKey==='tours')        { tours=arr;         sv('dta_tours',arr); }
-        if(dataKey==='blacklist')    { blacklist=arr;     sv('dta_bl',arr); }
-        if(dataKey==='reviews')      { reviews=arr;       sv('dta_rev',arr); }
-        if(dataKey==='waitlist')     { waitlist=arr;      sv('dta_wl',arr); }
+        if(dataKey==='bookings')     { bookings=arr;      LSS('dta_bk',arr); }
+        if(dataKey==='expenses')     { expenses=arr;      LSS('dta_ex',arr); }
+        if(dataKey==='roomSt')       { roomSt=arr;        LSS('dta_rs',arr); }
+        if(dataKey==='restaurantTx') { restaurantTx=arr;  LSS('dta_rest',arr); }
+        if(dataKey==='tours')        { tours=arr;         LSS('dta_tours',arr); }
+        if(dataKey==='blacklist')    { blacklist=arr;     LSS('dta_bl',arr); }
+        if(dataKey==='reviews')      { reviews=arr;       LSS('dta_rev',arr); }
+        if(dataKey==='waitlist')     { waitlist=arr;      LSS('dta_wl',arr); }
         totalImported += arr.length;
       }
     }
@@ -23790,11 +23790,11 @@ async function importData(file){
     }
     // استيراد حقول أخرى
     if(data.exRate)     { exRate=parseFloat(data.exRate); localStorage.setItem('dta_rate',exRate); }
-    if(data.restMenu)   { restMenu=data.restMenu;   sv('dta_rest_menu',restMenu); window.restMenu=restMenu; }
-    if(data.roomPhotos) { roomPhotos=data.roomPhotos; sv('dta_room_photos',roomPhotos); }
-    if(data.prices)     { prices=data.prices;       sv('dta_pr',prices); }
-    if(data.duPrices)   { duPrices=data.duPrices;   sv('dta_du',duPrices); }
-    if(data.policies)   { policies=data.policies;   sv('dta_pol',policies); }
+    if(data.restMenu)   { restMenu=data.restMenu;   LSS('dta_rest_menu',restMenu); window.restMenu=restMenu; }
+    if(data.roomPhotos) { roomPhotos=data.roomPhotos; LSS('dta_room_photos',roomPhotos); }
+    if(data.prices)     { prices=data.prices;       LSS('dta_pr',prices); }
+    if(data.duPrices)   { duPrices=data.duPrices;   LSS('dta_du',duPrices); }
+    if(data.policies)   { policies=data.policies;   LSS('dta_pol',policies); }
     if(data.qrSettings) { localStorage.setItem('dta_qr_settings', JSON.stringify(data.qrSettings)); }
 
     renderDashboard(); renderBookings();
