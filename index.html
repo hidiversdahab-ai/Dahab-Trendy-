@@ -22132,67 +22132,75 @@ function rebuildGuestRows(savedData){
       fld.className = span2 ? "fld s2" : "fld";
       const lbl = document.createElement("label");
       lbl.textContent = labelTxt;
+      lbl.style.textTransform = "none";   // منع uppercase يكسر العربي
+      lbl.style.letterSpacing = "0.5px";
       fld.appendChild(lbl);
       fld.appendChild(inputEl);
       return fld;
     };
 
+    // تحديد اللغة الحالية
+    const isAr = (typeof currentLang !== "undefined" ? currentLang : (localStorage.getItem("lang")||"ar")) === "ar";
+
     // الاسم
     const nameInp = document.createElement("input");
     nameInp.id = `${pfx}-name`;
     nameInp.className = "bm-guest-name" + (isMain?" bm-main-name":"");
-    nameInp.placeholder = isMain ? "Ahmed Hassan" : "اسم النزيل";
+    nameInp.placeholder = isMain ? "Ahmed Hassan" : (isAr ? "اسم النزيل" : "Guest Name");
     nameInp.value = d.name || "";
     if(isMain) nameInp.addEventListener("input", ()=>{ syncMainGuest(); if(typeof checkRepeaterGuest==="function") checkRepeaterGuest(); });
-    grid.appendChild(mkFld("الاسم الكامل *", nameInp, true));
+    grid.appendChild(mkFld(isAr ? "★ الاسم الكامل *" : "★ Full Name *", nameInp, true));
 
     // ID
     const idInp = document.createElement("input");
     idInp.id = `${pfx}-idno`; idInp.className="bm-guest-idno";
     idInp.placeholder="A12345678"; idInp.value = d.idno||d.idNo||"";
-    grid.appendChild(mkFld("🪪 ID / جواز سفر", idInp, false));
+    grid.appendChild(mkFld(isAr ? "🪪 جواز سفر / ID" : "🪪 ID / Passport", idInp, false));
 
     // DOB
     const dobInp = document.createElement("input");
     dobInp.type="date"; dobInp.id=`${pfx}-dob`; dobInp.className="bm-guest-dob";
     dobInp.value = d.dob||"";
     if(isMain) dobInp.addEventListener("change", ()=>{ if(typeof checkBirthdayAlert==="function") checkBirthdayAlert(); });
-    grid.appendChild(mkFld("🎂 تاريخ الميلاد", dobInp, false));
+    grid.appendChild(mkFld(isAr ? "🎂 تاريخ الميلاد" : "🎂 Date of Birth", dobInp, false));
 
     // Gender
     const genSel = document.createElement("select");
     genSel.id=`${pfx}-gender`; genSel.className="bm-guest-gender";
-    [["","— الجنس —"],["ذكر","ذكر / Male"],["أنثى","أنثى / Female"]].forEach(([v,t])=>{
+    const genderOpts = isAr
+      ? [["","— الجنس —"],["ذكر","ذكر / Male"],["أنثى","أنثى / Female"]]
+      : [["","— Gender —"],["ذكر","Male / ذكر"],["أنثى","Female / أنثى"]];
+    genderOpts.forEach(([v,t])=>{
       const opt=document.createElement("option"); opt.value=v; opt.textContent=t;
       if((d.gender||"")=== v) opt.selected=true;
       genSel.appendChild(opt);
     });
-    grid.appendChild(mkFld("⚥ الجنس", genSel, false));
+    grid.appendChild(mkFld(isAr ? "⚥ الجنس" : "⚥ Gender", genSel, false));
 
     // Nationality
     const natInp = document.createElement("input");
     natInp.id=`${pfx}-nat`; natInp.className="bm-guest-nat";
     natInp.placeholder="Egyptian"; natInp.value=d.nat||"";
-    grid.appendChild(mkFld("🌍 الجنسية", natInp, false));
+    grid.appendChild(mkFld(isAr ? "🌍 الجنسية" : "🌍 Nationality", natInp, false));
 
     // حقول الاتصال للضيف الرئيسي فقط
     if(isMain){
       const phoneInp = document.createElement("input");
       phoneInp.id=`${pfx}-phone`; phoneInp.className="bm-guest-phone";
       phoneInp.placeholder="+20..."; phoneInp.value=d.phone||"";
-      grid.appendChild(mkFld("📞 Phone", phoneInp, false));
+      grid.appendChild(mkFld(isAr ? "📞 هاتف" : "📞 Phone", phoneInp, false));
 
       const waInp = document.createElement("input");
       waInp.id=`${pfx}-wa`; waInp.className="bm-guest-wa";
       waInp.placeholder="+20..."; waInp.value=d.wa||d.whatsapp||"";
       waInp.style.borderColor="rgba(37,211,102,0.4)";
       waInp.addEventListener("input", syncMainGuest);
-      grid.appendChild(mkFld("💬 واتساب", waInp, false));
+      grid.appendChild(mkFld(isAr ? "💬 واتساب" : "💬 WhatsApp", waInp, false));
 
       const emailInp = document.createElement("input");
       emailInp.type="email"; emailInp.id=`${pfx}-email`; emailInp.className="bm-guest-email";
       emailInp.placeholder="guest@email.com"; emailInp.value=d.email||"";
-      grid.appendChild(mkFld("📧 Email", emailInp, false));
+      grid.appendChild(mkFld(isAr ? "📧 إيميل" : "📧 Email", emailInp, false));
     }
 
     inner.appendChild(grid);
