@@ -1387,6 +1387,8 @@ label {
     <div class="bn-more-item" onclick="exportAll();closeBnMore()"><span class="bm-icon">💾</span><span class="t" data-ar="تصدير" data-en="Export">تصدير</span></div>
     <div class="bn-more-item" onclick="shareBackupWA();closeBnMore()" style="border-color:rgba(37,211,102,0.4);background:rgba(37,211,102,0.07);"><span class="bm-icon" style="color:#25D366;">📤</span><span class="t" data-ar="مشاركة نسخة" data-en="Share Backup">مشاركة نسخة</span></div>
     <div class="bn-more-item" onclick="showImportGuide();closeBnMore()"><span class="bm-icon">📂</span><span class="t" data-ar="استيراد" data-en="Import">استيراد</span></div>
+    <div class="bn-more-item" onclick="exportData();closeBnMore()" style="border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.07);"><span class="bm-icon" style="color:#1abc9c;">🗄️</span><span style="color:#1abc9c;">Export IDB</span></div>
+    <div class="bn-more-item" onclick="triggerIDBImport();closeBnMore()" style="border-color:rgba(155,89,182,0.4);background:rgba(155,89,182,0.07);"><span class="bm-icon" style="color:#c39bd3;">📥</span><span style="color:#c39bd3;">Import IDB</span></div>
     <div class="bn-more-item" onclick="toggleTheme();closeBnMore()"><span class="bm-icon" id="bn-theme-icon">🌙</span><span class="t" data-ar="الوضع" data-en="Theme">الوضع</span></div>
     <div class="bn-more-item" onclick="showMobileLangPicker();closeBnMore()"><span class="bm-icon">🌐</span><span id="bn-lang-lbl">🌐 اللغة / Language</span></div>
   </div>
@@ -1493,7 +1495,10 @@ label {
 <button class="nb exp-btn" onclick="exportAll()">💾 <span class="t" data-ar="تصدير" data-en="Export">Export</span></button>
 <button class="nb" onclick="shareBackupWA()" style="background:rgba(37,211,102,0.12);color:#25D366;border-color:rgba(37,211,102,0.4);font-weight:700;" title="مشاركة نسخة احتياطية عبر واتساب">📤</button>
 <button class="nb imp-btn" onclick="showImportGuide()">📂 <span class="t" data-ar="استيراد" data-en="Import">Import</span></button>
+<button class="nb" onclick="exportData()" style="background:rgba(26,188,156,0.12);color:#1abc9c;border-color:rgba(26,188,156,0.4);font-weight:700;" title="تصدير قاعدة بيانات IDB">🗄️ <span class="t" data-ar="تصدير IDB" data-en="Export IDB">Export IDB</span></button>
+<button class="nb" onclick="triggerIDBImport()" style="background:rgba(155,89,182,0.12);color:#c39bd3;border-color:rgba(155,89,182,0.4);font-weight:700;" title="استيراد قاعدة بيانات IDB">📥 <span class="t" data-ar="استيراد IDB" data-en="Import IDB">Import IDB</span></button>
 <input type="file" id="impfile" accept=".html,.json,application/json,text/html" style="display:none" onchange="importAll(event)">
+<input type="file" id="idb-impfile" accept=".json,application/json" style="display:none" onchange="importData(this.files[0])">
 </div>
 </div>
 <div class="banner" id="banner">✅ Data imported successfully!</div>
@@ -23649,6 +23654,9 @@ function exportData(){
   DTA_BACKUP.exportBackup(true);
 }
 // ── تحديث زر Import ──
+function triggerIDBImport(){
+  document.getElementById('idb-impfile').click();
+}
 const _importData_orig = typeof importData==='function' ? importData : null;
 function importData(file){
   if(file) DTA_BACKUP.importBackup(file);
@@ -24233,6 +24241,40 @@ const DTA_DB = (function(){
     return data;
   }
 
+  // JSON.stringify آمن: يتعامل مع أي مرجع دائري (circular) بدل ما يرمي error
+  function safeStringify(value){
+    const seen = new WeakSet();
+    return JSON.stringify(value, function(key, val){
+      if(typeof val === 'object' && val !== null){
+        if(seen.has(val)) return '[Circular]';
+        seen.add(val);
+      }
+      return val;
+    });
+  }
+
+  // ─── تصدير كامل كـ "قطع" (chunks) — يبني الـ JSON تدريجياً Store بـ Store
+  // بدل تجميع كل البيانات في object واحد ضخم وعمل JSON.stringify عليه مرة
+  // واحدة (وده اللي كان يفشل مع RangeError: Invalid string length لما تكون
+  // الصور/الـ snapshots كبيرة). كل Store بييجي كقطعة منفصلة في Blob، وده
+  // يدعم حجم إجمالي أكبر بكثير من حد الـ string الواحد في المتصفح.
+  async function exportAllDataChunks(){
+    const keys  = Object.keys(STORES);
+    const parts = ['{'];
+    for(let i=0; i<keys.length; i++){
+      const store = keys[i];
+      let arr = [];
+      try{ arr = await getAll(store); }catch(e){ arr = []; }
+      let json = '[]';
+      try{ json = safeStringify(arr); }
+      catch(e){ console.warn('[DTA_DB] export stringify failed for', store, e); json = '[]'; }
+      parts.push(JSON.stringify(store) + ':' + json);
+      if(i < keys.length - 1) parts.push(',');
+    }
+    parts.push('}');
+    return parts;
+  }
+
   // Init
   open().then(()=> migrateFromLS()).catch(e=> console.warn('[DTA_DB] init error:', e));
 
@@ -24240,6 +24282,7 @@ const DTA_DB = (function(){
     put, getByKey, getAll, remove, clear, getByIndex,
     setSetting, getSetting, bulkSave, saveSnapshot,
     getSnapshots, migrateFromLS, getStorageInfo, exportAllData,
+    exportAllDataChunks, safeStringify,
     get ready(){ return _ready; }
   };
 })();
@@ -26280,20 +26323,21 @@ function saveQRSettings(){
   </button>
   <button onclick="
     if(typeof sNotify!=='undefined') sNotify('⏳ جاري التصدير','يتم تجميع البيانات...','info',2000);
-    DTA_DB.exportAllData().then(d=>{
-      const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+    DTA_DB.exportAllDataChunks().then(parts=>{
+      const b=new Blob(parts,{type:'application/json'});
       const a=document.createElement('a');
-      a.href=URL.createObjectURL(b);
+      a.href=window.URL.createObjectURL(b);
       a.download='DahabTrendy_IDB_Export_'+new Date().toISOString().slice(0,10)+'.json';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-      if(typeof sNotify!=='undefined') sNotify('✅ تم التصدير','تم حفظ ملف IDB Export','success',3000);
+      window.URL.revokeObjectURL(a.href);
+      if(typeof sNotify!=='undefined') sNotify('✅ تم التصدير','تم حفظ ملف IDB Export ('+Math.round(b.size/1024)+' KB)','success',3000);
     }).catch(err=>{
       console.error('[Export IDB] error:', err);
-      if(typeof sNotify!=='undefined') sNotify('❌ فشل التصدير', err.message||'حدث خطأ غير معروف — جرب إغلاق التابات الأخرى وإعادة المحاولة','urgent',5000);
-      else alert('فشل التصدير: '+(err.message||err));
+      const msg=(err&&(err.message||err.name))||'حدث خطأ غير معروف';
+      if(typeof sNotify!=='undefined') sNotify('❌ فشل التصدير', msg+' — جرب إغلاق التابات الأخرى وإعادة المحاولة','urgent',6000);
+      alert('فشل تصدير IDB:\\n'+msg+'\\n\\n(افتح الكونسول F12 لمزيد من التفاصيل)');
     })
   "
     style="background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);border-radius:7px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;font-family:Arial,sans-serif;">
