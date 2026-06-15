@@ -982,7 +982,10 @@ label {
   border-radius: 18px !important;
   box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 2px 0 rgba(201,168,76,0.15) inset !important;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  max-height: 92vh !important;
+  -webkit-overflow-scrolling: touch;
 }
 .mdl::before {
   content: '';
@@ -992,6 +995,7 @@ label {
   background: var(--gradient-gold);
   opacity: 0.7;
   pointer-events: none;
+  border-radius: 18px 18px 0 0;
 }
 
 .mtitle {
