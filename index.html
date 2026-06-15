@@ -23652,24 +23652,123 @@ const DTA_BACKUP = (function(){
   return { exportBackup, shareReport, importBackup, compress, decompress };
 })();
 
-// ── تحديث زر Export الموجود ليستخدم الـ backup المضغوط ──
-const _exportData_orig = typeof exportData==='function' ? exportData : null;
-function exportData(){
-  DTA_BACKUP.exportBackup(true);
+// ══ Export IDB — يصدّر مباشرة من IndexedDB ══
+async function exportData(){
+  try{
+    sNotify('🗄️ جاري التصدير...','يتم قراءة البيانات من IDB','info',2000);
+    const parts = await DTA_DB.exportAllDataChunks();
+    const json  = parts.join('');
+    const date  = new Date().toISOString().slice(0,10);
+    const fname = 'DahabTrendy_IDB_'+date+'.json';
+    // محاولة ضغط
+    if('CompressionStream' in window){
+      try{
+        const gz = await DTA_BACKUP.compress(json);
+        const blob = new Blob([gz], {type:'application/gzip'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fname+'.gz';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        const kb = Math.round(gz.length/1024);
+        sNotify('✅ تصدير IDB','تم: '+fname+'.gz ('+kb+'KB)','success',4000);
+        return;
+      }catch(e){ console.warn('[exportData] compress failed, fallback JSON'); }
+    }
+    // fallback JSON
+    const blob = new Blob([json], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fname;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    sNotify('✅ تصدير IDB','تم: '+fname+' ('+Math.round(json.length/1024)+'KB)','success',4000);
+  }catch(e){
+    console.error('[exportData]',e);
+    sNotify('❌ خطأ','فشل تصدير IDB: '+e.message,'urgent',4000);
+  }
 }
-// ── تحديث زر Import ──
+
+// ══ Import IDB — يستورد مباشرة في IndexedDB ══
+async function importData(file){
+  if(!file) return;
+  try{
+    sNotify('📥 جاري الاستيراد...','يتم قراءة الملف','info',2000);
+    let text = '';
+    if(file.name.endsWith('.gz')){
+      const buf = await file.arrayBuffer();
+      text = await DTA_BACKUP.decompress(new Uint8Array(buf));
+      if(!text) throw new Error('فشل فك الضغط');
+    } else {
+      text = await file.text();
+    }
+    let data = null;
+    try{ data = JSON.parse(text); }catch(e){ throw new Error('ملف JSON غير صحيح'); }
+
+    // تحقق: لازم يكون فيه على الأقل stores معروفة
+    const knownStores = ['bookings','expenses','roomSt','restaurantTx','tours','blacklist','reviews','waitlist','rooms','settings'];
+    const hasData = knownStores.some(k => Array.isArray(data[k]) || (data[k] && typeof data[k]==='object'));
+    // دعم format قديم (data.bookings مباشرة)
+    const isOldFormat = Array.isArray(data.bookings);
+    if(!hasData && !isOldFormat) throw new Error('لا توجد بيانات صالحة في الملف');
+
+    if(!confirm('سيتم استبدال كل البيانات الحالية بالبيانات المستوردة. هل أنت متأكد؟')) return;
+    pushUndo('قبل استيراد IDB', getUndoSnapshot());
+
+    // استيراد IDB stores
+    const storeMap = {
+      bookings:     'bookings',
+      expenses:     'expenses',
+      roomSt:       'rooms',
+      restaurantTx: 'restaurantTx',
+      tours:        'tours',
+      blacklist:    'blacklist',
+      reviews:      'reviews',
+      waitlist:     'waitlist',
+    };
+    let totalImported = 0;
+    for(const [dataKey, idbStore] of Object.entries(storeMap)){
+      const arr = data[dataKey] || data[idbStore];
+      if(Array.isArray(arr) && arr.length>0){
+        await DTA_DB.clear(idbStore).catch(()=>{});
+        await DTA_DB.bulkSave(idbStore, arr).catch(e=>console.warn('[importData]',idbStore,e));
+        // تحديث المتغيرات في الذاكرة
+        if(dataKey==='bookings')     { bookings=arr;      sv('dta_bk',arr); }
+        if(dataKey==='expenses')     { expenses=arr;      sv('dta_ex',arr); }
+        if(dataKey==='roomSt')       { roomSt=arr;        sv('dta_rs',arr); }
+        if(dataKey==='restaurantTx') { restaurantTx=arr;  sv('dta_rest',arr); }
+        if(dataKey==='tours')        { tours=arr;         sv('dta_tours',arr); }
+        if(dataKey==='blacklist')    { blacklist=arr;     sv('dta_bl',arr); }
+        if(dataKey==='reviews')      { reviews=arr;       sv('dta_rev',arr); }
+        if(dataKey==='waitlist')     { waitlist=arr;      sv('dta_wl',arr); }
+        totalImported += arr.length;
+      }
+    }
+    // استيراد settings
+    if(data.settings && Array.isArray(data.settings)){
+      for(const s of data.settings){
+        if(s.key) await DTA_DB.setSetting(s.key, s.value).catch(()=>{});
+      }
+    }
+    // استيراد حقول أخرى
+    if(data.exRate)     { exRate=parseFloat(data.exRate); localStorage.setItem('dta_rate',exRate); }
+    if(data.restMenu)   { restMenu=data.restMenu;   sv('dta_rest_menu',restMenu); window.restMenu=restMenu; }
+    if(data.roomPhotos) { roomPhotos=data.roomPhotos; sv('dta_room_photos',roomPhotos); }
+    if(data.prices)     { prices=data.prices;       sv('dta_pr',prices); }
+    if(data.duPrices)   { duPrices=data.duPrices;   sv('dta_du',duPrices); }
+    if(data.policies)   { policies=data.policies;   sv('dta_pol',policies); }
+    if(data.qrSettings) { localStorage.setItem('dta_qr_settings', JSON.stringify(data.qrSettings)); }
+
+    renderDashboard(); renderBookings();
+    sNotify('✅ استيراد IDB ناجح','تم استيراد '+bookings.length+' حجز ('+totalImported+' سجل إجمالي)','success',5000);
+  }catch(e){
+    console.error('[importData]',e);
+    sNotify('❌ خطأ','فشل الاستيراد: '+e.message,'urgent',5000);
+  }
+}
+
 function triggerIDBImport(){
   document.getElementById('idb-impfile').click();
-}
-const _importData_orig = typeof importData==='function' ? importData : null;
-function importData(file){
-  if(file) DTA_BACKUP.importBackup(file);
-  else{
-    const inp = document.createElement('input');
-    inp.type='file'; inp.accept='.json,.gz,.html';
-    inp.onchange = e=> DTA_BACKUP.importBackup(e.target.files[0]);
-    inp.click();
-  }
 }
 
 
