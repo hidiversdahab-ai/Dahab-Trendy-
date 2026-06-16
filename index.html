@@ -3579,9 +3579,9 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 
   <div style="background:rgba(230,126,34,0.07);border:1px solid rgba(230,126,34,0.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:2;">
     <div style="color:#e67e22;font-weight:700;margin-bottom:4px;">🍽️ ما سيصل للعميل / What the customer receives:</div>
-    <div>📋 قائمة الطعام والمشروبات بالعربي والإنجليزي مع الأسعار</div>
-    <div style="color:var(--muted);font-size:11px;">📋 Full menu in Arabic & English with prices</div>
-    <div style="color:#e0c068;font-size:11px;margin-top:4px;">⚡ بدون WiFi أو خدمات غرفة — منيو خارجي فقط / Menu only, no room services</div>
+    <div>📋 صفحة منيو تفاعلية (كروت) بالعربي والإنجليزي مع إضافة للطلب وإرسال واتساب</div>
+    <div style="color:var(--muted);font-size:11px;">📋 Interactive card-style menu page with order builder & WhatsApp send</div>
+    <div style="color:#e0c068;font-size:11px;margin-top:4px;">⚡ بدون WiFi أو رقم غرفة — منيو خارجي فقط / No WiFi or room number — menu only</div>
   </div>
 
   <div class="fld">
@@ -3591,6 +3591,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   </div>
 
   <div class="flex mt" style="flex-wrap:wrap;gap:8px;">
+    <button class="btn" onclick="doPreviewTakeawayMenu()" style="flex:1;background:rgba(26,188,156,0.2);color:#1abc9c;border:1px solid rgba(26,188,156,0.4);font-size:13px;">👁️ معاينة</button>
     <button class="btn" onclick="doSendTakeawayMenu()" style="flex:3;font-size:14px;padding:13px;background:#e67e22;color:#fff;border:none;">🛵 إرسال المنيو / Send Menu</button>
     <button class="btn bb" onclick="closeM('takeaway-menu-modal')" style="flex:1;">إغلاق / Close</button>
   </div>
@@ -19813,38 +19814,17 @@ async function doSendTakeawayMenu(){
   const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
   const waNum = qrs.waNum || '201099531272';
 
-  // بناء قائمة المنيو نصياً — عربي + إنجليزي
-  const menu = (window.restMenu||[]).filter(i=>i.available!==false);
-  let menuText = '';
-  if(menu.length){
-    // تجميع حسب الفئة
-    const cats = {};
-    menu.forEach(i=>{
-      const c = i.cat||'أخرى';
-      if(!cats[c]) cats[c]=[];
-      cats[c].push(i);
-    });
-    Object.keys(cats).forEach(cat=>{
-      menuText += '\n*─── ' + cat + ' ───*\n';
-      cats[cat].forEach(i=>{
-        const ar = i.name || '';
-        const en = i.nameEn ? ' / ' + i.nameEn : '';
-        menuText += (i.emoji||'•') + ' ' + ar + en + ' — *' + (parseInt(i.price)||0) + ' EGP*\n';
-      });
-    });
-  } else {
-    menuText = '\n_(المنيو غير متاح حالياً / Menu not available)_\n';
-  }
+  // بناء صفحة Takeaway (كروت — نفس فكرة صفحة الضيف) كـ data URL
+  const takeawayHTML = DTA_QR.buildTakeawayPage();
+  const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(takeawayHTML);
 
   const msg =
     '🛵 *' + prop.name + ' — Takeaway*\n' +
     '━━━━━━━━━━━━━━━━━━\n\n' +
-    '🍽️ *قائمة الطعام والمشروبات*\n' +
-    '🍽️ *Food & Drinks Menu*\n' +
-    menuText + '\n' +
+    '🍽️ منيونا جاهز! اطلب بضغطة واحدة من الرابط:\n' +
+    '🍽️ Our menu is ready! Order with one tap:\n\n' +
+    dataUrl + '\n\n' +
     '━━━━━━━━━━━━━━━━━━\n' +
-    '📲 للطلب راسلنا على واتساب\n' +
-    '📲 To order, message us on WhatsApp\n' +
     '📞 ' + (prop.phone||'+20'+waNum);
 
   const waUrl = phone
@@ -19853,7 +19833,13 @@ async function doSendTakeawayMenu(){
 
   window.open(waUrl,'_blank');
   closeM('takeaway-menu-modal');
-  sNotify('🛵','تم فتح واتساب مع المنيو كاملاً','success',3000);
+  sNotify('🛵','تم فتح واتساب مع رابط منيو Takeaway','success',3000);
+}
+
+function doPreviewTakeawayMenu(){
+  const html = DTA_QR.buildTakeawayPage();
+  const w = window.open('','_blank');
+  if(w){ w.document.write(html); w.document.close(); }
 }
 
 // ══ إرسال صفحة الضيف (منيو + خدمات) من صفحة المطعم ══
@@ -26368,6 +26354,292 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 </html>`;
   }
 
+  // ─── صفحة Takeaway (نفس تصميم صفحة الضيف — بدون غرفة/واي فاي) ───
+  function buildTakeawayPage(){
+    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
+    const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
+    const waNum = qrs.waNum || '201099531272';
+
+    let _restMenuRaw = [];
+    if (window.restMenu && Array.isArray(window.restMenu) && window.restMenu.length) {
+      _restMenuRaw = window.restMenu.slice();
+    }
+    if (!_restMenuRaw.length) {
+      try {
+        const _ls = localStorage.getItem('dta_rest_menu');
+        if (_ls) { const _p = JSON.parse(_ls); if(Array.isArray(_p)&&_p.length) _restMenuRaw = _p; }
+      } catch(e){}
+    }
+    if (!_restMenuRaw.length && typeof restMenu !== 'undefined' && Array.isArray(restMenu) && restMenu.length) {
+      _restMenuRaw = restMenu.slice();
+    }
+    const _menuArr = _restMenuRaw.map(function(it){
+      return { n: it.name||'', ne: it.nameEn||'', p: parseInt(it.price,10)||0, e: it.emoji||'🍽️', c: it.cat||'أخرى', a: it.available!==false };
+    });
+    const _menuB64 = (function(){
+      try { return btoa(unescape(encodeURIComponent(JSON.stringify(_menuArr)))); } catch(e){ return ''; }
+    })();
+
+    return `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>منيو Takeaway — ${prop.name}</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--gold:#c9a84c;--gold2:#e0c068;--bg1:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;--card:rgba(255,255,255,0.05);--bdr:rgba(201,168,76,0.2);--muted:#7a8fa6;--text:#f0e6cc;--green:#25D366;--teal:#1abc9c}
+body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:var(--text);font-family:'Tajawal',Arial,sans-serif;min-height:100vh;padding-bottom:30px;}
+
+.hero{position:relative;overflow:hidden;text-align:center;padding:36px 20px 28px;background:linear-gradient(135deg,rgba(230,126,34,0.14),rgba(230,126,34,0.04));border-bottom:1px solid var(--bdr);}
+.hero::before{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(230,126,34,0.18),transparent 70%);border-radius:50%;}
+.hero-badge{display:inline-block;background:rgba(230,126,34,0.15);border:1px solid rgba(230,126,34,0.4);border-radius:20px;padding:4px 14px;font-size:11px;color:#e67e22;font-weight:700;letter-spacing:2px;margin-bottom:14px;}
+.hero-room{font-size:48px;font-weight:800;color:var(--gold);line-height:1;text-shadow:0 0 40px rgba(201,168,76,0.3);}
+.hero-name{font-size:17px;font-weight:700;margin-top:8px;color:var(--text);}
+.hero-welcome{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.7;}
+.hero-info{display:flex;justify-content:center;gap:16px;margin-top:16px;flex-wrap:wrap;}
+.hero-pill{background:rgba(255,255,255,0.06);border:1px solid var(--bdr);border-radius:20px;padding:5px 14px;font-size:11px;color:var(--muted);}
+.hero-pill span{color:var(--text);font-weight:700;}
+
+.wrap{padding:16px;max-width:480px;margin:0 auto;}
+
+.sec{background:var(--card);border:1px solid var(--bdr);border-radius:16px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;}
+.sec::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold2));opacity:0.5;}
+.sec-title{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.sec-title .ico{font-size:20px;}
+.sec-title .ar{font-size:14px;font-weight:800;color:var(--gold);}
+.sec-title .en{font-size:10px;color:var(--muted);font-weight:400;margin-right:auto;letter-spacing:1px;}
+
+.cat-scroll{display:flex;gap:7px;overflow-x:auto;padding-bottom:10px;margin-bottom:14px;scrollbar-width:none;}
+.cat-scroll::-webkit-scrollbar{display:none;}
+.cat-chip{background:transparent;border:1.5px solid var(--bdr);color:var(--muted);border-radius:14px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Tajawal',Arial,sans-serif;transition:all .18s;white-space:nowrap;flex-shrink:0;text-align:center;line-height:1.6;}
+.cat-chip.act{background:rgba(26,188,156,0.15);border-color:var(--teal);color:var(--teal);}
+.cat-chip .cnt{background:var(--teal);color:#fff;border-radius:10px;padding:0 6px;font-size:9px;margin-right:3px;}
+.menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+.mi-card{background:rgba(255,255,255,0.04);border:1.5px solid var(--bdr);border-radius:14px;padding:16px 8px 12px;text-align:center;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .18s;}
+.mi-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(201,168,76,0.12),transparent);opacity:0;transition:opacity .2s;pointer-events:none;}
+.mi-card:active::after{opacity:1;}
+.mi-card:hover{border-color:rgba(201,168,76,0.5);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3);}
+.mi-card.active{border-color:var(--teal);background:rgba(26,188,156,0.07);box-shadow:0 0 0 2px rgba(26,188,156,0.15);}
+.mi-badge{position:absolute;top:6px;left:6px;background:var(--teal);color:#fff;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:800;display:none;z-index:2;}
+.mi-card.active .mi-badge{display:block;}
+.mi-emoji{font-size:30px;line-height:1;}
+.mi-name{font-size:11px;font-weight:700;color:var(--text);line-height:1.4;}
+.mi-name-en{font-size:9px;font-weight:400;color:var(--muted);direction:ltr;display:inline-block;}
+.mi-price{font-size:13px;font-weight:800;color:var(--gold);margin-bottom:3px;}
+.mi-card.unavail{opacity:0.45;}
+.mi-card.unavail:hover{transform:none;box-shadow:none;border-color:var(--bdr);}
+.mi-unavail-tag{font-size:10px;font-weight:800;color:#e74c3c;background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);border-radius:8px;padding:3px 8px;text-align:center;line-height:1.6;}
+.mi-unavail-tag .en{font-size:8px;font-weight:400;direction:ltr;display:inline-block;color:#e7807a;}
+.qty-row{display:flex;align-items:center;justify-content:center;gap:7px;}
+.qbtn{width:30px;height:30px;border-radius:8px;border:1.5px solid rgba(26,188,156,0.4);background:rgba(26,188,156,0.12);color:var(--teal);font-size:20px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-family:Arial,sans-serif;touch-action:manipulation;transition:all .12s;}
+.qbtn.plus{background:rgba(26,188,156,0.22);border-color:var(--teal);}
+.qbtn:active{background:rgba(26,188,156,0.45);transform:scale(0.9);}
+.qbtn.minus{opacity:0.35;}
+.qbtn.minus.has{opacity:1;}
+.qval{font-size:15px;font-weight:800;color:var(--text);min-width:20px;text-align:center;}
+
+.order-bar{display:none;background:rgba(26,188,156,0.07);border:1.5px solid rgba(26,188,156,0.35);border-radius:14px;padding:16px;margin-top:4px;}
+.order-bar.show{display:block;}
+.order-title{font-size:12px;font-weight:800;color:var(--teal);letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.order-items{font-size:12px;color:var(--text);line-height:2.1;margin-bottom:10px;}
+.order-total{font-size:17px;font-weight:800;color:var(--teal);padding-top:10px;border-top:1px solid rgba(26,188,156,0.25);margin-bottom:14px;}
+.order-wa{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:14px;border-radius:12px;text-decoration:none;font-size:15px;font-weight:700;box-shadow:0 4px 16px rgba(37,211,102,0.25);margin-bottom:8px;}
+.order-clear{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;width:100%;text-align:center;padding:4px;font-family:'Tajawal',Arial,sans-serif;}
+
+.contact-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.contact-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.03);border:1px solid var(--bdr);border-radius:10px;padding:12px 14px;}
+.contact-ico{font-size:22px;width:32px;text-align:center;flex-shrink:0;}
+.contact-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.contact-val{font-size:13px;color:var(--text);font-weight:700;margin-top:2px;}
+.wa-main{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:16px;border-radius:14px;text-decoration:none;font-size:16px;font-weight:700;box-shadow:0 4px 20px rgba(37,211,102,0.25);}
+
+.footer{text-align:center;padding:24px 20px 10px;font-size:11px;color:var(--muted);line-height:2;}
+.footer a{color:var(--muted);text-decoration:none;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-badge">🛵 TAKEAWAY</div>
+  <div class="hero-room">🍽️</div>
+  <div class="hero-name">${prop.name}</div>
+  <div class="hero-welcome">منيو الطعام والمشروبات · Food & Drinks Menu</div>
+  <div class="hero-info">
+    <div class="hero-pill">📍 <span>Dahab, Sinai</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<div class="sec">
+  <div class="sec-title">
+    <span class="ico">🍽️</span>
+    <span class="ar">الطعام والمشروبات</span>
+    <span class="en">FOOD & DRINKS</span>
+  </div>
+  <div class="cat-scroll" id="cat-scroll"></div>
+  <div class="menu-grid" id="menu-grid"></div>
+  <div class="order-bar" id="order-bar">
+    <div class="order-title">🛒 طلبك · Your Order</div>
+    <div class="order-items" id="order-items"></div>
+    <div class="order-total" id="order-total"></div>
+    <a class="order-wa" id="order-wa" href="#">💬 أرسل الطلب عبر واتساب</a>
+    <button class="order-clear" onclick="clearOrd()">🗑️ مسح الطلب · Clear</button>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="sec-title">
+    <span class="ico">📞</span>
+    <span class="ar">تواصل معنا</span>
+    <span class="en">CONTACT</span>
+  </div>
+  <div class="contact-list">
+    <div class="contact-item">
+      <div class="contact-ico">📍</div>
+      <div><div class="contact-lbl">العنوان · Address</div><div class="contact-val">${prop.address}</div></div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-ico">📞</div>
+      <div><div class="contact-lbl">هاتف · Phone</div><div class="contact-val"><a href="tel:${prop.phone}" style="color:inherit;text-decoration:none;" dir="ltr">${prop.phone}</a></div></div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-ico">📧</div>
+      <div><div class="contact-lbl">بريد · Email</div><div class="contact-val" style="font-size:12px;">${prop.email}</div></div>
+    </div>
+  </div>
+  <a href="https://wa.me/${waNum}?text=${encodeURIComponent('مرحباً، عايز أطلب Takeaway 🛵')}" class="wa-main">
+    💬 تواصل معنا · WhatsApp
+  </a>
+</div>
+
+</div><!-- /wrap -->
+
+<div class="footer">
+  🏨 ${prop.name} · 🛵 Takeaway<br>
+  <a href="https://wa.me/${waNum}">واتساب الاستقبال</a>
+</div>
+
+<script>
+(function(){
+  var WA='${waNum}';
+  var MI=[];
+  try{ var b='${_menuB64}'; if(b) MI=JSON.parse(decodeURIComponent(escape(atob(b)))); }catch(e){}
+  var QS=new Array(MI.length).fill(0);
+  var activeCat='all';
+  var cats=['all'];
+  MI.forEach(function(it){ if(it.c && cats.indexOf(it.c)===-1) cats.push(it.c); });
+
+  var catLabels={'all':'🍽️ الكل'};
+  var catEnMap={
+    'لحوم 🥩':'Meat','فراخ 🍗':'Chicken','أسماك 🐟':'Fish','مشروبات 🥤':'Drinks',
+    'حلويات 🍰':'Desserts','وجبات خفيفة 🥪':'Snacks','شيشة 💨':'Shisha','أكل 🍽️':'Food',
+    'شوربة 🍲':'Soup','سلطات 🥗':'Salads','باستا 🍝':'Pasta','مشويات 🔥':'Grill',
+    'إفطار 🍳':'Breakfast','بيتزا 🍕':'Pizza','سندوتشات 🥙':'Sandwiches','أرز وحبوب 🍚':'Rice & Grains',
+    'عصائر طازجة 🍊':'Fresh Juices','مشروبات ساخنة ☕':'Hot Drinks','مياه وبارد 💧':'Water & Cold',
+    'مشروبات غازية 🥤':'Soft Drinks','أخرى 📌':'Other','سموزي ومثلجات 🧋':'Smoothies & Shakes'
+  };
+
+  function buildCats(){
+    var el=document.getElementById('cat-scroll'); if(!el) return;
+    el.innerHTML=cats.map(function(cat){
+      var lbl=catLabels[cat]||(cat.length>10?cat.substring(0,10)+'…':cat);
+      var enLbl = cat==='all' ? 'All' : (catEnMap[cat]||'');
+      var total=0; QS.forEach(function(q,i){ if(q>0&&(cat==='all'||MI[i].c===cat)) total+=q; });
+      var act=activeCat===cat;
+      return '<button class="cat-chip'+(act?' act':'')+'" onclick="setCat(\\''+cat+'\\')">'
+        +(total>0?'<span class="cnt">'+total+'</span>':'')+lbl
+        +(enLbl?'<br><span style="font-size:9px;opacity:.7;font-weight:400;">'+enLbl+'</span>':'')
+        +'</button>';
+    }).join('');
+  }
+
+  function buildGrid(){
+    var el=document.getElementById('menu-grid'); if(!el) return;
+    if(!MI.length){
+      el.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px;grid-column:1/-1;font-size:12px;">لا توجد أصناف حالياً — تواصل معنا مباشرة 💬</p>';
+      return;
+    }
+    var list=MI.map(function(it,i){return{it:it,i:i};}).filter(function(o){
+      return activeCat==='all'||o.it.c===activeCat;
+    });
+    if(!list.length){ el.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px;grid-column:1/-1;font-size:12px;">لا يوجد في هذه الفئة</p>'; return; }
+    el.innerHTML=list.map(function(o){
+      var it=o.it,i=o.i,q=QS[i]||0,has=q>0,avail=it.a!==false;
+      var nameHtml='<div class="mi-name">'+it.n+(it.ne?'<br><span class="mi-name-en">'+it.ne+'</span>':'')+'</div>';
+      if(!avail){
+        return '<div class="mi-card unavail" id="mc'+i+'">'
+          +'<span class="mi-emoji">'+it.e+'</span>'
+          +nameHtml
+          +'<div class="mi-price">'+it.p+' ج</div>'
+          +'<div class="mi-unavail-tag">غير متوفر<br><span class="en">Not Available</span></div>'
+          +'</div>';
+      }
+      return '<div class="mi-card'+(has?' active':'')+'" id="mc'+i+'">'
+        +'<div class="mi-badge" id="mb'+i+'">'+(has?q:'')+'</div>'
+        +'<span class="mi-emoji">'+it.e+'</span>'
+        +nameHtml
+        +'<div class="mi-price">'+it.p+' ج</div>'
+        +'<div class="qty-row">'
+        +'<button class="qbtn minus'+(has?' has':'')+'" onclick="chg('+i+',-1)">&#8722;</button>'
+        +'<span class="qval" id="qv'+i+'">'+q+'</span>'
+        +'<button class="qbtn plus" onclick="chg('+i+',1)">+</button>'
+        +'</div></div>';
+    }).join('');
+  }
+
+  window.setCat=function(cat){ activeCat=cat; buildCats(); buildGrid(); };
+
+  window.chg=function(i,d){
+    QS[i]=Math.max(0,(QS[i]||0)+d);
+    var q=QS[i];
+    var qvEl=document.getElementById('qv'+i);
+    var mbEl=document.getElementById('mb'+i);
+    var mcEl=document.getElementById('mc'+i);
+    var minus=mcEl?mcEl.querySelector('.qbtn.minus'):null;
+    if(qvEl) qvEl.textContent=q;
+    if(mbEl){ mbEl.textContent=q>0?q:''; }
+    if(mcEl){ if(q>0){mcEl.classList.add('active');}else{mcEl.classList.remove('active');} }
+    if(minus){ if(q>0){minus.classList.add('has');}else{minus.classList.remove('has');} }
+    buildCats();
+    updateBar();
+  };
+
+  function updateBar(){
+    var bar=document.getElementById('order-bar');
+    var items=[],total=0;
+    MI.forEach(function(it,i){
+      if(QS[i]>0){ var p=parseInt(it.p,10)||0; items.push({n:it.n,q:QS[i],p:p,e:it.e}); total+=QS[i]*p; }
+    });
+    if(!items.length){ bar.classList.remove('show'); return; }
+    bar.classList.add('show');
+    document.getElementById('order-items').innerHTML=items.map(function(it){
+      return it.e+' '+it.n+' \xd7'+it.q+' = <strong style="color:var(--teal);">'+(it.q*it.p)+' EGP</strong>';
+    }).join('<br>');
+    document.getElementById('order-total').textContent='💰 الإجمالي: '+total+' EGP';
+    var t=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+    var msg='🛵 طلب Takeaway\\n⏰ '+t+'\\n\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n';
+    msg+=items.map(function(it){ return it.e+' '+it.n+' \\xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\\n');
+    msg+='\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n*الإجمالي: '+total+' EGP*';
+    document.getElementById('order-wa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);
+  }
+
+  window.clearOrd=function(){
+    QS=new Array(MI.length).fill(0);
+    buildCats(); buildGrid();
+    document.getElementById('order-bar').classList.remove('show');
+  };
+
+  buildCats();
+  buildGrid();
+})();
+<\/script>
+</body>
+</html>`;
+  }
+
   // ─── Modal عرض QR لغرفة ───
   async function openQRModal(roomNo){
     roomNo = String(roomNo);
@@ -26642,7 +26914,7 @@ h1{text-align:center;color:#1a1a2e;margin-bottom:20px;font-size:18px;}
     patchRoomsPage();
   });
 
-  return { openQRModal, buildGuestPage, generateQRSVG };
+  return { openQRModal, buildGuestPage, buildTakeawayPage, generateQRSVG };
 })();
 
 window.DTA_QR = DTA_QR;
