@@ -26166,7 +26166,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     <div class="order-title">🛒 طلبك · Your Order</div>
     <div class="order-items" id="order-items"></div>
     <div class="order-total" id="order-total"></div>
-    <a class="order-wa" id="order-wa" href="#">💬 أرسل الطلب عبر واتساب</a>
+    <a class="order-wa" id="order-wa" href="#">💬 أرسل الطلب عبر واتساب · Send Order via WhatsApp</a>
     <button class="order-clear" onclick="clearOrd()">🗑️ مسح الطلب · Clear</button>
   </div>
 </div>
@@ -26176,7 +26176,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
   <div class="sec-title">
     <span class="ico">📞</span>
     <span class="ar">تواصل معنا</span>
-    <span class="en">CONTACT</span>
+    <span class="en">CONTACT US</span>
   </div>
   <div class="contact-list">
     <div class="contact-item">
@@ -26193,7 +26193,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     </div>
   </div>
   <a href="https://wa.me/${waNum}?text=${encodeURIComponent('مرحباً، أنا في الغرفة '+room+' · Hello from Room '+room)}" class="wa-main">
-    💬 تواصل معنا · WhatsApp
+    💬 تواصل معنا عبر واتساب · Contact Us via WhatsApp
   </a>
 </div>
 
@@ -26219,7 +26219,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 
 <div class="footer">
   🏨 ${prop.name} · غرفة ${room}<br>
-  <a href="https://wa.me/${waNum}">واتساب الاستقبال</a>
+  <a href="https://wa.me/${waNum}">واتساب الاستقبال · Reception WhatsApp</a>
 </div>
 
 <script>
@@ -26318,7 +26318,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     document.getElementById('order-items').innerHTML=items.map(function(it){
       return it.e+' '+it.n+(it.ne?' / '+it.ne:'')+' \xd7'+it.q+' = <strong style="color:var(--teal);">'+(it.q*it.p)+' EGP</strong>';
     }).join('<br>');
-    document.getElementById('order-total').textContent='💰 الإجمالي: '+total+' EGP';
+    document.getElementById('order-total').textContent='💰 الإجمالي · Total: '+total+' EGP';
     var t=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
     var dk=['مشروبات ساخنة ☕','عصائر طازجة 🍊','مياه وبارد 💧','مشروبات غازية 🥤','سموزي ومثلجات 🧋'];
     var hf=false,hd=false;
@@ -26326,7 +26326,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var ttl=(hf&&hd)?'🍽️🥤 طلب طعام ومشروبات':hf?'🍽️ طلب طعام':'🥤 طلب مشروبات';
     var msg=ttl+' — غرفة '+RM+'\\n⏰ '+t+'\\n\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n';
     msg+=items.map(function(it){ return it.e+' '+it.n+(it.ne?' / '+it.ne:'')+' \\xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\\n');
-    msg+='\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n*الإجمالي: '+total+' EGP*';
+    msg+='\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n*الإجمالي · Total: '+total+' EGP*';
     document.getElementById('order-wa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);
   }
 
@@ -26485,7 +26485,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     <div class="order-title">🛒 طلبك · Your Order</div>
     <div class="order-items" id="order-items"></div>
     <div class="order-total" id="order-total"></div>
-    <a class="order-wa" id="order-wa" href="#">💬 أرسل الطلب عبر واتساب</a>
+    <a class="order-wa" id="order-wa" href="#">💬 أرسل الطلب عبر واتساب · Send Order via WhatsApp</a>
     <button class="order-clear" onclick="clearOrd()">🗑️ مسح الطلب · Clear</button>
   </div>
 </div>
@@ -26494,7 +26494,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
   <div class="sec-title">
     <span class="ico">📞</span>
     <span class="ar">تواصل معنا</span>
-    <span class="en">CONTACT</span>
+    <span class="en">CONTACT US</span>
   </div>
   <div class="contact-list">
     <div class="contact-item">
@@ -26511,7 +26511,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     </div>
   </div>
   <a href="https://wa.me/${waNum}?text=${encodeURIComponent('مرحباً، عايز أطلب Takeaway 🛵')}" class="wa-main">
-    💬 تواصل معنا · WhatsApp
+    💬 تواصل معنا عبر واتساب · Contact Us via WhatsApp
   </a>
 </div>
 
@@ -26519,7 +26519,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 
 <div class="footer">
   🏨 ${prop.name} · 🛵 Takeaway<br>
-  <a href="https://wa.me/${waNum}">واتساب الاستقبال</a>
+  <a href="https://wa.me/${waNum}">واتساب الاستقبال · Reception WhatsApp</a>
 </div>
 
 <script>
@@ -26618,11 +26618,11 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     document.getElementById('order-items').innerHTML=items.map(function(it){
       return it.e+' '+it.n+(it.ne?' / '+it.ne:'')+' \xd7'+it.q+' = <strong style="color:var(--teal);">'+(it.q*it.p)+' EGP</strong>';
     }).join('<br>');
-    document.getElementById('order-total').textContent='💰 الإجمالي: '+total+' EGP';
+    document.getElementById('order-total').textContent='💰 الإجمالي · Total: '+total+' EGP';
     var t=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
     var msg='🛵 طلب Takeaway\\n⏰ '+t+'\\n\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n';
     msg+=items.map(function(it){ return it.e+' '+it.n+(it.ne?' / '+it.ne:'')+' \\xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\\n');
-    msg+='\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n*الإجمالي: '+total+' EGP*';
+    msg+='\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n*الإجمالي · Total: '+total+' EGP*';
     document.getElementById('order-wa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);
   }
 
