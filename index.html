@@ -3221,6 +3221,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     <button class="btn" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.4);" onclick="switchRestView('pos', document.getElementById('rtab-pos'))">🧾 POS</button>
     <button class="btn" style="background:rgba(37,211,102,0.12);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);" onclick="switchRestView('menu', document.getElementById('rtab-menu'))">🍴 <span class="t" data-ar="تعديل المنيو" data-en="Edit Menu">تعديل المنيو</span></button>
     <button class="btn" style="background:rgba(37,211,102,0.18);color:#25D366;border:1px solid rgba(37,211,102,0.5);font-weight:700;" onclick="openSendMenuModal()">📱 <span class="t" data-ar="إرسال للضيف" data-en="Send to Guest">إرسال للضيف</span></button>
+    <button class="btn" style="background:rgba(230,126,34,0.18);color:#e67e22;border:1px solid rgba(230,126,34,0.5);font-weight:700;" onclick="openTakeawayMenuModal()">🛵 <span class="t" data-ar="Takeaway منيو" data-en="Takeaway Menu">Takeaway منيو</span></button>
   </div>
 </div>
 
@@ -3567,6 +3568,31 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     <button class="btn bgr" onclick="doSendMenuToGuest()" style="flex:3;font-size:14px;padding:13px;">💬 فتح واتساب وإرسال</button>
     <button class="btn" onclick="doPreviewGuestPageFromModal()" style="flex:2;background:rgba(26,188,156,0.2);color:#1abc9c;border:1px solid rgba(26,188,156,0.4);font-size:13px;">👁️ معاينة</button>
     <button class="btn bb" onclick="closeM('send-menu-modal')" style="flex:1;">إغلاق</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ TAKEAWAY MENU MODAL ══ -->
+<div class="ovl" id="takeaway-menu-modal">
+<div class="mdl" style="max-width:420px;">
+  <div class="mtitle">🛵 إرسال المنيو — Send Menu (Takeaway)</div>
+
+  <div style="background:rgba(230,126,34,0.07);border:1px solid rgba(230,126,34,0.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:2;">
+    <div style="color:#e67e22;font-weight:700;margin-bottom:4px;">🍽️ ما سيصل للعميل / What the customer receives:</div>
+    <div>📋 قائمة الطعام والمشروبات بالعربي والإنجليزي مع الأسعار</div>
+    <div style="color:var(--muted);font-size:11px;">📋 Full menu in Arabic & English with prices</div>
+    <div style="color:#e0c068;font-size:11px;margin-top:4px;">⚡ بدون WiFi أو خدمات غرفة — منيو خارجي فقط / Menu only, no room services</div>
+  </div>
+
+  <div class="fld">
+    <label>📱 واتساب العميل / Customer WhatsApp (اختياري / Optional)</label>
+    <input id="takeaway-phone" type="tel" placeholder="e.g. 201012345678" dir="ltr" style="font-size:14px;">
+    <div style="font-size:10px;color:var(--muted);margin-top:4px;">اتركه فارغاً لفتح واتساب بدون رقم / Leave empty to open WhatsApp without a number</div>
+  </div>
+
+  <div class="flex mt" style="flex-wrap:wrap;gap:8px;">
+    <button class="btn" onclick="doSendTakeawayMenu()" style="flex:3;font-size:14px;padding:13px;background:#e67e22;color:#fff;border:none;">🛵 إرسال المنيو / Send Menu</button>
+    <button class="btn bb" onclick="closeM('takeaway-menu-modal')" style="flex:1;">إغلاق / Close</button>
   </div>
 </div>
 </div>
@@ -17388,7 +17414,16 @@ function openMorningBriefing(){
     if(diff<=7)bdays.push({...b,diff});
   });
   document.getElementById('mb-bday-list').innerHTML=bdays.length
-    ?bdays.map(b=>`<div class="mb-item bday">🎂 <div><div style="font-weight:700;color:#f5c518;">${b.name}</div><div style="font-size:10px;color:var(--muted);">${b.diff===0?(currentLang==='ar'?'اليوم!':'Today!'):(currentLang==='ar'?'خلال '+b.diff+' يوم':'In '+b.diff+' days')}</div></div></div>`).join('')
+    ?bdays.map(b=>{
+      const dobD=new Date(b.dob);
+      const turningAge=now.getFullYear()-dobD.getFullYear()+(b.diff===0&&now.getMonth()>=dobD.getMonth()?0:0);
+      // Age they are turning this birthday
+      const bdayYear=b.diff===0?now.getFullYear():(new Date(now.getFullYear(),dobD.getMonth(),dobD.getDate())<new Date()?now.getFullYear()+1:now.getFullYear());
+      const age=bdayYear-dobD.getFullYear();
+      const ageTag=`<span style="background:rgba(245,197,24,0.2);border:1px solid rgba(245,197,24,0.5);border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;color:#f5c518;margin-right:5px;">${age} ${currentLang==='ar'?'سنة':'yrs'}</span>`;
+      const whenStr=b.diff===0?(currentLang==='ar'?'🎉 اليوم!':'🎉 Today!'):(currentLang==='ar'?'خلال '+b.diff+' يوم':'In '+b.diff+' days');
+      return `<div class="mb-item bday">🎂 <div><div style="font-weight:700;color:#f5c518;">${b.name} ${ageTag}</div><div style="font-size:10px;color:var(--muted);">${whenStr}</div></div></div>`;
+    }).join('')
     :`<div class="mb-item info" style="color:var(--muted);">${currentLang==='ar'?'لا أعياد ميلاد قريبة':'No upcoming birthdays'}</div>`;
   document.getElementById('mb-payments').innerHTML=pending.length
     ?pending.map(b=>{
@@ -19754,6 +19789,71 @@ function sendPOSReceiptWA(){
     : "https://wa.me/?text="+encodeURIComponent(msg);
 
   window.open(url,"_blank");
+}
+
+// ══ Takeaway: إرسال المنيو فقط (بدون غرفة أو خدمات) ══
+
+function openTakeawayMenuModal(){
+  document.getElementById('takeaway-phone').value = '';
+  document.getElementById('takeaway-menu-modal').classList.add('on');
+}
+
+async function doSendTakeawayMenu(){
+  const phone = (document.getElementById('takeaway-phone').value||'').replace(/[^0-9+]/g,'');
+
+  // تأكد المنيو محمّل
+  if(typeof restMenu !== 'undefined' && !restMenu.length){
+    try{
+      const idbMenu = await DTA_DB.getSetting('dta_rest_menu',[]);
+      if(Array.isArray(idbMenu)&&idbMenu.length){ restMenu=idbMenu; window.restMenu=restMenu; }
+    }catch(e){}
+  }
+
+  const prop = (typeof PROP!=='undefined'&&PROP) ? PROP : {name:'Dahab Trendy',phone:''};
+  const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
+  const waNum = qrs.waNum || '201099531272';
+
+  // بناء قائمة المنيو نصياً — عربي + إنجليزي
+  const menu = (window.restMenu||[]).filter(i=>i.available!==false);
+  let menuText = '';
+  if(menu.length){
+    // تجميع حسب الفئة
+    const cats = {};
+    menu.forEach(i=>{
+      const c = i.cat||'أخرى';
+      if(!cats[c]) cats[c]=[];
+      cats[c].push(i);
+    });
+    Object.keys(cats).forEach(cat=>{
+      menuText += '\n*─── ' + cat + ' ───*\n';
+      cats[cat].forEach(i=>{
+        const ar = i.name || '';
+        const en = i.nameEn ? ' / ' + i.nameEn : '';
+        menuText += (i.emoji||'•') + ' ' + ar + en + ' — *' + (parseInt(i.price)||0) + ' EGP*\n';
+      });
+    });
+  } else {
+    menuText = '\n_(المنيو غير متاح حالياً / Menu not available)_\n';
+  }
+
+  const msg =
+    '🛵 *' + prop.name + ' — Takeaway*\n' +
+    '━━━━━━━━━━━━━━━━━━\n\n' +
+    '🍽️ *قائمة الطعام والمشروبات*\n' +
+    '🍽️ *Food & Drinks Menu*\n' +
+    menuText + '\n' +
+    '━━━━━━━━━━━━━━━━━━\n' +
+    '📲 للطلب راسلنا على واتساب\n' +
+    '📲 To order, message us on WhatsApp\n' +
+    '📞 ' + (prop.phone||'+20'+waNum);
+
+  const waUrl = phone
+    ? 'https://wa.me/'+phone+'?text='+encodeURIComponent(msg)
+    : 'https://wa.me/?text='+encodeURIComponent(msg);
+
+  window.open(waUrl,'_blank');
+  closeM('takeaway-menu-modal');
+  sNotify('🛵','تم فتح واتساب مع المنيو كاملاً','success',3000);
 }
 
 // ══ إرسال صفحة الضيف (منيو + خدمات) من صفحة المطعم ══
