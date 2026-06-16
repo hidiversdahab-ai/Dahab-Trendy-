@@ -26311,12 +26311,12 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var bar=document.getElementById('order-bar');
     var items=[],total=0;
     MI.forEach(function(it,i){
-      if(QS[i]>0){ var p=parseInt(it.p,10)||0; items.push({n:it.n,q:QS[i],p:p,e:it.e}); total+=QS[i]*p; }
+      if(QS[i]>0){ var p=parseInt(it.p,10)||0; items.push({n:it.n,ne:it.ne||'',q:QS[i],p:p,e:it.e}); total+=QS[i]*p; }
     });
     if(!items.length){ bar.classList.remove('show'); return; }
     bar.classList.add('show');
     document.getElementById('order-items').innerHTML=items.map(function(it){
-      return it.e+' '+it.n+' \xd7'+it.q+' = <strong style="color:var(--teal);">'+(it.q*it.p)+' EGP</strong>';
+      return it.e+' '+it.n+(it.ne?' / '+it.ne:'')+' \xd7'+it.q+' = <strong style="color:var(--teal);">'+(it.q*it.p)+' EGP</strong>';
     }).join('<br>');
     document.getElementById('order-total').textContent='💰 الإجمالي: '+total+' EGP';
     var t=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
@@ -26325,7 +26325,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     MI.forEach(function(it,i){ if(QS[i]>0){ if(dk.indexOf(it.c)>=0) hd=true; else hf=true; } });
     var ttl=(hf&&hd)?'🍽️🥤 طلب طعام ومشروبات':hf?'🍽️ طلب طعام':'🥤 طلب مشروبات';
     var msg=ttl+' — غرفة '+RM+'\\n⏰ '+t+'\\n\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n';
-    msg+=items.map(function(it){ return it.e+' '+it.n+' \\xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\\n');
+    msg+=items.map(function(it){ return it.e+' '+it.n+(it.ne?' / '+it.ne:'')+' \\xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\\n');
     msg+='\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n*الإجمالي: '+total+' EGP*';
     document.getElementById('order-wa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);
   }
@@ -26611,17 +26611,17 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var bar=document.getElementById('order-bar');
     var items=[],total=0;
     MI.forEach(function(it,i){
-      if(QS[i]>0){ var p=parseInt(it.p,10)||0; items.push({n:it.n,q:QS[i],p:p,e:it.e}); total+=QS[i]*p; }
+      if(QS[i]>0){ var p=parseInt(it.p,10)||0; items.push({n:it.n,ne:it.ne||'',q:QS[i],p:p,e:it.e}); total+=QS[i]*p; }
     });
     if(!items.length){ bar.classList.remove('show'); return; }
     bar.classList.add('show');
     document.getElementById('order-items').innerHTML=items.map(function(it){
-      return it.e+' '+it.n+' \xd7'+it.q+' = <strong style="color:var(--teal);">'+(it.q*it.p)+' EGP</strong>';
+      return it.e+' '+it.n+(it.ne?' / '+it.ne:'')+' \xd7'+it.q+' = <strong style="color:var(--teal);">'+(it.q*it.p)+' EGP</strong>';
     }).join('<br>');
     document.getElementById('order-total').textContent='💰 الإجمالي: '+total+' EGP';
     var t=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
     var msg='🛵 طلب Takeaway\\n⏰ '+t+'\\n\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n';
-    msg+=items.map(function(it){ return it.e+' '+it.n+' \\xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\\n');
+    msg+=items.map(function(it){ return it.e+' '+it.n+(it.ne?' / '+it.ne:'')+' \\xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\\n');
     msg+='\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n*الإجمالي: '+total+' EGP*';
     document.getElementById('order-wa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);
   }
