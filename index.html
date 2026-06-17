@@ -1377,6 +1377,11 @@ label {
     <div class="bn-more-item" onclick="bnGo('invoice',null);closeBnMore()"><span class="bm-icon">📄</span><span class="t" data-ar="فاتورة" data-en="Invoice">فاتورة</span></div>
     <div class="bn-more-item" onclick="bnGo('analytics',null);closeBnMore()"><span class="bm-icon">📊</span><span class="t" data-ar="تحليلات" data-en="Analytics">تحليلات</span></div>
     <div class="bn-more-item" onclick="bnGo('housekeeping',null);closeBnMore()"><span class="bm-icon">🧹</span><span class="t" data-ar="تنظيف" data-en="HK">تنظيف</span></div>
+    <div class="bn-more-item" onclick="bnGo('minibar',null);closeBnMore()" style="border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.07);"><span class="bm-icon" style="color:#1abc9c;">🌡️</span><span style="color:#1abc9c;" class="t" data-ar="مينيبار" data-en="Minibar">مينيبار</span></div>
+    <div class="bn-more-item" onclick="bnGo('wakeup',null);closeBnMore()" style="border-color:rgba(255,193,7,0.4);background:rgba(255,193,7,0.07);"><span class="bm-icon" style="color:#ffc107;">🔔</span><span style="color:#ffc107;" class="t" data-ar="إيقاظ" data-en="Wake-up">إيقاظ</span></div>
+    <div class="bn-more-item" onclick="bnGo('lostandfound',null);closeBnMore()" style="border-color:rgba(230,126,34,0.4);background:rgba(230,126,34,0.07);"><span class="bm-icon" style="color:#e67e22;">📦</span><span style="color:#e67e22;" class="t" data-ar="مفقودات" data-en="Lost & Found">مفقودات</span></div>
+    <div class="bn-more-item" onclick="bnGo('guestreq',null);closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">🛎️</span><span style="color:#7ab8f5;" class="t" data-ar="طلبات ضيوف" data-en="Requests">طلبات</span></div>
+    <div class="bn-more-item" onclick="bnGo('staffshift',null);closeBnMore()" style="border-color:rgba(155,89,182,0.4);background:rgba(155,89,182,0.07);"><span class="bm-icon" style="color:#c39bd3;">📊</span><span style="color:#c39bd3;" class="t" data-ar="شيفت" data-en="Staff Shift">شيفت</span></div>
     <div class="bn-more-item" onclick="bnGo('guestsreg',null);closeBnMore()"><span class="bm-icon">📋</span><span class="t" data-ar="سجل الضيوف" data-en="Guests Reg.">سجل الضيوف</span></div>
     <div class="bn-more-item" onclick="bnGo('restaurant',null);closeBnMore()"><span class="bm-icon">🍽️</span><span class="t" data-ar="مطعم" data-en="Rest.">مطعم</span></div>
     <div class="bn-more-item" onclick="bnGo('tours',null);closeBnMore()"><span class="bm-icon">🏔️</span><span class="t" data-ar="رحلات" data-en="Tours">رحلات</span></div>
@@ -1410,6 +1415,482 @@ label {
     <div class="fab-item" onclick="openAIChat();fabClose()"><span class="fab-item-icon">🤖</span> AI Assistant</div>
   </div>
   <button class="fab-btn" id="fab-main-btn" onclick="fabToggle()">＋</button>
+</div>
+
+<!-- ══ WAKE-UP CALL PAGE ══ -->
+<div id="page-wakeup" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <h2 style="color:#ffc107;font-size:18px;">🔔 <span class="t" data-ar="نظام الإيقاظ" data-en="Wake-up Call System">نظام الإيقاظ</span></h2>
+    <button class="btn" style="background:rgba(255,193,7,0.15);color:#ffc107;border:1px solid rgba(255,193,7,0.4);" onclick="openWakeUpModal()">+ <span class="t" data-ar="طلب إيقاظ" data-en="New Wake-up">طلب إيقاظ</span></button>
+  </div>
+  <div id="wakeup-list"><div style="text-align:center;padding:40px;color:var(--muted);">🔔 <span class="t" data-ar="لا توجد طلبات إيقاظ" data-en="No wake-up calls">لا توجد طلبات إيقاظ</span></div></div>
+</div>
+
+<!-- Wake-up Modal -->
+<div id="wakeup-modal-overlay" class="mdl-overlay" style="display:none;" onclick="if(event.target===this)closeWakeUpModal()">
+  <div class="mdl" style="max-width:420px;">
+    <div class="mdl-hdr"><span>🔔 <span class="t" data-ar="طلب إيقاظ جديد" data-en="New Wake-up Call">طلب إيقاظ جديد</span></span><button class="mdl-x" onclick="closeWakeUpModal()">✕</button></div>
+    <div class="fld"><label class="t" data-ar="الغرفة" data-en="Room">الغرفة</label><input id="wu-room" type="text" placeholder="رقم الغرفة"></div>
+    <div class="fld"><label class="t" data-ar="اسم الضيف" data-en="Guest Name">اسم الضيف</label><input id="wu-guest" type="text"></div>
+    <div class="fld"><label class="t" data-ar="وقت الإيقاظ" data-en="Wake-up Time">وقت الإيقاظ</label><input id="wu-time" type="time"></div>
+    <div class="fld"><label class="t" data-ar="التاريخ" data-en="Date">التاريخ</label><input id="wu-date" type="date"></div>
+    <div class="fld"><label class="t" data-ar="ملاحظات" data-en="Notes">ملاحظات</label><input id="wu-notes" type="text"></div>
+    <div class="flex mt"><button class="btn bg" onclick="saveWakeUp()">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ</span></button><button class="btn bb" onclick="closeWakeUpModal()"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء</span></button></div>
+  </div>
+</div>
+
+<!-- ══ LOST & FOUND PAGE ══ -->
+<div id="page-lostandfound" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <h2 style="color:#e67e22;font-size:18px;">📦 <span class="t" data-ar="المفقودات والموجودات" data-en="Lost & Found">المفقودات والموجودات</span></h2>
+    <button class="btn" style="background:rgba(230,126,34,0.15);color:#e67e22;border:1px solid rgba(230,126,34,0.4);" onclick="openLFModal()">+ <span class="t" data-ar="صنف جديد" data-en="New Item">صنف جديد</span></button>
+  </div>
+  <div id="lf-list"><div style="text-align:center;padding:40px;color:var(--muted);">📦 <span class="t" data-ar="لا توجد عناصر مسجلة" data-en="No items recorded">لا توجد عناصر مسجلة</span></div></div>
+</div>
+
+<!-- Lost & Found Modal -->
+<div id="lf-modal-overlay" class="mdl-overlay" style="display:none;" onclick="if(event.target===this)closeLFModal()">
+  <div class="mdl" style="max-width:420px;">
+    <div class="mdl-hdr"><span>📦 <span class="t" data-ar="تسجيل مفقود/موجود" data-en="Log Lost/Found Item">تسجيل مفقود/موجود</span></span><button class="mdl-x" onclick="closeLFModal()">✕</button></div>
+    <div class="fld"><label class="t" data-ar="النوع" data-en="Type">النوع</label>
+      <select id="lf-type">
+        <option value="found" class="t" data-ar="موجود (وجدناه)" data-en="Found">موجود (وجدناه)</option>
+        <option value="lost" class="t" data-ar="مفقود (طلبه ضيف)" data-en="Lost">مفقود (طلبه ضيف)</option>
+      </select>
+    </div>
+    <div class="fld"><label class="t" data-ar="وصف الغرض" data-en="Item Description">وصف الغرض</label><input id="lf-desc" type="text"></div>
+    <div class="fld"><label class="t" data-ar="الغرفة / المكان" data-en="Room / Location">الغرفة / المكان</label><input id="lf-location" type="text"></div>
+    <div class="fld"><label class="t" data-ar="اسم الضيف (إن وجد)" data-en="Guest Name (if any)">اسم الضيف (إن وجد)</label><input id="lf-guest" type="text"></div>
+    <div class="fld"><label class="t" data-ar="التاريخ" data-en="Date">التاريخ</label><input id="lf-date" type="date"></div>
+    <div class="fld"><label class="t" data-ar="الحالة" data-en="Status">الحالة</label>
+      <select id="lf-status">
+        <option value="pending">⏳ <span class="t" data-ar="قيد المتابعة" data-en="Pending">قيد المتابعة</span></option>
+        <option value="returned">✅ <span class="t" data-ar="تم الإرجاع" data-en="Returned">تم الإرجاع</span></option>
+        <option value="disposed">🗑️ <span class="t" data-ar="تم التخلص منه" data-en="Disposed">تم التخلص منه</span></option>
+      </select>
+    </div>
+    <div class="flex mt"><button class="btn bg" onclick="saveLFItem()">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ</span></button><button class="btn bb" onclick="closeLFModal()"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء</span></button></div>
+  </div>
+</div>
+
+<!-- ══ GUEST REQUESTS TRACKER PAGE ══ -->
+<div id="page-guestreq" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <h2 style="color:#7ab8f5;font-size:18px;">🛎️ <span class="t" data-ar="طلبات الضيوف" data-en="Guest Requests">طلبات الضيوف</span></h2>
+    <button class="btn" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.4);" onclick="openGReqModal()">+ <span class="t" data-ar="طلب جديد" data-en="New Request">طلب جديد</span></button>
+  </div>
+  <div id="greq-list"><div style="text-align:center;padding:40px;color:var(--muted);">🛎️ <span class="t" data-ar="لا توجد طلبات" data-en="No requests yet">لا توجد طلبات</span></div></div>
+</div>
+
+<!-- Guest Requests Modal -->
+<div id="greq-modal-overlay" class="mdl-overlay" style="display:none;" onclick="if(event.target===this)closeGReqModal()">
+  <div class="mdl" style="max-width:420px;">
+    <div class="mdl-hdr"><span>🛎️ <span class="t" data-ar="طلب ضيف جديد" data-en="New Guest Request">طلب ضيف جديد</span></span><button class="mdl-x" onclick="closeGReqModal()">✕</button></div>
+    <div class="fld"><label class="t" data-ar="الغرفة" data-en="Room">الغرفة</label><input id="greq-room" type="text"></div>
+    <div class="fld"><label class="t" data-ar="اسم الضيف" data-en="Guest Name">اسم الضيف</label><input id="greq-guest" type="text"></div>
+    <div class="fld"><label class="t" data-ar="نوع الطلب" data-en="Request Type">نوع الطلب</label>
+      <select id="greq-type">
+        <option value="towel" class="t" data-ar="فوط" data-en="Towels">فوط / Towels</option>
+        <option value="pillow" class="t" data-ar="وسائد" data-en="Pillows">وسائد / Pillows</option>
+        <option value="ac" class="t" data-ar="تكييف" data-en="AC">تكييف / AC</option>
+        <option value="wifi" class="t" data-ar="واي فاي" data-en="WiFi">واي فاي / WiFi</option>
+        <option value="transport" class="t" data-ar="مواصلات" data-en="Transport">مواصلات / Transport</option>
+        <option value="food" class="t" data-ar="طعام/مشروب" data-en="Food/Drink">طعام / Food</option>
+        <option value="other" class="t" data-ar="أخرى" data-en="Other">أخرى / Other</option>
+      </select>
+    </div>
+    <div class="fld"><label class="t" data-ar="التفاصيل" data-en="Details">التفاصيل</label><textarea id="greq-notes" rows="2"></textarea></div>
+    <div class="fld"><label class="t" data-ar="الأولوية" data-en="Priority">الأولوية</label>
+      <select id="greq-priority">
+        <option value="normal">🟡 <span class="t" data-ar="عادية" data-en="Normal">عادية</span></option>
+        <option value="urgent">🔴 <span class="t" data-ar="عاجل" data-en="Urgent">عاجل</span></option>
+      </select>
+    </div>
+    <div class="flex mt"><button class="btn bg" onclick="saveGReq()">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ</span></button><button class="btn bb" onclick="closeGReqModal()"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء</span></button></div>
+  </div>
+</div>
+
+<!-- ══ STAFF SHIFT LOG PAGE ══ -->
+<div id="page-staffshift" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <h2 style="color:#c39bd3;font-size:18px;">📊 <span class="t" data-ar="سجل الشيفت" data-en="Staff Shift Log">سجل الشيفت</span></h2>
+    <button class="btn" style="background:rgba(155,89,182,0.15);color:#c39bd3;border:1px solid rgba(155,89,182,0.4);" onclick="openShiftModal()">+ <span class="t" data-ar="شيفت جديد" data-en="New Shift">شيفت جديد</span></button>
+  </div>
+  <div id="shift-list"><div style="text-align:center;padding:40px;color:var(--muted);">📊 <span class="t" data-ar="لا توجد سجلات شيفت" data-en="No shift records">لا توجد سجلات شيفت</span></div></div>
+</div>
+
+<!-- Staff Shift Modal -->
+<div id="shift-modal-overlay" class="mdl-overlay" style="display:none;" onclick="if(event.target===this)closeShiftModal()">
+  <div class="mdl" style="max-width:420px;">
+    <div class="mdl-hdr"><span>📊 <span class="t" data-ar="تسجيل شيفت" data-en="Log Shift">تسجيل شيفت</span></span><button class="mdl-x" onclick="closeShiftModal()">✕</button></div>
+    <div class="fld"><label class="t" data-ar="اسم الموظف" data-en="Staff Name">اسم الموظف</label><input id="sh-name" type="text"></div>
+    <div class="fld"><label class="t" data-ar="الدور" data-en="Role">الدور</label>
+      <select id="sh-role">
+        <option value="reception">🏨 <span class="t" data-ar="استقبال" data-en="Reception">استقبال</span></option>
+        <option value="housekeeping">🧹 <span class="t" data-ar="تنظيف" data-en="Housekeeping">تنظيف</span></option>
+        <option value="restaurant">🍽️ <span class="t" data-ar="مطعم" data-en="Restaurant">مطعم</span></option>
+        <option value="security">🔒 <span class="t" data-ar="أمن" data-en="Security">أمن</span></option>
+        <option value="maintenance">🔧 <span class="t" data-ar="صيانة" data-en="Maintenance">صيانة</span></option>
+      </select>
+    </div>
+    <div class="fld"><label class="t" data-ar="بداية الشيفت" data-en="Shift Start">بداية الشيفت</label><input id="sh-start" type="datetime-local"></div>
+    <div class="fld"><label class="t" data-ar="نهاية الشيفت" data-en="Shift End">نهاية الشيفت</label><input id="sh-end" type="datetime-local"></div>
+    <div class="fld"><label class="t" data-ar="ملاحظات / تسليم الشيفت" data-en="Notes / Handover">ملاحظات / تسليم الشيفت</label><textarea id="sh-notes" rows="3"></textarea></div>
+    <div class="flex mt"><button class="btn bg" onclick="saveShift()">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ</span></button><button class="btn bb" onclick="closeShiftModal()"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء</span></button></div>
+  </div>
+</div>
+
+<!-- ══ JS for new 4 features ══ -->
+<script>
+(function(){
+// ── Shared helpers ──
+function td(){ return (typeof toDay==='function')?toDay():new Date().toISOString().split('T')[0]; }
+function sv2(key,arr){ try{ localStorage.setItem(key,JSON.stringify(arr)); }catch(e){} }
+function ld(key){ try{ return JSON.parse(localStorage.getItem(key)||'[]'); }catch(e){ return []; } }
+function notify(msg,type){ if(typeof sNotify==='function') sNotify('',msg,type||'success',2500); }
+function isEn(){ return document.documentElement.lang==='en'; }
+
+// ── WAKE-UP CALLS ──
+let wuData = ld('dta_wakeup');
+window.openWakeUpModal = function(){
+  const d = document.getElementById('wu-date');
+  if(d) d.value = td();
+  document.getElementById('wakeup-modal-overlay').style.display='flex';
+};
+window.closeWakeUpModal = function(){ document.getElementById('wakeup-modal-overlay').style.display='none'; };
+window.saveWakeUp = function(){
+  const room=document.getElementById('wu-room').value.trim();
+  const time=document.getElementById('wu-time').value;
+  const date=document.getElementById('wu-date').value;
+  if(!room||!time||!date){ notify(isEn()?'Fill room, time & date':'اكتب الغرفة والوقت والتاريخ','info'); return; }
+  wuData.push({id:'WU-'+Date.now(),room,guest:document.getElementById('wu-guest').value.trim(),
+    time,date,notes:document.getElementById('wu-notes').value.trim(),done:false,created:new Date().toISOString()});
+  sv2('dta_wakeup',wuData);
+  closeWakeUpModal();
+  renderWakeUp();
+  notify(isEn()?'Wake-up call saved':'تم حفظ طلب الإيقاظ');
+};
+window.toggleWU = function(id){
+  const i=wuData.findIndex(x=>x.id===id);
+  if(i>-1){ wuData[i].done=!wuData[i].done; sv2('dta_wakeup',wuData); renderWakeUp(); }
+};
+window.deleteWU = function(id){
+  wuData=wuData.filter(x=>x.id!==id); sv2('dta_wakeup',wuData); renderWakeUp();
+};
+window.renderWakeUp = function(){
+  const el=document.getElementById('wakeup-list'); if(!el) return;
+  if(!wuData.length){ el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">🔔 '+(isEn()?'No wake-up calls':'لا توجد طلبات إيقاظ')+'</div>'; return; }
+  const sorted=[...wuData].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  el.innerHTML=sorted.map(w=>`
+    <div class="card" style="border-color:${w.done?'rgba(46,204,113,0.3)':'rgba(255,193,7,0.3)'};display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="font-size:28px;">${w.done?'✅':'🔔'}</div>
+      <div style="flex:1;min-width:140px;">
+        <div style="font-weight:700;color:#ffc107;">${isEn()?'Room':'غرفة'} ${w.room} ${w.guest?'— '+w.guest:''}</div>
+        <div style="font-size:13px;color:var(--text);">⏰ ${w.time} · 📅 ${w.date}</div>
+        ${w.notes?`<div style="font-size:11px;color:var(--muted);">${w.notes}</div>`:''}
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn bsm" style="background:${w.done?'rgba(231,76,60,0.2)':'rgba(46,204,113,0.2)'};color:${w.done?'#e74c3c':'#2ecc71'};border:1px solid;" onclick="toggleWU('${w.id}')">${w.done?(isEn()?'Undo':'تراجع'):(isEn()?'Done':'تم')}</button>
+        <button class="btn bsm br" onclick="deleteWU('${w.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+};
+
+// ── LOST & FOUND ──
+let lfData = ld('dta_lf');
+window.openLFModal = function(){
+  const d=document.getElementById('lf-date'); if(d) d.value=td();
+  document.getElementById('lf-modal-overlay').style.display='flex';
+};
+window.closeLFModal = function(){ document.getElementById('lf-modal-overlay').style.display='none'; };
+window.saveLFItem = function(){
+  const desc=document.getElementById('lf-desc').value.trim();
+  if(!desc){ notify(isEn()?'Add item description':'اكتب وصف الغرض','info'); return; }
+  lfData.push({id:'LF-'+Date.now(),type:document.getElementById('lf-type').value,desc,
+    location:document.getElementById('lf-location').value.trim(),
+    guest:document.getElementById('lf-guest').value.trim(),
+    date:document.getElementById('lf-date').value,
+    status:document.getElementById('lf-status').value,
+    created:new Date().toISOString()});
+  sv2('dta_lf',lfData); closeLFModal(); renderLF();
+  notify(isEn()?'Item saved':'تم الحفظ');
+};
+window.updateLFStatus = function(id,st){
+  const i=lfData.findIndex(x=>x.id===id);
+  if(i>-1){ lfData[i].status=st; sv2('dta_lf',lfData); renderLF(); }
+};
+window.deleteLF = function(id){ lfData=lfData.filter(x=>x.id!==id); sv2('dta_lf',lfData); renderLF(); };
+window.renderLF = function(){
+  const el=document.getElementById('lf-list'); if(!el) return;
+  if(!lfData.length){ el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">📦 '+(isEn()?'No items recorded':'لا توجد عناصر مسجلة')+'</div>'; return; }
+  const stColor={pending:'#ffc107',returned:'#2ecc71',disposed:'#95a5a6'};
+  const stLabel={pending:isEn()?'Pending':'قيد المتابعة',returned:isEn()?'Returned':'تم الإرجاع',disposed:isEn()?'Disposed':'تم التخلص'};
+  el.innerHTML=[...lfData].reverse().map(it=>`
+    <div class="card" style="border-color:${it.type==='found'?'rgba(46,204,113,0.3)':'rgba(231,76,60,0.3)'};">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:26px;">${it.type==='found'?'📦':'❓'}</div>
+        <div style="flex:1;min-width:140px;">
+          <div style="font-weight:700;color:#e67e22;">${it.desc}</div>
+          <div style="font-size:11px;color:var(--muted);">
+            ${it.location?'📍 '+it.location:''} ${it.guest?'· 👤 '+it.guest:''} · 📅 ${it.date}
+          </div>
+          <span style="font-size:10px;font-weight:700;color:${stColor[it.status]};">● ${stLabel[it.status]}</span>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+          ${it.status!=='returned'?`<button class="btn bsm" style="background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);" onclick="updateLFStatus('${it.id}','returned')">✅</button>`:''}
+          <button class="btn bsm br" onclick="deleteLF('${it.id}')">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+};
+
+// ── GUEST REQUESTS ──
+let grData = ld('dta_greq');
+window.openGReqModal = function(){ document.getElementById('greq-modal-overlay').style.display='flex'; };
+window.closeGReqModal = function(){ document.getElementById('greq-modal-overlay').style.display='none'; };
+window.saveGReq = function(){
+  const room=document.getElementById('greq-room').value.trim();
+  if(!room){ notify(isEn()?'Enter room number':'اكتب رقم الغرفة','info'); return; }
+  const typeMap={towel:isEn()?'Towels':'فوط',pillow:isEn()?'Pillows':'وسائد',ac:isEn()?'AC':'تكييف',wifi:'WiFi',transport:isEn()?'Transport':'مواصلات',food:isEn()?'Food':'طعام',other:isEn()?'Other':'أخرى'};
+  const typeVal=document.getElementById('greq-type').value;
+  grData.push({id:'GR-'+Date.now(),room,guest:document.getElementById('greq-guest').value.trim(),
+    type:typeVal,typeLabel:typeMap[typeVal]||typeVal,
+    notes:document.getElementById('greq-notes').value.trim(),
+    priority:document.getElementById('greq-priority').value,
+    status:'open',created:new Date().toISOString(),date:td()});
+  sv2('dta_greq',grData); closeGReqModal(); renderGReq();
+  notify(isEn()?'Request saved':'تم حفظ الطلب');
+};
+window.closeGR = function(id){
+  const i=grData.findIndex(x=>x.id===id);
+  if(i>-1){ grData[i].status='closed'; grData[i].closedAt=new Date().toISOString(); sv2('dta_greq',grData); renderGReq(); }
+};
+window.deleteGR = function(id){ grData=grData.filter(x=>x.id!==id); sv2('dta_greq',grData); renderGReq(); };
+window.renderGReq = function(){
+  const el=document.getElementById('greq-list'); if(!el) return;
+  if(!grData.length){ el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">🛎️ '+(isEn()?'No requests yet':'لا توجد طلبات')+'</div>'; return; }
+  const open=grData.filter(x=>x.status==='open');
+  const closed=grData.filter(x=>x.status==='closed');
+  const renderGroup=(arr,title)=>arr.length?`<div style="color:var(--gold);font-size:11px;letter-spacing:1px;margin:10px 0 6px;text-transform:uppercase;">${title}</div>`+arr.map(r=>`
+    <div class="card" style="border-color:${r.priority==='urgent'?'rgba(231,76,60,0.5)':'rgba(52,152,219,0.3)'};">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:24px;">${r.priority==='urgent'?'🔴':'🟡'}</div>
+        <div style="flex:1;min-width:140px;">
+          <div style="font-weight:700;color:#7ab8f5;">${isEn()?'Room':'غرفة'} ${r.room} — ${r.typeLabel}</div>
+          ${r.guest?`<div style="font-size:11px;color:var(--muted);">👤 ${r.guest}</div>`:''}
+          ${r.notes?`<div style="font-size:11px;color:var(--text);">${r.notes}</div>`:''}
+          <div style="font-size:10px;color:var(--muted);">📅 ${r.date}</div>
+        </div>
+        <div style="display:flex;gap:5px;">
+          ${r.status==='open'?`<button class="btn bsm" style="background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);" onclick="closeGR('${r.id}')">✅ ${isEn()?'Done':'تم'}</button>`:''}
+          <button class="btn bsm br" onclick="deleteGR('${r.id}')">🗑</button>
+        </div>
+      </div>
+    </div>`).join(''):'';
+  el.innerHTML=renderGroup(open,isEn()?'Open Requests':'طلبات مفتوحة')+renderGroup(closed,isEn()?'Closed':'مغلقة');
+};
+
+// ── STAFF SHIFT LOG ──
+let shData = ld('dta_shifts');
+window.openShiftModal = function(){
+  const now=new Date().toISOString().slice(0,16);
+  const s=document.getElementById('sh-start'); if(s) s.value=now;
+  document.getElementById('shift-modal-overlay').style.display='flex';
+};
+window.closeShiftModal = function(){ document.getElementById('shift-modal-overlay').style.display='none'; };
+window.saveShift = function(){
+  const name=document.getElementById('sh-name').value.trim();
+  if(!name){ notify(isEn()?'Enter staff name':'اكتب اسم الموظف','info'); return; }
+  const roleMap={reception:isEn()?'Reception':'استقبال',housekeeping:isEn()?'Housekeeping':'تنظيف',restaurant:isEn()?'Restaurant':'مطعم',security:isEn()?'Security':'أمن',maintenance:isEn()?'Maintenance':'صيانة'};
+  const roleVal=document.getElementById('sh-role').value;
+  shData.push({id:'SH-'+Date.now(),name,role:roleVal,roleLabel:roleMap[roleVal]||roleVal,
+    start:document.getElementById('sh-start').value,end:document.getElementById('sh-end').value,
+    notes:document.getElementById('sh-notes').value.trim(),date:td()});
+  sv2('dta_shifts',shData); closeShiftModal(); renderShifts();
+  notify(isEn()?'Shift saved':'تم حفظ الشيفت');
+};
+window.deleteShift = function(id){ shData=shData.filter(x=>x.id!==id); sv2('dta_shifts',shData); renderShifts(); };
+window.renderShifts = function(){
+  const el=document.getElementById('shift-list'); if(!el) return;
+  if(!shData.length){ el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">📊 '+(isEn()?'No shift records':'لا توجد سجلات شيفت')+'</div>'; return; }
+  const roleIcon={reception:'🏨',housekeeping:'🧹',restaurant:'🍽️',security:'🔒',maintenance:'🔧'};
+  const grouped={};
+  [...shData].reverse().forEach(s=>{ if(!grouped[s.date]) grouped[s.date]=[]; grouped[s.date].push(s); });
+  el.innerHTML=Object.keys(grouped).sort((a,b)=>b.localeCompare(a)).map(date=>`
+    <div style="color:var(--gold);font-size:11px;letter-spacing:1px;margin:10px 0 6px;">📅 ${date}</div>
+    ${grouped[date].map(s=>`
+      <div class="card" style="border-color:rgba(155,89,182,0.3);">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="font-size:24px;">${roleIcon[s.role]||'👤'}</div>
+          <div style="flex:1;min-width:140px;">
+            <div style="font-weight:700;color:#c39bd3;">${s.name} — ${s.roleLabel}</div>
+            <div style="font-size:11px;color:var(--muted);">${s.start?'▶ '+s.start.replace('T',' '):''} ${s.end?'⏹ '+s.end.replace('T',' '):''}</div>
+            ${s.notes?`<div style="font-size:11px;color:var(--text);margin-top:4px;">${s.notes}</div>`:''}
+          </div>
+          <button class="btn bsm br" onclick="deleteShift('${s.id}')">🗑</button>
+        </div>
+      </div>`).join('')}`).join('');
+};
+
+// ── Hook into goPage for auto-render ──
+const _origGoPage4 = goPage;
+goPage = function(id, btn){
+  _origGoPage4(id, btn);
+  if(id==='wakeup') setTimeout(renderWakeUp, 50);
+  if(id==='lostandfound') setTimeout(renderLF, 50);
+  if(id==='guestreq') setTimeout(renderGReq, 50);
+  if(id==='staffshift') setTimeout(renderShifts, 50);
+};
+
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════
+  ══ MINIBAR TRACKER PAGE ══
+══════════════════════════════════════════════ -->
+<div id="page-minibar" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <h2 style="color:#1abc9c;font-size:18px;">🌡️ <span class="t" data-ar="مينيبار — المخزون والاستهلاك" data-en="Minibar — Stock &amp; Consumption">مينيبار — المخزون والاستهلاك</span></h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn" style="background:rgba(26,188,156,0.15);color:#1abc9c;border:1px solid rgba(26,188,156,0.4);" onclick="openMinibarItemModal()">+ <span class="t" data-ar="صنف جديد" data-en="New Item">صنف جديد</span></button>
+      <button class="btn" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.4);" onclick="openMinibarLogModal()">📝 <span class="t" data-ar="تسجيل استهلاك" data-en="Log Consumption">تسجيل استهلاك</span></button>
+      <button class="btn" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.4);" onclick="renderMinibar()">🔄 <span class="t" data-ar="تحديث" data-en="Refresh">تحديث</span></button>
+    </div>
+  </div>
+
+  <!-- KPI strip -->
+  <div id="mb-kpi" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px;"></div>
+
+  <!-- Tabs -->
+  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;" id="mb-tabs">
+    <button class="btn" id="mb-tab-stock" onclick="mbSetTab('stock',this)" style="background:rgba(26,188,156,0.2);color:#1abc9c;border:1px solid rgba(26,188,156,0.5);">📦 <span class="t" data-ar="المخزون" data-en="Stock">المخزون</span></button>
+    <button class="btn bb" id="mb-tab-log"   onclick="mbSetTab('log',this)">📋 <span class="t" data-ar="سجل الاستهلاك" data-en="Consumption Log">سجل الاستهلاك</span></button>
+    <button class="btn bb" id="mb-tab-room"  onclick="mbSetTab('room',this)">🏨 <span class="t" data-ar="حسب الغرفة" data-en="By Room">حسب الغرفة</span></button>
+  </div>
+
+  <!-- Stock Tab -->
+  <div id="mb-view-stock">
+    <div class="card" style="padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table class="tbl" id="mb-stock-tbl">
+        <thead><tr>
+          <th class="t" data-ar="الصنف" data-en="Item">الصنف</th><th class="t" data-ar="الفئة" data-en="Category">الفئة</th>
+          <th class="t" data-ar="سعر الوحدة" data-en="Unit Price">سعر الوحدة</th><th class="t" data-ar="المخزون الكلي" data-en="Total Stock">المخزون الكلي</th>
+          <th class="t" data-ar="المستهلك" data-en="Consumed">المستهلك</th><th class="t" data-ar="المتبقي" data-en="Remaining">المتبقي</th><th class="t" data-ar="الحالة" data-en="Status">الحالة</th><th class="t" data-ar="إجراء" data-en="Action">إجراء</th>
+        </tr></thead>
+        <tbody id="mb-stock-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Log Tab -->
+  <div id="mb-view-log" style="display:none;">
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <input id="mb-log-search" placeholder="🔍 بحث..." oninput="renderMinibarLog()" style="width:180px;padding:6px 10px;font-size:12px;">
+      <select id="mb-log-room-f" onchange="renderMinibarLog()" style="width:auto;padding:6px 8px;font-size:12px;">
+        <option value="" class="t" data-ar="كل الغرف" data-en="All Rooms">كل الغرف</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table class="tbl">
+        <thead><tr>
+          <th class="t" data-ar="التاريخ" data-en="Date">التاريخ</th><th class="t" data-ar="الغرفة" data-en="Room">الغرفة</th><th class="t" data-ar="الصنف" data-en="Item">الصنف</th>
+          <th class="t" data-ar="الكمية" data-en="Qty">الكمية</th><th class="t" data-ar="الإجمالي" data-en="Total">الإجمالي</th><th class="t" data-ar="أضيف للحجز؟" data-en="Added to Booking?">أضيف للحجز؟</th><th class="t" data-ar="ملاحظة" data-en="Note">ملاحظة</th><th></th>
+        </tr></thead>
+        <tbody id="mb-log-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- By Room Tab -->
+  <div id="mb-view-room" style="display:none;">
+    <div id="mb-room-cards" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;"></div>
+  </div>
+</div>
+
+<!-- ── Minibar: Add/Edit Item Modal ── -->
+<div class="ovl" id="mb-item-modal">
+  <div class="mdl" style="max-width:440px;">
+    <div class="mtitle">🌡️ <span id="mb-item-modal-title" class="t" data-ar="إضافة صنف مينيبار" data-en="Add Minibar Item">إضافة صنف مينيبار</span></div>
+    <input type="hidden" id="mb-item-edit-idx" value="">
+    <div class="g2">
+      <div class="fld"><label class="t" data-ar="اسم الصنف" data-en="Item Name">اسم الصنف</label><input id="mb-item-name" placeholder="مثال: مياه معدنية 500ml"></div>
+      <div class="fld"><label class="t" data-ar="الفئة" data-en="Category">الفئة</label>
+        <select id="mb-item-cat">
+          <option value="water" class="t" data-ar="💧 مياه" data-en="💧 Water">💧 مياه</option>
+          <option value="drinks" class="t" data-ar="🥤 مشروبات" data-en="🥤 Drinks">🥤 مشروبات</option>
+          <option value="juice" class="t" data-ar="🍹 عصائر" data-en="🍹 Juices">🍹 عصائر</option>
+          <option value="beer" class="t" data-ar="🍺 بيرة" data-en="🍺 Beer">🍺 بيرة</option>
+          <option value="snacks" class="t" data-ar="🍟 سناكس" data-en="🍟 Snacks">🍟 سناكس</option>
+          <option value="sweets" class="t" data-ar="🍫 حلويات" data-en="🍫 Sweets">🍫 حلويات</option>
+          <option value="chips" class="t" data-ar="🥔 شيبس" data-en="🥔 Chips">🥔 شيبس</option>
+          <option value="nuts" class="t" data-ar="🥜 مكسرات" data-en="🥜 Nuts">🥜 مكسرات</option>
+          <option value="cigarettes" class="t" data-ar="🚬 سجاير" data-en="🚬 Cigarettes">🚬 سجاير</option>
+          <option value="other" class="t" data-ar="📦 أخرى" data-en="📦 Other">📦 أخرى</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="fld"><label class="t" data-ar="سعر الوحدة (EGP)" data-en="Unit Price (EGP)">سعر الوحدة (EGP)</label><input id="mb-item-price" type="number" min="0" placeholder="0"></div>
+      <div class="fld"><label class="t" data-ar="المخزون الإجمالي (كمية)" data-en="Total Stock (Qty)">المخزون الإجمالي (كمية)</label><input id="mb-item-stock" type="number" min="0" placeholder="0"></div>
+    </div>
+    <div class="fld"><label class="t" data-ar="إيموجي (اختياري)" data-en="Emoji (optional)">إيموجي (اختياري)</label><input id="mb-item-emoji" placeholder="🍺" maxlength="4" style="width:80px;font-size:20px;text-align:center;"></div>
+    <div class="flex mt">
+      <button class="btn bg" onclick="saveMinibarItem()" style="flex:2;">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ</span></button>
+      <button class="btn bb" onclick="closeM('mb-item-modal')" style="flex:1;"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Minibar: Log Consumption Modal ── -->
+<div class="ovl" id="mb-log-modal">
+  <div class="mdl" style="max-width:480px;">
+    <div class="mtitle">📝 <span class="t" data-ar="تسجيل استهلاك مينيبار" data-en="Log Minibar Consumption">تسجيل استهلاك مينيبار</span></div>
+
+    <!-- Room/Table selector -->
+    <div class="g2" style="margin-bottom:10px;">
+      <div class="fld">
+        <label class="t" data-ar="الغرفة" data-en="Room">الغرفة</label>
+        <select id="mb-log-room-sel">
+          <option value="" class="t" data-ar="— اختر الغرفة —" data-en="— Select Room —">— اختر الغرفة —</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label class="t" data-ar="التاريخ" data-en="Date">التاريخ</label>
+        <input id="mb-log-date" type="date">
+      </div>
+    </div>
+
+    <!-- Items selection -->
+    <div style="font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;font-weight:700;" class="t" data-ar="اختر الأصناف المستهلكة" data-en="Select Consumed Items">اختر الأصناف المستهلكة</div>
+    <div id="mb-log-items-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-height:220px;overflow-y:auto;margin-bottom:12px;padding:2px;"></div>
+
+    <!-- Selected summary -->
+    <div id="mb-log-summary" style="background:rgba(26,188,156,0.08);border:1px solid rgba(26,188,156,0.25);border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;display:none;">
+      <div style="font-weight:700;color:#1abc9c;margin-bottom:6px;" class="t" data-ar="الأصناف المختارة:" data-en="Selected Items:">الأصناف المختارة:</div>
+      <div id="mb-log-summary-items"></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(26,188,156,0.2);margin-top:8px;padding-top:8px;font-weight:700;">
+        <span class="t" data-ar="الإجمالي:" data-en="Total:">الإجمالي:</span>
+        <span style="color:#1abc9c;" id="mb-log-total">£0</span>
+      </div>
+    </div>
+
+    <div class="fld"><label class="t" data-ar="ملاحظة (اختياري)" data-en="Note (optional)">ملاحظة (اختياري)</label><input id="mb-log-note" placeholder="مثال: تم اكتشافه عند المغادرة"></div>
+
+    <!-- Add to booking toggle -->
+    <div style="display:flex;align-items:center;gap:10px;margin:10px 0;background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:10px;">
+      <input type="checkbox" id="mb-log-addbooking" checked style="width:16px;height:16px;accent-color:#c9a84c;">
+      <label for="mb-log-addbooking" style="font-size:12px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">🏨 <span class="t" data-ar="أضف على حساب الحجز (Room Charge)" data-en="Add to Booking Account (Room Charge)">أضف على حساب الحجز (Room Charge)</span></label>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:rgba(52,152,219,0.07);border:1px solid rgba(52,152,219,0.2);border-radius:8px;padding:10px;">
+      <input type="checkbox" id="mb-log-addrest" style="width:16px;height:16px;accent-color:#3498db;">
+      <label for="mb-log-addrest" style="font-size:12px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">🍽️ <span class="t" data-ar="أضف كإيراد في الرستوران" data-en="Add as Restaurant Income">أضف كإيراد في الرستوران</span></label>
+    </div>
+
+    <div class="flex mt">
+      <button class="btn" style="background:#1abc9c;color:#fff;flex:2;font-size:14px;font-weight:700;" onclick="saveMinibarLog()">✅ <span class="t" data-ar="تسجيل الاستهلاك" data-en="Log Consumption">تسجيل الاستهلاك</span></button>
+      <button class="btn bb" onclick="closeM('mb-log-modal')" style="flex:1;"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء</span></button>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════════════════════
@@ -1467,6 +1948,7 @@ label {
 <button class="nb" onclick="goPage('analytics',this)" style="background:rgba(155,89,182,0.12);color:#c39bd3;border-color:rgba(155,89,182,0.4);">📊 Analytics</button>
 <button class="nb" onclick="goPage('guestsreg',this)" style="background:rgba(22,160,133,0.12);color:#1abc9c;border-color:rgba(22,160,133,0.4);font-weight:700;">📋 <span class="t" data-ar="سجل الضيوف" data-en="Guests Register">Guests Register</span></button>
 <button class="nb" onclick="goPage('housekeeping',this)" style="background:rgba(26,188,156,0.12);color:#1abc9c;border-color:rgba(26,188,156,0.4);font-weight:700;">🧹 <span class="t" data-ar="Housekeeping" data-en="Housekeeping">Housekeeping</span></button>
+<button class="nb" onclick="goPage('minibar',this)" style="background:rgba(26,188,156,0.08);color:#1abc9c;border-color:rgba(26,188,156,0.3);">🌡️ <span class="t" data-ar="مينيبار" data-en="Minibar">مينيبار</span></button>
 <button class="nb" onclick="goPage('reviews',this)" style="background:rgba(241,196,15,0.12);color:#f1c40f;border-color:rgba(241,196,15,0.4);font-weight:700;">⭐ <span class="t" data-ar="التقييمات" data-en="Reviews">Reviews</span></button>
 <button class="nb" onclick="goPage('waitlist',this)" style="background:rgba(230,126,34,0.12);color:#e67e22;border-color:rgba(230,126,34,0.5);font-weight:700;">⏳ <span class="t" data-ar="قائمة الانتظار" data-en="Waiting List">Waiting List</span><span id="wl-nav-badge" style="display:none;background:#e74c3c;color:#fff;border-radius:50%;font-size:9px;font-weight:700;min-width:14px;height:14px;margin-left:4px;padding:0 3px;vertical-align:middle;"></span></button>
 <div style="margin-left:auto;display:flex;gap:5px;align-items:center;">
@@ -1567,17 +2049,68 @@ label {
 <div class="ctitle">🔮 توقع الإشغال / Occupancy Forecast — 14 يوم القادمين</div>
 <div id="predictive-occ-content" style="padding:4px 0;"></div>
 </div>
-<!-- FEATURE 1: Revenue Charts -->
-<div class="g2" style="margin-top:12px;">
-<div class="card">
-<div class="ctitle">📈 إيرادات آخر 6 أشهر / Revenue (6 Months)</div>
-<div class="chart-canvas-wrap"><canvas id="chart-revenue"></canvas></div>
+<!-- ══ LIVE REVENUE DASHBOARD ══ -->
+<div id="live-rev-dashboard" style="margin-top:14px;">
+
+  <!-- Header + Controls -->
+  <div style="background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04));border:1px solid rgba(201,168,76,0.3);border-radius:14px;padding:14px 18px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;">📊 لوحة الإيرادات الحية</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Live Revenue Dashboard — مقارنة بنفس الفترة السابقة</div>
+      </div>
+      <!-- Period Tabs -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="rev-period-tabs">
+        <button onclick="setRevPeriod('week',this)" class="rev-period-btn act" style="padding:5px 13px;border-radius:20px;border:1px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.2);color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .2s;">أسبوع</button>
+        <button onclick="setRevPeriod('month',this)" class="rev-period-btn" style="padding:5px 13px;border-radius:20px;border:1px solid var(--bdr);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .2s;">شهر</button>
+        <button onclick="setRevPeriod('3months',this)" class="rev-period-btn" style="padding:5px 13px;border-radius:20px;border:1px solid var(--bdr);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .2s;">3 أشهر</button>
+        <button onclick="setRevPeriod('6months',this)" class="rev-period-btn" style="padding:5px 13px;border-radius:20px;border:1px solid var(--bdr);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .2s;">6 أشهر</button>
+        <button onclick="setRevPeriod('year',this)" class="rev-period-btn" style="padding:5px 13px;border-radius:20px;border:1px solid var(--bdr);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .2s;">سنة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards Row -->
+  <div id="rev-kpi-row" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:12px;"></div>
+
+  <!-- Main Chart -->
+  <div class="card" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <div class="ctitle" style="margin-bottom:0;">📈 مقارنة الإيرادات</div>
+      <!-- Legend -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#c9a84c;margin-left:4px;vertical-align:middle;"></span>حجوزات</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#25D366;margin-left:4px;vertical-align:middle;"></span>رستوران</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e74c3c;margin-left:4px;vertical-align:middle;"></span>مصروفات</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(255,255,255,0.15);border:1px dashed rgba(255,255,255,0.3);margin-left:4px;vertical-align:middle;"></span>الفترة السابقة</span>
+      </div>
+    </div>
+    <div style="position:relative;height:240px;"><canvas id="chart-revenue-live"></canvas></div>
+  </div>
+
+  <!-- Bottom Row: Breakdown + Occupancy -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+    <!-- Revenue Breakdown Donut -->
+    <div class="card">
+      <div class="ctitle">🧩 توزيع الإيرادات</div>
+      <div style="position:relative;height:180px;"><canvas id="chart-rev-breakdown"></canvas></div>
+    </div>
+    <!-- Occupancy Chart -->
+    <div class="card">
+      <div class="ctitle">🏨 نسبة الإشغال</div>
+      <div style="position:relative;height:180px;"><canvas id="chart-occupancy"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Comparison Table -->
+  <div class="card">
+    <div class="ctitle">📋 مقارنة الفترة الحالية بالسابقة</div>
+    <div id="rev-comparison-table" style="overflow-x:auto;"></div>
+  </div>
+
 </div>
-<div class="card">
-<div class="ctitle">🏨 نسبة الإشغال الشهرية / Monthly Occupancy %</div>
-<div class="chart-canvas-wrap"><canvas id="chart-occupancy"></canvas></div>
-</div>
-</div>
+<!-- hidden canvases for old chart-revenue (backward compat) -->
+<canvas id="chart-revenue" style="display:none;"></canvas>
 </div>
 <!-- FEATURE 2: Calendar Page -->
 <div id="page-calendar" class="page">
@@ -3280,7 +3813,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     <div>
       <div class="card" style="margin-bottom:10px;padding:12px 14px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <span style="color:var(--gold);font-size:11px;font-weight:700;letter-spacing:2px;">🍴 اختر الأصناف</span>
+          <span style="color:var(--gold);font-size:11px;font-weight:700;letter-spacing:2px;">🍴 <span class="t" data-ar="اختر الأصناف" data-en="Choose Items">اختر الأصناف</span></span>
           <select id="pos-cat-filter" onchange="renderPOSMenu()" style="width:auto;padding:4px 8px;font-size:12px;">
             <option value="">كل الأصناف</option>
           </select>
@@ -4815,6 +5348,20 @@ function calcPaid(b){
 function calcDeductions(b){
   if(!b||!b.payments||!b.payments.length) return 0;
   return b.payments.filter(p=>p.amount>0 && p.isDeduction).reduce((s,p)=>s+p.amount,0);
+}
+// ── مصروفات المطعم/الرحلات المعلقة (لم تُدفع بعد) المضافة على حساب الغرفة ──
+function getRoomChargesPending(b){
+  if(!b||!b.roomCharges||!b.roomCharges.length) return 0;
+  return b.roomCharges.filter(r=>(r.status||"pending")!=="paid").reduce((s,r)=>s+(r.amount||0),0);
+}
+function getTourChargesPending(b){
+  if(!b||!b.tourCharges||!b.tourCharges.length) return 0;
+  return b.tourCharges.filter(t=>(t.status||"pending")!=="paid").reduce((s,t)=>s+(t.price||0),0);
+}
+// ✅ الإجمالي الحقيقي المطلوب من النزيل = إجمالي الحجز + مصروفات المطعم/الرحلات المعلقة على الغرفة
+function getBookingTotalOwed(b){
+  if(!b) return 0;
+  return (b.total||0) + getRoomChargesPending(b) + getTourChargesPending(b);
 }
 function showToast(m="✓ Saved!"){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2000);}
 function closeM(id){document.getElementById(id).classList.remove("on");}
@@ -9340,9 +9887,10 @@ return "<tr style='background:#fff8e6;'>"+
 // Build restaurant room charges rows (pending charges from POS)
 const curBookingIdx = (typeof loadInvIdx !== "undefined") ? loadInvIdx : -1;
 let roomChargesRows = "";
+let rcTotal = 0;
 if(curBookingIdx >= 0 && bookings[curBookingIdx] && bookings[curBookingIdx].roomCharges && bookings[curBookingIdx].roomCharges.length) {
   const rc = bookings[curBookingIdx].roomCharges;
-  const rcTotal = rc.reduce((s,r)=>s+(r.amount||0),0);
+  rcTotal = rc.filter(r=>(r.status||"pending")!=="paid").reduce((s,r)=>s+(r.amount||0),0);
   roomChargesRows = rc.map((r,ri)=>{
     const st = r.status||"pending";
     const stColor = st==="paid" ? "background:#d4edda;color:#155724;" : "background:#fff3cd;color:#856404;";
@@ -9356,7 +9904,7 @@ let tourChargesRows = "";
 let tourChargesTotal = 0;
 if(curBookingIdx >= 0 && bookings[curBookingIdx] && bookings[curBookingIdx].tourCharges && bookings[curBookingIdx].tourCharges.length) {
   const tc = bookings[curBookingIdx].tourCharges;
-  tourChargesTotal = tc.reduce((s,t)=>s+(t.price||0),0);
+  tourChargesTotal = tc.filter(t=>(t.status||"pending")!=="paid").reduce((s,t)=>s+(t.price||0),0);
   tourChargesRows = tc.map((t,ti)=>{
     const st = t.status||"pending";
     const stColor = st==="paid" ? "background:#d4edda;color:#155724;" : "background:#e8f4fb;color:#1a6a9a;";
@@ -9371,6 +9919,9 @@ if(curBookingIdx >= 0 && bookings[curBookingIdx] && bookings[curBookingIdx].tour
   }).join("") +
   "<tr style='background:#d6eaf8;border-top:1px solid #7ab8f5;'><td colspan='3' style='font-size:9px;color:#1a6a9a;font-weight:700;'>🏔️ إجمالي الرحلات السياحية</td><td><strong style='color:#1a6a9a;'>£"+tourChargesTotal.toLocaleString()+"</strong></td></tr>";
 }
+// مصروفات المطعم/الرحلات المعلقة دايمًا بتُسجَّل بالجنيه — لازم تتحول لعملة الفاتورة قبل ما تُجمع على الإجمالي
+const extraChargesEGP = rcTotal + tourChargesTotal;
+const extraChargesConv = invCur==="USD" ? extraChargesEGP/exRate : invCur==="EUR" ? extraChargesEGP/eurRate : extraChargesEGP;
 // Build room rows
 const roomRows=d.lines.map(l=>{
 const ntsCol=l.isDU?"<span style='color:#e67e22;font-weight:700;'>DU</span>":l.isMonthly?"<span style='color:#9b59b6;font-weight:700;'>"+Math.round(l.months)+"mo</span>":""+l.n;
@@ -9462,15 +10013,15 @@ proformaBanner+
 "<div class='invp-tr'><span>Subtotal (Rooms)</span><span>"+d.sym+subtotal.toFixed(2)+"</span></div>"+
 (ivTransfer.has?"<div class='invp-tr'><span>✈️ Airport Transfer</span><span>"+d.sym+ivTransfer.price.toFixed(2)+"</span></div>":"")+
 "<div class='invp-tr'><span>Tax (0%)</span><span>"+d.sym+"0.00</span></div>"+
-(roomChargesRows&&curBookingIdx>=0&&bookings[curBookingIdx]&&bookings[curBookingIdx].roomCharges&&bookings[curBookingIdx].roomCharges.length?"<div class='invp-tr' style='color:#856404;'><span>🍽️ Restaurant Charges (Pending)</span><span>£"+(bookings[curBookingIdx].roomCharges.reduce((s,r)=>s+(r.amount||0),0)).toFixed(0)+"</span></div>":"")+
+(roomChargesRows&&rcTotal>0?"<div class='invp-tr' style='color:#856404;'><span>🍽️ Restaurant Charges (Pending)</span><span>£"+rcTotal.toFixed(0)+"</span></div>":"")+
 (tourChargesRows&&tourChargesTotal>0?"<div class='invp-tr' style='color:#1a6a9a;'><span>🏔️ Tour Charges</span><span>£"+tourChargesTotal.toLocaleString()+"</span></div>":"")+
 (d.prepay>0&&!isProforma?"<div class='invp-tr'><span>Prepayment</span><span>- "+d.sym+d.prepay.toFixed(2)+"</span></div>":"")+
 (isDepositPF
-? "<div class='invp-tr'><span>Balance at Check-in</span><span>"+d.sym+(subtotal+ivTransfer.price-depAmtPF).toFixed(2)+"</span></div>"+
+? "<div class='invp-tr'><span>Balance at Check-in</span><span>"+d.sym+(subtotal+ivTransfer.price+extraChargesConv-depAmtPF).toFixed(2)+"</span></div>"+
 "<div class='invp-tr grd'><span>💰 Deposit Required</span><span>"+d.sym+depAmtPF.toFixed(2)+"</span></div>"
 : isFullPF
-? "<div class='invp-tr grd' style='color:#2471a3;'><span>⚠️ TENTATIVE Total</span><span>"+d.sym+(subtotal+ivTransfer.price).toFixed(2)+"</span></div>"
-: "<div class='invp-tr grd'><span>Total"+(d.prepay>0?" Due":"")+"</span><span>"+d.sym+(subtotal+ivTransfer.price-(d.prepay>0&&!isProforma?d.prepay:0)).toFixed(2)+"</span></div>")+
+? "<div class='invp-tr grd' style='color:#2471a3;'><span>⚠️ TENTATIVE Total</span><span>"+d.sym+(subtotal+ivTransfer.price+extraChargesConv).toFixed(2)+"</span></div>"
+: "<div class='invp-tr grd'><span>Total"+(d.prepay>0?" Due":"")+"</span><span>"+d.sym+(subtotal+ivTransfer.price+extraChargesConv-(d.prepay>0&&!isProforma?d.prepay:0)).toFixed(2)+"</span></div>")+
 "</div></div>"+
 (d.notes?"<div style='background:#f8f6f0;padding:7px 10px;border-radius:5px;margin-bottom:9px;font-size:9px;color:#555;'><strong style='color:#b8860b;'>Notes: </strong>"+d.notes+"</div>":"")+
 polHtml+
@@ -9723,9 +10274,10 @@ const sym=b.cur==="USD"?"$":"EGP ";
 if(!b.payments) b.payments=[];
 const paidSum=calcPaid(b);
 const refundSum=b.payments.filter(p=>p.amount<0).reduce((s,p)=>s+Math.abs(p.amount),0);
-const rcTotal=(b.roomCharges&&b.roomCharges.length)?b.roomCharges.reduce((s,r)=>s+(r.amount||0),0):0;
-const remain=Math.max(0,b.total+rcTotal-paidSum);
-document.getElementById("pay-total").textContent=sym+b.total.toFixed(2)+(rcTotal>0?" + £"+rcTotal.toFixed(0)+" مطعم":"");
+const rcTotal=getRoomChargesPending(b);
+const tcTotal=getTourChargesPending(b);
+const remain=Math.max(0,b.total+rcTotal+tcTotal-paidSum);
+document.getElementById("pay-total").textContent=sym+b.total.toFixed(2)+(rcTotal>0?" + £"+rcTotal.toFixed(0)+" مطعم":"")+(tcTotal>0?" + £"+tcTotal.toFixed(0)+" رحلات":"");
 document.getElementById("pay-paid-sum").textContent=sym+paidSum.toFixed(2)+(refundSum>0?" (↩️ -"+sym+refundSum.toFixed(2)+" refunded)":"");
 document.getElementById("pay-remain").textContent=sym+remain.toFixed(2);
 // Render restaurant room charges
@@ -12879,15 +13431,30 @@ const _dict = {
 };
 
 // Helper: translate a string from Arabic→English
+function _isArLetter(ch){ return !!ch && /[\u0600-\u06FF]/.test(ch); }
 function tr(text){
   if(!text) return text;
   if(currentLang === "ar") return text;
   // exact match
   if(_dict[text.trim()]) return text.replace(text.trim(), _dict[text.trim()]);
-  // partial matches — replace any Arabic substring found in dict
+  // partial matches — replace Arabic WHOLE WORDS found in dict only.
+  // (word-boundary safe: never replaces a substring sitting inside a
+  // longer Arabic word, e.g. "لا" inside "استهلاك" must stay untouched)
   let out = text;
   for(const [ar, en] of Object.entries(_dict)){
-    if(out.includes(ar)) out = out.split(ar).join(en);
+    if(!out.includes(ar)) continue;
+    let result = "";
+    let i = 0;
+    while(i < out.length){
+      if(out.startsWith(ar, i) && !_isArLetter(out[i-1]) && !_isArLetter(out[i+ar.length])){
+        result += en;
+        i += ar.length;
+      } else {
+        result += out[i];
+        i++;
+      }
+    }
+    out = result;
   }
   return out;
 }
@@ -12945,6 +13512,7 @@ function setLang(lang){
   renderBookings();
   renderRooms();
   renderExpenses();
+  if(typeof renderMinibar==='function' && document.getElementById('page-minibar')?.classList.contains('on')) renderMinibar();
   // Re-run DOM translation after renders settle
   if(currentLang !== "ar") setTimeout(_translateDOM, 100);
 }
@@ -12956,6 +13524,7 @@ function toggleLang(){
   renderBookings();
   renderRooms();
   renderExpenses();
+  if(typeof renderMinibar==='function' && document.getElementById('page-minibar')?.classList.contains('on')) renderMinibar();
   if(currentLang !== "ar") setTimeout(_translateDOM, 100);
 }
 function toggleLangMenu(){
@@ -14185,67 +14754,305 @@ addInvRoom();
 buildPreview();
 setTimeout(checkExportReminder, 3000);
 // ═══════════════════════════════════════════════
-// ══ FEATURE 1: INTERACTIVE CHARTS (Chart.js) ══
-// ═══════════════════════════════════════════════
-let chartRevenue=null, chartOccupancy=null;
+// ══ LIVE REVENUE DASHBOARD (upgraded) ══
+// ═══════════════════════════════════════
+let chartRevenue=null, chartOccupancy=null, chartRevLive=null, chartRevBreak=null;
+let _revPeriod = 'week';
+
 function loadChartJS(cb){
-if(window.Chart){cb();return;}
-const s=document.createElement("script");
-s.src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js";
-s.onload=cb;
-document.head.appendChild(s);
+  if(window.Chart){cb();return;}
+  const s=document.createElement("script");
+  s.src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js";
+  s.onload=cb;
+  document.head.appendChild(s);
 }
+
+// ── helpers ──
+function _fmtK(v){ return v>=1000000?(v/1000000).toFixed(1)+"M": v>=1000?Math.round(v/1000)+"k":Math.round(v); }
+function _revBookings(from,to){
+  return bookings.filter(b=>b.status!=="Cancelled"&&b.ci>=from&&b.ci<to)
+    .reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
+}
+function _revRestaurant(from,to){
+  return restaurantTx.filter(t=>t.type==="income"&&t.date>=from&&t.date<to)
+    .reduce((s,t)=>s+t.egp,0);
+}
+function _revExpenses(from,to){
+  return expenses.filter(e=>e.date>=from&&e.date<to).reduce((s,e)=>s+e.egp,0);
+}
+function _occPct(from,to){
+  const days=Math.max(1,Math.round((new Date(to)-new Date(from))/(86400000)));
+  let occ=0;
+  bookings.filter(b=>b.status!=="Cancelled").forEach(b=>{
+    if(!b.ci||!b.co) return;
+    const a=b.ci>from?b.ci:from, z=b.co<to?b.co:to;
+    if(a<z) occ+=Math.round((new Date(z)-new Date(a))/86400000);
+  });
+  return Math.min(100,Math.round((occ/(14*days))*100));
+}
+function _addDays(dateStr,n){
+  const d=new Date(dateStr); d.setDate(d.getDate()+n); return d.toISOString().split("T")[0];
+}
+function _addMonths(dateStr,n){
+  const d=new Date(dateStr); d.setMonth(d.getMonth()+n); return d.toISOString().split("T")[0];
+}
+
+// ── period calculator ──
+function _getPeriodRange(period){
+  const td=toDay();
+  let from,to,prevFrom,prevTo,labels=[];
+  if(period==="week"){
+    from=_addDays(td,-6); to=_addDays(td,1);
+    prevFrom=_addDays(from,-7); prevTo=_addDays(prevTo||from,0)||from;
+    prevTo=from;
+    // daily labels last 7 days
+    for(let i=6;i>=0;i--){
+      const d=new Date(td); d.setDate(d.getDate()-i);
+      labels.push(d.toLocaleDateString("ar-EG",{weekday:"short",day:"numeric"}));
+    }
+    return {from,to,prevFrom,prevTo,labels,step:"day",stepCount:7};
+  } else if(period==="month"){
+    from=_addDays(td,-29); to=_addDays(td,1);
+    prevFrom=_addDays(from,-30); prevTo=from;
+    for(let i=29;i>=0;i-=3){
+      const d=new Date(td); d.setDate(d.getDate()-i);
+      labels.push(d.getDate()+"/"+String(d.getMonth()+1).padStart(2,"0"));
+    }
+    return {from,to,prevFrom,prevTo,labels,step:"3day",stepCount:10};
+  } else if(period==="3months"){
+    from=_addMonths(td,-3); to=_addDays(td,1);
+    prevFrom=_addMonths(from,-3); prevTo=from;
+    // weekly labels
+    for(let i=11;i>=0;i--){
+      const d=new Date(); d.setDate(d.getDate()-i*7);
+      labels.push("أسبوع "+d.getDate()+"/"+String(d.getMonth()+1).padStart(2,"0"));
+    }
+    return {from,to,prevFrom,prevTo,labels,step:"week",stepCount:12};
+  } else if(period==="6months"){
+    from=_addMonths(td,-6); to=_addDays(td,1);
+    prevFrom=_addMonths(from,-6); prevTo=from;
+    for(let i=5;i>=0;i--){
+      const d=new Date(); d.setMonth(d.getMonth()-i);
+      labels.push(d.toLocaleString("ar-EG",{month:"short"})+" "+d.getFullYear());
+    }
+    return {from,to,prevFrom,prevTo,labels,step:"month",stepCount:6};
+  } else { // year
+    from=_addMonths(td,-12); to=_addDays(td,1);
+    prevFrom=_addMonths(from,-12); prevTo=from;
+    for(let i=11;i>=0;i--){
+      const d=new Date(); d.setMonth(d.getMonth()-i);
+      labels.push(d.toLocaleString("ar-EG",{month:"short"})+" "+d.getFullYear());
+    }
+    return {from,to,prevFrom,prevTo,labels,step:"month",stepCount:12};
+  }
+}
+
+// ── build step intervals ──
+function _buildSteps(from,to,step,count){
+  const steps=[];
+  let cur=from;
+  for(let i=0;i<count;i++){
+    let next;
+    if(step==="day") next=_addDays(cur,1);
+    else if(step==="3day") next=_addDays(cur,3);
+    else if(step==="week") next=_addDays(cur,7);
+    else next=_addMonths(cur,1);
+    steps.push({from:cur,to:next<to?next:to});
+    cur=next;
+    if(cur>=to) break;
+  }
+  return steps;
+}
+
+function setRevPeriod(period,btn){
+  _revPeriod=period;
+  document.querySelectorAll(".rev-period-btn").forEach(b=>{
+    b.style.background="transparent";
+    b.style.color="var(--muted)";
+    b.style.borderColor="var(--bdr)";
+  });
+  if(btn){
+    btn.style.background="rgba(201,168,76,0.2)";
+    btn.style.color="var(--gold)";
+    btn.style.borderColor="rgba(201,168,76,0.4)";
+  }
+  renderCharts();
+}
+
 function renderCharts(){
-loadChartJS(()=>{
-const months=[];
-const revData=[];
-const occData=[];
-const now=new Date();
-for(let i=5;i>=0;i--){
-const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-const yr=d.getFullYear();
-const mo=String(d.getMonth()+1).padStart(2,"0");
-const key=yr+"-"+mo;
-months.push(d.toLocaleString("ar-EG",{month:"short"})+"\n"+yr);
-// Revenue
-const rev=bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(key))
-.reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
-revData.push(Math.round(rev));
-// Occupancy: unique rooms booked / 14 * 100
-const days=new Date(yr,d.getMonth()+1,0).getDate();
-let totalOccRoomDays=0;
-bookings.filter(b=>b.status!=="Cancelled").forEach(b=>{
-if(!b.ci||!b.co) return;
-const bciD=new Date(b.ci);
-const bcoD=new Date(b.co);
-const mStart=new Date(yr,d.getMonth(),1);
-const mEnd=new Date(yr,d.getMonth()+1,0);
-const from=bciD>mStart?bciD:mStart;
-const to=bcoD<mEnd?bcoD:mEnd;
-const diffDays=Math.max(0,(to-from)/(1000*60*60*24));
-totalOccRoomDays+=diffDays;
-});
-const occ=Math.min(100,Math.round((totalOccRoomDays/(14*days))*100));
-occData.push(occ);
-}
-const cfgRev={
-type:"bar",
-data:{labels:months,datasets:[{label:"إيرادات EGP",data:revData,backgroundColor:"rgba(201,168,76,0.6)",borderColor:"#c9a84c",borderWidth:1,borderRadius:5}]},
-options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#f0e6cc",font:{size:10}}}},scales:{x:{ticks:{color:"#7a8fa6",font:{size:9}},grid:{color:"rgba(255,255,255,0.05)"}},y:{ticks:{color:"#7a8fa6",font:{size:9},callback:v=>v>=1000?Math.round(v/1000)+"k":v},grid:{color:"rgba(255,255,255,0.07)"}}}}
-};
-const cfgOcc={
-type:"line",
-data:{labels:months,datasets:[{label:"نسبة الإشغال %",data:occData,borderColor:"#25D366",backgroundColor:"rgba(37,211,102,0.1)",tension:.4,fill:true,pointBackgroundColor:"#25D366",pointRadius:4}]},
-options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#f0e6cc",font:{size:10}}}},scales:{x:{ticks:{color:"#7a8fa6",font:{size:9}},grid:{color:"rgba(255,255,255,0.05)"}},y:{min:0,max:100,ticks:{color:"#7a8fa6",font:{size:9},callback:v=>v+"%"},grid:{color:"rgba(255,255,255,0.07)"}}}}
-};
-const c1=document.getElementById("chart-revenue");
-const c2=document.getElementById("chart-occupancy");
-if(!c1||!c2) return;
-if(chartRevenue){chartRevenue.destroy();}
-if(chartOccupancy){chartOccupancy.destroy();}
-chartRevenue=new Chart(c1,cfgRev);
-chartOccupancy=new Chart(c2,cfgOcc);
-});
+  loadChartJS(()=>{
+    const pr=_getPeriodRange(_revPeriod);
+    const steps=_buildSteps(pr.from,pr.to,pr.step,pr.stepCount);
+    const prevSteps=_buildSteps(pr.prevFrom,pr.prevTo,pr.step,pr.stepCount);
+
+    // current period data per step
+    const bkData=steps.map(s=>Math.round(_revBookings(s.from,s.to)));
+    const restData=steps.map(s=>Math.round(_revRestaurant(s.from,s.to)));
+    const expData=steps.map(s=>Math.round(_revExpenses(s.from,s.to)));
+    const occData=steps.map(s=>_occPct(s.from,s.to));
+
+    // previous period totals (for KPI comparison)
+    const prevBkTotal=prevSteps.reduce((s,st)=>s+_revBookings(st.from,st.to),0);
+    const prevRestTotal=prevSteps.reduce((s,st)=>s+_revRestaurant(st.from,st.to),0);
+    const prevExpTotal=prevSteps.reduce((s,st)=>s+_revExpenses(st.from,st.to),0);
+    const curBkTotal=bkData.reduce((a,b)=>a+b,0);
+    const curRestTotal=restData.reduce((a,b)=>a+b,0);
+    const curExpTotal=expData.reduce((a,b)=>a+b,0);
+    const curNet=curBkTotal+curRestTotal-curExpTotal;
+    const prevNet=prevBkTotal+prevRestTotal-prevExpTotal;
+
+    // ── KPI Cards ──
+    function kpiCard(icon,label,cur,prev,color){
+      const diff=prev>0?((cur-prev)/prev*100):0;
+      const up=diff>=0;
+      const arrow=up?"▲":"▼";
+      const dc=up?"#25D366":"#e74c3c";
+      return `<div style="background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${color};opacity:.7;"></div>
+        <div style="font-size:22px;margin-bottom:2px;">${icon}</div>
+        <div style="font-size:20px;font-weight:700;color:${color};">£${_fmtK(cur)}</div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin:3px 0;">${label}</div>
+        <div style="font-size:11px;font-weight:700;color:${dc};">${arrow} ${Math.abs(diff).toFixed(1)}% <span style="font-weight:400;color:var(--muted);">مقارنة بالسابق</span></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">السابق: £${_fmtK(prev)}</div>
+      </div>`;
+    }
+    const kpiEl=document.getElementById("rev-kpi-row");
+    if(kpiEl) kpiEl.innerHTML=
+      kpiCard("🏨","إيرادات الحجوزات",curBkTotal,prevBkTotal,"#c9a84c")+
+      kpiCard("🍽️","إيرادات الرستوران",curRestTotal,prevRestTotal,"#25D366")+
+      kpiCard("💸","المصروفات",curExpTotal,prevExpTotal,"#e74c3c")+
+      kpiCard("💰","صافي الربح",curNet,prevNet,curNet>=0?"#3498db":"#e74c3c");
+
+    // previous period for ghost line
+    const prevTotalData=prevSteps.map(s=>Math.round(_revBookings(s.from,s.to)+_revRestaurant(s.from,s.to)));
+    const curTotalData=bkData.map((v,i)=>v+(restData[i]||0));
+
+    // ── Main Chart ──
+    const axisOpts=(color)=>({ticks:{color,font:{size:9}},grid:{color:"rgba(255,255,255,0.05)"}});
+    const cfgLive={
+      type:"bar",
+      data:{
+        labels:pr.labels.slice(0,steps.length),
+        datasets:[
+          {label:"حجوزات",data:bkData,backgroundColor:"rgba(201,168,76,0.65)",borderColor:"#c9a84c",borderWidth:1,borderRadius:4,stack:"cur"},
+          {label:"رستوران",data:restData,backgroundColor:"rgba(37,211,102,0.55)",borderColor:"#25D366",borderWidth:1,borderRadius:4,stack:"cur"},
+          {label:"مصروفات",data:expData.map(v=>-v),backgroundColor:"rgba(231,76,60,0.5)",borderColor:"#e74c3c",borderWidth:1,borderRadius:4,stack:"cur"},
+          {label:"فترة سابقة",data:prevTotalData,type:"line",borderColor:"rgba(255,255,255,0.2)",borderDash:[5,4],borderWidth:1.5,pointRadius:2,pointBackgroundColor:"rgba(255,255,255,0.3)",fill:false,tension:.4,yAxisID:"y"},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            callbacks:{
+              label:ctx=>{
+                const v=Math.abs(ctx.raw);
+                const lbl=ctx.dataset.label;
+                return ` ${lbl}: £${v.toLocaleString()}`;
+              }
+            }
+          }
+        },
+        scales:{
+          x:axisOpts("#7a8fa6"),
+          y:{...axisOpts("#7a8fa6"),ticks:{...axisOpts("#7a8fa6").ticks,callback:v=>v<0?"−£"+_fmtK(Math.abs(v)):"£"+_fmtK(v)}},
+        }
+      }
+    };
+    const c1=document.getElementById("chart-revenue-live");
+    if(c1){
+      if(chartRevLive){chartRevLive.destroy();}
+      chartRevLive=new Chart(c1,cfgLive);
+    }
+
+    // ── Breakdown Donut ──
+    const c2b=document.getElementById("chart-rev-breakdown");
+    if(c2b){
+      if(chartRevBreak){chartRevBreak.destroy();}
+      chartRevBreak=new Chart(c2b,{
+        type:"doughnut",
+        data:{
+          labels:["حجوزات","رستوران"],
+          datasets:[{
+            data:[Math.max(0,curBkTotal),Math.max(0,curRestTotal)],
+            backgroundColor:["rgba(201,168,76,0.8)","rgba(37,211,102,0.75)"],
+            borderColor:["#c9a84c","#25D366"],borderWidth:2,hoverOffset:8
+          }]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,cutout:"65%",
+          plugins:{
+            legend:{position:"bottom",labels:{color:"#f0e6cc",font:{size:10},padding:12,boxWidth:12}},
+            tooltip:{callbacks:{label:ctx=>" "+ctx.label+": £"+ctx.raw.toLocaleString()}}
+          }
+        }
+      });
+    }
+
+    // ── Occupancy Chart ──
+    const c2=document.getElementById("chart-occupancy");
+    if(c2){
+      if(chartOccupancy){chartOccupancy.destroy();}
+      chartOccupancy=new Chart(c2,{
+        type:"line",
+        data:{
+          labels:pr.labels.slice(0,steps.length),
+          datasets:[{
+            label:"إشغال %",data:occData,
+            borderColor:"#3498db",backgroundColor:"rgba(52,152,219,0.12)",
+            tension:.4,fill:true,pointBackgroundColor:"#3498db",pointRadius:3
+          }]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{
+            x:axisOpts("#7a8fa6"),
+            y:{...axisOpts("#7a8fa6"),min:0,max:100,ticks:{...axisOpts("#7a8fa6").ticks,callback:v=>v+"%"}}
+          }
+        }
+      });
+    }
+
+    // ── Comparison Table ──
+    const pctStr=(cur,prev)=>{
+      if(prev===0) return cur>0?'<span style="color:#25D366;">جديد</span>':'—';
+      const d=(cur-prev)/prev*100;
+      const c=d>=0?"#25D366":"#e74c3c";
+      return `<span style="color:${c};font-weight:700;">${d>=0?"▲":"▼"} ${Math.abs(d).toFixed(1)}%</span>`;
+    };
+    const tblEl=document.getElementById("rev-comparison-table");
+    if(tblEl){
+      const periodLbl={"week":"الأسبوع الحالي","month":"الشهر الحالي","3months":"3 أشهر","6months":"6 أشهر","year":"السنة"}[_revPeriod]||"الفترة الحالية";
+      tblEl.innerHTML=`
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--bdr);">
+            <th style="padding:8px 10px;text-align:right;font-size:10px;letter-spacing:1px;color:var(--gold);">البند</th>
+            <th style="padding:8px 10px;text-align:center;font-size:10px;letter-spacing:1px;color:var(--gold);">${periodLbl}</th>
+            <th style="padding:8px 10px;text-align:center;font-size:10px;letter-spacing:1px;color:var(--gold);">الفترة السابقة</th>
+            <th style="padding:8px 10px;text-align:center;font-size:10px;letter-spacing:1px;color:var(--gold);">التغيير</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[
+            ["🏨 إيرادات الحجوزات",curBkTotal,prevBkTotal],
+            ["🍽️ إيرادات الرستوران",curRestTotal,prevRestTotal],
+            ["📦 إجمالي الإيرادات",curBkTotal+curRestTotal,prevBkTotal+prevRestTotal],
+            ["💸 المصروفات",curExpTotal,prevExpTotal],
+            ["💰 صافي الربح",curNet,prevNet],
+          ].map(([lbl,cur,prev])=>`
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+              <td style="padding:9px 10px;font-weight:600;">${lbl}</td>
+              <td style="padding:9px 10px;text-align:center;font-weight:700;color:var(--gold);">£${Math.abs(cur).toLocaleString()}</td>
+              <td style="padding:9px 10px;text-align:center;color:var(--muted);">£${Math.abs(prev).toLocaleString()}</td>
+              <td style="padding:9px 10px;text-align:center;">${pctStr(cur,prev)}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+    }
+  });
 }
 // Patch renderDashboard to also call renderCharts
 const _origRenderDashboard=renderDashboard;
@@ -19318,10 +20125,13 @@ function renderPOSCatQuick(){
   if(!el) return;
   const catMeta = getCatMeta();
   const cats = [...new Set(restMenu.map(i=>i.cat).filter(Boolean))];
-  el.innerHTML = `<button onclick="setPOSCatQuick('',this)" style="padding:5px 10px;border-radius:6px;border:1px solid var(--bdr);background:rgba(201,168,76,0.2);color:var(--gold);cursor:pointer;font-size:11px;font-weight:700;font-family:Arial,sans-serif;" class="pos-cq-btn act">الكل</button>` +
+  const isAr = (typeof currentLang==='undefined') || currentLang==='ar';
+  const allLbl = isAr ? 'الكل' : 'All';
+  el.innerHTML = `<button onclick="setPOSCatQuick('',this)" style="padding:5px 10px;border-radius:6px;border:1px solid var(--bdr);background:rgba(201,168,76,0.2);color:var(--gold);cursor:pointer;font-size:11px;font-weight:700;font-family:Arial,sans-serif;" class="pos-cq-btn act">${allLbl}</button>` +
     cats.map(cat=>{
       const meta = catMeta[cat]||{color:"#95a5a6",emoji:"🍽️"};
-      return `<button onclick="setPOSCatQuick('${cat}',this)" class="pos-cq-btn" style="padding:5px 10px;border-radius:6px;border:1px solid ${meta.color}55;background:${meta.color}18;color:${meta.color};cursor:pointer;font-size:11px;font-weight:700;font-family:Arial,sans-serif;">${meta.emoji} ${cat.split(" ")[0]}</button>`;
+      const lbl = isAr ? cat.split(" ")[0] : (meta.en || cat.split(" ")[0]);
+      return `<button onclick="setPOSCatQuick('${cat}',this)" class="pos-cq-btn" style="padding:5px 10px;border-radius:6px;border:1px solid ${meta.color}55;background:${meta.color}18;color:${meta.color};cursor:pointer;font-size:11px;font-weight:700;font-family:Arial,sans-serif;">${meta.emoji} ${lbl}</button>`;
     }).join("");
 }
 
@@ -19339,6 +20149,7 @@ function renderPOSMenu(){
   if(!grid) return;
   const catMeta = getCatMeta();
   const cats = [...new Set(restMenu.map(i=>i.cat).filter(Boolean))];
+  const isAr = (typeof currentLang==='undefined') || currentLang==='ar';
   // أعد بناء الـ select بس لو الـ options اتغيرت (منع re-render غير ضروري)
   if(catSel){
     const cur = catSel.value;
@@ -19346,7 +20157,11 @@ function renderPOSMenu(){
     const current = Array.from(catSel.options).map(o=>o.value);
     const changed = expected.length !== current.length || expected.some((v,i)=>v!==current[i]);
     if(changed){
-      catSel.innerHTML = '<option value="">كل الأصناف</option>' + cats.map(c=>`<option ${c===cur?"selected":""}>${c}</option>`).join("");
+      const allOptLbl = isAr ? 'كل الأصناف' : 'All Categories';
+      catSel.innerHTML = `<option value="">${allOptLbl}</option>` + cats.map(c=>{
+        const lbl = isAr ? c : (catMeta[c]?.en || c);
+        return `<option value="${c}" ${c===cur?"selected":""}>${lbl}</option>`;
+      }).join("");
       catSel.value = cur;
     }
   }
@@ -19356,7 +20171,7 @@ function renderPOSMenu(){
   const filtered = fCat ? indexedMenu.filter(({item})=>item.cat===fCat) : indexedMenu;
   if(!filtered.length){
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:24px;font-size:12px;">
-      لا توجد أصناف — اذهب لـ إدارة القائمة لإضافة أصناف
+      ${isAr ? 'لا توجد أصناف — اذهب لـ إدارة القائمة لإضافة أصناف' : 'No items — go to Manage Menu to add items'}
     </div>`; return;
   }
   grid.innerHTML = filtered.map(({item,i})=>{
@@ -19380,7 +20195,7 @@ function addToCart(idx){
   if(!item) return;
   const existing = posCart.find(c=>c.idx===idx);
   if(existing) existing.qty++;
-  else posCart.push({idx, name:item.name, emoji:item.emoji||"🍽️", price:item.price, qty:1});
+  else posCart.push({idx, name:item.name, nameEn:item.nameEn||"", emoji:item.emoji||"🍽️", price:item.price, qty:1});
   renderPOSCart();
   renderPOSMenu();
 }
@@ -19475,7 +20290,7 @@ function submitPOSOrder(){
   const methodLabel = {cash:"💵 كاش",card:"💳 بطاقة",room:"🏨 على الغرفة"}[posPayMethod]||"كاش";
   const roomGuest = room ? bookings.find(b=>String(b.room)===String(room)&&b.ci<=toDay()&&b.co>=toDay()&&b.status!=="Cancelled") : null;
   const tableNo = document.getElementById("pos-table")?.value.trim()||"";
-  const orderDesc = posCart.map(c=>`${c.emoji}${c.name}×${c.qty}`).join(", ");
+  const orderDesc = posCart.map(c=>`${c.emoji}${c.name}${c.nameEn?(' / '+c.nameEn):''}×${c.qty}`).join(", ");
   const tableLabel = tableNo ? ` — ترابيزة ${tableNo}` : "";
   const fullDesc = `🧾 POS: ${orderDesc}`+(customer?` — ${customer}`:"")+(room?` — غرفة ${room}`:"")+tableLabel;
 
@@ -19814,16 +20629,22 @@ async function doSendTakeawayMenu(){
   const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
   const waNum = qrs.waNum || '201099531272';
 
-  // بناء صفحة Takeaway (كروت — نفس فكرة صفحة الضيف) كـ data URL
+  // بناء صفحة Takeaway (كروت — نفس فكرة صفحة الضيف) وتحميلها كملف HTML
+  // (تضمين الصفحة كـ data URL داخل رسالة واتساب مش بيتفتح عند الضيف — واتساب لا يدعم روابط data:)
   const takeawayHTML = DTA_QR.buildTakeawayPage();
-  const dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(takeawayHTML);
+  const blob = new Blob([takeawayHTML], {type:'text/html;charset=utf-8'});
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = 'Takeaway_Menu.html';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(blobUrl), 15000);
 
   const msg =
     '🛵 *' + prop.name + ' — Takeaway*\n' +
     '━━━━━━━━━━━━━━━━━━\n\n' +
-    '🍽️ منيونا جاهز! اطلب بضغطة واحدة من الرابط:\n' +
-    '🍽️ Our menu is ready! Order with one tap:\n\n' +
-    dataUrl + '\n\n' +
+    'مرفق ملف المنيو — افتحه من هاتفك للطلب بضغطة واحدة:\n' +
+    'Menu file attached — open it on your phone to order with one tap:\n\n' +
     '━━━━━━━━━━━━━━━━━━\n' +
     '📞 ' + (prop.phone||'+20'+waNum);
 
@@ -19831,9 +20652,9 @@ async function doSendTakeawayMenu(){
     ? 'https://wa.me/'+phone+'?text='+encodeURIComponent(msg)
     : 'https://wa.me/?text='+encodeURIComponent(msg);
 
-  window.open(waUrl,'_blank');
+  setTimeout(()=>{ window.open(waUrl,'_blank'); }, 800);
   closeM('takeaway-menu-modal');
-  sNotify('🛵','تم فتح واتساب مع رابط منيو Takeaway','success',3000);
+  sNotify('✅ تم','تم تحميل ملف المنيو — أرسل الملف للضيف عبر واتساب','success',5000);
 }
 
 function doPreviewTakeawayMenu(){
@@ -20776,10 +21597,18 @@ function toggleBnMore(){
   const m = document.getElementById('bn-more-menu');
   if(!m) return;
   m.classList.toggle('on');
+  _toggleQposFabForMore(m.classList.contains('on'));
 }
 function closeBnMore(){
   const m = document.getElementById('bn-more-menu');
   if(m) m.classList.remove('on');
+  _toggleQposFabForMore(false);
+}
+function _toggleQposFabForMore(hide){
+  const fab = document.getElementById('qpos-fab');
+  const fabLbl = document.getElementById('qpos-fab-label');
+  if(fab) fab.style.display = hide ? 'none' : '';
+  if(fabLbl) fabLbl.style.display = hide ? 'none' : '';
 }
 // Close more menu when tapping elsewhere
 document.addEventListener('click', function(e){
@@ -20787,6 +21616,7 @@ document.addEventListener('click', function(e){
   const btn = document.getElementById('bn-more');
   if(m && m.classList.contains('on') && !m.contains(e.target) && e.target!==btn && !btn.contains(e.target)){
     m.classList.remove('on');
+    _toggleQposFabForMore(false);
   }
 });
 
@@ -20796,8 +21626,8 @@ function updateBnBadges(){
   const todayArriving = bookings.filter(b=>b.ci===td && b.status!=='Cancelled' && !b.ciConfirmed).length;
   const badge = document.getElementById('bn-bk-badge');
   if(badge){ badge.textContent=todayArriving; badge.style.display=todayArriving?'flex':'none'; }
-  // Debt badge = pending/partial bookings
-  const debtCount = bookings.filter(b=>b.status==='Pending'||b.status==='Partial').length;
+  // Debt badge = bookings with an outstanding balance (room total + pending restaurant/tour charges)
+  const debtCount = getDebtData().length;
   const dbadge = document.getElementById('bn-debt-badge');
   if(dbadge){ dbadge.textContent=debtCount; dbadge.style.display=debtCount?'flex':'none'; }
 }
@@ -20824,7 +21654,8 @@ function getDebtData(){
   return bookings.filter(b => {
     if(b.status === 'Cancelled') return false;
     const paidSum = calcPaid(b);
-    return paidSum < b.total;
+    const owed = getBookingTotalOwed(b);
+    return paidSum < owed;
   });
 }
 
@@ -20838,11 +21669,12 @@ function renderDebt(){
   // Compute debt for each
   list = list.map(b => {
     const paidSum = calcPaid(b);
-    const remaining = Math.max(0, b.total - paidSum);
-    const pct = b.total > 0 ? Math.min(100, Math.round(paidSum/b.total*100)) : 100;
+    const owed = getBookingTotalOwed(b);
+    const remaining = Math.max(0, owed - paidSum);
+    const pct = owed > 0 ? Math.min(100, Math.round(paidSum/owed*100)) : 100;
     const isOverdue = remaining > 0 && b.co < td;
     const _origIdx = bookings.indexOf(b);
-    return { ...b, _paidSum: paidSum, _remaining: remaining, _pct: pct, _isOverdue: isOverdue, _origIdx };
+    return { ...b, _paidSum: paidSum, _owed: owed, _remaining: remaining, _pct: pct, _isOverdue: isOverdue, _origIdx };
   }).filter(b => b._remaining > 0);
 
   // Apply filter
@@ -20860,7 +21692,7 @@ function renderDebt(){
   const allDebt = getDebtData();
   const totalOwe = allDebt.reduce((s,b) => {
     const paid = calcPaid(b);
-    const rem = Math.max(0, b.total - paid);
+    const rem = Math.max(0, getBookingTotalOwed(b) - paid);
     const sym = b.cur==='USD' ? 1 : b.cur==='EUR' ? usdEurRate : (1/exRate);
     return s + rem * sym;
   }, 0);
@@ -20924,7 +21756,7 @@ function renderDebt(){
         </div>
         <div style="text-align:right;">
           <div style="font-size:20px;font-weight:700;color:#e74c3c;">${sym}${b._remaining.toFixed(2)}</div>
-          <div style="font-size:10px;color:var(--muted);">${currentLang==='ar'?'المتبقي من':'Remaining of'} ${sym}${b.total.toFixed(2)}</div>
+          <div style="font-size:10px;color:var(--muted);">${currentLang==='ar'?'المتبقي من':'Remaining of'} ${sym}${b._owed.toFixed(2)}</div>
           <div style="font-size:10px;color:#4cda7a;margin-top:2px;">${currentLang==='ar'?'مدفوع':'Paid'}: ${sym}${b._paidSum.toFixed(2)} (${b._pct}%)</div>
         </div>
       </div>
@@ -20946,13 +21778,14 @@ function sendDebtReminder(bi){
   if(!b) return;
   const sym = b.cur==='USD'?'$':b.cur==='EUR'?'€':'EGP ';
   const paidSum = calcPaid(b);
-  const remaining = Math.max(0, b.total - paidSum);
+  const owed = getBookingTotalOwed(b);
+  const remaining = Math.max(0, owed - paidSum);
   const msg = encodeURIComponent(
     `السلام عليكم ${b.name} 🌊\n\n` +
     `نودّ تذكيركم بالمبلغ المستحق لـ *${PROP.name}*\n\n` +
     `🏨 الغرفة: ${b.room} (${b.type})\n` +
     `📅 ${fmtD(b.ci)} → ${fmtD(b.co)}\n` +
-    `💰 الإجمالي: ${sym}${b.total.toFixed(2)}\n` +
+    `💰 الإجمالي: ${sym}${owed.toFixed(2)}\n` +
     `✅ المدفوع: ${sym}${paidSum.toFixed(2)}\n` +
     `🔴 المتبقي: *${sym}${remaining.toFixed(2)}*\n\n` +
     `يرجى التواصل لترتيب الدفع 🙏\n` +
@@ -27225,5 +28058,1030 @@ window.openQRRoomPicker = openQRRoomPicker;
   }
   updateClock();
   setInterval(updateClock, 1000);
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════
+     ══ QUICK POS FAB — كاشير سريع عائم              ══
+     ══════════════════════════════════════════════════ -->
+<style>
+/* ── FAB Button ── */
+#qpos-fab {
+  position:fixed; bottom:136px; right:18px; z-index:1200;
+  width:58px; height:58px; border-radius:50%;
+  background:linear-gradient(135deg,#e67e22,#d35400);
+  border:none; cursor:pointer;
+  box-shadow:0 4px 22px rgba(230,126,34,0.55), 0 2px 8px rgba(0,0,0,0.3);
+  display:flex; align-items:center; justify-content:center;
+  font-size:26px; transition:all .25s cubic-bezier(.34,1.56,.64,1);
+  animation:qpos-pulse 3s ease-in-out infinite;
+}
+@keyframes qpos-pulse {
+  0%,100%{box-shadow:0 4px 22px rgba(230,126,34,0.55),0 2px 8px rgba(0,0,0,0.3);}
+  50%{box-shadow:0 4px 32px rgba(230,126,34,0.8),0 2px 12px rgba(0,0,0,0.35);}
+}
+#qpos-fab:hover { transform:scale(1.12) rotate(-8deg); }
+#qpos-fab:active { transform:scale(.93); }
+#qpos-fab .qpos-badge {
+  position:absolute; top:-4px; right:-4px;
+  background:#e74c3c; color:#fff; border-radius:50%;
+  width:18px; height:18px; font-size:10px; font-weight:700;
+  display:none; align-items:center; justify-content:center;
+  border:2px solid #0f0f1a;
+}
+#qpos-fab .qpos-badge.on { display:flex; }
+#qpos-fab-label {
+  position:fixed; bottom:200px; right:14px; z-index:1199;
+  background:rgba(20,20,40,0.92); color:#e67e22;
+  border:1px solid rgba(230,126,34,0.4); border-radius:20px;
+  padding:4px 10px; font-size:10px; font-weight:700;
+  white-space:nowrap; pointer-events:none;
+  opacity:0; transform:translateX(10px); transition:all .2s;
+}
+#qpos-fab:hover ~ #qpos-fab-label,
+#qpos-fab-label.show { opacity:1; transform:translateX(0); }
+
+/* ── Modal Overlay ── */
+#qpos-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.6); z-index:1300;
+  align-items:flex-end; justify-content:center;
+  padding:0;
+}
+#qpos-overlay.on { display:flex; }
+#qpos-modal {
+  background:linear-gradient(180deg,#1a2235,#111827);
+  border:1px solid rgba(230,126,34,0.3);
+  border-radius:20px 20px 0 0;
+  width:100%; max-width:620px;
+  max-height:92vh; display:flex; flex-direction:column;
+  box-shadow:0 -8px 40px rgba(0,0,0,0.5);
+  animation:qpos-slide-up .3s cubic-bezier(.34,1.26,.64,1);
+}
+@keyframes qpos-slide-up {
+  from{transform:translateY(100%);opacity:0;}
+  to{transform:translateY(0);opacity:1;}
+}
+
+/* ── Modal Header ── */
+#qpos-header {
+  background:linear-gradient(135deg,rgba(230,126,34,0.18),rgba(230,126,34,0.06));
+  border-bottom:1px solid rgba(230,126,34,0.25);
+  border-radius:20px 20px 0 0;
+  padding:14px 16px 10px;
+  flex-shrink:0;
+}
+.qpos-drag-handle {
+  width:36px; height:4px; background:rgba(255,255,255,0.15);
+  border-radius:2px; margin:0 auto 10px;
+}
+.qpos-title-row {
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+}
+.qpos-title { font-size:15px; font-weight:800; color:#e67e22; }
+#qpos-close {
+  background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12);
+  color:var(--muted); border-radius:50%; width:30px; height:30px;
+  cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;
+  transition:.15s; flex-shrink:0;
+}
+#qpos-close:hover { background:rgba(231,76,60,0.2); color:#e74c3c; border-color:#e74c3c; }
+
+/* ── Target Row (Room / Table) ── */
+.qpos-target-row {
+  display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;
+}
+.qpos-target-btn {
+  flex:1; min-width:100px; padding:7px 10px;
+  border-radius:10px; border:1.5px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.04); color:var(--muted);
+  font-size:12px; font-weight:700; cursor:pointer;
+  font-family:Arial,sans-serif; transition:all .2s; text-align:center;
+}
+.qpos-target-btn.act-room {
+  border-color:rgba(201,168,76,0.6); background:rgba(201,168,76,0.12);
+  color:var(--gold);
+}
+.qpos-target-btn.act-tbl {
+  border-color:rgba(52,152,219,0.6); background:rgba(52,152,219,0.1);
+  color:#7ab8f5;
+}
+.qpos-target-sub {
+  margin-top:7px; display:none;
+}
+.qpos-target-sub.on { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.qpos-room-pill, .qpos-tbl-pill {
+  padding:4px 10px; border-radius:16px; font-size:11px; font-weight:700;
+  cursor:pointer; border:1.5px solid; transition:all .15s; font-family:Arial,sans-serif;
+}
+.qpos-room-pill {
+  border-color:rgba(201,168,76,0.35); background:transparent; color:var(--gold);
+}
+.qpos-room-pill.act { background:rgba(201,168,76,0.2); border-color:var(--gold); }
+.qpos-tbl-pill {
+  border-color:rgba(52,152,219,0.35); background:transparent; color:#7ab8f5;
+}
+.qpos-tbl-pill.act { background:rgba(52,152,219,0.15); border-color:#3498db; }
+
+/* ── Cat Tabs ── */
+.qpos-cats {
+  display:flex; gap:6px; overflow-x:auto; padding:10px 16px 0;
+  scrollbar-width:none; flex-shrink:0;
+}
+.qpos-cats::-webkit-scrollbar { display:none; }
+.qpos-cat-btn {
+  padding:5px 12px; border-radius:16px; font-size:11px; font-weight:700;
+  cursor:pointer; border:1.5px solid rgba(255,255,255,0.1);
+  background:transparent; color:var(--muted); white-space:nowrap;
+  font-family:Arial,sans-serif; transition:all .2s; flex-shrink:0;
+}
+.qpos-cat-btn.act {
+  border-color:rgba(230,126,34,0.6); background:rgba(230,126,34,0.15);
+  color:#e67e22;
+}
+
+/* ── Menu Grid ── */
+#qpos-menu-grid {
+  display:grid; grid-template-columns:repeat(3,1fr);
+  gap:8px; padding:10px 16px;
+  overflow-y:auto; flex:1; min-height:0;
+}
+@media(max-width:400px) { #qpos-menu-grid { grid-template-columns:repeat(2,1fr); } }
+.qpos-item {
+  background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.08);
+  border-radius:12px; padding:10px 6px 8px; text-align:center;
+  cursor:pointer; transition:all .18s; position:relative; user-select:none;
+}
+.qpos-item:hover { background:rgba(230,126,34,0.08); border-color:rgba(230,126,34,0.3); }
+.qpos-item.in-cart {
+  border-color:rgba(230,126,34,0.7); background:rgba(230,126,34,0.12);
+}
+.qpos-item-qty-badge {
+  position:absolute; top:4px; right:4px;
+  background:#e67e22; color:#fff; border-radius:10px;
+  padding:1px 6px; font-size:9px; font-weight:800;
+  display:none;
+}
+.qpos-item.in-cart .qpos-item-qty-badge { display:block; }
+.qpos-item-emoji { font-size:28px; line-height:1; margin-bottom:4px; display:block; }
+.qpos-item-name { font-size:10px; font-weight:700; color:var(--text); line-height:1.3; margin-bottom:3px; }
+.qpos-item-price { font-size:12px; font-weight:800; color:#e67e22; }
+.qpos-item-add-row {
+  display:none; margin-top:5px;
+  justify-content:center; align-items:center; gap:4px;
+}
+.qpos-item.in-cart .qpos-item-add-row { display:flex; }
+.qpos-qty-btn {
+  background:#e67e22; color:#fff; border:none; border-radius:6px;
+  width:22px; height:22px; font-size:14px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; line-height:1;
+  transition:.1s;
+}
+.qpos-qty-btn.minus { background:#c0392b; }
+.qpos-qty-num { font-size:12px; font-weight:700; min-width:14px; text-align:center; color:var(--text); }
+
+/* ── Cart Footer ── */
+#qpos-footer {
+  border-top:1px solid rgba(255,255,255,0.08);
+  padding:10px 16px 14px; flex-shrink:0;
+  background:rgba(0,0,0,0.2);
+}
+.qpos-cart-summary {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px; flex-wrap:wrap; gap:6px;
+}
+.qpos-cart-items {
+  font-size:11px; color:var(--muted);
+  max-width:55%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.qpos-cart-total {
+  font-size:18px; font-weight:800; color:#e67e22;
+}
+
+/* ── Pay Methods ── */
+.qpos-pay-row {
+  display:flex; gap:6px; margin-bottom:8px;
+}
+.qpos-pay-btn {
+  flex:1; padding:7px 4px; border-radius:9px; font-size:11px; font-weight:700;
+  cursor:pointer; font-family:Arial,sans-serif; transition:all .18s;
+  border:1.5px solid;
+}
+.qpos-pay-btn.pm-cash { border-color:rgba(37,211,102,0.35); background:transparent; color:#4cda7a; }
+.qpos-pay-btn.pm-card { border-color:rgba(74,144,217,0.35); background:transparent; color:#7ab8f5; }
+.qpos-pay-btn.pm-room { border-color:rgba(201,168,76,0.35); background:transparent; color:var(--gold); }
+.qpos-pay-btn.pm-transfer { border-color:rgba(155,89,182,0.35); background:transparent; color:#c39bd3; }
+.qpos-pay-btn.act-pm.pm-cash { background:rgba(37,211,102,0.2); border-color:#25D366; box-shadow:0 0 0 2px rgba(37,211,102,0.2); }
+.qpos-pay-btn.act-pm.pm-card { background:rgba(74,144,217,0.2); border-color:#4A90D9; box-shadow:0 0 0 2px rgba(74,144,217,0.2); }
+.qpos-pay-btn.act-pm.pm-room { background:rgba(201,168,76,0.2); border-color:var(--gold); box-shadow:0 0 0 2px rgba(201,168,76,0.15); }
+.qpos-pay-btn.act-pm.pm-transfer { background:rgba(155,89,182,0.2); border-color:#9b59b6; box-shadow:0 0 0 2px rgba(155,89,182,0.15); }
+
+/* ── Discount + Confirm ── */
+.qpos-bottom-row {
+  display:flex; gap:8px; align-items:center;
+}
+.qpos-disc-wrap {
+  display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted);
+}
+.qpos-disc-wrap input {
+  width:52px; padding:5px 6px; border-radius:7px; font-size:12px;
+  text-align:center; background:rgba(255,255,255,0.07);
+  border:1px solid var(--bdr); color:var(--text);
+}
+#qpos-confirm-btn {
+  flex:1; padding:11px 0; border-radius:10px; font-size:14px; font-weight:800;
+  background:linear-gradient(135deg,#e67e22,#d35400); color:#fff; border:none;
+  cursor:pointer; transition:all .2s; letter-spacing:.3px;
+  box-shadow:0 4px 14px rgba(230,126,34,0.4);
+}
+#qpos-confirm-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+#qpos-confirm-btn:active { transform:scale(.97); }
+#qpos-confirm-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+/* ── Success Flash ── */
+#qpos-success {
+  display:none; position:absolute; inset:0; z-index:10;
+  background:rgba(15,15,26,0.92); border-radius:20px 20px 0 0;
+  flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  animation:qpos-fade-in .3s ease;
+}
+#qpos-success.on { display:flex; }
+@keyframes qpos-fade-in { from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);} }
+.qpos-success-icon { font-size:56px; animation:qpos-bounce .5s ease; }
+@keyframes qpos-bounce { 0%{transform:scale(.5);}60%{transform:scale(1.15);}100%{transform:scale(1);} }
+.qpos-success-amt { font-size:28px; font-weight:800; color:#25D366; }
+.qpos-success-lbl { font-size:13px; color:var(--muted); }
+</style>
+
+<!-- FAB Button -->
+<button id="qpos-fab" onclick="openQPOS()" title="كاشير سريع">
+  🧾
+  <span class="qpos-badge" id="qpos-cart-badge"></span>
+</button>
+<div id="qpos-fab-label"><span class="t" data-ar="كاشير سريع" data-en="Quick POS">كاشير سريع</span></div>
+
+<!-- Quick POS Modal -->
+<div id="qpos-overlay" onclick="if(event.target===this)closeQPOS()">
+  <div id="qpos-modal">
+
+    <!-- Success overlay -->
+    <div id="qpos-success">
+      <div class="qpos-success-icon">✅</div>
+      <div class="qpos-success-amt" id="qpos-success-amt"></div>
+      <div class="qpos-success-lbl" id="qpos-success-lbl"></div>
+    </div>
+
+    <!-- Header -->
+    <div id="qpos-header">
+      <div class="qpos-drag-handle"></div>
+      <div class="qpos-title-row">
+        <div>
+          <span class="qpos-title">🧾 <span class="t" data-ar="كاشير سريع" data-en="Quick POS">كاشير سريع</span></span>
+          <span id="qpos-target-label" style="font-size:11px;color:var(--muted);margin-right:8px;"></span>
+        </div>
+        <button id="qpos-close" onclick="closeQPOS()">✕</button>
+      </div>
+
+      <!-- Room / Table selector -->
+      <div class="qpos-target-row">
+        <button class="qpos-target-btn" id="qpos-btn-room" onclick="qposSetTargetMode('room')">🏨 <span class="t" data-ar="غرفة" data-en="Room">غرفة</span></button>
+        <button class="qpos-target-btn" id="qpos-btn-tbl"  onclick="qposSetTargetMode('table')">🪑 <span class="t" data-ar="طاولة" data-en="Table">طاولة</span></button>
+        <button class="qpos-target-btn" id="qpos-btn-none" onclick="qposSetTargetMode('none')" style="flex:.6;"><span class="t" data-ar="بدون" data-en="None">بدون</span></button>
+      </div>
+
+      <!-- Room pills -->
+      <div class="qpos-target-sub" id="qpos-room-sub">
+        <span style="font-size:10px;color:var(--muted);flex-shrink:0;" class="t" data-ar="غرفة:" data-en="Room:">غرفة:</span>
+        <div id="qpos-room-pills" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+      </div>
+
+      <!-- Table pills -->
+      <div class="qpos-target-sub" id="qpos-tbl-sub">
+        <span style="font-size:10px;color:var(--muted);flex-shrink:0;" class="t" data-ar="طاولة:" data-en="Table:">طاولة:</span>
+        <div id="qpos-tbl-pills" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="qpos-cats" id="qpos-cats"></div>
+
+    <!-- Menu Grid -->
+    <div id="qpos-menu-grid"></div>
+
+    <!-- Footer -->
+    <div id="qpos-footer">
+      <div class="qpos-cart-summary">
+        <div class="qpos-cart-items" id="qpos-cart-items-lbl">سلة فارغة</div>
+        <div class="qpos-cart-total" id="qpos-cart-total">£0</div>
+      </div>
+
+      <!-- Payment methods -->
+      <div class="qpos-pay-row">
+        <button class="qpos-pay-btn pm-cash act-pm" onclick="qposSetPay('cash',this)">💵 <span class="t" data-ar="كاش" data-en="Cash">كاش</span></button>
+        <button class="qpos-pay-btn pm-card" onclick="qposSetPay('card',this)">💳 <span class="t" data-ar="بطاقة" data-en="Card">بطاقة</span></button>
+        <button class="qpos-pay-btn pm-transfer" onclick="qposSetPay('transfer',this)">🏦 <span class="t" data-ar="تحويل" data-en="Transfer">تحويل</span></button>
+        <button class="qpos-pay-btn pm-room" onclick="qposSetPay('room',this)">🏨 <span class="t" data-ar="غرفة" data-en="Room">غرفة</span></button>
+      </div>
+
+      <div class="qpos-bottom-row">
+        <div class="qpos-disc-wrap">
+          <span class="t" data-ar="خصم" data-en="Disc">خصم</span>
+          <input type="number" id="qpos-disc" value="0" min="0" max="100" oninput="qposCalcTotal()"> %
+        </div>
+        <button id="qpos-confirm-btn" onclick="qposSubmit()" disabled>✅ <span class="t" data-ar="تأكيد الطلب" data-en="Confirm Order">تأكيد الطلب</span> — £0</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══ QUICK POS LOGIC ══
+(function(){
+  let _cart = [];           // [{idx,name,emoji,price,qty}]
+  let _payMethod = 'cash';  // cash|card|transfer|room
+  let _targetMode = 'none'; // none|room|table
+  let _targetRoom = '';
+  let _targetTable = '';
+  let _catFilter = 'all';
+
+  /* ── open / close ── */
+  window.openQPOS = function(){
+    document.getElementById('qpos-overlay').classList.add('on');
+    document.getElementById('qpos-success').classList.remove('on');
+    _renderCats();
+    _renderGrid();
+    _renderRoomPills();
+    _renderTablePills();
+    _updateTotal();
+  };
+  window.closeQPOS = function(){
+    document.getElementById('qpos-overlay').classList.remove('on');
+  };
+
+  /* ── target mode ── */
+  window.qposSetTargetMode = function(mode){
+    _targetMode = mode;
+    _targetRoom = '';
+    _targetTable = '';
+    ['room','tbl','none'].forEach(m=>{
+      const b = document.getElementById('qpos-btn-'+m);
+      if(b){ b.className='qpos-target-btn'; }
+    });
+    const activeId = mode==='room'?'qpos-btn-room': mode==='table'?'qpos-btn-tbl':'qpos-btn-none';
+    const activeBtn = document.getElementById(activeId);
+    if(activeBtn){
+      activeBtn.className = 'qpos-target-btn '+(mode==='room'?'act-room':mode==='table'?'act-tbl':'act-room');
+    }
+    document.getElementById('qpos-room-sub').className = 'qpos-target-sub'+(mode==='room'?' on':'');
+    document.getElementById('qpos-tbl-sub').className  = 'qpos-target-sub'+(mode==='table'?' on':'');
+    _updateLabel();
+    // auto-select pay-room if room mode
+    if(mode==='room'){
+      const rb=document.querySelector('.qpos-pay-btn.pm-room');
+      if(rb) qposSetPay('room',rb);
+    }
+  };
+
+  window.qposPickRoom = function(room, btn){
+    _targetRoom = _targetRoom===room?'':room;
+    document.querySelectorAll('.qpos-room-pill').forEach(b=>b.classList.remove('act'));
+    if(_targetRoom) btn.classList.add('act');
+    _updateLabel();
+  };
+
+  window.qposPickTable = function(n, btn){
+    _targetTable = _targetTable===String(n)?'':String(n);
+    document.querySelectorAll('.qpos-tbl-pill').forEach(b=>b.classList.remove('act'));
+    if(_targetTable) btn.classList.add('act');
+    _updateLabel();
+  };
+
+  function _renderRoomPills(){
+    const el = document.getElementById('qpos-room-pills');
+    if(!el) return;
+    const td = (typeof toDay==='function')?toDay():new Date().toISOString().split('T')[0];
+    const activeRooms = (typeof bookings!=='undefined'?bookings:[])
+      .filter(b=>b.ci<=td&&b.co>td&&b.status!=='Cancelled'&&!b.coConfirmed)
+      .map(b=>({room:b.room,name:b.name}));
+    if(!activeRooms.length){
+      const noRoomTxt = document.documentElement.lang==='en'?'No occupied rooms':'لا توجد غرف مشغولة';
+      el.innerHTML='<span style="font-size:11px;color:var(--muted);">'+noRoomTxt+'</span>';
+      return;
+    }
+    el.innerHTML = activeRooms.map(r=>
+      `<button class="qpos-room-pill${_targetRoom===String(r.room)?' act':''}" onclick="qposPickRoom('${r.room}',this)" title="${r.name}">
+        ${r.room} <span style="font-size:9px;opacity:.7;">${r.name.split(' ')[0]}</span>
+       </button>`
+    ).join('');
+  }
+
+  function _renderTablePills(){
+    const el = document.getElementById('qpos-tbl-pills');
+    if(!el) return;
+    el.innerHTML = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].map(n=>
+      `<button class="qpos-tbl-pill${_targetTable===String(n)?' act':''}" onclick="qposPickTable(${n},this)">${n}</button>`
+    ).join('');
+  }
+
+  function _updateLabel(){
+    const el = document.getElementById('qpos-target-label');
+    if(!el) return;
+    if(_targetMode==='room' && _targetRoom) el.textContent='— غرفة '+_targetRoom;
+    else if(_targetMode==='table' && _targetTable) el.textContent='— طاولة '+_targetTable;
+    else el.textContent='';
+  }
+
+  /* ── categories ── */
+  function _renderCats(){
+    const cats = ['all'];
+    const menu = (typeof restMenu!=='undefined')?restMenu:[];
+    menu.forEach(item=>{ if(item.cat && !cats.includes(item.cat)) cats.push(item.cat); });
+    const isEn = document.documentElement.lang==='en';
+    const catMeta = {
+      all:{label:'🍽️ '+(isEn?'All':'الكل')},meat:{label:'🥩 '+(isEn?'Meat':'لحوم')},chicken:{label:'🍗 '+(isEn?'Chicken':'دجاج')},
+      fish:{label:'🐟 '+(isEn?'Fish':'أسماك')},drinks:{label:'🥤 '+(isEn?'Drinks':'مشروبات')},sweets:{label:'🍰 '+(isEn?'Sweets':'حلويات')},
+      snacks:{label:'🍟 '+(isEn?'Snacks':'سناكس')},shisha:{label:'💨 '+(isEn?'Shisha':'شيشة')},soup:{label:'🍲 '+(isEn?'Soup':'شوربة')},
+      salad:{label:'🥗 '+(isEn?'Salads':'سلطات')},pasta:{label:'🍝 '+(isEn?'Pasta':'باستا')},grill:{label:'🔥 '+(isEn?'Grill':'مشاوي')},
+      breakfast:{label:'🍳 '+(isEn?'Breakfast':'فطار')},pizza:{label:'🍕 Pizza'},
+      sandwiches:{label:'🥪 '+(isEn?'Sandwiches':'ساندوتشات')},rice:{label:'🍚 '+(isEn?'Rice':'أرز')},other:{label:'📦 '+(isEn?'Other':'أخرى')}
+    };
+    const el = document.getElementById('qpos-cats');
+    if(!el) return;
+    el.innerHTML = cats.map(c=>
+      `<button class="qpos-cat-btn${_catFilter===c?' act':''}" onclick="qposSetCat('${c}',this)">
+        ${catMeta[c]?catMeta[c].label:c}
+       </button>`
+    ).join('');
+  }
+
+  window.qposSetCat = function(cat, btn){
+    _catFilter = cat;
+    document.querySelectorAll('.qpos-cat-btn').forEach(b=>b.classList.remove('act'));
+    btn.classList.add('act');
+    _renderGrid();
+  };
+
+  /* ── menu grid ── */
+  function _renderGrid(){
+    const menu = (typeof restMenu!=='undefined')?restMenu:[];
+    const items = _catFilter==='all'?menu:menu.filter(i=>i.cat===_catFilter);
+    const el = document.getElementById('qpos-menu-grid');
+    if(!el) return;
+    if(!items.length){
+      const emptyTxt = document.documentElement.lang==='en'?'No items in this category':'لا توجد أصناف في هذه الفئة';
+      el.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:30px;font-size:13px;">'+emptyTxt+'</div>';
+      return;
+    }
+    el.innerHTML = items.map((item,i)=>{
+      const globalIdx = menu.indexOf(item);
+      const cart = _cart.find(c=>c.idx===globalIdx);
+      const qty = cart?cart.qty:0;
+      return `<div class="qpos-item${qty>0?' in-cart':''}" id="qpos-item-${globalIdx}" onclick="qposAddItem(${globalIdx})">
+        <span class="qpos-item-qty-badge">${qty}</span>
+        <span class="qpos-item-emoji">${item.emoji||'🍽️'}</span>
+        <div class="qpos-item-name">${item.name}</div>
+        <div class="qpos-item-price">£${item.price}</div>
+        <div class="qpos-item-add-row">
+          <button class="qpos-qty-btn minus" onclick="event.stopPropagation();qposRemItem(${globalIdx})">−</button>
+          <span class="qpos-qty-num">${qty}</span>
+          <button class="qpos-qty-btn" onclick="event.stopPropagation();qposAddItem(${globalIdx})">+</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  window.qposAddItem = function(idx){
+    const menu = (typeof restMenu!=='undefined')?restMenu:[];
+    const item = menu[idx];
+    if(!item) return;
+    const existing = _cart.find(c=>c.idx===idx);
+    if(existing) existing.qty++;
+    else _cart.push({idx, name:item.name, nameEn:item.nameEn||'', emoji:item.emoji||'🍽️', price:+item.price, qty:1});
+    _syncItem(idx);
+    _updateTotal();
+  };
+
+  window.qposRemItem = function(idx){
+    const ci = _cart.findIndex(c=>c.idx===idx);
+    if(ci===-1) return;
+    _cart[ci].qty--;
+    if(_cart[ci].qty<=0) _cart.splice(ci,1);
+    _syncItem(idx);
+    _updateTotal();
+  };
+
+  function _syncItem(idx){
+    const el = document.getElementById('qpos-item-'+idx);
+    if(!el) return;
+    const cart = _cart.find(c=>c.idx===idx);
+    const qty = cart?cart.qty:0;
+    el.className = 'qpos-item'+(qty>0?' in-cart':'');
+    const badge = el.querySelector('.qpos-item-qty-badge');
+    const num   = el.querySelector('.qpos-qty-num');
+    if(badge) badge.textContent = qty;
+    if(num)   num.textContent   = qty;
+  }
+
+  /* ── pay method ── */
+  window.qposSetPay = function(method, btn){
+    _payMethod = method;
+    document.querySelectorAll('.qpos-pay-btn').forEach(b=>b.classList.remove('act-pm'));
+    btn.classList.add('act-pm');
+  };
+
+  /* ── totals ── */
+  window.qposCalcTotal = function(){
+    return _calcTotals();
+  };
+
+  function _calcTotals(){
+    const subtotal = _cart.reduce((s,c)=>s+c.price*c.qty, 0);
+    const disc = Math.min(100,Math.max(0,+document.getElementById('qpos-disc')?.value||0));
+    const total = subtotal*(1-disc/100);
+    return {subtotal, disc, total};
+  }
+
+  function _updateTotal(){
+    const {total} = _calcTotals();
+    const count = _cart.reduce((s,c)=>s+c.qty,0);
+    const lbl = document.getElementById('qpos-cart-items-lbl');
+    const totEl = document.getElementById('qpos-cart-total');
+    const btn = document.getElementById('qpos-confirm-btn');
+    const badge = document.getElementById('qpos-cart-badge');
+
+    if(lbl) lbl.textContent = count>0
+      ? _cart.map(c=>c.emoji+'×'+c.qty).join('  ')
+      : (document.documentElement.lang==='en'?'Empty cart':'سلة فارغة');
+    if(totEl) totEl.textContent = '£'+Math.round(total);
+    const confirmTxt = document.documentElement.lang==='en'?'Confirm Order':'تأكيد الطلب';
+    if(btn){ btn.innerHTML='✅ '+confirmTxt+' — £'+Math.round(total); btn.disabled=!count; }
+    if(badge){ badge.textContent=count; badge.className='qpos-badge'+(count>0?' on':''); }
+  }
+
+  /* ── submit ── */
+  window.qposSubmit = function(){
+    if(!_cart.length){ return; }
+    const {subtotal, disc, total} = _calcTotals();
+    const td = (typeof toDay==='function')?toDay():new Date().toISOString().split('T')[0];
+    const methodLabel = {cash:'💵 كاش',card:'💳 بطاقة',transfer:'🏦 تحويل بنكي',room:'🏨 على الغرفة'}[_payMethod]||'كاش';
+    const orderDesc = _cart.map(c=>`${c.emoji}${c.name}${c.nameEn?(' / '+c.nameEn):''}×${c.qty}`).join(', ');
+    const roomGuest = _targetMode==='room' && _targetRoom
+      ? (typeof bookings!=='undefined'?bookings:[]).find(b=>String(b.room)===String(_targetRoom)&&b.ci<=td&&b.co>td&&b.status!=='Cancelled')
+      : null;
+
+    const tx = {
+      id:'QPOS-'+Date.now(),
+      date:td,
+      type:'income',
+      posOrder:true,
+      quickPos:true,
+      items:[..._cart],
+      subtotal, disc,
+      desc:`🧾 Quick POS: ${orderDesc}`+
+           (_targetMode==='room'&&_targetRoom?` — غرفة ${_targetRoom}`:'')+
+           (_targetMode==='table'&&_targetTable?` — طاولة ${_targetTable}`:''),
+      cur:'EGP', egp:total,
+      usd:+(total/(typeof exRate!=='undefined'?exRate:50)).toFixed(2),
+      eur:+(total/(typeof eurRate!=='undefined'?eurRate:55)).toFixed(2),
+      method:methodLabel,
+      room:_targetMode==='room'?_targetRoom:'',
+      tableNo:_targetMode==='table'?_targetTable:'',
+      notes:'',
+    };
+
+    if(typeof restaurantTx!=='undefined'){
+      restaurantTx.push(tx);
+      if(typeof sv==='function') sv('dta_rest', restaurantTx);
+    }
+
+    // on-room charge
+    if(_payMethod==='room' && roomGuest && typeof bookings!=='undefined'){
+      const bIdx = bookings.indexOf(roomGuest);
+      if(!bookings[bIdx].roomCharges) bookings[bIdx].roomCharges=[];
+      bookings[bIdx].roomCharges.push({date:td,amount:total,desc:orderDesc,id:tx.id,status:'pending'});
+      if(bookings[bIdx].status==='Paid') bookings[bIdx].status='Partial';
+      if(typeof sv==='function') sv('dta_bk', bookings);
+    } else if(_payMethod==='room' && !roomGuest && _targetMode==='room'){
+      if(typeof sNotify==='function') sNotify('⚠️ تنبيه','لم يتم ربط الغرفة — تأكد من وجود ضيف نشط','info',3500);
+    }
+
+    // success flash
+    const su = document.getElementById('qpos-success');
+    const sa = document.getElementById('qpos-success-amt');
+    const sl = document.getElementById('qpos-success-lbl');
+    if(su){ su.classList.add('on');
+      if(sa) sa.textContent='£'+Math.round(total).toLocaleString();
+      if(sl) sl.textContent=methodLabel+(_targetMode==='room'&&_targetRoom?' — غرفة '+_targetRoom:_targetMode==='table'&&_targetTable?' — طاولة '+_targetTable:'');
+      setTimeout(()=>{
+        su.classList.remove('on');
+        closeQPOS();
+      }, 1800);
+    }
+
+    // reset
+    _cart=[]; _targetRoom=''; _targetTable='';
+    _updateTotal();
+    if(typeof sNotify==='function') sNotify('✅ طلب مؤكد','£'+Math.round(total)+' — '+methodLabel,'success',3000);
+    if(typeof renderDashboard==='function') setTimeout(renderDashboard, 200);
+    if(typeof renderRestaurant==='function') setTimeout(renderRestaurant, 200);
+  };
+
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════
+     ══ MINIBAR TRACKER — JavaScript             ══
+══════════════════════════════════════════════ -->
+<script>
+(function(){
+
+// ── Data ──
+let mbItems = JSON.parse(localStorage.getItem('dta_mb_items') || '[]');
+// Default starter items if empty
+if(!mbItems.length){
+  mbItems = [
+    {id:'MB1',name:'مياه معدنية 500ml',cat:'water',emoji:'💧',price:15,stock:50},
+    {id:'MB2',name:'مياه معدنية 1L',cat:'water',emoji:'💧',price:25,stock:30},
+    {id:'MB3',name:'كولا 330ml',cat:'drinks',emoji:'🥤',price:30,stock:24},
+    {id:'MB4',name:'بيبسي 330ml',cat:'drinks',emoji:'🥤',price:30,stock:24},
+    {id:'MB5',name:'عصير برتقال',cat:'juice',emoji:'🍊',price:35,stock:20},
+    {id:'MB6',name:'شيبس',cat:'chips',emoji:'🥔',price:25,stock:30},
+    {id:'MB7',name:'شوكولاتة',cat:'sweets',emoji:'🍫',price:40,stock:20},
+    {id:'MB8',name:'مكسرات',cat:'nuts',emoji:'🥜',price:45,stock:15},
+  ];
+  localStorage.setItem('dta_mb_items', JSON.stringify(mbItems));
+}
+
+let mbLog = JSON.parse(localStorage.getItem('dta_mb_log') || '[]');
+// temp cart for log modal
+let _mbCart = {}; // {itemId: qty}
+
+const CAT_META = {
+  water:{label:'💧 مياه'},drinks:{label:'🥤 مشروبات'},juice:{label:'🍹 عصائر'},
+  beer:{label:'🍺 بيرة'},snacks:{label:'🍟 سناكس'},sweets:{label:'🍫 حلويات'},
+  chips:{label:'🥔 شيبس'},nuts:{label:'🥜 مكسرات'},cigarettes:{label:'🚬 سجاير'},other:{label:'📦 أخرى'}
+};
+const CAT_META_EN = {
+  water:{label:'💧 Water'},drinks:{label:'🥤 Drinks'},juice:{label:'🍹 Juices'},
+  beer:{label:'🍺 Beer'},snacks:{label:'🍟 Snacks'},sweets:{label:'🍫 Sweets'},
+  chips:{label:'🥔 Chips'},nuts:{label:'🥜 Nuts'},cigarettes:{label:'🚬 Cigarettes'},other:{label:'📦 Other'}
+};
+function _mbCat(cat){ return (currentLang==='ar'?CAT_META:CAT_META_EN)[cat]?.label || cat; }
+
+// ── Minibar text dictionary (used by dynamically-built rows/cards) ──
+const _mbDict = {
+  'أصناف المينيبار':'Minibar Items','قيمة المخزون':'Stock Value','إجمالي المستهلك':'Total Consumed',
+  'تحت الحد الأدنى':'Below Minimum','لا توجد أصناف — أضف أصنافك من زرار "+ صنف جديد"':'No items yet — add items via the "+ New Item" button',
+  'نفد':'Out','منخفض':'Low','كافي':'OK','لا يوجد سجل استهلاك بعد':'No consumption logged yet',
+  'غرفة':'Room','نعم':'Yes','لا':'No','لا يوجد استهلاك مسجل بعد':'No consumption recorded yet',
+  'متبقي':'Remaining','لا توجد أصناف — أضفها أولاً':'No items — add some first',
+  'تعديل صنف':'Edit Item','إضافة صنف مينيبار':'Add Minibar Item',
+  '— اختر الغرفة —':'— Select Room —','كل الغرف':'All Rooms','(نشطة)':'(active)',
+  'أدخل اسم الصنف':'Enter item name','تم حفظ الصنف':'Item saved','حذف هذا الصنف؟':'Delete this item?',
+  'اختر أصناف أولاً':'Select items first','اختر الغرفة':'Select a room',
+  '⚠️ تنبيه':'⚠️ Notice','لم يتم الربط بالحجز — لا يوجد ضيف نشط في الغرفة':'Not linked to a booking — no active guest in this room',
+  '✅ تم التسجيل':'✅ Logged','حذف هذا السجل؟':'Delete this log entry?',
+  '🌡️ مينيبار: ':'🌡️ Minibar: ','🌡️ مينيبار غرفة ':'🌡️ Minibar room ',
+};
+function _mbT(s){ return currentLang==='ar' ? s : (_mbDict[s]||s); }
+function _mbRoomLbl(room){ return currentLang==='ar' ? ('غرفة '+room) : ('Room '+room); }
+
+function mbSave(){ localStorage.setItem('dta_mb_items', JSON.stringify(mbItems)); }
+function mbLogSave(){ localStorage.setItem('dta_mb_log', JSON.stringify(mbLog)); }
+
+// ── Routing ──
+const _mbOrigGoPage = goPage;
+goPage = function(id, btn){
+  _mbOrigGoPage(id, btn);
+  if(id === 'minibar') setTimeout(renderMinibar, 50);
+};
+
+// ── Tab switcher ──
+let _mbTab = 'stock';
+window.mbSetTab = function(tab, btn){
+  _mbTab = tab;
+  ['stock','log','room'].forEach(t=>{
+    const v = document.getElementById('mb-view-'+t);
+    const b = document.getElementById('mb-tab-'+t);
+    if(v) v.style.display = t===tab?'':'none';
+    if(b){ b.className = t===tab?'btn':'btn bb'; b.style.background=t===tab?'rgba(26,188,156,0.2)':''; b.style.color=t===tab?'#1abc9c':''; b.style.borderColor=t===tab?'rgba(26,188,156,0.5)':''; }
+  });
+  if(tab==='log') renderMinibarLog();
+  if(tab==='room') renderMinibarByRoom();
+};
+
+// ── Main render ──
+window.renderMinibar = function(){
+  _renderMbKPI();
+  _renderMbStock();
+  if(_mbTab==='log') renderMinibarLog();
+  if(_mbTab==='room') renderMinibarByRoom();
+};
+
+function _renderMbKPI(){
+  const el = document.getElementById('mb-kpi');
+  if(!el) return;
+  const totalItems = mbItems.length;
+  const totalStockVal = mbItems.reduce((s,i)=>s+i.price*i.stock,0);
+  const consumed = mbLog.reduce((s,l)=>s+(l.items||[]).reduce((ss,li)=>ss+li.qty,0),0);
+  const consumedVal = mbLog.reduce((s,l)=>s+l.total,0);
+  const lowStock = mbItems.filter(i=>{
+    const used = mbLog.reduce((s,l)=>s+(l.items||[]).filter(li=>li.id===i.id).reduce((ss,li)=>ss+li.qty,0),0);
+    return (i.stock - used) <= 3;
+  }).length;
+
+  el.innerHTML = [
+    ['📦',_mbT('أصناف المينيبار'),totalItems+'','#1abc9c'],
+    ['💰',_mbT('قيمة المخزون'),'£'+totalStockVal.toLocaleString(),'#c9a84c'],
+    ['📉',_mbT('إجمالي المستهلك'),'£'+consumedVal.toLocaleString(),'#e67e22'],
+    ['⚠️',_mbT('تحت الحد الأدنى'),lowStock+'','#e74c3c'],
+  ].map(([icon,lbl,val,color])=>
+    `<div style="background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:14px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${color};opacity:.7;"></div>
+      <div style="font-size:22px;margin-bottom:4px;">${icon}</div>
+      <div style="font-size:20px;font-weight:700;color:${color};">${val}</div>
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px;">${lbl}</div>
+    </div>`
+  ).join('');
+}
+
+function _getConsumed(itemId){
+  return mbLog.reduce((s,l)=>s+(l.items||[]).filter(li=>li.id===itemId).reduce((ss,li)=>ss+li.qty,0),0);
+}
+
+function _renderMbStock(){
+  const tbody = document.getElementById('mb-stock-body');
+  if(!tbody) return;
+  if(!mbItems.length){
+    tbody.innerHTML=`<tr><td colspan="8" class="empty">${_mbT('لا توجد أصناف — أضف أصنافك من زرار "+ صنف جديد"')}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = mbItems.map((item,idx)=>{
+    const used = _getConsumed(item.id);
+    const remaining = Math.max(0, item.stock - used);
+    const pct = item.stock>0?Math.round((used/item.stock)*100):0;
+    const statusColor = remaining<=0?'#e74c3c':remaining<=3?'#e67e22':'#25D366';
+    const statusLbl = remaining<=0?_mbT('نفد'):remaining<=3?_mbT('منخفض'):_mbT('كافي');
+    return `<tr>
+      <td><span style="font-size:16px;margin-left:6px;">${item.emoji||'📦'}</span><strong>${item.name}</strong></td>
+      <td><span style="font-size:10px;background:rgba(26,188,156,0.1);color:#1abc9c;padding:2px 7px;border-radius:10px;">${_mbCat(item.cat)}</span></td>
+      <td style="color:var(--gold);font-weight:700;">£${item.price}</td>
+      <td style="font-weight:700;">${item.stock}</td>
+      <td style="color:#e67e22;">${used}</td>
+      <td>
+        <strong style="color:${statusColor};">${remaining}</strong>
+        <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px;margin-top:4px;width:60px;">
+          <div style="height:100%;width:${Math.min(100,pct)}%;background:${statusColor};border-radius:2px;transition:width .4s;"></div>
+        </div>
+      </td>
+      <td><span class="bdg" style="background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;">${statusLbl}</span></td>
+      <td>
+        <button class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.3);" onclick="openMinibarItemModal(${idx})">✏️</button>
+        <button class="btn bsm" style="background:rgba(231,76,60,0.1);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);margin-right:4px;" onclick="deleteMinibarItem(${idx})">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+window.renderMinibarLog = function(){
+  const tbody = document.getElementById('mb-log-body');
+  if(!tbody) return;
+  const search = (document.getElementById('mb-log-search')?.value||'').toLowerCase();
+  const roomF  = document.getElementById('mb-log-room-f')?.value||'';
+  let logs = [...mbLog].reverse();
+  if(search) logs = logs.filter(l=>l.room?.includes(search)||l.note?.toLowerCase().includes(search)||(l.items||[]).some(li=>li.name?.toLowerCase().includes(search)));
+  if(roomF)  logs = logs.filter(l=>String(l.room)===roomF);
+  if(!logs.length){ tbody.innerHTML=`<tr><td colspan="8" class="empty">${_mbT('لا يوجد سجل استهلاك بعد')}</td></tr>`; return; }
+  tbody.innerHTML = logs.map(l=>
+    `<tr>
+      <td style="white-space:nowrap;font-size:11px;color:var(--muted);">${l.date||''}</td>
+      <td><span style="color:var(--gold);font-weight:700;">${_mbRoomLbl(l.room||'—')}</span></td>
+      <td style="font-size:11px;">${(l.items||[]).map(li=>`${li.emoji||''}${li.name}×${li.qty}`).join(' · ')}</td>
+      <td style="text-align:center;">${(l.items||[]).reduce((s,li)=>s+li.qty,0)}</td>
+      <td style="color:#1abc9c;font-weight:700;">£${l.total?.toFixed(0)||0}</td>
+      <td style="text-align:center;">${l.addedToBooking?`<span class="bdg bg-green">✓ ${_mbT('نعم')}</span>`:`<span class="bdg bg-gray">${_mbT('لا')}</span>`}</td>
+      <td style="font-size:11px;color:var(--muted);">${l.note||'—'}</td>
+      <td><button class="btn bsm" style="background:rgba(231,76,60,0.1);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);" onclick="deleteMinibarLog('${l.id}')">🗑</button></td>
+    </tr>`
+  ).join('');
+};
+
+window.renderMinibarByRoom = function(){
+  const el = document.getElementById('mb-room-cards');
+  if(!el) return;
+  const byRoom = {};
+  mbLog.forEach(l=>{
+    if(!l.room) return;
+    if(!byRoom[l.room]) byRoom[l.room]={room:l.room,logs:[],total:0};
+    byRoom[l.room].logs.push(l);
+    byRoom[l.room].total += l.total||0;
+  });
+  const rooms = Object.values(byRoom).sort((a,b)=>b.total-a.total);
+  if(!rooms.length){ el.innerHTML=`<div class="empty" style="grid-column:1/-1;">${_mbT('لا يوجد استهلاك مسجل بعد')}</div>`; return; }
+  el.innerHTML = rooms.map(r=>{
+    const itemMap={};
+    r.logs.forEach(l=>(l.items||[]).forEach(li=>{ if(!itemMap[li.name]) itemMap[li.name]={name:li.name,emoji:li.emoji||'📦',qty:0,total:0}; itemMap[li.name].qty+=li.qty; itemMap[li.name].total+=li.qty*(li.price||0); }));
+    const items = Object.values(itemMap).sort((a,b)=>b.total-a.total);
+    return `<div style="background:var(--card);border:1px solid var(--bdr);border-radius:13px;padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);">🏨 ${_mbRoomLbl(r.room)}</div>
+        <div style="font-size:16px;font-weight:800;color:#1abc9c;">£${r.total.toFixed(0)}</div>
+      </div>
+      ${items.map(i=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px;">
+          <span>${i.emoji} ${i.name} <span style="color:var(--muted);">×${i.qty}</span></span>
+          <span style="color:var(--gold);font-weight:700;">£${i.total.toFixed(0)}</span>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+};
+
+// ── Item Modal ──
+window.openMinibarItemModal = function(idx){
+  const el = idx!==undefined ? mbItems[idx] : null;
+  document.getElementById('mb-item-modal-title').textContent = el?_mbT('تعديل صنف'):_mbT('إضافة صنف مينيبار');
+  document.getElementById('mb-item-edit-idx').value = idx!==undefined?idx:'';
+  document.getElementById('mb-item-name').value  = el?.name||'';
+  document.getElementById('mb-item-cat').value   = el?.cat||'water';
+  document.getElementById('mb-item-price').value = el?.price||'';
+  document.getElementById('mb-item-stock').value = el?.stock||'';
+  document.getElementById('mb-item-emoji').value = el?.emoji||'';
+  document.getElementById('mb-item-modal').classList.add('on');
+};
+
+window.saveMinibarItem = function(){
+  const name  = document.getElementById('mb-item-name').value.trim();
+  const price = parseFloat(document.getElementById('mb-item-price').value)||0;
+  const stock = parseInt(document.getElementById('mb-item-stock').value)||0;
+  const cat   = document.getElementById('mb-item-cat').value;
+  const emoji = document.getElementById('mb-item-emoji').value.trim()||CAT_META[cat]?.label.split(' ')[0]||'📦';
+  const editIdx = document.getElementById('mb-item-edit-idx').value;
+  if(!name){ if(typeof sNotify==='function') sNotify('⚠️',_mbT('أدخل اسم الصنف'),'info',2000); return; }
+  const item = { id: editIdx!==''?mbItems[editIdx].id:'MB'+Date.now(), name, cat, emoji, price, stock };
+  if(editIdx!=='') mbItems[editIdx] = item;
+  else mbItems.push(item);
+  mbSave();
+  closeM('mb-item-modal');
+  renderMinibar();
+  if(typeof sNotify==='function') sNotify('✅',_mbT('تم حفظ الصنف'),'success',2000);
+};
+
+window.deleteMinibarItem = function(idx){
+  if(!confirm(_mbT('حذف هذا الصنف؟'))) return;
+  mbItems.splice(idx,1);
+  mbSave();
+  renderMinibar();
+};
+
+// ── Log Modal ──
+window.openMinibarLogModal = function(){
+  _mbCart = {};
+  document.getElementById('mb-log-date').value = (typeof toDay==='function'?toDay():new Date().toISOString().split('T')[0]);
+  document.getElementById('mb-log-note').value = '';
+  document.getElementById('mb-log-addbooking').checked = true;
+  document.getElementById('mb-log-addrest').checked = false;
+
+  // Populate room select with active rooms
+  const sel = document.getElementById('mb-log-room-sel');
+  const td = (typeof toDay==='function'?toDay():new Date().toISOString().split('T')[0]);
+  const activeRooms = (typeof bookings!=='undefined'?bookings:[])
+    .filter(b=>b.ci<=td&&b.co>td&&b.status!=='Cancelled'&&!b.coConfirmed)
+    .map(b=>b.room);
+  sel.innerHTML = `<option value="">${_mbT('— اختر الغرفة —')}</option>` +
+    (typeof ROOMS!=='undefined'?ROOMS:[]).map(r=>
+      `<option value="${r}">${activeRooms.includes(String(r))?'🟢':''} ${_mbRoomLbl(r)}${activeRooms.includes(String(r))?' '+_mbT('(نشطة)'):''}</option>`
+    ).join('');
+
+  // Also update log filter
+  const logF = document.getElementById('mb-log-room-f');
+  if(logF) logF.innerHTML = `<option value="">${_mbT('كل الغرف')}</option>` +
+    (typeof ROOMS!=='undefined'?ROOMS:[]).map(r=>`<option value="${r}">${_mbRoomLbl(r)}</option>`).join('');
+
+  _renderMbLogItems();
+  document.getElementById('mb-log-modal').classList.add('on');
+};
+
+function _renderMbLogItems(){
+  const grid = document.getElementById('mb-log-items-grid');
+  if(!grid) return;
+  if(!mbItems.length){ grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padding:20px;">${_mbT('لا توجد أصناف — أضفها أولاً')}</div>`; return; }
+  grid.innerHTML = mbItems.map(item=>{
+    const qty = _mbCart[item.id]||0;
+    const remaining = Math.max(0, item.stock - _getConsumed(item.id));
+    return `<div style="background:${qty>0?'rgba(26,188,156,0.12)':'rgba(255,255,255,0.04)'};border:1.5px solid ${qty>0?'rgba(26,188,156,0.6)':'rgba(255,255,255,0.08)'};border-radius:10px;padding:8px 6px;text-align:center;cursor:pointer;transition:all .18s;" onclick="mbLogAdd('${item.id}')">
+      <div style="font-size:22px;">${item.emoji||'📦'}</div>
+      <div style="font-size:10px;font-weight:700;color:var(--text);margin:3px 0;line-height:1.3;">${item.name}</div>
+      <div style="font-size:11px;color:#1abc9c;font-weight:700;">£${item.price}</div>
+      <div style="font-size:9px;color:var(--muted);">${_mbT('متبقي')}: ${remaining}</div>
+      ${qty>0?`<div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:5px;">
+        <button onclick="event.stopPropagation();mbLogRem('${item.id}')" style="background:#e74c3c;color:#fff;border:none;border-radius:5px;width:20px;height:20px;cursor:pointer;font-size:12px;font-weight:700;">−</button>
+        <span style="font-size:12px;font-weight:800;color:#1abc9c;">${qty}</span>
+        <button onclick="event.stopPropagation();mbLogAdd('${item.id}')" style="background:#1abc9c;color:#fff;border:none;border-radius:5px;width:20px;height:20px;cursor:pointer;font-size:12px;font-weight:700;">+</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+  _updateMbLogSummary();
+}
+
+window.mbLogAdd = function(id){
+  _mbCart[id] = (_mbCart[id]||0)+1;
+  _renderMbLogItems();
+};
+window.mbLogRem = function(id){
+  _mbCart[id] = Math.max(0,(_mbCart[id]||0)-1);
+  if(!_mbCart[id]) delete _mbCart[id];
+  _renderMbLogItems();
+};
+
+function _updateMbLogSummary(){
+  const sumEl = document.getElementById('mb-log-summary');
+  const itemsEl = document.getElementById('mb-log-summary-items');
+  const totalEl = document.getElementById('mb-log-total');
+  const keys = Object.keys(_mbCart);
+  if(!keys.length){ if(sumEl) sumEl.style.display='none'; return; }
+  if(sumEl) sumEl.style.display='';
+  let total=0;
+  const lines = keys.map(id=>{
+    const item = mbItems.find(i=>i.id===id);
+    if(!item) return '';
+    const qty = _mbCart[id];
+    const sub = item.price*qty;
+    total+=sub;
+    return `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;">${item.emoji||''}${item.name} ×${qty}<span style="color:#1abc9c;">£${sub}</span></div>`;
+  }).join('');
+  if(itemsEl) itemsEl.innerHTML=lines;
+  if(totalEl) totalEl.textContent='£'+total;
+}
+
+window.saveMinibarLog = function(){
+  const room = document.getElementById('mb-log-room-sel')?.value;
+  const date = document.getElementById('mb-log-date')?.value || (typeof toDay==='function'?toDay():'');
+  const note = document.getElementById('mb-log-note')?.value.trim()||'';
+  const addBooking = document.getElementById('mb-log-addbooking')?.checked;
+  const addRest    = document.getElementById('mb-log-addrest')?.checked;
+  const keys = Object.keys(_mbCart);
+
+  if(!keys.length){ if(typeof sNotify==='function') sNotify('⚠️',_mbT('اختر أصناف أولاً'),'info',2000); return; }
+  if(!room){ if(typeof sNotify==='function') sNotify('⚠️',_mbT('اختر الغرفة'),'info',2000); return; }
+
+  const items = keys.map(id=>{
+    const item = mbItems.find(i=>i.id===id);
+    return item?{id:item.id,name:item.name,emoji:item.emoji||'📦',price:item.price,qty:_mbCart[id]}:null;
+  }).filter(Boolean);
+
+  const total = items.reduce((s,i)=>s+i.price*i.qty,0);
+  const desc = items.map(i=>`${i.emoji}${i.name}×${i.qty}`).join(', ');
+
+  const logEntry = {
+    id:'MBL'+Date.now(), date, room, items, total, note,
+    addedToBooking: addBooking, addedToRest: addRest,
+  };
+  mbLog.push(logEntry);
+  mbLogSave();
+
+  // Add to booking room charges
+  if(addBooking && typeof bookings!=='undefined'){
+    const td = typeof toDay==='function'?toDay():'';
+    const guest = bookings.find(b=>String(b.room)===String(room)&&b.ci<=td&&b.co>td&&b.status!=='Cancelled'&&!b.coConfirmed);
+    if(guest){
+      const bIdx=bookings.indexOf(guest);
+      if(!bookings[bIdx].roomCharges) bookings[bIdx].roomCharges=[];
+      bookings[bIdx].roomCharges.push({date,amount:total,desc:_mbT('🌡️ مينيبار: ')+desc,id:logEntry.id,status:'pending'});
+      if(bookings[bIdx].status==='Paid') bookings[bIdx].status='Partial';
+      if(typeof sv==='function') sv('dta_bk',bookings);
+    } else {
+      if(typeof sNotify==='function') sNotify(_mbT('⚠️ تنبيه'),_mbT('لم يتم الربط بالحجز — لا يوجد ضيف نشط في الغرفة'),'info',4000);
+    }
+  }
+
+  // Add to restaurant income
+  if(addRest && typeof restaurantTx!=='undefined'){
+    restaurantTx.push({
+      id:'MB-RST-'+Date.now(), date, type:'income',
+      desc:_mbT('🌡️ مينيبار غرفة ')+room+': '+desc,
+      cur:'EGP', egp:total,
+      usd:+(total/(typeof exRate!=='undefined'?exRate:50)).toFixed(2),
+      eur:+(total/(typeof eurRate!=='undefined'?eurRate:55)).toFixed(2),
+      method:'💵 كاش', room, notes:note,
+    });
+    if(typeof sv==='function') sv('dta_rest',restaurantTx);
+  }
+
+  closeM('mb-log-modal');
+  renderMinibar();
+  if(typeof sNotify==='function') sNotify(_mbT('✅ تم التسجيل'),'£'+total.toFixed(0)+' — '+_mbRoomLbl(room),'success',3000);
+};
+
+window.deleteMinibarLog = function(id){
+  if(!confirm(_mbT('حذف هذا السجل؟'))) return;
+  mbLog = mbLog.filter(l=>l.id!==id);
+  mbLogSave();
+  renderMinibar();
+};
+
+// expose for routing
+window.renderMinibar = window.renderMinibar;
+
 })();
 </script>
