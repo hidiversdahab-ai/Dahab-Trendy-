@@ -1370,6 +1370,7 @@ label {
 <!-- More Menu (slides up from bottom nav) -->
 <div id="bn-more-menu">
   <div class="bn-more-grid">
+    <div class="bn-more-item" onclick="bnGo('events',null);closeBnMore()" style="border-color:rgba(243,156,18,0.4);background:rgba(243,156,18,0.07);"><span class="bm-icon" style="color:#f39c12;">🎉</span><span style="color:#f39c12;" class="t" data-ar="الفعاليات" data-en="Events">الفعاليات</span></div>
     <div class="bn-more-item" onclick="openPDFReport();closeBnMore()" style="position:relative;border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);"><span class="bm-icon">📅</span><span class="t" data-ar="تقرير شهري" data-en="Monthly Report">تقرير شهري</span></div>
     <div class="bn-more-item" onclick="bnGo('calendar',null);closeBnMore()"><span class="bm-icon">🗓️</span><span class="t" data-ar="التقويم" data-en="Calendar">التقويم</span></div>
     <div class="bn-more-item" onclick="bnGo('rooms',null);closeBnMore()"><span class="bm-icon">🏨</span><span class="t" data-ar="الغرف" data-en="Rooms">الغرف</span></div>
@@ -1417,11 +1418,364 @@ label {
   <button class="fab-btn" id="fab-main-btn" onclick="fabToggle()">＋</button>
 </div>
 
+<!-- ══ EVENTS PAGE ══ -->
+<div id="page-events" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <h2 style="color:#f39c12;font-size:18px;">🎉 <span class="t" data-ar="الفعاليات والمناسبات" data-en="Events">الفعاليات والمناسبات</span></h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn" style="background:rgba(243,156,18,0.15);color:#f39c12;border:1px solid rgba(243,156,18,0.4);" onclick="openEventModal()">+ <span class="t" data-ar="فعالية جديدة" data-en="New Event">فعالية جديدة</span></button>
+      <button class="btn" style="background:rgba(37,211,102,0.15);color:#25D366;border:1px solid rgba(37,211,102,0.4);" onclick="openBroadcastModal()">📢 <span class="t" data-ar="إرسال للجميع" data-en="Broadcast All">إرسال للجميع</span></button>
+    </div>
+  </div>
+
+  <!-- فلتر -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+    <button id="ev-filter-all"   onclick="renderEvents('all')"     class="btn" style="font-size:11px;padding:5px 10px;background:rgba(243,156,18,0.2);color:#f39c12;border:1px solid rgba(243,156,18,0.5);">📋 <span class="t" data-ar="الكل" data-en="All">الكل</span></button>
+    <button id="ev-filter-today" onclick="renderEvents('today')"   class="btn" style="font-size:11px;padding:5px 10px;">📅 <span class="t" data-ar="اليوم" data-en="Today">اليوم</span></button>
+    <button id="ev-filter-week"  onclick="renderEvents('week')"    class="btn" style="font-size:11px;padding:5px 10px;">📆 <span class="t" data-ar="هذا الأسبوع" data-en="This Week">هذا الأسبوع</span></button>
+    <button id="ev-filter-past"  onclick="renderEvents('past')"    class="btn" style="font-size:11px;padding:5px 10px;">🗂️ <span class="t" data-ar="المنتهية" data-en="Past">المنتهية</span></button>
+  </div>
+
+  <div id="events-list"></div>
+</div>
+
+<!-- Broadcast Modal -->
+<div id="broadcast-modal-overlay" class="mdl-overlay" style="display:none;" onclick="if(event.target===this)closeBroadcastModal()">
+  <div class="mdl" style="max-width:520px;">
+    <div class="mdl-hdr">
+      <span>📢 <span class="t" data-ar="إرسال رسالة للجميع" data-en="Broadcast Message">إرسال رسالة للجميع</span></span>
+      <button class="mdl-x" onclick="closeBroadcastModal()">✕</button>
+    </div>
+
+    <!-- المجموعات المستهدفة -->
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;display:block;" class="t" data-ar="اختر المجموعات" data-en="Select Groups">اختر المجموعات</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.3);border-radius:8px;padding:6px 12px;">
+          <input type="checkbox" id="bc-group-inhouse" checked style="width:auto;accent-color:#3498db;"> 🏨 <span class="t" data-ar="الضيوف الحاليين" data-en="Current Guests">الضيوف الحاليين</span> <span id="bc-count-inhouse" style="font-size:10px;background:#3498db;color:#fff;border-radius:10px;padding:1px 6px;"></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:8px;padding:6px 12px;">
+          <input type="checkbox" id="bc-group-upcoming" checked style="width:auto;accent-color:#2ecc71;"> 📅 <span class="t" data-ar="الحجوزات القادمة" data-en="Upcoming Bookings">الحجوزات القادمة</span> <span id="bc-count-upcoming" style="font-size:10px;background:#2ecc71;color:#fff;border-radius:10px;padding:1px 6px;"></span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.3);border-radius:8px;padding:6px 12px;">
+          <input type="checkbox" id="bc-group-events" checked style="width:auto;accent-color:#f39c12;"> 🎉 <span class="t" data-ar="جهات الفعاليات" data-en="Event Contacts">جهات الفعاليات</span> <span id="bc-count-events" style="font-size:10px;background:#f39c12;color:#fff;border-radius:10px;padding:1px 6px;"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- الرسالة -->
+    <div class="fld">
+      <label class="t" data-ar="📝 الرسالة (عربي + إنجليزي)" data-en="📝 Message (Arabic + English)">📝 الرسالة</label>
+      <textarea id="bc-message" rows="5" placeholder="اكتب رسالتك هنا...&#10;Write your message here..."></textarea>
+    </div>
+
+    <!-- قوالب سريعة -->
+    <div style="margin-bottom:12px;">
+      <label style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block;">⚡ قوالب سريعة / Quick Templates</label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <button onclick="bcTemplate('promo')" class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.3);font-size:10px;">🌟 عرض خاص</button>
+        <button onclick="bcTemplate('event')" class="btn bsm" style="background:rgba(243,156,18,0.15);color:#f39c12;border:1px solid rgba(243,156,18,0.3);font-size:10px;">🎉 دعوة فعالية</button>
+        <button onclick="bcTemplate('info')" class="btn bsm" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.3);font-size:10px;">ℹ️ إشعار عام</button>
+        <button onclick="bcTemplate('wifi')" class="btn bsm" style="background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);font-size:10px;">📶 WiFi</button>
+      </div>
+    </div>
+
+    <!-- قائمة المستلمين -->
+    <div id="bc-recipients-preview" style="max-height:180px;overflow-y:auto;background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;margin-bottom:12px;"></div>
+
+    <!-- إجمالي + إرسال -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:12px;color:var(--muted);">
+        <span id="bc-total-count" style="font-weight:700;color:var(--gold);font-size:14px;">0</span>
+        <span class="t" data-ar=" مستلم" data-en=" recipients"> مستلم</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn bb" onclick="closeBroadcastModal()"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء</span></button>
+        <button class="btn" style="background:rgba(37,211,102,0.2);color:#25D366;border:1px solid rgba(37,211,102,0.4);" onclick="startBroadcast()">📤 <span class="t" data-ar="بدء الإرسال" data-en="Start Sending">بدء الإرسال</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Events Modal -->
+<div id="event-modal-overlay" class="mdl-overlay" style="display:none;" onclick="if(event.target===this)closeEventModal()">
+  <div class="mdl" style="max-width:460px;">
+    <div class="mdl-hdr">
+      <span id="event-modal-title">🎉 فعالية جديدة</span>
+      <button class="mdl-x" onclick="closeEventModal()">✕</button>
+    </div>
+    <input type="hidden" id="ev-edit-idx" value="-1">
+
+    <div class="fld"><label class="t" data-ar="📝 اسم الفعالية *" data-en="📝 Event Name *">📝 اسم الفعالية *</label><input id="ev-title" type="text" placeholder="مثلاً: عرس، مؤتمر، حفلة... / e.g. Wedding, Conference..."></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="fld"><label class="t" data-ar="📅 التاريخ *" data-en="📅 Date *">📅 التاريخ *</label><input id="ev-date" type="date" oninput="evShowHijri()"></div>
+      <div class="fld"><label class="t" data-ar="🕐 الوقت" data-en="🕐 Time">🕐 الوقت</label><input id="ev-time" type="time" value="18:00"></div>
+    </div>
+    <div id="ev-date-hijri" style="display:none;font-size:11px;color:#c9a84c;margin:-6px 0 8px;font-weight:600;"></div>
+
+    <div class="fld"><label class="t" data-ar="🏷️ النوع" data-en="🏷️ Type">🏷️ النوع</label>
+      <select id="ev-type">
+        <option value="عرس">💍 عرس / Wedding</option>
+        <option value="خطوبة">💎 خطوبة / Engagement</option>
+        <option value="عيد ميلاد">🎂 عيد ميلاد / Birthday</option>
+        <option value="مؤتمر">🏢 مؤتمر / Conference</option>
+        <option value="حفلة">🎶 حفلة / Party</option>
+        <option value="رحلة">🏔️ رحلة / Trip</option>
+        <option value="اجتماع">📋 اجتماع / Meeting</option>
+        <option value="تخرج">🎓 تخرج / Graduation</option>
+        <option value="أخرى">📌 أخرى / Other</option>
+      </select>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="fld"><label class="t" data-ar="👥 عدد الأشخاص" data-en="👥 Guests Count">👥 عدد الأشخاص</label><input id="ev-count" type="number" min="1" placeholder="مثلاً: 50 / e.g. 50"></div>
+      <div class="fld"><label class="t" data-ar="🏨 الغرفة / المكان" data-en="🏨 Room / Venue">🏨 الغرفة / المكان</label><input id="ev-location" type="text" placeholder="مثلاً: القاعة الكبرى / e.g. Main Hall"></div>
+    </div>
+
+    <div class="fld"><label class="t" data-ar="📞 جهة الاتصال" data-en="📞 Contact">📞 جهة الاتصال</label><input id="ev-contact" type="text" placeholder="الاسم والهاتف / Name & Phone"></div>
+    <div class="fld"><label class="t" data-ar="💰 الميزانية / السعر" data-en="💰 Budget / Price">💰 الميزانية / السعر</label><input id="ev-budget" type="text" placeholder="مثلاً: 5000 EGP"></div>
+    <div class="fld"><label class="t" data-ar="📝 ملاحظات" data-en="📝 Notes">📝 ملاحظات</label><textarea id="ev-notes" rows="3" placeholder="أي تفاصيل إضافية... / Any additional details..."></textarea></div>
+
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn" style="flex:1;background:rgba(243,156,18,0.2);color:#f39c12;border:1px solid rgba(243,156,18,0.5);" onclick="saveEvent()">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ</span></button>
+      <button class="btn" style="flex:1;" onclick="closeEventModal()"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ EVENTS MODULE ══
+let _evFilter = 'all';
+
+function evLS(){ return LS('dta_events', []); }
+function evSave(arr){ localStorage.setItem('dta_events', JSON.stringify(arr)); }
+
+window.evShowHijri = function(){
+  const v = document.getElementById('ev-date')?.value;
+  const el = document.getElementById('ev-date-hijri');
+  if(!el) return;
+  if(!v){ el.style.display='none'; el.textContent=''; return; }
+  const h = typeof gregorianToHijri === 'function' ? gregorianToHijri(v) : '';
+  if(h){ el.textContent='🌙 '+h; el.style.display=''; }
+  else { el.style.display='none'; }
+}
+
+window.openEventModal = function(idx){
+  const overlay = document.getElementById('event-modal-overlay');
+  const titleEl = document.getElementById('event-modal-title');
+  document.getElementById('ev-edit-idx').value = idx !== undefined ? idx : -1;
+  if(idx !== undefined){
+    const ev = evLS()[idx];
+    if(!ev) return;
+    titleEl.textContent = '✏️ تعديل الفعالية / Edit Event';
+    document.getElementById('ev-title').value    = ev.title||'';
+    document.getElementById('ev-date').value     = ev.date||'';
+    document.getElementById('ev-time').value     = ev.time||'18:00';
+    document.getElementById('ev-type').value     = ev.type||'أخرى';
+    document.getElementById('ev-count').value    = ev.count||'';
+    document.getElementById('ev-location').value = ev.location||'';
+    document.getElementById('ev-contact').value  = ev.contact||'';
+    document.getElementById('ev-budget').value   = ev.budget||'';
+    document.getElementById('ev-notes').value    = ev.notes||'';
+    evShowHijri();
+  } else {
+    titleEl.textContent = '🎉 فعالية جديدة / New Event';
+    ['ev-title','ev-count','ev-location','ev-contact','ev-budget','ev-notes'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('ev-date').value  = '';
+    document.getElementById('ev-time').value  = '18:00';
+    document.getElementById('ev-type').value  = 'أخرى';
+    document.getElementById('ev-date-hijri').style.display='none';
+  }
+  overlay.style.display='flex';
+}
+
+window.closeEventModal = function(){
+  document.getElementById('event-modal-overlay').style.display='none';
+};
+
+window.saveEvent = function(){
+  const title = document.getElementById('ev-title').value.trim();
+  const date  = document.getElementById('ev-date').value;
+  if(!title || !date){ sNotify('⚠️','يرجى إدخال اسم الفعالية والتاريخ','warning'); return; }
+  const ev = {
+    title, date,
+    time    : document.getElementById('ev-time').value||'',
+    type    : document.getElementById('ev-type').value||'أخرى',
+    count   : document.getElementById('ev-count').value||'',
+    location: document.getElementById('ev-location').value.trim()||'',
+    contact : document.getElementById('ev-contact').value.trim()||'',
+    budget  : document.getElementById('ev-budget').value.trim()||'',
+    notes   : document.getElementById('ev-notes').value.trim()||'',
+    created : new Date().toISOString()
+  };
+  const arr = evLS();
+  const idx = parseInt(document.getElementById('ev-edit-idx').value);
+  if(idx >= 0) arr[idx] = ev;
+  else arr.push(ev);
+  arr.sort((a,b)=> a.date > b.date ? 1 : -1);
+  evSave(arr);
+  closeEventModal();
+  renderEvents(_evFilter);
+  sNotify('✅', idx>=0 ? 'تم تعديل الفعالية' : 'تمت إضافة الفعالية');
+}
+
+window.deleteEvent = function(idx){
+  if(!confirm('هل تريد حذف هذه الفعالية؟')) return;
+  const arr = evLS();
+  arr.splice(idx,1);
+  evSave(arr);
+  renderEvents(_evFilter);
+  sNotify('🗑️','تم حذف الفعالية','warning');
+}
+
+window.renderEvents = function(filter){
+  _evFilter = filter || 'all';
+  const container = document.getElementById('events-list');
+  if(!container) return;
+
+  // تحديث الفلتر النشط
+  ['all','today','week','past'].forEach(f=>{
+    const btn = document.getElementById('ev-filter-'+f);
+    if(!btn) return;
+    const active = f === _evFilter;
+    btn.style.background = active ? 'rgba(243,156,18,0.2)' : 'rgba(255,255,255,0.04)';
+    btn.style.borderColor = active ? 'rgba(243,156,18,0.5)' : 'rgba(255,255,255,0.1)';
+    btn.style.color = active ? '#f39c12' : 'var(--muted)';
+  });
+
+  const now   = new Date();
+  const today = now.toISOString().split('T')[0];
+  const in7   = new Date(now.getTime()+7*86400000).toISOString().split('T')[0];
+
+  let arr = evLS();
+  // فلترة
+  if(filter==='today') arr = arr.filter(e=> e.date===today);
+  else if(filter==='week') arr = arr.filter(e=> e.date>=today && e.date<=in7);
+  else if(filter==='past') arr = arr.filter(e=> e.date<today);
+  else arr = arr.filter(e=> e.date>=today); // all = قادمة + اليوم بالترتيب
+
+  if(!arr.length){
+    const msgs = {all:'لا توجد فعاليات قادمة / No upcoming events',today:'لا توجد فعاليات اليوم / No events today',week:'لا توجد فعاليات هذا الأسبوع / No events this week',past:'لا توجد فعاليات منتهية / No past events'};
+    container.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted);">🎉 ${msgs[filter]||'لا توجد فعاليات / No events'}</div>`;
+    return;
+  }
+
+  const allArr = evLS(); // الأصلي للحصول على الـ index الصحيح
+
+  container.innerHTML = arr.map(ev=>{
+    const realIdx = allArr.findIndex(e=> e.created===ev.created && e.title===ev.title);
+    const evDate  = new Date(ev.date+'T'+(ev.time||'00:00'));
+    const diffMs  = evDate - now;
+    const diffD   = Math.ceil(diffMs / 86400000);
+
+    let statusTxt='', statusColor='#c9a84c', cardBg='rgba(201,168,76,0.07)', cardBorder='rgba(201,168,76,0.25)';
+    if(ev.date < today){
+      statusTxt='✅ منتهية'; statusColor='#7f8c8d'; cardBg='rgba(127,140,141,0.05)'; cardBorder='rgba(127,140,141,0.2)';
+    } else if(ev.date===today){
+      statusTxt='🔥 اليوم!'; statusColor='#e74c3c'; cardBg='rgba(231,76,60,0.1)'; cardBorder='rgba(231,76,60,0.4)';
+    } else if(diffD<=3){
+      statusTxt=`⚡ بعد ${diffD} يوم`; statusColor='#f39c12'; cardBg='rgba(243,156,18,0.1)'; cardBorder='rgba(243,156,18,0.35)';
+    } else if(diffD<=7){
+      statusTxt=`📅 بعد ${diffD} أيام`; statusColor='#3498db'; cardBg='rgba(52,152,219,0.07)'; cardBorder='rgba(52,152,219,0.25)';
+    } else {
+      statusTxt=`📆 بعد ${diffD} يوم`;
+    }
+
+    const hijriDate = typeof gregorianToHijri==='function' ? gregorianToHijri(ev.date) : '';
+    const typeEmojis = {'عرس':'💍','خطوبة':'💎','عيد ميلاد':'🎂','مؤتمر':'🏢','حفلة':'🎶','رحلة':'🏔️','اجتماع':'📋','تخرج':'🎓','أخرى':'📌'};
+    const typeEmoji = typeEmojis[ev.type]||'📌';
+    const dateFormatted = new Date(ev.date).toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+    return `<div style="background:${cardBg};border:1px solid ${cardBorder};border-radius:12px;padding:14px 16px;margin-bottom:10px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;">${typeEmoji} ${ev.title}</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:2px;">📅 ${dateFormatted}${ev.time?' · 🕐 '+ev.time:''}</div>
+          ${hijriDate?`<div style="font-size:11px;color:#c9a84c;">🌙 ${hijriDate}</div>`:''}
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="font-size:11px;background:rgba(0,0,0,0.3);border-radius:5px;padding:2px 8px;color:${statusColor};font-weight:700;">${statusTxt}</span>
+            <span style="font-size:11px;background:rgba(0,0,0,0.2);border-radius:5px;padding:2px 8px;color:var(--muted);">${ev.type}</span>
+            ${ev.location?`<span style="font-size:11px;background:rgba(0,0,0,0.2);border-radius:5px;padding:2px 8px;color:var(--muted);">📍 ${ev.location}</span>`:''}
+            ${ev.count?`<span style="font-size:11px;background:rgba(0,0,0,0.2);border-radius:5px;padding:2px 8px;color:var(--muted);">👥 ${ev.count} شخص</span>`:''}
+            ${ev.budget?`<span style="font-size:11px;background:rgba(0,0,0,0.2);border-radius:5px;padding:2px 8px;color:#4cda7a;">💰 ${ev.budget}</span>`:''}
+          </div>
+          ${ev.contact?`<div style="font-size:11px;color:var(--muted);margin-top:4px;">📞 ${ev.contact}</div>`:''}
+          ${ev.notes?`<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;font-style:italic;">${ev.notes}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <button onclick="openEventModal(${realIdx})" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:var(--muted);cursor:pointer;">✏️</button>
+          <button onclick="deleteEvent(${realIdx})" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(231,76,60,0.3);background:rgba(231,76,60,0.08);color:#e74c3c;cursor:pointer;">🗑️</button>
+          <button onclick="notifyEventGuest(${realIdx})" style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid rgba(37,211,102,0.3);background:rgba(37,211,102,0.08);color:#25D366;cursor:pointer;" title="إبلاغ الضيف / Notify Guest">📲</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// تحميل الأحداث عند فتح الصفحة
+const _origGoPage_events = typeof goPage==='function' ? goPage : null;
+if(_origGoPage_events){
+  const __evGoPage = goPage;
+  goPage = function(id, btn){
+    __evGoPage(id, btn);
+    if(id==='events') renderEvents(_evFilter);
+  };
+}
+
+// ── NOTIFY EVENT GUEST via WhatsApp (bilingual) ──
+window.notifyEventGuest = function(idx){
+  const arr = evLS();
+  const ev = arr[idx];
+  if(!ev){ return; }
+  const ar = document.documentElement.lang !== 'en';
+  const phone = (ev.contact||'').replace(/\D/g,'');
+  const dateFormatted = new Date(ev.date).toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const dateEn = new Date(ev.date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const typeEmojis = {'عرس':'💍','خطوبة':'💎','عيد ميلاد':'🎂','مؤتمر':'🏢','حفلة':'🎶','رحلة':'🏔️','اجتماع':'📋','تخرج':'🎓','أخرى':'📌'};
+  const emoji = typeEmojis[ev.type]||'📌';
+
+  const msg =
+    emoji + ' *' + ev.title + '*
+' +
+    '🗓️ ' + dateFormatted + ' / ' + dateEn + '
+' +
+    (ev.time ? '🕐 ' + ev.time + '
+' : '') +
+    (ev.location ? '📍 ' + ev.location + '
+' : '') +
+    (ev.count ? '👥 ' + ev.count + (ar?' شخص':' guests') + '
+' : '') +
+    (ev.notes ? '📝 ' + ev.notes + '
+' : '') +
+    '
+🏨 Dahab Trendy';
+
+  if(phone){
+    window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg));
+  } else {
+    // نافذة اختيار الرقم يدوياً
+    const num = prompt(ar ? 'أدخل رقم واتساب الضيف (بدون +):' : 'Enter guest WhatsApp number (without +):', '20');
+    if(num && num.replace(/\D/g,'').length > 7){
+      window.open('https://wa.me/' + num.replace(/\D/g,'') + '?text=' + encodeURIComponent(msg));
+    } else if(num !== null){
+      window.open('https://wa.me/?text=' + encodeURIComponent(msg));
+    }
+  }
+};
+</script>
+
 <!-- ══ WAKE-UP CALL PAGE ══ -->
 <div id="page-wakeup" class="page">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
     <h2 style="color:#ffc107;font-size:18px;">🔔 <span class="t" data-ar="نظام الإيقاظ" data-en="Wake-up Call System">نظام الإيقاظ</span></h2>
     <button class="btn" style="background:rgba(255,193,7,0.15);color:#ffc107;border:1px solid rgba(255,193,7,0.4);" onclick="openWakeUpModal()">+ <span class="t" data-ar="طلب إيقاظ" data-en="New Wake-up">طلب إيقاظ</span></button>
+  </div>
+  <!-- فلتر Wake-up -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+    <button id="wu-filter-all"   onclick="renderWakeUp('all')"   class="btn" style="font-size:11px;padding:5px 10px;background:rgba(255,193,7,0.2);color:#ffc107;border:1px solid rgba(255,193,7,0.5);">📋 <span class="t" data-ar="الكل" data-en="All">الكل</span></button>
+    <button id="wu-filter-today" onclick="renderWakeUp('today')" class="btn" style="font-size:11px;padding:5px 10px;">📅 <span class="t" data-ar="اليوم" data-en="Today">اليوم</span></button>
+    <button id="wu-filter-done"  onclick="renderWakeUp('done')"  class="btn" style="font-size:11px;padding:5px 10px;">✅ <span class="t" data-ar="تم" data-en="Done">تم</span></button>
   </div>
   <div id="wakeup-list"><div style="text-align:center;padding:40px;color:var(--muted);">🔔 <span class="t" data-ar="لا توجد طلبات إيقاظ" data-en="No wake-up calls">لا توجد طلبات إيقاظ</span></div></div>
 </div>
@@ -1430,10 +1784,21 @@ label {
 <div id="wakeup-modal-overlay" class="mdl-overlay" style="display:none;" onclick="if(event.target===this)closeWakeUpModal()">
   <div class="mdl" style="max-width:420px;">
     <div class="mdl-hdr"><span>🔔 <span class="t" data-ar="طلب إيقاظ جديد" data-en="New Wake-up Call">طلب إيقاظ جديد</span></span><button class="mdl-x" onclick="closeWakeUpModal()">✕</button></div>
-    <div class="fld"><label class="t" data-ar="الغرفة" data-en="Room">الغرفة</label><input id="wu-room" type="text" placeholder="رقم الغرفة"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="fld"><label class="t" data-ar="الغرفة" data-en="Room">الغرفة</label><input id="wu-room" type="text" placeholder="رقم الغرفة / Room No."></div>
+      <div class="fld"><label class="t" data-ar="رقم الواتساب" data-en="WhatsApp Number">رقم الواتساب</label><input id="wu-phone" type="tel" placeholder="20xxxxxxxxxx" style="direction:ltr;"></div>
+    </div>
     <div class="fld"><label class="t" data-ar="اسم الضيف" data-en="Guest Name">اسم الضيف</label><input id="wu-guest" type="text"></div>
-    <div class="fld"><label class="t" data-ar="وقت الإيقاظ" data-en="Wake-up Time">وقت الإيقاظ</label><input id="wu-time" type="time"></div>
-    <div class="fld"><label class="t" data-ar="التاريخ" data-en="Date">التاريخ</label><input id="wu-date" type="date"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="fld"><label class="t" data-ar="وقت الإيقاظ" data-en="Wake-up Time">وقت الإيقاظ</label><input id="wu-time" type="time"></div>
+      <div class="fld"><label class="t" data-ar="التاريخ" data-en="Date">التاريخ</label><input id="wu-date" type="date"></div>
+    </div>
+    <div class="fld">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--gold);text-transform:none;letter-spacing:0;">
+        <input type="checkbox" id="wu-repeat" style="width:auto;accent-color:#ffc107;">
+        🔁 <span class="t" data-ar="تكرار يومي" data-en="Repeat Daily">تكرار يومي</span>
+      </label>
+    </div>
     <div class="fld"><label class="t" data-ar="ملاحظات" data-en="Notes">ملاحظات</label><input id="wu-notes" type="text"></div>
     <div class="flex mt"><button class="btn bg" onclick="saveWakeUp()">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ</span></button><button class="btn bb" onclick="closeWakeUpModal()"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء</span></button></div>
   </div>
@@ -1563,11 +1928,16 @@ window.saveWakeUp = function(){
   const time=document.getElementById('wu-time').value;
   const date=document.getElementById('wu-date').value;
   if(!room||!time||!date){ notify(isEn()?'Fill room, time & date':'اكتب الغرفة والوقت والتاريخ','info'); return; }
-  wuData.push({id:'WU-'+Date.now(),room,guest:document.getElementById('wu-guest').value.trim(),
-    time,date,notes:document.getElementById('wu-notes').value.trim(),done:false,created:new Date().toISOString()});
+  wuData.push({id:'WU-'+Date.now(),room,
+    guest:document.getElementById('wu-guest').value.trim(),
+    phone:(document.getElementById('wu-phone')?.value||'').trim(),
+    time,date,
+    repeat:document.getElementById('wu-repeat')?.checked||false,
+    notes:document.getElementById('wu-notes').value.trim(),
+    done:false,created:new Date().toISOString()});
   sv2('dta_wakeup',wuData);
   closeWakeUpModal();
-  renderWakeUp();
+  renderWakeUp(_wuFilter||'all');
   notify(isEn()?'Wake-up call saved':'تم حفظ طلب الإيقاظ');
 };
 window.toggleWU = function(id){
@@ -1577,24 +1947,329 @@ window.toggleWU = function(id){
 window.deleteWU = function(id){
   wuData=wuData.filter(x=>x.id!==id); sv2('dta_wakeup',wuData); renderWakeUp();
 };
-window.renderWakeUp = function(){
+let _wuFilter = 'all';
+window.renderWakeUp = function(filter){
+  if(filter) _wuFilter = filter;
   const el=document.getElementById('wakeup-list'); if(!el) return;
-  if(!wuData.length){ el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">🔔 '+(isEn()?'No wake-up calls':'لا توجد طلبات إيقاظ')+'</div>'; return; }
-  const sorted=[...wuData].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
-  el.innerHTML=sorted.map(w=>`
+  const td2 = (typeof toDay==='function') ? toDay() : new Date().toISOString().split('T')[0];
+
+  // تحديث الفلتر النشط
+  ['all','today','done'].forEach(f=>{
+    const btn=document.getElementById('wu-filter-'+f); if(!btn) return;
+    const active = f===_wuFilter;
+    btn.style.background = active?'rgba(255,193,7,0.2)':'rgba(255,255,255,0.04)';
+    btn.style.borderColor = active?'rgba(255,193,7,0.5)':'rgba(255,255,255,0.1)';
+    btn.style.color = active?'#ffc107':'var(--muted)';
+  });
+
+  let arr = [...wuData];
+  if(_wuFilter==='today') arr = arr.filter(w=> w.date===td2);
+  else if(_wuFilter==='done') arr = arr.filter(w=> w.done);
+  else arr = arr.filter(w=> !w.done); // all = غير منتهية
+
+  arr.sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+
+  if(!arr.length){
+    const msgs    ={all:'لا توجد طلبات إيقاظ / No wake-up calls',today:'لا توجد إيقاظات اليوم / No wake-ups today',done:'لا توجد طلبات منتهية / No completed calls'};
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">🔔 '+(msgs[_wuFilter]||msgs.all)+'</div>';
+    return;
+  }
+
+  el.innerHTML=arr.map(w=>{
+    const phone = (w.phone||'').replace(/[^0-9+]/g,'');
+    const waBtn = `<button class="btn bsm" style="background:rgba(37,211,102,0.15);color:#25D366;border:1px solid rgba(37,211,102,0.3);" onclick="wuWhatsApp('${w.id}')" title="واتساب / WhatsApp">📲</button>`;
+    const callBtn = phone.length>6 ? `<button class="btn bsm" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.3);" onclick="window.location.href='tel:+${phone}'" title="اتصال / Call">📞</button>` : '';
+    const repeatBadge = w.repeat ? `<span style="font-size:10px;background:rgba(255,193,7,0.15);color:#ffc107;border:1px solid rgba(255,193,7,0.3);border-radius:10px;padding:1px 7px;">🔁 يومي / Daily</span>` : '';
+    const doneLabel = w.done ? 'تراجع / Undo' : 'تم / Done';
+    return `
     <div class="card" style="border-color:${w.done?'rgba(46,204,113,0.3)':'rgba(255,193,7,0.3)'};display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <div style="font-size:28px;">${w.done?'✅':'🔔'}</div>
       <div style="flex:1;min-width:140px;">
-        <div style="font-weight:700;color:#ffc107;">${isEn()?'Room':'غرفة'} ${w.room} ${w.guest?'— '+w.guest:''}</div>
+        <div style="font-weight:700;color:#ffc107;">غرفة / Room: ${w.room}${w.guest?' — '+w.guest:''}</div>
         <div style="font-size:13px;color:var(--text);">⏰ ${w.time} · 📅 ${w.date}</div>
-        ${w.notes?`<div style="font-size:11px;color:var(--muted);">${w.notes}</div>`:''}
+        ${phone?`<div style="font-size:11px;color:var(--muted);direction:ltr;">📞 ${w.phone}</div>`:''}
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;">${repeatBadge}${w.notes?`<span style="font-size:11px;color:rgba(255,255,255,0.45);">${w.notes}</span>`:''}</div>
       </div>
-      <div style="display:flex;gap:6px;">
-        <button class="btn bsm" style="background:${w.done?'rgba(231,76,60,0.2)':'rgba(46,204,113,0.2)'};color:${w.done?'#e74c3c':'#2ecc71'};border:1px solid;" onclick="toggleWU('${w.id}')">${w.done?(isEn()?'Undo':'تراجع'):(isEn()?'Done':'تم')}</button>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
+        ${waBtn}${callBtn}
+        <button class="btn bsm" style="background:${w.done?'rgba(231,76,60,0.2)':'rgba(46,204,113,0.2)'};color:${w.done?'#e74c3c':'#2ecc71'};border:1px solid;" onclick="toggleWU('${w.id}')">${doneLabel}</button>
         <button class="btn bsm br" onclick="deleteWU('${w.id}')">🗑</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 };
+
+// إرسال واتساب لطلب الإيقاظ
+window.wuWhatsApp = function(id){
+  const w = wuData.find(x=>x.id===id); if(!w) return;
+  const ar = document.documentElement.lang !== 'en';
+  const hotel = (typeof PROP!=='undefined'&&PROP.name)?PROP.name:'Dahab Trendy';
+  const msg = ar
+    ? `🔔 تنبيه إيقاظ من ${hotel}
+
+عزيزي الضيف ${w.guest||''},
+موعد إيقاظك غداً الساعة *${w.time}* 🕐
+الغرفة: ${w.room}
+${w.notes?'📝 '+w.notes+'
+':''}
+ليلة سعيدة 🌙
+🏨 ${hotel}`
+    : `🔔 Wake-up Call from ${hotel}
+
+Dear Guest ${w.guest||''},
+Your wake-up call is set for *${w.time}* 🕐
+Room: ${w.room}
+${w.notes?'📝 '+w.notes+'
+':''}
+Good night 🌙
+🏨 ${hotel}`;
+  const phone = (w.phone||'').replace(/[^0-9+]/g,'');
+  if(phone.length>6){
+    window.open('https://wa.me/'+phone.replace(/\+/g,'')+'?text='+encodeURIComponent(msg));
+  } else {
+    const num = prompt(ar?'أدخل رقم واتساب الضيف:':'Enter guest WhatsApp number:','20');
+    if(num && num.replace(/\D/g,'').length>6)
+      window.open('https://wa.me/'+num.replace(/\D/g,'')+'?text='+encodeURIComponent(msg));
+  }
+};
+
+// ── BROADCAST TO ALL ──
+window.openBroadcastModal = function(){
+  document.getElementById('broadcast-modal-overlay').style.display='flex';
+  bcRefresh();
+};
+window.closeBroadcastModal = function(){
+  document.getElementById('broadcast-modal-overlay').style.display='none';
+};
+
+function bcGetRecipients(){
+  const td = (typeof toDay==='function') ? toDay() : new Date().toISOString().split('T')[0];
+  const bks = (typeof bookings !== 'undefined') ? bookings : (typeof LS==='function' ? LS('dta_bk',[]) : []);
+  const ar = [];
+
+  // ① الضيوف الحاليين
+  if(document.getElementById('bc-group-inhouse')?.checked){
+    bks.filter(b=> b.ci<=td && b.co>td && b.status!=='Cancelled' && !b.coConfirmed && b.phone)
+      .forEach(b=>{
+        const phone = b.phone.replace(/[^0-9+]/g,'');
+        if(phone.length>6 && !ar.find(r=>r.phone===phone))
+          ar.push({phone, name:b.name||'—', label:'🏨', group:'inhouse', room:b.room||''});
+      });
+  }
+
+  // ② الحجوزات القادمة
+  if(document.getElementById('bc-group-upcoming')?.checked){
+    bks.filter(b=> b.ci>td && b.status!=='Cancelled' && b.status!=='Standby' && b.phone)
+      .forEach(b=>{
+        const phone = b.phone.replace(/[^0-9+]/g,'');
+        if(phone.length>6 && !ar.find(r=>r.phone===phone))
+          ar.push({phone, name:b.name||'—', label:'📅', group:'upcoming', room:b.room||'', ci:b.ci||''});
+      });
+  }
+
+  // ③ جهات الفعاليات
+  if(document.getElementById('bc-group-events')?.checked){
+    (evLS()||[]).forEach(ev=>{
+      if(!ev.contact) return;
+      const phone = ev.contact.replace(/[^0-9+]/g,'');
+      if(phone.length>6 && !ar.find(r=>r.phone===phone))
+        ar.push({phone, name:ev.contact||'—', label:'🎉', group:'events', eventTitle:ev.title||''});
+    });
+  }
+  return ar;
+}
+
+function bcRefresh(){
+  const recipients = bcGetRecipients();
+  const bks = (typeof bookings !== 'undefined') ? bookings : [];
+  const td  = (typeof toDay==='function') ? toDay() : new Date().toISOString().split('T')[0];
+
+  // الأعداد
+  const cntIn  = bks.filter(b=> b.ci<=td && b.co>td && b.status!=='Cancelled' && !b.coConfirmed && b.phone && b.phone.replace(/[^0-9+]/g,'').length>6).length;
+  const cntUp  = bks.filter(b=> b.ci>td  && b.status!=='Cancelled' && b.status!=='Standby' && b.phone && b.phone.replace(/[^0-9+]/g,'').length>6).length;
+  const cntEv  = (evLS()||[]).filter(ev=> ev.contact && ev.contact.replace(/[^0-9+]/g,'').length>6).length;
+
+  const cntInEl=document.getElementById('bc-count-inhouse');
+  const cntUpEl=document.getElementById('bc-count-upcoming');
+  const cntEvEl=document.getElementById('bc-count-events');
+  if(cntInEl) cntInEl.textContent=cntIn;
+  if(cntUpEl) cntUpEl.textContent=cntUp;
+  if(cntEvEl) cntEvEl.textContent=cntEv;
+
+  const totalEl=document.getElementById('bc-total-count');
+  if(totalEl) totalEl.textContent=recipients.length;
+
+  // قائمة المستلمين
+  const prev=document.getElementById('bc-recipients-preview');
+  if(!prev) return;
+  if(!recipients.length){
+    prev.innerHTML='<div style="text-align:center;padding:10px;color:var(--muted);font-size:12px;">لا يوجد مستلمون بأرقام واتساب / No recipients with phone numbers</div>';
+    return;
+  }
+  prev.innerHTML=recipients.map((r,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <span style="font-size:14px;">${r.label}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}${r.room?' · غرفة '+r.room:''}${r.ci?' · قدوم '+r.ci:''}${r.eventTitle?' · '+r.eventTitle:''}</div>
+        <div style="font-size:10px;color:var(--muted);direction:ltr;">${r.phone}</div>
+      </div>
+      <span style="font-size:10px;color:#25D366;">#${i+1}</span>
+    </div>`).join('');
+}
+
+// تحديث القائمة عند تغيير الاختيارات
+['bc-group-inhouse','bc-group-upcoming','bc-group-events'].forEach(id=>{
+  document.addEventListener('change', e=>{ if(e.target.id===id) bcRefresh(); });
+});
+
+// القوالب السريعة
+window.bcTemplate = function(type){
+  const ar = document.documentElement.lang !== 'en';
+  const hotel = (typeof PROP !== 'undefined' && PROP.name) ? PROP.name : 'Dahab Trendy';
+  const templates = {
+    promo: `🌟 عرض خاص من ${hotel}
+
+نقدم لكم خصم حصري لفترة محدودة!
+للحجز والاستفسار تواصلوا معنا.
+
+🌟 Special Offer from ${hotel}
+Exclusive discount for a limited time!
+Contact us to book now.`,
+    event: `🎉 دعوة خاصة!
+
+يسعدنا دعوتكم لحضور فعالياتنا القادمة في ${hotel}.
+نتطلع لرؤيتكم!
+
+🎉 Special Invitation!
+We're delighted to invite you to our upcoming events at ${hotel}.
+Looking forward to seeing you!`,
+    info: `ℹ️ إشعار من ${hotel}
+
+نود إعلامكم بـ [اكتب التفاصيل هنا]
+
+ℹ️ Notice from ${hotel}
+We would like to inform you about [write details here]`,
+    wifi: `📶 معلومات الواي فاي / WiFi Info
+
+🌐 شبكة / Network: ${hotel}
+🔑 كلمة السر / Password: [اكتب هنا]
+
+للمساعدة تواصل مع الاستقبال.
+For assistance, contact reception.`
+  };
+  const ta = document.getElementById('bc-message');
+  if(ta) ta.value = templates[type]||'';
+};
+
+// بدء الإرسال — يفتح واتساب واحد تلو الآخر
+window.startBroadcast = function(){
+  const msg = (document.getElementById('bc-message')?.value||'').trim();
+  const ar  = document.documentElement.lang !== 'en';
+  if(!msg){ 
+    if(typeof sNotify==='function') sNotify('⚠️', ar?'اكتب الرسالة أولاً':'Write the message first','warning');
+    return;
+  }
+  const recipients = bcGetRecipients();
+  if(!recipients.length){
+    if(typeof sNotify==='function') sNotify('ℹ️', ar?'لا يوجد مستلمون':'No recipients','info');
+    return;
+  }
+  closeBroadcastModal();
+  // نفتح popup لكل رقم بتأخير بسيط
+  let delay = 0;
+  recipients.forEach((r,i)=>{
+    setTimeout(()=>{
+      const url = 'https://wa.me/' + r.phone.replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(msg);
+      window.open(url, '_blank');
+      if(i===recipients.length-1){
+        if(typeof sNotify==='function') sNotify('✅', (ar?'تم فتح '+recipients.length+' محادثة واتساب':'Opened '+recipients.length+' WhatsApp chats'), 'success', 4000);
+      }
+    }, delay);
+    delay += 800; // 0.8 ثانية بين كل رسالة
+  });
+};
+
+// ── WAKE-UP ALARM SYSTEM ──
+// طلب إذن الإشعارات عند أول تفاعل
+window.requestWUNotifPerm = function(){
+  if('Notification' in window && Notification.permission==='default'){
+    Notification.requestPermission();
+  }
+};
+document.addEventListener('click', window.requestWUNotifPerm, {once:true});
+
+// دالة صوت beep بديل للنوتيفيكيشن
+function wuBeep(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.6, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 1.5);
+    // تكرار 3 مرات
+    setTimeout(()=>{ try{
+      const o2=ctx.createOscillator(); const g2=ctx.createGain();
+      o2.connect(g2); g2.connect(ctx.destination);
+      o2.frequency.value=1100; o2.type='sine';
+      g2.gain.setValueAtTime(0.6,ctx.currentTime); g2.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+1.2);
+      o2.start(ctx.currentTime); o2.stop(ctx.currentTime+1.2);
+    }catch(e){} }, 1800);
+  }catch(e){}
+}
+
+// تشيك كل دقيقة على طلبات الإيقاظ
+(function startWUChecker(){
+  function checkWU(){
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    const nowTime = hh + ':' + mm;
+    wuData.forEach(function(w){
+      if(w.done) return;
+      if(w.date !== todayStr) return;
+      if(w.time !== nowTime) return;
+      // حان وقت الإيقاظ!
+      const ar = document.documentElement.lang !== 'en';
+      const title = ar ? ('🔔 وقت إيقاظ الغرفة ' + w.room) : ('🔔 Wake-up call: Room ' + w.room);
+      const body  = ar
+        ? ('الضيف: ' + (w.guest||'—') + '
+' + (w.notes||''))
+        : ('Guest: ' + (w.guest||'—') + '
+' + (w.notes||''));
+      // Browser Notification
+      if('Notification' in window && Notification.permission==='granted'){
+        new Notification(title, {body: body, icon: 'data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><text y=\'.9em\' font-size=\'80\'>🔔</text></svg>', requireInteraction: true});
+      } else {
+        // fallback: sNotify
+        if(typeof sNotify==='function') sNotify('🔔', title, 'warning', 8000);
+      }
+      // صوت دائماً
+      wuBeep();
+      // تسجيل alert في الـ page لو مفتوحة
+      const el = document.getElementById('wakeup-list');
+      if(el){
+        const flash = document.createElement('div');
+        flash.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;background:linear-gradient(135deg,#1a1200,#2a2000);border:3px solid #ffc107;border-radius:18px;padding:24px 32px;text-align:center;box-shadow:0 8px 40px rgba(255,193,7,0.5);animation:wuflash 0.4s ease;';
+        flash.innerHTML='<div style="font-size:48px;">🔔</div><div style="color:#ffc107;font-size:18px;font-weight:800;margin:8px 0;">'+title+'</div><div style="color:#fff;font-size:13px;margin-bottom:14px;">'+body.replace('\n','<br>')+'</div><button onclick="this.parentNode.remove()" style="background:#ffc107;color:#1a1a2e;border:none;border-radius:8px;padding:8px 24px;font-size:14px;font-weight:700;cursor:pointer;">'+(ar?'✅ تم':'✅ OK')+'</button>';
+        document.body.appendChild(flash);
+        setTimeout(()=>{ if(flash.parentNode) flash.remove(); }, 30000);
+      }
+    });
+  }
+  // تشيك فوري ثم كل دقيقة
+  setTimeout(checkWU, 3000);
+  setInterval(checkWU, 60000);
+  // إضافة CSS للـ animation
+  const st = document.createElement('style');
+  st.textContent='@keyframes wuflash{0%{transform:translate(-50%,-50%) scale(0.7);opacity:0}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}';
+  document.head.appendChild(st);
+})();
 
 // ── LOST & FOUND ──
 let lfData = ld('dta_lf');
@@ -1931,6 +2606,7 @@ goPage = function(id, btn){
 <div id="nav-clock" style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;margin-left:6px;border-left:2px solid rgba(201,168,76,0.3);padding-left:8px;">
   <span id="nav-clock-time" style="font-size:15px;font-weight:700;color:var(--gold);font-family:monospace;letter-spacing:2px;"></span>
   <span id="nav-clock-date" style="font-size:9px;color:var(--muted);font-family:Arial,sans-serif;white-space:nowrap;"></span>
+  <span id="nav-clock-hijri" style="font-size:9px;color:#c9a84c;font-family:Arial,sans-serif;white-space:nowrap;font-weight:600;">🌙</span>
 </div>
 <button class="nb act" onclick="goPage('dashboard',this)">📊 <span class="t" data-ar="الرئيسية" data-en="Dashboard">Dashboard</span></button>
 <button class="nb" onclick="goPage('calendar',this)">🗓️ <span class="t" data-ar="التقويم" data-en="Calendar">Calendar</span></button>
@@ -2007,6 +2683,7 @@ goPage = function(id, btn){
   <div>
     <div id="dash-clock-time" style="font-size:36px;font-weight:700;color:var(--gold);font-family:monospace;letter-spacing:3px;line-height:1;"></div>
     <div id="dash-clock-date" style="font-size:13px;color:var(--muted);margin-top:4px;font-family:Arial,sans-serif;"></div>
+    <div id="dash-clock-hijri" style="font-size:12px;color:#c9a84c;margin-top:2px;font-family:Arial,sans-serif;font-weight:600;letter-spacing:0.3px;">🌙</div>
   </div>
   <div style="text-align:left;opacity:0.6;">
     <div style="font-size:28px;">🌊</div>
@@ -3445,9 +4122,9 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <div class="fld"><label>Type</label>
 <select id="bm-type" onchange="calcBM()"><option>Single</option><option selected>Double</option><option>Triple</option><option>Suite</option><option>Dorm Bed</option></select>
 </div>
-<div class="fld" id="bm-ci-wrap"><label>Check-in</label><input id="bm-ci" type="date" onchange="calcBM();checkBirthdayAlert()"></div>
-<div class="fld" id="bm-co-wrap"><label>Check-out</label><input id="bm-co" type="date" onchange="calcBM();checkBirthdayAlert()"></div>
-<div class="fld" id="bm-du-date-wrap" style="display:none;"><label>📅 تاريخ الإقامة</label><input id="bm-du-date" type="date" onchange="calcBM()"></div>
+<div class="fld" id="bm-ci-wrap"><label>Check-in</label><input id="bm-ci" type="date" onchange="calcBM();checkBirthdayAlert();showHijriFor('bm-ci','bm-ci-hijri');showHijriFor('bm-co','bm-co-hijri')"><span id="bm-ci-hijri" style="display:none;font-size:11px;color:#c9a84c;margin-top:3px;display:block;font-weight:600;"></span></div>
+<div class="fld" id="bm-co-wrap"><label>Check-out</label><input id="bm-co" type="date" onchange="calcBM();checkBirthdayAlert();showHijriFor('bm-ci','bm-ci-hijri');showHijriFor('bm-co','bm-co-hijri')"><span id="bm-co-hijri" style="display:none;font-size:11px;color:#c9a84c;margin-top:3px;display:block;font-weight:600;"></span></div>
+<div class="fld" id="bm-du-date-wrap" style="display:none;"><label>📅 تاريخ الإقامة</label><input id="bm-du-date" type="date" onchange="calcBM();showHijriFor('bm-du-date','bm-du-date-hijri')"><span id="bm-du-date-hijri" style="display:none;font-size:11px;color:#c9a84c;margin-top:3px;display:block;font-weight:600;"></span></div>
 <div class="fld" id="bm-du-in-wrap" style="display:none;"><label>🕐 وقت الدخول</label><input id="bm-du-in" type="time" value="10:00" onchange="calcBM()"></div>
 <div class="fld" id="bm-du-out-wrap" style="display:none;"><label>🕕 وقت الخروج</label><input id="bm-du-out" type="time" value="18:00" onchange="calcBM()"></div>
 <div class="fld"><label>Currency</label>
@@ -6691,6 +7368,43 @@ calcBM();
 }
 // nightPrices: array of {date, price} for current booking modal
 let nightPrices=[];
+
+// ═══════════════════════════════════════════════════
+// ══ تحويل ميلادي → هجري                          ══
+// ═══════════════════════════════════════════════════
+function gregorianToHijri(gDate){
+  if(!gDate || isNaN(new Date(gDate))) return '';
+  const d = new Date(gDate);
+  const gy=d.getFullYear(), gm=d.getMonth()+1, gd=d.getDate();
+  const jdn=Math.floor((1461*(gy+4800+Math.floor((gm-14)/12)))/4)+Math.floor((367*(gm-2-12*Math.floor((gm-14)/12)))/12)-Math.floor((3*Math.floor((gy+4900+Math.floor((gm-14)/12))/100))/4)+gd-32075;
+  const z=jdn-1948440+10632,n=Math.floor((z-1)/10631),z2=z-10631*n+354;
+  const j=Math.floor((10985-z2)/5316)*Math.floor((50*z2)/17719)+Math.floor(z2/5670)*Math.floor((43*z2)/15238);
+  const z3=z2-Math.floor((30-j)/15)*Math.floor((17719*j)/50)-Math.floor(j/16)*Math.floor((15238*j)/43)+29;
+  const hm=Math.ceil(z3/29), hd=Math.ceil(z3)-Math.floor(29.5001*(hm-1)), hy=30*n+j-30;
+  const HM=['محرم','صفر','ربيع الأول','ربيع الثاني','جمادى الأولى','جمادى الثانية','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
+  return `${hd} ${HM[hm-1]} ${hy} هـ`;
+}
+
+// تحويل هجري → ميلادي (دالة عامة)
+function hijriToGregorianGlobal(hy, hm, hd){
+  const jd=Math.floor((11*hy+3)/30)+354*hy+30*hm-Math.floor((hm-1)/2)+hd+1948440-385;
+  const l=jd+68569, n=Math.floor(4*l/146097), ll=l-Math.floor((146097*n+3)/4);
+  const i=Math.floor(4000*(ll+1)/1461001), lll=ll-Math.floor(1461*i/4)+31;
+  const j=Math.floor(80*lll/2447), day=lll-Math.floor(2447*j/80);
+  const lv=Math.floor(j/11), month=j+2-12*lv, year=100*(n-49)+i+lv;
+  return new Date(year, month-1, day);
+}
+
+function showHijriFor(inputId, displayId){
+  const val = document.getElementById(inputId)?.value;
+  const el  = document.getElementById(displayId);
+  if(!el) return;
+  if(!val){ el.textContent=''; el.style.display='none'; return; }
+  const h = gregorianToHijri(val);
+  if(h){ el.textContent='🌙 '+h; el.style.display=''; }
+  else  { el.textContent=''; el.style.display='none'; }
+}
+
 function calcBM(){
 const t=document.getElementById("bm-type").value;
 const cur=document.getElementById("bm-cur").value;
@@ -6881,6 +7595,8 @@ document.getElementById("bm-room").value=b.room;
 document.getElementById("bm-type").value=b.type;
 document.getElementById("bm-ci").value=b.ci;
 document.getElementById("bm-co").value=b.co;
+showHijriFor('bm-ci','bm-ci-hijri');
+showHijriFor('bm-co','bm-co-hijri');
 document.getElementById("bm-cur").value=b.cur||"EGP";
 document.getElementById("bm-customprice").value=b.customPrice||0;
 document.getElementById("bm-status").value=b.status;
@@ -6953,6 +7669,8 @@ rebuildGuestRows([]);
 document.getElementById("bm-room").value="101";
 document.getElementById("bm-ci").value="";
 document.getElementById("bm-co").value="";
+showHijriFor('bm-ci','bm-ci-hijri');
+showHijriFor('bm-co','bm-co-hijri');
 document.getElementById("bm-cur").value="EGP";
 document.getElementById("bm-customprice").value=0;
 document.getElementById("bm-status").value="Paid";
@@ -23076,12 +23794,159 @@ function rebuildGuestRows(savedData){
     idInp.placeholder="A12345678"; idInp.value = d.idno||d.idNo||"";
     grid.appendChild(mkFld(isAr ? "🪪 جواز سفر / ID" : "🪪 ID / Passport", idInp, false));
 
-    // DOB
+    // DOB — ميلادي + إدخال هجري
     const dobInp = document.createElement("input");
     dobInp.type="date"; dobInp.id=`${pfx}-dob`; dobInp.className="bm-guest-dob";
     dobInp.value = d.dob||"";
-    if(isMain) dobInp.addEventListener("change", ()=>{ if(typeof checkBirthdayAlert==="function") checkBirthdayAlert(); });
-    grid.appendChild(mkFld(isAr ? "🎂 تاريخ الميلاد" : "🎂 Date of Birth", dobInp, false));
+    dobInp.style.cssText="width:100%;box-sizing:border-box;";
+
+    // عرض التاريخ الهجري المحوّل
+    const dobHijriSpan = document.createElement("span");
+    dobHijriSpan.id=`${pfx}-dob-hijri`;
+    dobHijriSpan.style.cssText="display:none;font-size:11px;color:#c9a84c;margin-top:3px;font-weight:600;";
+    if(d.dob){ const hh=gregorianToHijri(d.dob); if(hh){dobHijriSpan.textContent='🌙 '+hh; dobHijriSpan.style.display='';} }
+    dobInp.addEventListener("change", ()=>{
+      const hv=gregorianToHijri(dobInp.value);
+      if(hv){dobHijriSpan.textContent='🌙 '+hv; dobHijriSpan.style.display='';}
+      else{dobHijriSpan.textContent=''; dobHijriSpan.style.display='none';}
+      calcAndShowAge(dobInp.value);
+      // إخفاء منطقة الإدخال الهجري إذا تم الإدخال ميلادي
+      const hZone = document.getElementById(`${pfx}-dob-hijri-input-zone`);
+      if(hZone) hZone.style.display='none';
+      if(isMain && typeof checkBirthdayAlert==="function") checkBirthdayAlert();
+    });
+
+    // زر فتح الإدخال الهجري
+    const hijriBtn = document.createElement("button");
+    hijriBtn.type="button";
+    hijriBtn.textContent="🌙 إدخال هجري";
+    hijriBtn.style.cssText="margin-top:5px;font-size:11px;padding:3px 9px;border-radius:6px;border:1px solid rgba(201,168,76,0.5);background:rgba(201,168,76,0.1);color:#c9a84c;cursor:pointer;width:100%;";
+    hijriBtn.onclick = ()=>{
+      const z = document.getElementById(`${pfx}-dob-hijri-input-zone`);
+      if(z) z.style.display = z.style.display==='none' ? '' : 'none';
+    };
+
+    // منطقة الإدخال الهجري (يوم / شهر / سنة)
+    const hijriZone = document.createElement("div");
+    hijriZone.id=`${pfx}-dob-hijri-input-zone`;
+    hijriZone.style.cssText="display:none;margin-top:6px;background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:8px 10px;";
+    hijriZone.innerHTML=`
+      <div style="font-size:10px;color:#c9a84c;margin-bottom:5px;font-weight:700;">🌙 أدخل التاريخ الهجري ← يتحول ميلادي تلقائياً</div>
+      <div style="display:flex;gap:5px;align-items:center;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:2px;">يوم</div>
+          <input id="${pfx}-hdob-d" type="number" min="1" max="30" placeholder="1-30"
+            style="width:100%;padding:5px 4px;border-radius:5px;border:1px solid rgba(201,168,76,0.3);background:rgba(0,0,0,0.3);color:#fff;font-size:13px;text-align:center;box-sizing:border-box;">
+        </div>
+        <div style="flex:2;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:2px;">شهر</div>
+          <select id="${pfx}-hdob-m"
+            style="width:100%;padding:5px 4px;border-radius:5px;border:1px solid rgba(201,168,76,0.3);background:rgba(0,0,0,0.8);color:#fff;font-size:12px;box-sizing:border-box;">
+            <option value="">— شهر —</option>
+            <option value="1">1 - محرم</option>
+            <option value="2">2 - صفر</option>
+            <option value="3">3 - ربيع الأول</option>
+            <option value="4">4 - ربيع الثاني</option>
+            <option value="5">5 - جمادى الأولى</option>
+            <option value="6">6 - جمادى الثانية</option>
+            <option value="7">7 - رجب</option>
+            <option value="8">8 - شعبان</option>
+            <option value="9">9 - رمضان</option>
+            <option value="10">10 - شوال</option>
+            <option value="11">11 - ذو القعدة</option>
+            <option value="12">12 - ذو الحجة</option>
+          </select>
+        </div>
+        <div style="flex:1.5;text-align:center;">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:2px;">سنة هـ</div>
+          <input id="${pfx}-hdob-y" type="number" min="1300" max="1500" placeholder="مثلاً 1410"
+            style="width:100%;padding:5px 4px;border-radius:5px;border:1px solid rgba(201,168,76,0.3);background:rgba(0,0,0,0.3);color:#fff;font-size:13px;text-align:center;box-sizing:border-box;">
+        </div>
+        <div>
+          <div style="font-size:9px;color:transparent;margin-bottom:2px;">.</div>
+          <button type="button" id="${pfx}-hdob-convert"
+            style="padding:5px 10px;border-radius:5px;border:none;background:#c9a84c;color:#000;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
+            ✓ تحويل
+          </button>
+        </div>
+      </div>
+      <div id="${pfx}-hdob-result" style="font-size:11px;color:#4cda7a;margin-top:5px;display:none;"></div>
+    `;
+
+    // ربط زر التحويل
+    setTimeout(()=>{
+      const btn = document.getElementById(`${pfx}-hdob-convert`);
+      if(!btn) return;
+      const convert = ()=>{
+        const hd_v = parseInt(document.getElementById(`${pfx}-hdob-d`)?.value)||0;
+        const hm_v = parseInt(document.getElementById(`${pfx}-hdob-m`)?.value)||0;
+        const hy_v = parseInt(document.getElementById(`${pfx}-hdob-y`)?.value)||0;
+        const res  = document.getElementById(`${pfx}-hdob-result`);
+        if(!hd_v||!hm_v||!hy_v){ if(res){res.textContent='⚠️ أدخل يوم وشهر وسنة'; res.style.display=''; res.style.color='#e74c3c';} return; }
+        if(hd_v<1||hd_v>30||hm_v<1||hm_v>12||hy_v<1300||hy_v>1500){
+          if(res){res.textContent='⚠️ تحقق من الأرقام'; res.style.display=''; res.style.color='#e74c3c';} return;
+        }
+        const gDate = hijriToGregorianGlobal(hy_v, hm_v, hd_v);
+        if(!gDate||isNaN(gDate)){ if(res){res.textContent='⚠️ خطأ في التحويل'; res.style.display=''; res.style.color='#e74c3c';} return; }
+        const isoStr = gDate.toISOString().split('T')[0];
+        const dobEl = document.getElementById(`${pfx}-dob`);
+        if(dobEl){
+          dobEl.value = isoStr;
+          dobEl.dispatchEvent(new Event('change'));
+        }
+        if(res){
+          res.textContent='✅ '+ gDate.toLocaleDateString('ar-EG',{day:'numeric',month:'long',year:'numeric'});
+          res.style.display=''; res.style.color='#4cda7a';
+        }
+        setTimeout(()=>{ const z=document.getElementById(`${pfx}-dob-hijri-input-zone`); if(z) z.style.display='none'; }, 1500);
+      };
+      btn.addEventListener('click', convert);
+      // تحويل تلقائي عند ضغط Enter
+      [`${pfx}-hdob-d`,`${pfx}-hdob-m`,`${pfx}-hdob-y`].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.addEventListener('keydown', e=>{ if(e.key==='Enter') convert(); });
+      });
+    }, 100);
+
+    // حساب العمر
+    const ageSpan = document.createElement("div");
+    ageSpan.id=`${pfx}-dob-age`;
+    ageSpan.style.cssText="display:none;margin-top:5px;font-size:12px;padding:5px 10px;border-radius:7px;background:rgba(76,218,122,0.1);border:1px solid rgba(76,218,122,0.25);color:#4cda7a;font-weight:700;";
+
+    function calcAndShowAge(dobVal){
+      if(!dobVal){ ageSpan.style.display='none'; return; }
+      const dob=new Date(dobVal), now=new Date();
+      if(isNaN(dob)){ ageSpan.style.display='none'; return; }
+      let yrs=now.getFullYear()-dob.getFullYear();
+      let mths=now.getMonth()-dob.getMonth();
+      let days=now.getDate()-dob.getDate();
+      if(days<0){ mths--; }
+      if(mths<0){ yrs--; mths+=12; }
+      if(days<0){ const prev=new Date(now.getFullYear(),now.getMonth(),0); days+=prev.getDate(); }
+      let label='';
+      if(yrs<0){ ageSpan.style.display='none'; return; }
+      if(yrs===0 && mths===0)      label=`🍼 ${days} يوم`;
+      else if(yrs===0)              label=`🍼 ${mths} شهر ${days>0?'و '+days+' يوم':''}`;
+      else                          label=`🎂 ${yrs} سنة${mths>0?' و '+mths+' شهر':''}`;
+      // تصنيف لوني حسب الفئة
+      if(yrs<2)       { ageSpan.style.background='rgba(52,152,219,0.12)'; ageSpan.style.borderColor='rgba(52,152,219,0.35)'; ageSpan.style.color='#7ab8f5'; }
+      else if(yrs<12) { ageSpan.style.background='rgba(76,218,122,0.1)';  ageSpan.style.borderColor='rgba(76,218,122,0.25)';  ageSpan.style.color='#4cda7a'; }
+      else if(yrs<18) { ageSpan.style.background='rgba(243,156,18,0.12)'; ageSpan.style.borderColor='rgba(243,156,18,0.35)';  ageSpan.style.color='#f39c12'; }
+      else if(yrs<60) { ageSpan.style.background='rgba(201,168,76,0.1)';  ageSpan.style.borderColor='rgba(201,168,76,0.3)';   ageSpan.style.color='#c9a84c'; }
+      else            { ageSpan.style.background='rgba(155,89,182,0.1)';  ageSpan.style.borderColor='rgba(155,89,182,0.3)';   ageSpan.style.color='#c39bd3'; }
+      ageSpan.textContent='👤 العمر: '+label;
+      ageSpan.style.display='';
+    }
+
+    if(d.dob) calcAndShowAge(d.dob);
+
+    const dobWrap = document.createElement("div");
+    dobWrap.appendChild(dobInp);
+    dobWrap.appendChild(dobHijriSpan);
+    dobWrap.appendChild(ageSpan);
+    dobWrap.appendChild(hijriBtn);
+    dobWrap.appendChild(hijriZone);
+    grid.appendChild(mkFld(isAr ? "🎂 تاريخ الميلاد" : "🎂 Date of Birth", dobWrap, false));
 
     // Gender
     const genSel = document.createElement("select");
@@ -28043,18 +28908,32 @@ window.openQRRoomPicker = openQRRoomPicker;
     const hStr = String(h).padStart(2,'0');
     const timeEl = document.getElementById('nav-clock-time');
     const dateEl = document.getElementById('nav-clock-date');
+    const hijriNavEl = document.getElementById('nav-clock-hijri');
     const dashTime = document.getElementById('dash-clock-time');
     const dashDate = document.getElementById('dash-clock-date');
+    const dashHijri = document.getElementById('dash-clock-hijri');
     if(!timeEl && !dashTime) return;
     const lang = (typeof currentLang !== 'undefined') ? currentLang : 'ar';
     const timeStr = hStr+':'+m+':'+s+' '+ampm;
     const dateStr = lang === 'en'
       ? daysEn[now.getDay()]+' '+now.getDate()+' '+monthsEn[now.getMonth()]+' '+now.getFullYear()
       : daysAr[now.getDay()]+' '+now.getDate()+' '+monthsAr[now.getMonth()]+' '+now.getFullYear();
+    // حساب التاريخ الهجري
+    const HIJRI_MONTHS = ['محرم','صفر','ربيع الأول','ربيع الثاني','جمادى الأولى','جمادى الثانية','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
+    const HIJRI_DAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+    const gy=now.getFullYear(),gm=now.getMonth()+1,gd=now.getDate();
+    const jdn=Math.floor((1461*(gy+4800+Math.floor((gm-14)/12)))/4)+Math.floor((367*(gm-2-12*Math.floor((gm-14)/12)))/12)-Math.floor((3*Math.floor((gy+4900+Math.floor((gm-14)/12))/100))/4)+gd-32075;
+    const z=jdn-1948440+10632,n=Math.floor((z-1)/10631),z2=z-10631*n+354;
+    const j=Math.floor((10985-z2)/5316)*Math.floor((50*z2)/17719)+Math.floor(z2/5670)*Math.floor((43*z2)/15238);
+    const z3=z2-Math.floor((30-j)/15)*Math.floor((17719*j)/50)-Math.floor(j/16)*Math.floor((15238*j)/43)+29;
+    const hMonth=Math.ceil(z3/29),hDay=Math.ceil(z3)-Math.floor(29.5001*(hMonth-1)),hYear=30*n+j-30;
+    const hijriStr = '🌙 '+hDay+' '+HIJRI_MONTHS[hMonth-1]+' '+hYear+' هـ';
     if(timeEl) timeEl.textContent = timeStr;
     if(dateEl) dateEl.textContent = dateStr;
+    if(hijriNavEl) hijriNavEl.textContent = hijriStr;
     if(dashTime) dashTime.textContent = timeStr;
     if(dashDate) dashDate.textContent = dateStr;
+    if(dashHijri) dashHijri.textContent = hijriStr;
   }
   updateClock();
   setInterval(updateClock, 1000);
@@ -28690,396 +29569,4 @@ window.openQRRoomPicker = openQRRoomPicker;
 
 <!-- ══════════════════════════════════════════════
      ══ MINIBAR TRACKER — JavaScript             ══
-══════════════════════════════════════════════ -->
-<script>
-(function(){
-
-// ── Data ──
-let mbItems = JSON.parse(localStorage.getItem('dta_mb_items') || '[]');
-// Default starter items if empty
-if(!mbItems.length){
-  mbItems = [
-    {id:'MB1',name:'مياه معدنية 500ml',cat:'water',emoji:'💧',price:15,stock:50},
-    {id:'MB2',name:'مياه معدنية 1L',cat:'water',emoji:'💧',price:25,stock:30},
-    {id:'MB3',name:'كولا 330ml',cat:'drinks',emoji:'🥤',price:30,stock:24},
-    {id:'MB4',name:'بيبسي 330ml',cat:'drinks',emoji:'🥤',price:30,stock:24},
-    {id:'MB5',name:'عصير برتقال',cat:'juice',emoji:'🍊',price:35,stock:20},
-    {id:'MB6',name:'شيبس',cat:'chips',emoji:'🥔',price:25,stock:30},
-    {id:'MB7',name:'شوكولاتة',cat:'sweets',emoji:'🍫',price:40,stock:20},
-    {id:'MB8',name:'مكسرات',cat:'nuts',emoji:'🥜',price:45,stock:15},
-  ];
-  localStorage.setItem('dta_mb_items', JSON.stringify(mbItems));
-}
-
-let mbLog = JSON.parse(localStorage.getItem('dta_mb_log') || '[]');
-// temp cart for log modal
-let _mbCart = {}; // {itemId: qty}
-
-const CAT_META = {
-  water:{label:'💧 مياه'},drinks:{label:'🥤 مشروبات'},juice:{label:'🍹 عصائر'},
-  beer:{label:'🍺 بيرة'},snacks:{label:'🍟 سناكس'},sweets:{label:'🍫 حلويات'},
-  chips:{label:'🥔 شيبس'},nuts:{label:'🥜 مكسرات'},cigarettes:{label:'🚬 سجاير'},other:{label:'📦 أخرى'}
-};
-const CAT_META_EN = {
-  water:{label:'💧 Water'},drinks:{label:'🥤 Drinks'},juice:{label:'🍹 Juices'},
-  beer:{label:'🍺 Beer'},snacks:{label:'🍟 Snacks'},sweets:{label:'🍫 Sweets'},
-  chips:{label:'🥔 Chips'},nuts:{label:'🥜 Nuts'},cigarettes:{label:'🚬 Cigarettes'},other:{label:'📦 Other'}
-};
-function _mbCat(cat){ return (currentLang==='ar'?CAT_META:CAT_META_EN)[cat]?.label || cat; }
-
-// ── Minibar text dictionary (used by dynamically-built rows/cards) ──
-const _mbDict = {
-  'أصناف المينيبار':'Minibar Items','قيمة المخزون':'Stock Value','إجمالي المستهلك':'Total Consumed',
-  'تحت الحد الأدنى':'Below Minimum','لا توجد أصناف — أضف أصنافك من زرار "+ صنف جديد"':'No items yet — add items via the "+ New Item" button',
-  'نفد':'Out','منخفض':'Low','كافي':'OK','لا يوجد سجل استهلاك بعد':'No consumption logged yet',
-  'غرفة':'Room','نعم':'Yes','لا':'No','لا يوجد استهلاك مسجل بعد':'No consumption recorded yet',
-  'متبقي':'Remaining','لا توجد أصناف — أضفها أولاً':'No items — add some first',
-  'تعديل صنف':'Edit Item','إضافة صنف مينيبار':'Add Minibar Item',
-  '— اختر الغرفة —':'— Select Room —','كل الغرف':'All Rooms','(نشطة)':'(active)',
-  'أدخل اسم الصنف':'Enter item name','تم حفظ الصنف':'Item saved','حذف هذا الصنف؟':'Delete this item?',
-  'اختر أصناف أولاً':'Select items first','اختر الغرفة':'Select a room',
-  '⚠️ تنبيه':'⚠️ Notice','لم يتم الربط بالحجز — لا يوجد ضيف نشط في الغرفة':'Not linked to a booking — no active guest in this room',
-  '✅ تم التسجيل':'✅ Logged','حذف هذا السجل؟':'Delete this log entry?',
-  '🌡️ مينيبار: ':'🌡️ Minibar: ','🌡️ مينيبار غرفة ':'🌡️ Minibar room ',
-};
-function _mbT(s){ return currentLang==='ar' ? s : (_mbDict[s]||s); }
-function _mbRoomLbl(room){ return currentLang==='ar' ? ('غرفة '+room) : ('Room '+room); }
-
-function mbSave(){ localStorage.setItem('dta_mb_items', JSON.stringify(mbItems)); }
-function mbLogSave(){ localStorage.setItem('dta_mb_log', JSON.stringify(mbLog)); }
-
-// ── Routing ──
-const _mbOrigGoPage = goPage;
-goPage = function(id, btn){
-  _mbOrigGoPage(id, btn);
-  if(id === 'minibar') setTimeout(renderMinibar, 50);
-};
-
-// ── Tab switcher ──
-let _mbTab = 'stock';
-window.mbSetTab = function(tab, btn){
-  _mbTab = tab;
-  ['stock','log','room'].forEach(t=>{
-    const v = document.getElementById('mb-view-'+t);
-    const b = document.getElementById('mb-tab-'+t);
-    if(v) v.style.display = t===tab?'':'none';
-    if(b){ b.className = t===tab?'btn':'btn bb'; b.style.background=t===tab?'rgba(26,188,156,0.2)':''; b.style.color=t===tab?'#1abc9c':''; b.style.borderColor=t===tab?'rgba(26,188,156,0.5)':''; }
-  });
-  if(tab==='log') renderMinibarLog();
-  if(tab==='room') renderMinibarByRoom();
-};
-
-// ── Main render ──
-window.renderMinibar = function(){
-  _renderMbKPI();
-  _renderMbStock();
-  if(_mbTab==='log') renderMinibarLog();
-  if(_mbTab==='room') renderMinibarByRoom();
-};
-
-function _renderMbKPI(){
-  const el = document.getElementById('mb-kpi');
-  if(!el) return;
-  const totalItems = mbItems.length;
-  const totalStockVal = mbItems.reduce((s,i)=>s+i.price*i.stock,0);
-  const consumed = mbLog.reduce((s,l)=>s+(l.items||[]).reduce((ss,li)=>ss+li.qty,0),0);
-  const consumedVal = mbLog.reduce((s,l)=>s+l.total,0);
-  const lowStock = mbItems.filter(i=>{
-    const used = mbLog.reduce((s,l)=>s+(l.items||[]).filter(li=>li.id===i.id).reduce((ss,li)=>ss+li.qty,0),0);
-    return (i.stock - used) <= 3;
-  }).length;
-
-  el.innerHTML = [
-    ['📦',_mbT('أصناف المينيبار'),totalItems+'','#1abc9c'],
-    ['💰',_mbT('قيمة المخزون'),'£'+totalStockVal.toLocaleString(),'#c9a84c'],
-    ['📉',_mbT('إجمالي المستهلك'),'£'+consumedVal.toLocaleString(),'#e67e22'],
-    ['⚠️',_mbT('تحت الحد الأدنى'),lowStock+'','#e74c3c'],
-  ].map(([icon,lbl,val,color])=>
-    `<div style="background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:14px;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${color};opacity:.7;"></div>
-      <div style="font-size:22px;margin-bottom:4px;">${icon}</div>
-      <div style="font-size:20px;font-weight:700;color:${color};">${val}</div>
-      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px;">${lbl}</div>
-    </div>`
-  ).join('');
-}
-
-function _getConsumed(itemId){
-  return mbLog.reduce((s,l)=>s+(l.items||[]).filter(li=>li.id===itemId).reduce((ss,li)=>ss+li.qty,0),0);
-}
-
-function _renderMbStock(){
-  const tbody = document.getElementById('mb-stock-body');
-  if(!tbody) return;
-  if(!mbItems.length){
-    tbody.innerHTML=`<tr><td colspan="8" class="empty">${_mbT('لا توجد أصناف — أضف أصنافك من زرار "+ صنف جديد"')}</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = mbItems.map((item,idx)=>{
-    const used = _getConsumed(item.id);
-    const remaining = Math.max(0, item.stock - used);
-    const pct = item.stock>0?Math.round((used/item.stock)*100):0;
-    const statusColor = remaining<=0?'#e74c3c':remaining<=3?'#e67e22':'#25D366';
-    const statusLbl = remaining<=0?_mbT('نفد'):remaining<=3?_mbT('منخفض'):_mbT('كافي');
-    return `<tr>
-      <td><span style="font-size:16px;margin-left:6px;">${item.emoji||'📦'}</span><strong>${item.name}</strong></td>
-      <td><span style="font-size:10px;background:rgba(26,188,156,0.1);color:#1abc9c;padding:2px 7px;border-radius:10px;">${_mbCat(item.cat)}</span></td>
-      <td style="color:var(--gold);font-weight:700;">£${item.price}</td>
-      <td style="font-weight:700;">${item.stock}</td>
-      <td style="color:#e67e22;">${used}</td>
-      <td>
-        <strong style="color:${statusColor};">${remaining}</strong>
-        <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px;margin-top:4px;width:60px;">
-          <div style="height:100%;width:${Math.min(100,pct)}%;background:${statusColor};border-radius:2px;transition:width .4s;"></div>
-        </div>
-      </td>
-      <td><span class="bdg" style="background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;">${statusLbl}</span></td>
-      <td>
-        <button class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.3);" onclick="openMinibarItemModal(${idx})">✏️</button>
-        <button class="btn bsm" style="background:rgba(231,76,60,0.1);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);margin-right:4px;" onclick="deleteMinibarItem(${idx})">🗑</button>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-window.renderMinibarLog = function(){
-  const tbody = document.getElementById('mb-log-body');
-  if(!tbody) return;
-  const search = (document.getElementById('mb-log-search')?.value||'').toLowerCase();
-  const roomF  = document.getElementById('mb-log-room-f')?.value||'';
-  let logs = [...mbLog].reverse();
-  if(search) logs = logs.filter(l=>l.room?.includes(search)||l.note?.toLowerCase().includes(search)||(l.items||[]).some(li=>li.name?.toLowerCase().includes(search)));
-  if(roomF)  logs = logs.filter(l=>String(l.room)===roomF);
-  if(!logs.length){ tbody.innerHTML=`<tr><td colspan="8" class="empty">${_mbT('لا يوجد سجل استهلاك بعد')}</td></tr>`; return; }
-  tbody.innerHTML = logs.map(l=>
-    `<tr>
-      <td style="white-space:nowrap;font-size:11px;color:var(--muted);">${l.date||''}</td>
-      <td><span style="color:var(--gold);font-weight:700;">${_mbRoomLbl(l.room||'—')}</span></td>
-      <td style="font-size:11px;">${(l.items||[]).map(li=>`${li.emoji||''}${li.name}×${li.qty}`).join(' · ')}</td>
-      <td style="text-align:center;">${(l.items||[]).reduce((s,li)=>s+li.qty,0)}</td>
-      <td style="color:#1abc9c;font-weight:700;">£${l.total?.toFixed(0)||0}</td>
-      <td style="text-align:center;">${l.addedToBooking?`<span class="bdg bg-green">✓ ${_mbT('نعم')}</span>`:`<span class="bdg bg-gray">${_mbT('لا')}</span>`}</td>
-      <td style="font-size:11px;color:var(--muted);">${l.note||'—'}</td>
-      <td><button class="btn bsm" style="background:rgba(231,76,60,0.1);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);" onclick="deleteMinibarLog('${l.id}')">🗑</button></td>
-    </tr>`
-  ).join('');
-};
-
-window.renderMinibarByRoom = function(){
-  const el = document.getElementById('mb-room-cards');
-  if(!el) return;
-  const byRoom = {};
-  mbLog.forEach(l=>{
-    if(!l.room) return;
-    if(!byRoom[l.room]) byRoom[l.room]={room:l.room,logs:[],total:0};
-    byRoom[l.room].logs.push(l);
-    byRoom[l.room].total += l.total||0;
-  });
-  const rooms = Object.values(byRoom).sort((a,b)=>b.total-a.total);
-  if(!rooms.length){ el.innerHTML=`<div class="empty" style="grid-column:1/-1;">${_mbT('لا يوجد استهلاك مسجل بعد')}</div>`; return; }
-  el.innerHTML = rooms.map(r=>{
-    const itemMap={};
-    r.logs.forEach(l=>(l.items||[]).forEach(li=>{ if(!itemMap[li.name]) itemMap[li.name]={name:li.name,emoji:li.emoji||'📦',qty:0,total:0}; itemMap[li.name].qty+=li.qty; itemMap[li.name].total+=li.qty*(li.price||0); }));
-    const items = Object.values(itemMap).sort((a,b)=>b.total-a.total);
-    return `<div style="background:var(--card);border:1px solid var(--bdr);border-radius:13px;padding:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div style="font-size:15px;font-weight:700;color:var(--gold);">🏨 ${_mbRoomLbl(r.room)}</div>
-        <div style="font-size:16px;font-weight:800;color:#1abc9c;">£${r.total.toFixed(0)}</div>
-      </div>
-      ${items.map(i=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px;">
-          <span>${i.emoji} ${i.name} <span style="color:var(--muted);">×${i.qty}</span></span>
-          <span style="color:var(--gold);font-weight:700;">£${i.total.toFixed(0)}</span>
-        </div>`).join('')}
-    </div>`;
-  }).join('');
-};
-
-// ── Item Modal ──
-window.openMinibarItemModal = function(idx){
-  const el = idx!==undefined ? mbItems[idx] : null;
-  document.getElementById('mb-item-modal-title').textContent = el?_mbT('تعديل صنف'):_mbT('إضافة صنف مينيبار');
-  document.getElementById('mb-item-edit-idx').value = idx!==undefined?idx:'';
-  document.getElementById('mb-item-name').value  = el?.name||'';
-  document.getElementById('mb-item-cat').value   = el?.cat||'water';
-  document.getElementById('mb-item-price').value = el?.price||'';
-  document.getElementById('mb-item-stock').value = el?.stock||'';
-  document.getElementById('mb-item-emoji').value = el?.emoji||'';
-  document.getElementById('mb-item-modal').classList.add('on');
-};
-
-window.saveMinibarItem = function(){
-  const name  = document.getElementById('mb-item-name').value.trim();
-  const price = parseFloat(document.getElementById('mb-item-price').value)||0;
-  const stock = parseInt(document.getElementById('mb-item-stock').value)||0;
-  const cat   = document.getElementById('mb-item-cat').value;
-  const emoji = document.getElementById('mb-item-emoji').value.trim()||CAT_META[cat]?.label.split(' ')[0]||'📦';
-  const editIdx = document.getElementById('mb-item-edit-idx').value;
-  if(!name){ if(typeof sNotify==='function') sNotify('⚠️',_mbT('أدخل اسم الصنف'),'info',2000); return; }
-  const item = { id: editIdx!==''?mbItems[editIdx].id:'MB'+Date.now(), name, cat, emoji, price, stock };
-  if(editIdx!=='') mbItems[editIdx] = item;
-  else mbItems.push(item);
-  mbSave();
-  closeM('mb-item-modal');
-  renderMinibar();
-  if(typeof sNotify==='function') sNotify('✅',_mbT('تم حفظ الصنف'),'success',2000);
-};
-
-window.deleteMinibarItem = function(idx){
-  if(!confirm(_mbT('حذف هذا الصنف؟'))) return;
-  mbItems.splice(idx,1);
-  mbSave();
-  renderMinibar();
-};
-
-// ── Log Modal ──
-window.openMinibarLogModal = function(){
-  _mbCart = {};
-  document.getElementById('mb-log-date').value = (typeof toDay==='function'?toDay():new Date().toISOString().split('T')[0]);
-  document.getElementById('mb-log-note').value = '';
-  document.getElementById('mb-log-addbooking').checked = true;
-  document.getElementById('mb-log-addrest').checked = false;
-
-  // Populate room select with active rooms
-  const sel = document.getElementById('mb-log-room-sel');
-  const td = (typeof toDay==='function'?toDay():new Date().toISOString().split('T')[0]);
-  const activeRooms = (typeof bookings!=='undefined'?bookings:[])
-    .filter(b=>b.ci<=td&&b.co>td&&b.status!=='Cancelled'&&!b.coConfirmed)
-    .map(b=>b.room);
-  sel.innerHTML = `<option value="">${_mbT('— اختر الغرفة —')}</option>` +
-    (typeof ROOMS!=='undefined'?ROOMS:[]).map(r=>
-      `<option value="${r}">${activeRooms.includes(String(r))?'🟢':''} ${_mbRoomLbl(r)}${activeRooms.includes(String(r))?' '+_mbT('(نشطة)'):''}</option>`
-    ).join('');
-
-  // Also update log filter
-  const logF = document.getElementById('mb-log-room-f');
-  if(logF) logF.innerHTML = `<option value="">${_mbT('كل الغرف')}</option>` +
-    (typeof ROOMS!=='undefined'?ROOMS:[]).map(r=>`<option value="${r}">${_mbRoomLbl(r)}</option>`).join('');
-
-  _renderMbLogItems();
-  document.getElementById('mb-log-modal').classList.add('on');
-};
-
-function _renderMbLogItems(){
-  const grid = document.getElementById('mb-log-items-grid');
-  if(!grid) return;
-  if(!mbItems.length){ grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:12px;padding:20px;">${_mbT('لا توجد أصناف — أضفها أولاً')}</div>`; return; }
-  grid.innerHTML = mbItems.map(item=>{
-    const qty = _mbCart[item.id]||0;
-    const remaining = Math.max(0, item.stock - _getConsumed(item.id));
-    return `<div style="background:${qty>0?'rgba(26,188,156,0.12)':'rgba(255,255,255,0.04)'};border:1.5px solid ${qty>0?'rgba(26,188,156,0.6)':'rgba(255,255,255,0.08)'};border-radius:10px;padding:8px 6px;text-align:center;cursor:pointer;transition:all .18s;" onclick="mbLogAdd('${item.id}')">
-      <div style="font-size:22px;">${item.emoji||'📦'}</div>
-      <div style="font-size:10px;font-weight:700;color:var(--text);margin:3px 0;line-height:1.3;">${item.name}</div>
-      <div style="font-size:11px;color:#1abc9c;font-weight:700;">£${item.price}</div>
-      <div style="font-size:9px;color:var(--muted);">${_mbT('متبقي')}: ${remaining}</div>
-      ${qty>0?`<div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-top:5px;">
-        <button onclick="event.stopPropagation();mbLogRem('${item.id}')" style="background:#e74c3c;color:#fff;border:none;border-radius:5px;width:20px;height:20px;cursor:pointer;font-size:12px;font-weight:700;">−</button>
-        <span style="font-size:12px;font-weight:800;color:#1abc9c;">${qty}</span>
-        <button onclick="event.stopPropagation();mbLogAdd('${item.id}')" style="background:#1abc9c;color:#fff;border:none;border-radius:5px;width:20px;height:20px;cursor:pointer;font-size:12px;font-weight:700;">+</button>
-      </div>`:''}
-    </div>`;
-  }).join('');
-  _updateMbLogSummary();
-}
-
-window.mbLogAdd = function(id){
-  _mbCart[id] = (_mbCart[id]||0)+1;
-  _renderMbLogItems();
-};
-window.mbLogRem = function(id){
-  _mbCart[id] = Math.max(0,(_mbCart[id]||0)-1);
-  if(!_mbCart[id]) delete _mbCart[id];
-  _renderMbLogItems();
-};
-
-function _updateMbLogSummary(){
-  const sumEl = document.getElementById('mb-log-summary');
-  const itemsEl = document.getElementById('mb-log-summary-items');
-  const totalEl = document.getElementById('mb-log-total');
-  const keys = Object.keys(_mbCart);
-  if(!keys.length){ if(sumEl) sumEl.style.display='none'; return; }
-  if(sumEl) sumEl.style.display='';
-  let total=0;
-  const lines = keys.map(id=>{
-    const item = mbItems.find(i=>i.id===id);
-    if(!item) return '';
-    const qty = _mbCart[id];
-    const sub = item.price*qty;
-    total+=sub;
-    return `<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0;">${item.emoji||''}${item.name} ×${qty}<span style="color:#1abc9c;">£${sub}</span></div>`;
-  }).join('');
-  if(itemsEl) itemsEl.innerHTML=lines;
-  if(totalEl) totalEl.textContent='£'+total;
-}
-
-window.saveMinibarLog = function(){
-  const room = document.getElementById('mb-log-room-sel')?.value;
-  const date = document.getElementById('mb-log-date')?.value || (typeof toDay==='function'?toDay():'');
-  const note = document.getElementById('mb-log-note')?.value.trim()||'';
-  const addBooking = document.getElementById('mb-log-addbooking')?.checked;
-  const addRest    = document.getElementById('mb-log-addrest')?.checked;
-  const keys = Object.keys(_mbCart);
-
-  if(!keys.length){ if(typeof sNotify==='function') sNotify('⚠️',_mbT('اختر أصناف أولاً'),'info',2000); return; }
-  if(!room){ if(typeof sNotify==='function') sNotify('⚠️',_mbT('اختر الغرفة'),'info',2000); return; }
-
-  const items = keys.map(id=>{
-    const item = mbItems.find(i=>i.id===id);
-    return item?{id:item.id,name:item.name,emoji:item.emoji||'📦',price:item.price,qty:_mbCart[id]}:null;
-  }).filter(Boolean);
-
-  const total = items.reduce((s,i)=>s+i.price*i.qty,0);
-  const desc = items.map(i=>`${i.emoji}${i.name}×${i.qty}`).join(', ');
-
-  const logEntry = {
-    id:'MBL'+Date.now(), date, room, items, total, note,
-    addedToBooking: addBooking, addedToRest: addRest,
-  };
-  mbLog.push(logEntry);
-  mbLogSave();
-
-  // Add to booking room charges
-  if(addBooking && typeof bookings!=='undefined'){
-    const td = typeof toDay==='function'?toDay():'';
-    const guest = bookings.find(b=>String(b.room)===String(room)&&b.ci<=td&&b.co>td&&b.status!=='Cancelled'&&!b.coConfirmed);
-    if(guest){
-      const bIdx=bookings.indexOf(guest);
-      if(!bookings[bIdx].roomCharges) bookings[bIdx].roomCharges=[];
-      bookings[bIdx].roomCharges.push({date,amount:total,desc:_mbT('🌡️ مينيبار: ')+desc,id:logEntry.id,status:'pending'});
-      if(bookings[bIdx].status==='Paid') bookings[bIdx].status='Partial';
-      if(typeof sv==='function') sv('dta_bk',bookings);
-    } else {
-      if(typeof sNotify==='function') sNotify(_mbT('⚠️ تنبيه'),_mbT('لم يتم الربط بالحجز — لا يوجد ضيف نشط في الغرفة'),'info',4000);
-    }
-  }
-
-  // Add to restaurant income
-  if(addRest && typeof restaurantTx!=='undefined'){
-    restaurantTx.push({
-      id:'MB-RST-'+Date.now(), date, type:'income',
-      desc:_mbT('🌡️ مينيبار غرفة ')+room+': '+desc,
-      cur:'EGP', egp:total,
-      usd:+(total/(typeof exRate!=='undefined'?exRate:50)).toFixed(2),
-      eur:+(total/(typeof eurRate!=='undefined'?eurRate:55)).toFixed(2),
-      method:'💵 كاش', room, notes:note,
-    });
-    if(typeof sv==='function') sv('dta_rest',restaurantTx);
-  }
-
-  closeM('mb-log-modal');
-  renderMinibar();
-  if(typeof sNotify==='function') sNotify(_mbT('✅ تم التسجيل'),'£'+total.toFixed(0)+' — '+_mbRoomLbl(room),'success',3000);
-};
-
-window.deleteMinibarLog = function(id){
-  if(!confirm(_mbT('حذف هذا السجل؟'))) return;
-  mbLog = mbLog.filter(l=>l.id!==id);
-  mbLogSave();
-  renderMinibar();
-};
-
-// expose for routing
-window.renderMinibar = window.renderMinibar;
-
-})();
-</script>
+══════════════════════════════════                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
