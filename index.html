@@ -116,6 +116,10 @@ select option{background:#1a1a2e;color:var(--text)}
 /* MODAL */
 .ovl{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1100;align-items:center;justify-content:center;padding:12px}
 .ovl.on{display:flex}
+.mdl-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:1100;align-items:center;justify-content:center;padding:12px}
+.mdl-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;color:var(--gold);font-size:14px;font-weight:700}
+.mdl-x{background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px}
+.mdl-x:hover{color:var(--text);background:rgba(255,255,255,0.08)}
 .mdl{background:#1e2a3a;border:1px solid var(--bdr);border-radius:13px;padding:20px;width:100%;max-width:520px;max-height:92vh;overflow-y:auto}
 .mtitle{color:var(--gold);font-size:14px;font-weight:700;margin-bottom:14px}
 /* INVOICE PREVIEW */
@@ -1548,7 +1552,7 @@ label {
 // ══ EVENTS MODULE ══
 let _evFilter = 'all';
 
-function evLS(){ return LS('dta_events', []); }
+function evLS(){ try{ return JSON.parse(localStorage.getItem('dta_events'))||[]; }catch(e){ return []; } }
 function evSave(arr){ localStorage.setItem('dta_events', JSON.stringify(arr)); }
 
 window.evShowHijri = function(){
@@ -1735,21 +1739,13 @@ window.notifyEventGuest = function(idx){
   const typeEmojis = {'عرس':'💍','خطوبة':'💎','عيد ميلاد':'🎂','مؤتمر':'🏢','حفلة':'🎶','رحلة':'🏔️','اجتماع':'📋','تخرج':'🎓','أخرى':'📌'};
   const emoji = typeEmojis[ev.type]||'📌';
 
-  const msg =
-    emoji + ' *' + ev.title + '*
-' +
-    '🗓️ ' + dateFormatted + ' / ' + dateEn + '
-' +
-    (ev.time ? '🕐 ' + ev.time + '
-' : '') +
-    (ev.location ? '📍 ' + ev.location + '
-' : '') +
-    (ev.count ? '👥 ' + ev.count + (ar?' شخص':' guests') + '
-' : '') +
-    (ev.notes ? '📝 ' + ev.notes + '
-' : '') +
-    '
-🏨 Dahab Trendy';
+  const msg = `${emoji} *${ev.title}*\n` +
+    `🗓️ ${dateFormatted} / ${dateEn}\n` +
+    (ev.time ? `🕐 ${ev.time}\n` : '') +
+    (ev.location ? `📍 ${ev.location}\n` : '') +
+    (ev.count ? `👥 ${ev.count}${ar?' شخص':' guests'}\n` : '') +
+    (ev.notes ? `📝 ${ev.notes}\n` : '') +
+    `\n🏨 Dahab Trendy`;
 
   if(phone){
     window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg));
@@ -2005,24 +2001,8 @@ window.wuWhatsApp = function(id){
   const ar = document.documentElement.lang !== 'en';
   const hotel = (typeof PROP!=='undefined'&&PROP.name)?PROP.name:'Dahab Trendy';
   const msg = ar
-    ? `🔔 تنبيه إيقاظ من ${hotel}
-
-عزيزي الضيف ${w.guest||''},
-موعد إيقاظك غداً الساعة *${w.time}* 🕐
-الغرفة: ${w.room}
-${w.notes?'📝 '+w.notes+'
-':''}
-ليلة سعيدة 🌙
-🏨 ${hotel}`
-    : `🔔 Wake-up Call from ${hotel}
-
-Dear Guest ${w.guest||''},
-Your wake-up call is set for *${w.time}* 🕐
-Room: ${w.room}
-${w.notes?'📝 '+w.notes+'
-':''}
-Good night 🌙
-🏨 ${hotel}`;
+    ? `🔔 تنبيه إيقاظ من ${hotel}\n\nعزيزي الضيف ${w.guest||''},\nموعد إيقاظك غداً الساعة *${w.time}* 🕐\nالغرفة: ${w.room}\n${w.notes?'📝 '+w.notes+'\n':''}\nليلة سعيدة 🌙\n🏨 ${hotel}`
+    : `🔔 Wake-up Call from ${hotel}\n\nDear Guest ${w.guest||''},\nYour wake-up call is set for *${w.time}* 🕐\nRoom: ${w.room}\n${w.notes?'📝 '+w.notes+'\n':''}\nGood night 🌙\n🏨 ${hotel}`;
   const phone = (w.phone||'').replace(/[^0-9+]/g,'');
   if(phone.length>6){
     window.open('https://wa.me/'+phone.replace(/\+/g,'')+'?text='+encodeURIComponent(msg));
@@ -2238,10 +2218,8 @@ function wuBeep(){
       const ar = document.documentElement.lang !== 'en';
       const title = ar ? ('🔔 وقت إيقاظ الغرفة ' + w.room) : ('🔔 Wake-up call: Room ' + w.room);
       const body  = ar
-        ? ('الضيف: ' + (w.guest||'—') + '
-' + (w.notes||''))
-        : ('Guest: ' + (w.guest||'—') + '
-' + (w.notes||''));
+        ? ('الضيف: ' + (w.guest||'—') + '\n' + (w.notes||''))
+        : ('Guest: ' + (w.guest||'—') + '\n' + (w.notes||''));
       // Browser Notification
       if('Notification' in window && Notification.permission==='granted'){
         new Notification(title, {body: body, icon: 'data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><text y=\'.9em\' font-size=\'80\'>🔔</text></svg>', requireInteraction: true});
