@@ -28497,23 +28497,21 @@ window.openQRRoomPicker = openQRRoomPicker;
     const cats = ['all'];
     const menu = (typeof restMenu!=='undefined')?restMenu:[];
     menu.forEach(item=>{ if(item.cat && !cats.includes(item.cat)) cats.push(item.cat); });
-    const isEn = document.documentElement.lang==='en';
-    const catMeta = {
-      all:{label:'🍽️ '+(isEn?'All':'الكل')},meat:{label:'🥩 '+(isEn?'Meat':'لحوم')},chicken:{label:'🍗 '+(isEn?'Chicken':'دجاج')},
-      fish:{label:'🐟 '+(isEn?'Fish':'أسماك')},drinks:{label:'🥤 '+(isEn?'Drinks':'مشروبات')},sweets:{label:'🍰 '+(isEn?'Sweets':'حلويات')},
-      snacks:{label:'🍟 '+(isEn?'Snacks':'سناكس')},shisha:{label:'💨 '+(isEn?'Shisha':'شيشة')},soup:{label:'🍲 '+(isEn?'Soup':'شوربة')},
-      salad:{label:'🥗 '+(isEn?'Salads':'سلطات')},pasta:{label:'🍝 '+(isEn?'Pasta':'باستا')},grill:{label:'🔥 '+(isEn?'Grill':'مشاوي')},
-      breakfast:{label:'🍳 '+(isEn?'Breakfast':'فطار')},pizza:{label:'🍕 Pizza'},
-      sandwiches:{label:'🥪 '+(isEn?'Sandwiches':'ساندوتشات')},rice:{label:'🍚 '+(isEn?'Rice':'أرز')},other:{label:'📦 '+(isEn?'Other':'أخرى')}
-    };
+    const catMeta = (typeof getCatMeta==='function') ? getCatMeta() : {};
     const el = document.getElementById('qpos-cats');
     if(!el) return;
-    el.innerHTML = cats.map(c=>
-      `<button class="qpos-cat-btn${_catFilter===c?' act':''}" onclick="qposSetCat('${c}',this)">
-        ${catMeta[c]?catMeta[c].label:c}
-       </button>`
-    ).join('');
+    el.innerHTML = cats.map(c=>{
+      if(c==='all'){
+        const allLabel = window._menuLang==='en' ? 'All' : window._menuLang==='both' ? 'الكل / All' : 'الكل';
+        return `<button class="qpos-cat-btn${_catFilter==='all'?' act':''}" onclick="qposSetCat('all',this)">🍽️ ${allLabel}</button>`;
+      }
+      const meta = catMeta[c] || {emoji:'📦'};
+      const label = (window._menuLang==='both' && meta.en) ? `${c} / ${meta.en}` :
+                    (window._menuLang==='en' && meta.en) ? `${meta.emoji} ${meta.en}` : c;
+      return `<button class="qpos-cat-btn${_catFilter===c?' act':''}" onclick="qposSetCat('${c.replace(/'/g,"\\'")}',this)">${label}</button>`;
+    }).join('');
   }
+
 
   window.qposSetCat = function(cat, btn){
     _catFilter = cat;
@@ -28540,7 +28538,7 @@ window.openQRRoomPicker = openQRRoomPicker;
       return `<div class="qpos-item${qty>0?' in-cart':''}" id="qpos-item-${globalIdx}" onclick="qposAddItem(${globalIdx})">
         <span class="qpos-item-qty-badge">${qty}</span>
         <span class="qpos-item-emoji">${item.emoji||'🍽️'}</span>
-        <div class="qpos-item-name">${item.name}</div>
+        <div class="qpos-item-name">${typeof _dispName==='function'?_dispName(item):item.name}</div>
         <div class="qpos-item-price">£${item.price}</div>
         <div class="qpos-item-add-row">
           <button class="qpos-qty-btn minus" onclick="event.stopPropagation();qposRemItem(${globalIdx})">−</button>
