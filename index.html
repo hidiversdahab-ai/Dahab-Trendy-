@@ -1385,6 +1385,7 @@ label {
     <div class="bn-more-item" onclick="bnGo('guestsreg',null);closeBnMore()"><span class="bm-icon">📋</span><span class="t" data-ar="سجل الضيوف" data-en="Guests Reg.">سجل الضيوف</span></div>
     <div class="bn-more-item" onclick="bnGo('restaurant',null);closeBnMore()"><span class="bm-icon">🍽️</span><span class="t" data-ar="مطعم" data-en="Rest.">مطعم</span></div>
     <div class="bn-more-item" onclick="bnGo('tours',null);closeBnMore()"><span class="bm-icon">🏔️</span><span class="t" data-ar="رحلات" data-en="Tours">رحلات</span></div>
+    <div class="bn-more-item" onclick="bnGo('events',null);closeBnMore()" style="border-color:rgba(241,196,15,0.4);background:rgba(241,196,15,0.07);"><span class="bm-icon" style="color:#f1c40f;">🎉</span><span style="color:#f1c40f;" class="t" data-ar="أحداث" data-en="Events">أحداث</span></div>
     <div class="bn-more-item" onclick="bnGo('reviews',null);closeBnMore()"><span class="bm-icon">⭐</span><span class="t" data-ar="تقييمات" data-en="Reviews">تقييمات</span></div>
     <div class="bn-more-item" onclick="bnGo('settings',null);closeBnMore()"><span class="bm-icon">⚙️</span><span class="t" data-ar="إعدادات" data-en="Settings">إعدادات</span></div>
     <div class="bn-more-item" onclick="openAIChat();closeBnMore()"><span class="bm-icon">🤖</span><span>AI Chat</span></div>
@@ -1944,6 +1945,7 @@ goPage = function(id, btn){
 <button class="nb" onclick="goPage('invoice',this)">📄 <span class="t" data-ar="الفاتورة" data-en="Invoice">Invoice</span></button>
 <button class="nb" onclick="goPage('restaurant',this)">🍽️ <span class="t" data-ar="المطعم" data-en="Restaurant">Restaurant</span></button>
 <button class="nb" onclick="goPage('tours',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;">🏔️ <span class="t" data-ar="رحلات" data-en="Tours">رحلات</span></button>
+<button class="nb" onclick="goPage('events',this)" style="background:rgba(241,196,15,0.12);color:#f1c40f;border-color:rgba(241,196,15,0.4);font-weight:700;">🎉 <span class="t" data-ar="أحداث" data-en="Events">أحداث</span></button>
 <button class="nb" onclick="goPage('settings',this)">⚙️ <span class="t" data-ar="الإعدادات" data-en="Settings">Settings</span></button>
 <button class="nb" onclick="goPage('analytics',this)" style="background:rgba(155,89,182,0.12);color:#c39bd3;border-color:rgba(155,89,182,0.4);">📊 Analytics</button>
 <button class="nb" onclick="goPage('guestsreg',this)" style="background:rgba(22,160,133,0.12);color:#1abc9c;border-color:rgba(22,160,133,0.4);font-weight:700;">📋 <span class="t" data-ar="سجل الضيوف" data-en="Guests Register">Guests Register</span></button>
@@ -3744,6 +3746,160 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 </div>
 </div>
 
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- ═══════ PAGE: EVENTS ═══════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-events" class="page">
+<div class="flex" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+  <h2 style="color:#f1c40f;font-size:18px;margin:0;">🎉 <span class="t" data-ar="إدارة الأحداث" data-en="Events Management">إدارة الأحداث</span></h2>
+  <button class="btn bsm" onclick="openEventModal()" style="background:rgba(241,196,15,0.2);color:#f1c40f;border:1px solid rgba(241,196,15,0.5);font-weight:700;">+ <span class="t" data-ar="حدث جديد" data-en="New Event">حدث جديد</span></button>
+</div>
+
+<!-- Summary Strip -->
+<div id="ev-summary-strip" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px;"></div>
+
+<!-- Filter Bar -->
+<div class="card" style="padding:8px 12px;margin-bottom:10px;">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <select id="ev-filter-type" onchange="renderEvents()" style="flex:1;min-width:120px;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--text);border:1px solid var(--bdr);font-size:12px;font-family:Arial,sans-serif;">
+      <option value="">🎯 كل الأنواع</option>
+      <option value="party">🎉 حفلة</option>
+      <option value="wedding">💍 زفاف</option>
+      <option value="birthday">🎂 عيد ميلاد</option>
+      <option value="corporate">🏢 فعالية شركة</option>
+      <option value="concert">🎵 حفل موسيقي</option>
+      <option value="sport">⚽ رياضي</option>
+      <option value="cultural">🎭 ثقافي / فني</option>
+      <option value="other">📌 أخرى</option>
+    </select>
+    <select id="ev-filter-room" onchange="renderEvents()" style="flex:1;min-width:110px;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--text);border:1px solid var(--bdr);font-size:12px;font-family:Arial,sans-serif;">
+      <option value="">🏨 كل الغرف</option>
+    </select>
+    <select id="ev-filter-month" onchange="renderEvents()" style="flex:1;min-width:110px;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--text);border:1px solid var(--bdr);font-size:12px;font-family:Arial,sans-serif;">
+      <option value="">📅 كل الشهور</option>
+    </select>
+    <button onclick="clearEventFilters()" style="padding:5px 12px;border-radius:6px;background:rgba(241,196,15,0.15);color:#f1c40f;border:1px solid rgba(241,196,15,0.4);font-size:12px;cursor:pointer;font-family:Arial,sans-serif;">✕ مسح</button>
+  </div>
+</div>
+
+<!-- Events List -->
+<div id="ev-list" class="card" style="padding:0;overflow:hidden;margin-bottom:80px;">
+  <div class="empty" style="padding:30px;">لا توجد أحداث. أضف حدثاً جديداً.</div>
+</div>
+</div>
+
+<!-- ═══════ EVENT MODAL ═══════ -->
+<div class="ovl" id="event-modal">
+<div class="mdl" style="max-width:500px;display:flex;flex-direction:column;">
+  <div class="mtitle">🎉 <span id="event-modal-title">إضافة حدث جديد</span></div>
+
+  <div class="g2">
+    <!-- نوع الحدث -->
+    <div class="fld s2">
+      <label>🎯 نوع الحدث / Event Type</label>
+      <select id="em-type" onchange="onEventTypeChange()">
+        <option value="party">🎉 حفلة — Party</option>
+        <option value="wedding">💍 حفل زفاف — Wedding</option>
+        <option value="birthday">🎂 عيد ميلاد — Birthday</option>
+        <option value="corporate">🏢 فعالية شركة — Corporate Event</option>
+        <option value="concert">🎵 حفل موسيقي — Concert</option>
+        <option value="sport">⚽ فعالية رياضية — Sport Event</option>
+        <option value="cultural">🎭 ثقافي / فني — Cultural</option>
+        <option value="other">📌 أخرى — Other</option>
+      </select>
+    </div>
+    <!-- اسم الحدث -->
+    <div class="fld s2">
+      <label>✏️ اسم الحدث / Event Name</label>
+      <input id="em-name" placeholder="مثال: حفل زفاف أحمد ومريم...">
+    </div>
+    <!-- التاريخ والوقت -->
+    <div class="fld">
+      <label>📅 تاريخ الحدث</label>
+      <input id="em-date" type="date">
+    </div>
+    <div class="fld">
+      <label>⏰ وقت البداية</label>
+      <input id="em-time" type="time" placeholder="19:00">
+    </div>
+    <!-- المسؤول / المنظم -->
+    <div class="fld s2">
+      <label>👤 اسم العميل / المنظم</label>
+      <input id="em-client" placeholder="اسم العميل أو الجهة المنظمة" oninput="eventClientSearch(this.value)">
+      <div id="em-client-suggest" style="display:none;position:absolute;z-index:999;background:var(--card);border:1px solid var(--bdr);border-radius:6px;margin-top:2px;max-height:140px;overflow-y:auto;width:100%;box-shadow:0 4px 12px rgba(0,0,0,0.4);"></div>
+    </div>
+    <!-- رقم الواتساب -->
+    <div class="fld">
+      <label>📱 واتساب / هاتف</label>
+      <input id="em-phone" type="tel" placeholder="+201234567890" style="direction:ltr;">
+    </div>
+    <!-- الغرفة -->
+    <div class="fld">
+      <label>🏨 الغرفة المرتبطة (اختياري)</label>
+      <select id="em-room">
+        <option value="">-- بدون غرفة --</option>
+      </select>
+    </div>
+    <!-- المكان -->
+    <div class="fld s2">
+      <label>📍 مكان الحدث / Venue</label>
+      <input id="em-venue" placeholder="مثال: قاعة الفندق، البيتش، الحديقة...">
+    </div>
+    <!-- عدد الضيوف -->
+    <div class="fld">
+      <label>👥 عدد الضيوف المتوقع</label>
+      <input id="em-guests-count" type="number" min="1" value="1" placeholder="1">
+    </div>
+    <!-- السعر -->
+    <div class="fld">
+      <label>💰 تكلفة الحدث (EGP)</label>
+      <input id="em-price" type="number" min="0" step="0.01" value="0" placeholder="0" style="color:#f1c40f;font-weight:700;" oninput="calcEventFields()">
+    </div>
+    <!-- طريقة الدفع -->
+    <div class="fld">
+      <label>💳 طريقة الدفع</label>
+      <select id="em-pay-method" onchange="onEventPayChange()">
+        <option value="cash">💵 كاش</option>
+        <option value="room">🏨 على الغرفة</option>
+        <option value="transfer">🏦 تحويل بنكي</option>
+        <option value="card">💳 بطاقة</option>
+      </select>
+    </div>
+    <!-- حالة الدفع -->
+    <div class="fld">
+      <label>📊 حالة الدفع</label>
+      <select id="em-pay-status" onchange="calcEventFields()">
+        <option value="pending">🔴 Pending — لم يُدفع</option>
+        <option value="deposit">🟡 Deposit — عربون</option>
+        <option value="paid">🟢 Paid — مدفوع بالكامل</option>
+      </select>
+    </div>
+    <!-- المدفوع -->
+    <div class="fld" id="em-paid-wrap" style="display:none;">
+      <label>✅ المبلغ المدفوع (EGP)</label>
+      <input id="em-paid-amount" type="number" min="0" step="0.01" value="0" placeholder="0" oninput="calcEventFields()">
+    </div>
+    <!-- المتبقي -->
+    <div class="fld" id="em-remaining-wrap" style="display:none;">
+      <label>⏳ المتبقي (EGP)</label>
+      <input id="em-remaining" type="number" readonly style="opacity:0.6;background:rgba(231,76,60,0.07);color:#e74c3c;font-weight:700;">
+    </div>
+    <!-- ملاحظات -->
+    <div class="fld s2">
+      <label>📝 ملاحظات / Notes</label>
+      <textarea id="em-notes" rows="2" placeholder="أي تفاصيل إضافية، متطلبات خاصة..."></textarea>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--bg2);padding:10px 0 4px;border-top:1px solid var(--bdr);z-index:10;">
+    <button class="btn bsm" style="flex:1;padding:14px 10px;font-size:14px;background:rgba(241,196,15,0.2);color:#f1c40f;border:1px solid rgba(241,196,15,0.5);font-weight:700;" onclick="saveEvent()">💾 حفظ الحدث</button>
+    <button class="btn bb" style="padding:14px 10px;font-size:14px;" onclick="closeM('event-modal')">إلغاء</button>
+  </div>
+  <button id="em-delete-btn" class="btn" style="display:none;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);width:100%;margin-top:6px;" onclick="deleteEvent()">🗑 حذف الحدث</button>
+</div>
+</div>
+
 <div id="page-restaurant" class="page">
 
 <!-- ══ HEADER ══ -->
@@ -5244,8 +5400,9 @@ let expenses   = LS("dta_ex",[]);
 let exRate     = parseFloat(localStorage.getItem("dta_rate")||"50");
 let eurRate    = parseFloat(localStorage.getItem("dta_eur_rate")||"55"); // 1 EUR = EGP
 let usdEurRate = parseFloat(localStorage.getItem("dta_usd_eur")||"0.93"); // 1 USD = EUR
-let bkEdit=null, rmEdit=null, exEdit=null, restEdit=null, tourEdit=null;
+let bkEdit=null, rmEdit=null, exEdit=null, restEdit=null, tourEdit=null, eventEdit=null;
 let tours = LS("dta_tours",[]);
+let events = LS("dta_events",[]);
 let restFilter="all";
 let restaurantTx=LS("dta_rest",[]);
 let blacklist = LS("dta_blacklist",[]);  // قائمة الضيوف المحظورين
@@ -5375,7 +5532,7 @@ document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
 document.querySelectorAll(".nb").forEach(b=>b.classList.remove("act"));
 document.getElementById("page-"+id).classList.add("on");
 if(btn) btn.classList.add("act");
-const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage};
+const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,events:renderEvents,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage};
 if(map[id]) map[id]();
 if(id==="invoice"){renderInvRooms();buildPreview();}
 }
@@ -12961,7 +13118,7 @@ btn.disabled=false;
 function exportAll(){
 localStorage.setItem("dta_last_export",String(Date.now()));
 const qrSettings=JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
-const data={bookings,prices,duPrices,roomSt,policies,expenses,exRate,restaurantTx,tours,restMenu,roomPhotos,waitlist,qrSettings,savedAt:new Date().toISOString()};
+const data={bookings,prices,duPrices,roomSt,policies,expenses,exRate,restaurantTx,tours,events,restMenu,roomPhotos,waitlist,qrSettings,savedAt:new Date().toISOString()};
 const dataStr=JSON.stringify(data,null,2);
 const html=`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -13082,7 +13239,7 @@ showToast("✓ Exported as HTML!");
 }
 async function shareBackupWA(){
 const qrSettings2=JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
-const data={bookings,prices,duPrices,roomSt,policies,expenses,exRate,restaurantTx,tours,restMenu,roomPhotos,waitlist,qrSettings:qrSettings2,savedAt:new Date().toISOString()};
+const data={bookings,prices,duPrices,roomSt,policies,expenses,exRate,restaurantTx,tours,events,restMenu,roomPhotos,waitlist,qrSettings:qrSettings2,savedAt:new Date().toISOString()};
 const dataStr=JSON.stringify(data,null,2);
 const html=`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -14302,6 +14459,349 @@ function waTourInvoice(){
     `*حالة الدفع:* ${psLabel}\n\n`+
     `شكراً لاختياركم خدماتنا 🙏\n${prop.phone}`;
   window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// ═══════════ EVENTS ════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+
+const _evTypeMap = {
+  party:    {icon:"🎉", label:"حفلة",           color:"#f39c12"},
+  wedding:  {icon:"💍", label:"حفل زفاف",       color:"#e91e8c"},
+  birthday: {icon:"🎂", label:"عيد ميلاد",      color:"#e74c3c"},
+  corporate:{icon:"🏢", label:"فعالية شركة",    color:"#3498db"},
+  concert:  {icon:"🎵", label:"حفل موسيقي",     color:"#9b59b6"},
+  sport:    {icon:"⚽", label:"فعالية رياضية",  color:"#27ae60"},
+  cultural: {icon:"🎭", label:"ثقافي / فني",    color:"#1abc9c"},
+  other:    {icon:"📌", label:"أخرى",           color:"#95a5a6"}
+};
+function _evMeta(type){ return _evTypeMap[type] || {icon:"🎉", label:"حدث", color:"#f1c40f"}; }
+
+function renderEvents(){
+  events = LS("dta_events",[]);
+
+  // Populate filters
+  const fRoom  = document.getElementById("ev-filter-room");
+  const fMonth = document.getElementById("ev-filter-month");
+  const fType  = document.getElementById("ev-filter-type");
+  const curRoom  = (fRoom||{}).value||"";
+  const curMonth = (fMonth||{}).value||"";
+  const curType  = (fType||{}).value||"";
+
+  if(fRoom){
+    const rooms = [...new Set(events.map(e=>e.room).filter(Boolean))].sort();
+    fRoom.innerHTML = '<option value="">🏨 كل الغرف</option>' +
+      rooms.map(r=>`<option value="${r}" ${r===curRoom?"selected":""}>${r}</option>`).join("");
+  }
+  if(fMonth){
+    const months = [...new Set(events.map(e=>e.date?e.date.substring(0,7):"").filter(Boolean))].sort().reverse();
+    fMonth.innerHTML = '<option value="">📅 كل الشهور</option>' +
+      months.map(m=>`<option value="${m}" ${m===curMonth?"selected":""}>${m}</option>`).join("");
+  }
+
+  // Apply filters
+  let list = [...events];
+  if(curType)  list = list.filter(e=>e.type===curType);
+  if(curRoom)  list = list.filter(e=>e.room===curRoom);
+  if(curMonth) list = list.filter(e=>e.date&&e.date.startsWith(curMonth));
+
+  // Summary strip
+  const totalRev  = events.reduce((s,e)=>s+(e.price||0),0);
+  const totalPaid = events.reduce((s,e)=>s+(e.paidAmount||0),0);
+  const upcoming  = events.filter(e=>e.date>=toDay()).length;
+  const strip = document.getElementById("ev-summary-strip");
+  if(strip) strip.innerHTML = `
+    <div class="card" style="text-align:center;padding:10px;">
+      <div style="font-size:20px;font-weight:700;color:#f1c40f;">${events.length}</div>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">إجمالي الأحداث</div>
+    </div>
+    <div class="card" style="text-align:center;padding:10px;">
+      <div style="font-size:16px;font-weight:700;color:#3498db;">${upcoming}</div>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">⏰ قادم</div>
+    </div>
+    <div class="card" style="text-align:center;padding:10px;">
+      <div style="font-size:16px;font-weight:700;color:#2ecc71;">£${totalRev.toLocaleString()}</div>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">إجمالي الإيرادات</div>
+    </div>
+    <div class="card" style="text-align:center;padding:10px;">
+      <div style="font-size:16px;font-weight:700;color:#f39c12;">£${(totalRev-totalPaid).toLocaleString()}</div>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">💰 المتبقي</div>
+    </div>`;
+
+  const container = document.getElementById("ev-list");
+  if(!container) return;
+
+  if(!list.length){
+    container.innerHTML = '<div class="empty" style="padding:30px;">لا توجد أحداث تطابق الفلتر.</div>';
+    return;
+  }
+
+  container.innerHTML = list.slice().reverse().map((ev,ri)=>{
+    const idx = events.indexOf(ev);
+    const meta = _evMeta(ev.type);
+    const isUpcoming = ev.date >= toDay();
+    const payStatusBadge = ev.payStatus==="paid"
+      ? `<span style='background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;'>✅ Paid</span>`
+      : ev.payStatus==="deposit"
+      ? `<span style='background:rgba(241,196,15,0.15);color:#f1c40f;border:1px solid rgba(241,196,15,0.3);padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;'>🔶 عربون £${(ev.paidAmount||0).toLocaleString()}</span>`
+      : `<span style='background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;'>🔴 Pending</span>`;
+    const hasPhone = !!(ev.phone);
+    const roomBadge = ev.room
+      ? `<span style='background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.3);padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;'>🏨 ${ev.room}</span>`
+      : "";
+
+    return `<div style="border-bottom:1px solid var(--bdr);padding:12px 14px;">
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <!-- Icon + Date -->
+        <div style="flex-shrink:0;text-align:center;background:rgba(241,196,15,0.1);border:1px solid rgba(241,196,15,0.3);border-radius:10px;padding:8px 10px;min-width:52px;">
+          <div style="font-size:22px;">${meta.icon}</div>
+          <div style="font-size:9px;color:#f1c40f;font-weight:700;margin-top:2px;">${(ev.date||"").slice(5)||"—"}</div>
+          ${isUpcoming?`<div style="font-size:8px;color:#2ecc71;font-weight:700;">قادم</div>`:`<div style="font-size:8px;color:var(--muted);">منتهي</div>`}
+        </div>
+        <!-- Info -->
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:14px;color:#f1c40f;">${ev.name||"—"}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+            <span style="color:${meta.color};">${meta.icon} ${meta.label}</span>
+            ${ev.time?" · ⏰ "+ev.time:""}
+            ${ev.venue?" · 📍 "+ev.venue:""}
+          </div>
+          <div style="font-size:11px;margin-top:3px;">
+            👤 ${ev.client||"—"}
+            ${hasPhone?` · <span style="color:#25D366;">📱 ${ev.phone}</span>`:""}
+            ${ev.guestsCount?" · 👥 "+ev.guestsCount+" ضيف":""}
+          </div>
+          <div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap;align-items:center;">
+            ${payStatusBadge} ${roomBadge}
+            <span style="font-weight:700;color:#2ecc71;font-size:13px;">£${(ev.price||0).toLocaleString()}</span>
+          </div>
+          ${ev.notes?`<div style="font-size:10px;color:var(--muted);margin-top:4px;">📝 ${ev.notes}</div>`:""}
+        </div>
+        <!-- Actions -->
+        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+          <button class="btn bg bsm" onclick="openEventModal(${idx})" style="padding:7px 12px;font-size:13px;" title="تعديل">✏️</button>
+          <button class="btn bsm" onclick="waEventDirect(${idx})" style="background:#25D366;color:#fff;padding:7px 12px;font-size:13px;" title="${hasPhone?'إرسال لـ '+ev.phone:'واتساب'}">📱${hasPhone?"✓":""}</button>
+          <button class="btn bsm" onclick="deleteEventDirect(${idx})" style="background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.4);padding:7px 12px;font-size:13px;" title="حذف">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function clearEventFilters(){
+  ["ev-filter-type","ev-filter-room","ev-filter-month"].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value="";
+  });
+  renderEvents();
+}
+
+function openEventModal(editIdx){
+  eventEdit = (editIdx!==undefined) ? editIdx : null;
+  // Fill room select
+  const rs = document.getElementById("em-room");
+  if(rs){
+    fillRoomSel("em-room");
+    rs.innerHTML = '<option value="">-- بدون غرفة --</option>' + rs.innerHTML;
+  }
+  const titleEl = document.getElementById("event-modal-title");
+  const delBtn  = document.getElementById("em-delete-btn");
+
+  if(eventEdit!==null){
+    const ev = events[eventEdit];
+    if(titleEl) titleEl.textContent = "تعديل الحدث";
+    if(delBtn)  delBtn.style.display="block";
+    document.getElementById("em-type").value        = ev.type||"party";
+    document.getElementById("em-name").value        = ev.name||"";
+    document.getElementById("em-date").value        = ev.date||"";
+    document.getElementById("em-time").value        = ev.time||"";
+    document.getElementById("em-client").value      = ev.client||"";
+    document.getElementById("em-phone").value       = ev.phone||"";
+    document.getElementById("em-room").value        = ev.room||"";
+    document.getElementById("em-venue").value       = ev.venue||"";
+    document.getElementById("em-guests-count").value= ev.guestsCount||1;
+    document.getElementById("em-price").value       = ev.price||0;
+    document.getElementById("em-pay-method").value  = ev.payMethod||"cash";
+    document.getElementById("em-pay-status").value  = ev.payStatus||"pending";
+    document.getElementById("em-paid-amount").value = ev.paidAmount||0;
+    document.getElementById("em-notes").value       = ev.notes||"";
+  } else {
+    if(titleEl) titleEl.textContent = "إضافة حدث جديد";
+    if(delBtn)  delBtn.style.display="none";
+    document.getElementById("em-type").value        = "party";
+    document.getElementById("em-name").value        = "";
+    document.getElementById("em-date").value        = toDay();
+    document.getElementById("em-time").value        = "";
+    document.getElementById("em-client").value      = "";
+    document.getElementById("em-phone").value       = "";
+    document.getElementById("em-room").value        = "";
+    document.getElementById("em-venue").value       = "";
+    document.getElementById("em-guests-count").value= 1;
+    document.getElementById("em-price").value       = 0;
+    document.getElementById("em-pay-method").value  = "cash";
+    document.getElementById("em-pay-status").value  = "pending";
+    document.getElementById("em-paid-amount").value = 0;
+    document.getElementById("em-notes").value       = "";
+  }
+  calcEventFields();
+  document.getElementById("event-modal").classList.add("on");
+}
+
+function onEventTypeChange(){
+  const type = document.getElementById("em-type").value;
+  const meta = _evMeta(type);
+  const titleEl = document.getElementById("event-modal-title");
+  if(titleEl && titleEl.textContent.includes("إضافة"))
+    titleEl.textContent = "إضافة "+meta.icon+" جديد";
+  const nameEl = document.getElementById("em-name");
+  if(nameEl){
+    const ph = {
+      party:"مثال: حفلة شاطئ، DJ Night...",
+      wedding:"مثال: حفل زفاف أحمد ومريم...",
+      birthday:"مثال: عيد ميلاد سارة...",
+      corporate:"مثال: اجتماع شركة XYZ، Team Building...",
+      concert:"مثال: حفل فرقة الجيل...",
+      sport:"مثال: بطولة كرة قدم، سباق...",
+      cultural:"مثال: معرض فني، مسرحية...",
+      other:"مثال: وصف الحدث..."
+    };
+    nameEl.placeholder = ph[type]||"اسم الحدث...";
+  }
+}
+
+function onEventPayChange(){
+  calcEventFields();
+}
+
+function calcEventFields(){
+  const status = document.getElementById("em-pay-status").value;
+  const total  = parseFloat(document.getElementById("em-price").value)||0;
+  const paidW  = document.getElementById("em-paid-wrap");
+  const remW   = document.getElementById("em-remaining-wrap");
+  const remEl  = document.getElementById("em-remaining");
+  if(status==="paid"){
+    if(paidW) paidW.style.display="none";
+    if(remW)  remW.style.display="none";
+    document.getElementById("em-paid-amount").value = total.toFixed(2);
+  } else if(status==="deposit"){
+    if(paidW) paidW.style.display="block";
+    if(remW)  remW.style.display="block";
+    const paid = parseFloat(document.getElementById("em-paid-amount").value)||0;
+    if(remEl) remEl.value = Math.max(0,total-paid).toFixed(2);
+  } else {
+    if(paidW) paidW.style.display="none";
+    if(remW)  remW.style.display="none";
+    document.getElementById("em-paid-amount").value = "0";
+    if(remEl) remEl.value = total.toFixed(2);
+  }
+}
+
+function eventClientSearch(q){
+  const sug = document.getElementById("em-client-suggest");
+  if(!sug) return;
+  if(!q||q.length<2){ sug.style.display="none"; return; }
+  const matches = bookings.filter(b=>b.name&&b.name.toLowerCase().includes(q.toLowerCase())&&b.status!=="Cancelled").slice(0,6);
+  if(!matches.length){ sug.style.display="none"; return; }
+  sug.style.display="block";
+  sug.innerHTML = matches.map(b=>`<div onclick="selectEventClient('${b.name.replace(/'/g,"\\'")}','${b.room||""}','${(b.phone||"").replace(/'/g,"\\'")}' )" style="padding:7px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--bdr);">👤 ${b.name} <span style="color:var(--muted);font-size:10px;">· غرفة ${b.room||"—"}${b.phone?" · 📱"+b.phone:""}</span></div>`).join("");
+}
+
+function selectEventClient(name,room,phone){
+  document.getElementById("em-client").value = name;
+  if(room){ const rs=document.getElementById("em-room"); if(rs) rs.value=room; }
+  if(phone){ const ph=document.getElementById("em-phone"); if(ph) ph.value=phone; }
+  const sug=document.getElementById("em-client-suggest");
+  if(sug) sug.style.display="none";
+}
+
+function saveEvent(){
+  const type        = document.getElementById("em-type").value;
+  const name        = document.getElementById("em-name").value.trim();
+  const date        = document.getElementById("em-date").value;
+  const time        = document.getElementById("em-time").value;
+  const client      = document.getElementById("em-client").value.trim();
+  const phone       = document.getElementById("em-phone").value.trim();
+  const room        = document.getElementById("em-room").value;
+  const venue       = document.getElementById("em-venue").value.trim();
+  const guestsCount = parseInt(document.getElementById("em-guests-count").value)||1;
+  const price       = parseFloat(document.getElementById("em-price").value)||0;
+  const payMethod   = document.getElementById("em-pay-method").value;
+  const payStatus   = document.getElementById("em-pay-status").value;
+  const paidAmount  = parseFloat(document.getElementById("em-paid-amount").value)||0;
+  const notes       = document.getElementById("em-notes").value.trim();
+
+  if(!name){ alert("⚠️ أدخل اسم الحدث"); return; }
+  if(!date){ alert("⚠️ أدخل تاريخ الحدث"); return; }
+
+  const ev = {
+    id: eventEdit!==null ? events[eventEdit].id : "EV-"+Date.now(),
+    type, name, date, time, client, phone, room, venue, guestsCount,
+    price, payMethod, payStatus,
+    paidAmount: payStatus==="paid" ? price : (payStatus==="deposit" ? paidAmount : 0),
+    notes,
+    createdAt: eventEdit!==null ? (events[eventEdit].createdAt||toDay()) : toDay()
+  };
+
+  if(eventEdit!==null) events[eventEdit]=ev; else events.push(ev);
+  sv("dta_events", events);
+  closeM("event-modal");
+  renderEvents();
+  const meta = _evMeta(type);
+  sNotify(meta.icon+" تم حفظ الحدث", name, "success", 3000);
+}
+
+function deleteEvent(){
+  if(eventEdit===null) return;
+  if(!confirm("هل تريد حذف هذا الحدث؟")) return;
+  events.splice(eventEdit,1);
+  sv("dta_events",events);
+  closeM("event-modal");
+  renderEvents();
+  sNotify("🗑 تم الحذف","تم حذف الحدث","info",2000);
+}
+
+function deleteEventDirect(idx){
+  const ev = events[idx];
+  if(!ev) return;
+  if(!confirm("🗑 حذف حدث \""+ev.name+"\"؟")) return;
+  events.splice(idx,1);
+  sv("dta_events",events);
+  renderEvents();
+  sNotify("🗑 تم الحذف","","info",2000);
+}
+
+function waEventDirect(idx){
+  const ev = events[idx];
+  if(!ev) return;
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", phone:"+20 109 953 1272"};
+  const meta  = _evMeta(ev.type);
+  const psLabel = ev.payStatus==="paid" ? "✅ مدفوع بالكامل" : ev.payStatus==="deposit" ? "🔶 عربون" : "🔴 لم يُدفع";
+  const paid = ev.paidAmount||0;
+  const remaining = Math.max(0,(ev.price||0)-paid);
+
+  const msg =
+    `${meta.icon} *${meta.label} — ${prop.name}*\n\n`+
+    `*الحدث:* ${ev.name}\n`+
+    `*التاريخ:* ${fmtD(ev.date)}${ev.time?" — ⏰ "+ev.time:""}\n`+
+    `*العميل:* ${ev.client||"—"}\n`+
+    (ev.venue?`*المكان:* ${ev.venue}\n`:"")+
+    (ev.room?`*الغرفة:* ${ev.room}\n`:"")+
+    (ev.guestsCount>1?`*عدد الضيوف:* ${ev.guestsCount}\n`:"")+
+    `*التكلفة:* £${(ev.price||0).toLocaleString()}\n`+
+    (paid>0?`*المدفوع:* £${paid.toLocaleString()}\n`:"")+
+    (ev.payStatus!=="paid"?`*المتبقي:* £${remaining.toLocaleString()}\n`:"")+
+    `*حالة الدفع:* ${psLabel}\n`+
+    (ev.notes?`*ملاحظات:* ${ev.notes}\n`:"")+
+    `\nشكراً لاختياركم خدماتنا 🙏\n${prop.phone}`;
+
+  // محاولة جلب الرقم من السجل أو من الحجوزات
+  let phone = ev.phone||"";
+  if(!phone && ev.client){
+    const bk = bookings.find(b=>b.name===ev.client && b.status!=="Cancelled");
+    if(bk) phone = bk.phone||bk.whatsapp||"";
+  }
+  const waNum = phone.replace(/\D/g,"");
+  window.open("https://wa.me/"+(waNum||"")+"?text="+encodeURIComponent(msg),"_blank");
 }
 
 // ═══════════ RESTAURANT ═══════════
@@ -24668,6 +25168,7 @@ const DTA_BACKUP = (function(){
       if(data.roomSt)      { roomSt=data.roomSt;               sv('dta_rs',roomSt); }
       if(data.restaurantTx){ restaurantTx=data.restaurantTx;  sv('dta_rest',restaurantTx); }
       if(data.tours)       { tours=data.tours;                 sv('dta_tours',tours); }
+      if(data.events)      { events=data.events;               sv('dta_events',events); }
       if(data.prices)      { prices=data.prices;               sv('dta_pr',prices); }
       if(data.duPrices)    { duPrices=data.duPrices;           sv('dta_du',duPrices); }
       if(data.policies)    { policies=data.policies;           sv('dta_pol',policies); }
