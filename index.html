@@ -12646,10 +12646,16 @@ function sendRoomListWA(){
   const rst = (typeof roomSt!=="undefined")?roomSt:{};
   const bks = (typeof bookings!=="undefined")?bookings:[];
   const pd  = (typeof getPLData==='function')?getPLData():{};
-  const sym = p.currency==='GBP'?'£':p.currency==='USD'?'$':p.currency==='EUR'?'€':'ج.م';
+  const sym = p.currency==='GBP'?'£':p.currency==='USD'?'$':p.currency==='EUR'?'€':'EGP';
   const curKey = p.currency.toLowerCase();
   const showPrices = p.season && p.season !== 'none';
-  const seasonLabel = {low:'Low Season',mid:'Mid Season',high:'High Season',peak:'Peak Season'}[p.season]||'';
+  const seasonLabel = {
+    low :'Low Season / الموسم المنخفض',
+    mid :'Mid Season / الموسم المتوسط',
+    high:'High Season / الموسم المرتفع',
+    peak:'Peak Season / موسم الذروة'
+  }[p.season]||'';
+
   const ALL_ROOMS = Array.from({length:14},(_,i)=>101+i);
   const ROOMS_ARR = ALL_ROOMS.filter(r => rst[String(r)] !== 'maintenance');
   const maintCount = ALL_ROOMS.length - ROOMS_ARR.length;
@@ -12671,56 +12677,126 @@ function sendRoomListWA(){
   ROOMS_ARR.forEach(r=>{
     const info = rt['room_'+r]||{type:'Double',capacity:2};
     const t = info.type;
-    if(!typeGroups[t]) typeGroups[t]={type:t,capacity:info.capacity,count:0,total:0,avail:0};
+    if(!typeGroups[t]) typeGroups[t]={type:t,capacity:info.capacity,rooms:[],availRooms:[],count:0,total:0,avail:0};
+    typeGroups[t].rooms.push(r);
     typeGroups[t].count++;
     typeGroups[t].total += info.capacity;
-    if(hasAvail && availMap[r]) typeGroups[t].avail++;
+    if(hasAvail && availMap[r]){ typeGroups[t].avail++; typeGroups[t].availRooms.push(r); }
   });
   const totalRooms = ROOMS_ARR.length;
-  const totalCapacity = ROOMS_ARR.reduce((s,r)=>{ const i=rt['room_'+r]||{capacity:2}; return s+i.capacity;},0);
+  const totalCap   = ROOMS_ARR.reduce((s,r)=>{ const i=rt['room_'+r]||{capacity:2}; return s+i.capacity;},0);
   const totalAvail = hasAvail ? ROOMS_ARR.filter(r=>availMap[r]).length : null;
-  const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy Accommodation",phone:"",address:""};
+  const prop = (typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy Accommodation",phone:"",address:"",email:""};
 
-  let msg = `🏨 *${prop.name}*
-`;
-  if(prop.address) msg += `📍 ${prop.address}
-`;
-  msg += `
-`;
-  if(p.toCompany) msg += `إلى: *${p.toCompany}*${p.toContact?' — '+p.toContact:''}
+  // تنسيق التاريخ — ثنائي اللغة
+  const fmtDate = d => {
+    if(!d) return '';
+    const dt = new Date(d);
+    const ar = dt.toLocaleDateString('ar-EG',{day:'2-digit',month:'short',year:'numeric'});
+    const en = dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    return `${en} / ${ar}`;
+  };
 
-`;
-  if(hasAvail) msg += `📅 الفترة: ${p.checkin} ← ${p.checkout}
-`;
-  if(showPrices) msg += `💰 ${seasonLabel}
-`;
-  msg += `
-🛏 *قائمة الغرف*
-${'─'.repeat(30)}
+  // عدد الليالي
+  let nights = 0;
+  if(hasAvail) nights = Math.round((new Date(p.checkout)-new Date(p.checkin))/(1000*60*60*24));
 
-`;
+  const div = '─'.repeat(32);
+
+  // ══════════════════════════════
+  //  بناء الرسالة — ثنائية اللغة
+  // ══════════════════════════════
+  let msg = '';
+
+  // ── Header ──
+  msg += `🏨 *${prop.name}*\n`;
+  if(prop.address) msg += `📍 ${prop.address}\n`;
+  if(prop.phone)   msg += `📞 ${prop.phone}\n`;
+  if(prop.email)   msg += `✉️ ${prop.email}\n`;
+  msg += `\n${div}\n\n`;
+
+  // ── المستلم / Recipient ──
+  if(p.toCompany){
+    msg += `🏢 *To / إلى:* ${p.toCompany}`;
+    if(p.toContact) msg += ` — Attn / عناية: ${p.toContact}`;
+    msg += `\n\n`;
+  }
+
+  // ── فترة الإقامة / Stay Period ──
+  if(hasAvail){
+    msg += `📅 *Stay Period / فترة الإقامة*\n`;
+    msg += `   Check-in / وصول: ${fmtDate(p.checkin)}\n`;
+    msg += `   Check-out / مغادرة: ${fmtDate(p.checkout)}`;
+    if(nights > 0) msg += `   _(${nights} night${nights>1?'s':''} / ليلة)_`;
+    msg += `\n`;
+  }
+
+  // ── الموسم والتسعيرة / Pricing ──
+  if(showPrices){
+    msg += `💰 *Pricing / التسعيرة:* ${seasonLabel}  |  ${p.currency}\n`;
+  }
+
+  msg += `\n${div}\n`;
+  msg += `\n🛏 *Room Details / تفاصيل الغرف*\n`;
+
+  // ── وصف أنواع الغرف ──
+  const typeDesc = {
+    'Single'         : 'Single Room / غرفة لشخص واحد',
+    'Double'         : 'Double Room / غرفة مزدوجة',
+    'Triple'         : 'Triple Room / غرفة لثلاثة',
+    'Suite (غرفتين)' : 'Suite — Two Rooms / جناح غرفتان',
+    'Quad (رباعي)'   : 'Quad Room / غرفة رباعية'
+  };
+
   Object.values(typeGroups).forEach(g=>{
-    const priceVal = showPrices && pd[g.type] ? (pd[g.type][p.season+'_'+curKey]||pd[g.type][p.season]||0) : 0;
-    const priceStr = priceVal ? ` — 💰 ${sym}${priceVal.toLocaleString()}/ليلة` : '';
-    const availStr = hasAvail ? ` — ${g.avail>0?'✅ '+g.avail+' متاحة':'❌ محجوزة'}` : '';
-    msg += `🔹 *${g.type}*: ${g.count} غرفة${priceStr}${availStr}
-`;
+    const priceVal = showPrices && pd[g.type]
+      ? (pd[g.type][p.season+'_'+curKey]||pd[g.type][p.season]||0) : 0;
+    const totalGuests = g.capacity * g.count;
+    const desc = typeDesc[g.type] || g.type;
+
+    msg += `\n▪️ *${g.type}* — ${desc}\n`;
+    msg += `   Rooms / عدد الغرف: *${g.count}*  |  Capacity / السعة: *${g.capacity} pax / نفر*  |  Total / إجمالي: *${totalGuests} guests / نفر*\n`;
+
+    if(priceVal){
+      msg += `   💰 Price / السعر: *${sym} ${priceVal.toLocaleString()} per night / للليلة*\n`;
+    }
+
+    if(hasAvail){
+      const availNums  = g.availRooms.join('، ');
+      const bookedNums = g.rooms.filter(r=>!availMap[r]).join('، ');
+      if(availNums)  msg += `   ✅ Available / متاحة: ${availNums}\n`;
+      if(bookedNums) msg += `   🔴 Booked / محجوزة: ${bookedNums}\n`;
+    } else {
+      msg += `   🔢 Room Nos. / أرقام الغرف: ${g.rooms.join('، ')}\n`;
+    }
   });
-  msg += `
-${'─'.repeat(30)}
-`;
-  msg += `📊 *الإجمالي: ${totalRooms} غرفة — طاقة ${totalCapacity} فرد*`;
-  if(hasAvail) msg += ` — ✅ *${totalAvail} متاحة*`;
-  msg += `
-`;
-  if(maintCount>0) msg += `🔧 (${maintCount} غرفة صيانة — مستبعدة)
-`;
-  if(p.notes) msg += `
-📝 ${p.notes}
-`;
-  msg += `
-يسعدنا خدمتكم 🤝
-${prop.phone||''}`;
+
+  msg += `\n${div}\n`;
+
+  // ── ملخص / Summary ──
+  msg += `\n📊 *Summary / الملخص*\n`;
+  msg += `   Total Rooms / إجمالي الغرف: *${totalRooms}*\n`;
+  msg += `   Total Capacity / الطاقة الاستيعابية: *${totalCap} guests / نفر*\n`;
+  if(hasAvail){
+    const booked = totalRooms - totalAvail;
+    msg += `   ✅ Available / متاح: *${totalAvail}*  |  🔴 Booked / محجوز: *${booked}*\n`;
+  }
+  if(maintCount > 0){
+    msg += `   🔧 Maintenance / صيانة: ${maintCount} room(s) / غرفة (excluded / مستبعدة)\n`;
+  }
+
+  // ── ملاحظات / Notes ──
+  if(p.notes){
+    msg += `\n📝 *Notes / ملاحظات:* ${p.notes}\n`;
+  }
+
+  msg += `\n${div}\n\n`;
+
+  // ── ختام احترافي / Closing ──
+  msg += `Thank you for your interest. We look forward to welcoming you! 🤝\n`;
+  msg += `نشكر اهتمامكم ونسعد بخدمتكم في أي وقت.\n`;
+  msg += `For reservations / للحجز والاستفسار:\n`;
+  if(prop.phone) msg += `📞 ${prop.phone}\n`;
 
   const encoded = encodeURIComponent(msg);
   window.open('https://wa.me/?text='+encoded,'_blank');
