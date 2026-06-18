@@ -2668,14 +2668,14 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- معلومات المرسل إليه -->
 <div class="card">
-  <div class="ctitle">🏢 إرسال إلى شركة / وكالة</div>
+  <div class="ctitle">🏢 <span class="t" data-ar="إرسال إلى شركة / وكالة" data-en="Send to Company / Agency">إرسال إلى شركة / وكالة</span></div>
   <div class="g2">
-    <div><label class="lbl">اسم الشركة</label><input id="rl-to-company" type="text" placeholder="مثال: Delta Tours" class="inp"></div>
-    <div><label class="lbl">اسم المسؤول</label><input id="rl-to-contact" type="text" placeholder="اسم الموظف" class="inp"></div>
+    <div><label class="lbl"><span class="t" data-ar="اسم الشركة" data-en="Company Name">اسم الشركة</span></label><input id="rl-to-company" type="text" placeholder="مثال: Delta Tours" class="inp"></div>
+    <div><label class="lbl"><span class="t" data-ar="اسم المسؤول" data-en="Contact Person">اسم المسؤول</span></label><input id="rl-to-contact" type="text" placeholder="اسم الموظف" class="inp"></div>
   </div>
   <div class="g2" style="margin-top:10px;">
-    <div><label class="lbl">ملاحظات إضافية</label><input id="rl-notes" type="text" placeholder="مثال: متاحة للحجز من يوليو..." class="inp"></div>
-    <div><label class="lbl">العملة</label>
+    <div><label class="lbl"><span class="t" data-ar="ملاحظات إضافية" data-en="Additional Notes">ملاحظات إضافية</span></label><input id="rl-notes" type="text" placeholder="مثال: متاحة للحجز من يوليو..." class="inp"></div>
+    <div><label class="lbl"><span class="t" data-ar="العملة" data-en="Currency">العملة</span></label>
       <select id="rl-currency" class="inp" onchange="renderRoomListPreview()">
         <option value="GBP">GBP £</option>
         <option value="USD">USD $</option>
@@ -2685,17 +2685,17 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
   </div>
   <div class="g2" style="margin-top:10px;">
-    <div><label class="lbl">📅 تاريخ الوصول (التوافر)</label><input id="rl-checkin" type="date" class="inp" onchange="renderRoomListPreview()"></div>
-    <div><label class="lbl">📅 تاريخ المغادرة</label><input id="rl-checkout" type="date" class="inp" onchange="renderRoomListPreview()"></div>
+    <div><label class="lbl">📅 <span class="t" data-ar="تاريخ الوصول (التوافر)" data-en="Check-in Date (Availability)">تاريخ الوصول (التوافر)</span></label><input id="rl-checkin" type="date" class="inp" onchange="renderRoomListPreview()"></div>
+    <div><label class="lbl">📅 <span class="t" data-ar="تاريخ المغادرة" data-en="Check-out Date">تاريخ المغادرة</span></label><input id="rl-checkout" type="date" class="inp" onchange="renderRoomListPreview()"></div>
   </div>
   <div style="margin-top:10px;">
-    <label class="lbl">💰 الموسم للأسعار</label>
+    <label class="lbl">💰 <span class="t" data-ar="الموسم للأسعار" data-en="Pricing Season">الموسم للأسعار</span></label>
     <div class="flex" style="gap:8px;flex-wrap:wrap;margin-top:6px;">
-      <button id="rl-season-low"  class="btn bsm act-season" onclick="setRLSeason('low')">🌥️ Low</button>
-      <button id="rl-season-mid"  class="btn bsm" onclick="setRLSeason('mid')">⛅ Mid</button>
-      <button id="rl-season-high" class="btn bsm" onclick="setRLSeason('high')">☀️ High</button>
-      <button id="rl-season-peak" class="btn bsm" onclick="setRLSeason('peak')">🎉 Peak</button>
-      <button id="rl-season-none" class="btn bsm" onclick="setRLSeason('none')" style="background:rgba(255,255,255,0.05);">🚫 بدون أسعار</button>
+      <button id="rl-season-low"  class="btn bsm act-season" onclick="setRLSeason('low')">🌥️ <span class="t" data-ar="منخفض" data-en="Low">منخفض</span></button>
+      <button id="rl-season-mid"  class="btn bsm" onclick="setRLSeason('mid')">⛅ <span class="t" data-ar="متوسط" data-en="Mid">متوسط</span></button>
+      <button id="rl-season-high" class="btn bsm" onclick="setRLSeason('high')">☀️ <span class="t" data-ar="مرتفع" data-en="High">مرتفع</span></button>
+      <button id="rl-season-peak" class="btn bsm" onclick="setRLSeason('peak')">🎉 <span class="t" data-ar="ذروة" data-en="Peak">ذروة</span></button>
+      <button id="rl-season-none" class="btn bsm" onclick="setRLSeason('none')" style="background:rgba(255,255,255,0.05);">🚫 <span class="t" data-ar="بدون أسعار" data-en="No Prices">بدون أسعار</span></button>
     </div>
   </div>
 </div>
@@ -2703,18 +2703,18 @@ document.addEventListener('DOMContentLoaded', function(){
 <!-- معاينة -->
 <div class="card" style="padding:0;overflow:hidden;">
   <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(201,168,76,0.08);border-bottom:1px solid rgba(201,168,76,0.18);">
-    <div class="ctitle" style="margin:0;">👁️ معاينة القائمة</div>
-    <button class="btn bb bsm" onclick="renderRoomListPreview()" style="font-size:11px;">🔄 تحديث</button>
+    <div class="ctitle" style="margin:0;">👁️ <span class="t" data-ar="معاينة القائمة" data-en="List Preview">معاينة القائمة</span></div>
+    <button class="btn bb bsm" onclick="renderRoomListPreview()" style="font-size:11px;">🔄 <span class="t" data-ar="تحديث" data-en="Refresh">تحديث</span></button>
   </div>
   <div id="rl-preview" style="padding:16px;"></div>
 </div>
 
 <!-- أزرار -->
 <div class="flex" style="gap:8px;flex-wrap:wrap;margin-top:4px;">
-  <button class="btn bg" onclick="renderRoomListPreview()">👁️ معاينة</button>
-  <button class="btn" style="background:#25D366;color:#fff;" onclick="sendRoomListWA()">📱 إرسال واتساب</button>
-  <button class="btn" style="background:#e74c3c;color:#fff;" onclick="printRoomList()">🖨️ طباعة / PDF</button>
-  <button class="btn" style="background:linear-gradient(135deg,#c0392b,#922b21);color:#fff;font-weight:700;" onclick="downloadRoomListPDF()">📥 تحميل PDF</button>
+  <button class="btn bg" onclick="renderRoomListPreview()">👁️ <span class="t" data-ar="معاينة" data-en="Preview">معاينة</span></button>
+  <button class="btn" style="background:#25D366;color:#fff;" onclick="sendRoomListWA()">📱 <span class="t" data-ar="إرسال واتساب" data-en="Send WhatsApp">إرسال واتساب</span></button>
+  <button class="btn" style="background:#e74c3c;color:#fff;" onclick="printRoomList()">🖨️ <span class="t" data-ar="طباعة / PDF" data-en="Print / PDF">طباعة / PDF</span></button>
+  <button class="btn" style="background:linear-gradient(135deg,#c0392b,#922b21);color:#fff;font-weight:700;" onclick="downloadRoomListPDF()">📥 <span class="t" data-ar="تحميل PDF" data-en="Download PDF">تحميل PDF</span></button>
 </div>
 <div id="rl-print-area" style="display:none;"></div>
 </div>
@@ -12260,7 +12260,13 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency, season, check
   }
 
   const typeIcons = {'Single':'🛏','Double':'🛏🛏','Triple':'🛏🛏🛏','Suite (غرفتين)':'🏠','Quad (رباعي)':'👨‍👩‍👧‍👦'};
-  const typeDesc  = {'Single':'غرفة لشخص واحد','Double':'غرفة مزدوجة لشخصين','Triple':'غرفة لثلاثة أشخاص','Suite (غرفتين)':'جناح يضم غرفتين','Quad (رباعي)':'غرفة لأربعة أشخاص'};
+  const typeDesc  = {
+    'Single':'Single Room — غرفة لشخص واحد',
+    'Double':'Double Room — غرفة مزدوجة لشخصين',
+    'Triple':'Triple Room — غرفة لثلاثة أشخاص',
+    'Suite (غرفتين)':'Suite (Two Rooms) — جناح يضم غرفتين',
+    'Quad (رباعي)':'Quad Room — غرفة لأربعة أشخاص'
+  };
 
   const totalRooms = ROOMS_ARR.length;
   const totalCapacity = ROOMS_ARR.reduce((s,r)=>{ const i=rt['room_'+r]||{capacity:2}; return s+i.capacity;},0);
@@ -12269,7 +12275,7 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency, season, check
   const typeRows = Object.values(typeGroups).map(g=>{
     const price = getPrice(g.type);
     const availCell = hasAvail
-      ? `<td style="text-align:center;font-weight:700;color:${g.availRooms.length>0?'#27ae60':'#e74c3c'};">${g.availRooms.length>0?'✅ '+g.availRooms.length+' متاحة':'❌ محجوزة'}</td>`
+      ? `<td style="text-align:center;font-weight:700;color:${g.availRooms.length>0?'#27ae60':'#e74c3c'};">${g.availRooms.length>0?'✅ '+g.availRooms.length+' Available / متاحة':'❌ Fully Booked / محجوزة'}</td>`
       : '';
     const priceCell = showPrices
       ? `<td style="text-align:center;font-weight:700;color:#c9a84c;font-size:14px;">${price||'—'}</td>`
@@ -12279,8 +12285,8 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency, season, check
       <td style="font-size:18px;text-align:center;">${typeIcons[g.type]||'🛏'}</td>
       <td><strong>${g.type}</strong><br><span style="font-size:11px;color:#666;">${typeDesc[g.type]||''}</span></td>
       <td style="text-align:center;font-weight:700;font-size:16px;color:#1a1a2e;">${g.count}</td>
-      <td style="text-align:center;color:#555;">${g.capacity} نفر / غرفة</td>
-      <td style="text-align:center;font-weight:700;color:#c9a84c;">${g.capacity*g.count} نفر</td>
+      <td style="text-align:center;color:#555;">${g.capacity} <span style="font-size:11px;">Guests / نفر</span></td>
+      <td style="text-align:center;font-weight:700;color:#c9a84c;">${g.capacity*g.count} <span style="font-size:11px;">Total / إجمالي</span></td>
       ${priceCell}
       ${availCell}
       <td style="text-align:center;font-size:11px;color:#888;">${g.rooms.join('، ')}</td>
@@ -12288,7 +12294,7 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency, season, check
   }).join('');
 
   return `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
-  <title>قائمة الغرف — ${prop.name}</title>
+  <title>Room List / قائمة الغرف — ${prop.name}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Arial',sans-serif;background:#f4f4f4;color:#222;padding:30px;}
@@ -12315,6 +12321,7 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency, season, check
     td{padding:11px 14px;border-bottom:1px solid #f0ead8;color:#333;vertical-align:middle;font-size:13px;}
     tr:nth-child(even) td{background:#fdfbf5;}
     tr:last-child td{border-bottom:none;}
+    .bilingual-label{display:block;font-size:10px;color:#999;font-weight:400;margin-top:1px;}
     /* Notes */
     .notes-box{background:#fffbf0;border:1px solid #f0d98c;border-radius:8px;padding:12px 16px;font-size:13px;color:#555;margin-top:20px;}
     /* Footer */
@@ -12330,7 +12337,7 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency, season, check
       </div>
       <div style="text-align:left;">
         <div class="h-badge">ROOM LIST / قائمة الغرف</div>
-        ${toCompany?`<div class="h-to"><strong>${toCompany}</strong>${toContact?'عناية: '+toContact:''}</div>`:''}
+        ${toCompany?`<div class="h-to"><strong>${toCompany}</strong>${toContact?'<span style="font-size:11px;"> Attn / عناية: '+toContact+'</span>':''}</div>`:''}
         <div style="font-size:11px;color:#a0b4c8;margin-top:6px;">📅 ${today}</div>
       </div>
     </div>
@@ -12338,60 +12345,60 @@ function _buildRoomListHTML(toCompany, toContact, notes, currency, season, check
     <div class="body">
       <!-- Summary -->
       <div class="summary-row" style="grid-template-columns:repeat(${hasAvail?4:3},1fr);">
-        <div class="s-card"><div class="s-num">${totalRooms}</div><div class="s-lbl">إجمالي الغرف</div></div>
-        <div class="s-card"><div class="s-num">${totalCapacity}</div><div class="s-lbl">أقصى طاقة استيعابية</div></div>
-        <div class="s-card"><div class="s-num">${Object.keys(typeGroups).length}</div><div class="s-lbl">أنواع الغرف</div></div>
-        ${hasAvail?`<div class="s-card" style="border-color:rgba(${totalAvail>0?'39,174,96':'231,76,60'},0.4);"><div class="s-num" style="color:${totalAvail>0?'#27ae60':'#e74c3c'};">${totalAvail}</div><div class="s-lbl" style="color:#a0b4c8;">متاحة للحجز</div></div>`:''}
+        <div class="s-card"><div class="s-num">${totalRooms}</div><div class="s-lbl">Total Rooms<br><span style="font-size:10px;opacity:0.7;">إجمالي الغرف</span></div></div>
+        <div class="s-card"><div class="s-num">${totalCapacity}</div><div class="s-lbl">Max Capacity<br><span style="font-size:10px;opacity:0.7;">أقصى طاقة استيعابية</span></div></div>
+        <div class="s-card"><div class="s-num">${Object.keys(typeGroups).length}</div><div class="s-lbl">Room Types<br><span style="font-size:10px;opacity:0.7;">أنواع الغرف</span></div></div>
+        ${hasAvail?`<div class="s-card" style="border-color:rgba(${totalAvail>0?'39,174,96':'231,76,60'},0.4);"><div class="s-num" style="color:${totalAvail>0?'#27ae60':'#e74c3c'};">${totalAvail}</div><div class="s-lbl" style="color:#a0b4c8;">Available<br><span style="font-size:10px;opacity:0.7;">متاحة للحجز</span></div></div>`:''}
       </div>
-      ${maintCount>0?`<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;font-size:11px;color:#856404;margin-bottom:18px;">🔧 <strong>${maintCount} غرفة</strong> خارج الخدمة حالياً (صيانة) — غير مدرجة في القائمة</div>`:''}
+      ${maintCount>0?`<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;font-size:11px;color:#856404;margin-bottom:18px;">🔧 <strong>${maintCount} room(s) / غرفة</strong> currently out of service (maintenance) / خارج الخدمة حالياً — not listed / غير مدرجة في القائمة</div>`:''}
       <!-- Availability Banner -->
       ${hasAvail?`<div style="background:linear-gradient(135deg,#0f3460,#16213e);border:1px solid rgba(201,168,76,0.4);border-radius:10px;padding:12px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px;">
         <div style="font-size:24px;">📅</div>
         <div>
-          <div style="color:#c9a84c;font-weight:800;font-size:13px;">فترة الإقامة المطلوبة</div>
+          <div style="color:#c9a84c;font-weight:800;font-size:13px;">Requested Stay Period / فترة الإقامة المطلوبة</div>
           <div style="color:#fff;font-size:12px;margin-top:2px;" dir="ltr">${checkin} → ${checkout}</div>
         </div>
         <div style="margin-right:auto;text-align:center;background:rgba(39,174,96,0.15);border:1px solid rgba(39,174,96,0.4);border-radius:8px;padding:8px 16px;">
           <div style="font-size:22px;font-weight:900;color:#27ae60;">${totalAvail}</div>
-          <div style="font-size:11px;color:#a0b4c8;">غرفة متاحة</div>
+          <div style="font-size:11px;color:#a0b4c8;">Available / متاحة</div>
         </div>
       </div>`:''}
       <!-- Season Badge -->
-      ${showPrices?`<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:6px;padding:5px 12px;margin-bottom:14px;font-size:12px;color:#c9a84c;font-weight:700;">${seasonLabel} — الأسعار لكل غرفة / ليلة</div>`:''}
+      ${showPrices?`<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:6px;padding:5px 12px;margin-bottom:14px;font-size:12px;color:#c9a84c;font-weight:700;">${seasonLabel} — Price per room / night &nbsp;·&nbsp; السعر لكل غرفة / ليلة</div>`:''}
       <!-- Rooms Table -->
-      <div class="sec-title">🛏 تفاصيل أنواع الغرف</div>
+      <div class="sec-title">🛏 Room Types Details / تفاصيل أنواع الغرف</div>
       <table>
         <thead><tr>
           <th></th>
-          <th>نوع الغرفة</th>
-          <th style="text-align:center;">عدد الغرف</th>
-          <th style="text-align:center;">السعة / غرفة</th>
-          <th style="text-align:center;">إجمالي الأفراد</th>
-          ${showPrices?'<th style="text-align:center;">السعر / ليلة</th>':''}
-          ${hasAvail?'<th style="text-align:center;">التوافر</th>':''}
-          <th style="text-align:center;">أرقام الغرف</th>
+          <th>Room Type<br><span class="bilingual-label">نوع الغرفة</span></th>
+          <th style="text-align:center;">Rooms<br><span class="bilingual-label">عدد الغرف</span></th>
+          <th style="text-align:center;">Capacity / Room<br><span class="bilingual-label">السعة / غرفة</span></th>
+          <th style="text-align:center;">Total Guests<br><span class="bilingual-label">إجمالي الأفراد</span></th>
+          ${showPrices?'<th style="text-align:center;">Price / Night<br><span class="bilingual-label">السعر / ليلة</span></th>':''}
+          ${hasAvail?'<th style="text-align:center;">Availability<br><span class="bilingual-label">التوافر</span></th>':''}
+          <th style="text-align:center;">Room Numbers<br><span class="bilingual-label">أرقام الغرف</span></th>
         </tr></thead>
         <tbody>${typeRows}</tbody>
         <tfoot>
           <tr style="background:rgba(201,168,76,0.08);font-weight:700;">
-            <td colspan="2" style="font-size:13px;color:#1a1a2e;">📊 الإجمالي</td>
+            <td colspan="2" style="font-size:13px;color:#1a1a2e;">📊 Total / الإجمالي</td>
             <td style="text-align:center;font-size:15px;color:#c9a84c;font-weight:900;">${totalRooms}</td>
             <td></td>
-            <td style="text-align:center;font-size:15px;color:#27ae60;font-weight:900;">${totalCapacity} نفر</td>
+            <td style="text-align:center;font-size:15px;color:#27ae60;font-weight:900;">${totalCapacity} <span style="font-size:11px;font-weight:400;">guests / نفر</span></td>
             ${showPrices?'<td></td>':''}
-            ${hasAvail?`<td style="text-align:center;font-weight:900;color:#27ae60;">${totalAvail} متاحة</td>`:''}
+            ${hasAvail?`<td style="text-align:center;font-weight:900;color:#27ae60;">${totalAvail} <span style="font-size:11px;font-weight:400;">available / متاحة</span></td>`:''}
             <td></td>
           </tr>
         </tfoot>
       </table>
-      ${notes?`<div class="notes-box">📝 <strong>ملاحظات:</strong> ${notes}</div>`:''}
+      ${notes?`<div class="notes-box">📝 <strong>Notes / ملاحظات:</strong> ${notes}</div>`:''}
       <!-- Signature -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:28px;">
-        <div style="border-top:1px dashed #bbb;padding-top:8px;text-align:center;font-size:11px;color:#888;">توقيع الوكالة<br><br><br>_______________________</div>
-        <div style="border-top:1px dashed #bbb;padding-top:8px;text-align:center;font-size:11px;color:#888;">توقيع الفندق<br><br><br>_______________________<br>${prop.name}</div>
+        <div style="border-top:1px dashed #bbb;padding-top:8px;text-align:center;font-size:11px;color:#888;">Agency Signature / توقيع الوكالة<br><br><br>_______________________</div>
+        <div style="border-top:1px dashed #bbb;padding-top:8px;text-align:center;font-size:11px;color:#888;">Hotel Signature / توقيع الفندق<br><br><br>_______________________<br>${prop.name}</div>
       </div>
     </div>
-    <div class="ftr"><span class="ftr-gold">${prop.name}</span> &nbsp;·&nbsp; <span dir="ltr">${prop.phone||''}</span> &nbsp;·&nbsp; ${prop.email||''}<br>${prop.address||''}<br><span style="font-size:10px;opacity:0.7;">يسعدنا خدمتكم — نتطلع للتعاون معكم</span></div>
+    <div class="ftr"><span class="ftr-gold">${prop.name}</span> &nbsp;·&nbsp; <span dir="ltr">${prop.phone||''}</span> &nbsp;·&nbsp; ${prop.email||''}<br>${prop.address||''}<br><span style="font-size:10px;opacity:0.7;">We look forward to serving you / يسعدنا خدمتكم — نتطلع للتعاون معكم</span></div>
   </div></body></html>`;
 }
 
@@ -13980,6 +13987,7 @@ function setLang(lang){
   if(typeof renderMinibar==='function' && document.getElementById('page-minibar')?.classList.contains('on')) renderMinibar();
   // Re-run DOM translation after renders settle
   if(currentLang !== "ar") setTimeout(_translateDOM, 100);
+  if(typeof _restartVoiceForLang==='function') _restartVoiceForLang();
 }
 function toggleLang(){
   currentLang = currentLang === "en" ? "ar" : "en";
@@ -13991,6 +13999,7 @@ function toggleLang(){
   renderExpenses();
   if(typeof renderMinibar==='function' && document.getElementById('page-minibar')?.classList.contains('on')) renderMinibar();
   if(currentLang !== "ar") setTimeout(_translateDOM, 100);
+  if(typeof _restartVoiceForLang==='function') _restartVoiceForLang();
 }
 function toggleLangMenu(){
   const menu = document.getElementById("lang-menu");
@@ -17935,7 +17944,9 @@ function startVoice(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ document.getElementById('voice-transcript').textContent='❌ المتصفح لا يدعم الأوامر الصوتية. استخدم Chrome.'; return; }
   _voiceRecog = new SR();
-  _voiceRecog.lang = 'ar-EG';
+  // لغة التعرف الصوتى يجب أن تتبع لغة الواجهة الحالية (عربى/إنجليزى)
+  // كانت ثابتة على ar-EG دايماً، فكانت تفهم غلط لما اللغة تكون إنجليزى
+  _voiceRecog.lang = currentLang==='ar' ? 'ar-EG' : 'en-US';
   _voiceRecog.continuous = true;
   _voiceRecog.interimResults = true;
   _voiceRecog.onstart = ()=>{
@@ -17970,6 +17981,15 @@ function stopVoice(){
   _voiceActive = false;
   document.getElementById('voice-fab').classList.remove('listening');
   document.getElementById('voice-status').textContent = currentLang==='ar' ? '🎤 اضغط للتحدث' : '🎤 Press to speak';
+}
+
+// لو الميكروفون شغال وقت ما المستخدم يغير اللغة، نعيد تشغيله باللغة الجديدة
+// عشان التعرف الصوتى يفهم صح (كان فاضل شغال على اللغة القديمة دايماً)
+function _restartVoiceForLang(){
+  if(_voiceActive && _voiceRecog){
+    stopVoice();
+    startVoice();
+  }
 }
 
 function processVoiceCommand(cmd){
@@ -29419,21 +29439,24 @@ window.openQRRoomPicker = openQRRoomPicker;
     const menu = (typeof restMenu!=='undefined')?restMenu:[];
     menu.forEach(item=>{ if(item.cat && !cats.includes(item.cat)) cats.push(item.cat); });
     const isEn = document.documentElement.lang==='en';
-    const catMeta = {
-      all:{label:'🍽️ '+(isEn?'All':'الكل')},meat:{label:'🥩 '+(isEn?'Meat':'لحوم')},chicken:{label:'🍗 '+(isEn?'Chicken':'دجاج')},
-      fish:{label:'🐟 '+(isEn?'Fish':'أسماك')},drinks:{label:'🥤 '+(isEn?'Drinks':'مشروبات')},sweets:{label:'🍰 '+(isEn?'Sweets':'حلويات')},
-      snacks:{label:'🍟 '+(isEn?'Snacks':'سناكس')},shisha:{label:'💨 '+(isEn?'Shisha':'شيشة')},soup:{label:'🍲 '+(isEn?'Soup':'شوربة')},
-      salad:{label:'🥗 '+(isEn?'Salads':'سلطات')},pasta:{label:'🍝 '+(isEn?'Pasta':'باستا')},grill:{label:'🔥 '+(isEn?'Grill':'مشاوي')},
-      breakfast:{label:'🍳 '+(isEn?'Breakfast':'فطار')},pizza:{label:'🍕 Pizza'},
-      sandwiches:{label:'🥪 '+(isEn?'Sandwiches':'ساندوتشات')},rice:{label:'🍚 '+(isEn?'Rice':'أرز')},other:{label:'📦 '+(isEn?'Other':'أخرى')}
-    };
+    // استخدام نفس قاموس الفئات المستخدم فى باقى النظام (getCatMeta)
+    // بدلاً من قاموس محلى بمفاتيح لا تطابق فئات المنيو الفعلية (meat/chicken/fish..)
+    const realCatMeta = (typeof getCatMeta==='function') ? getCatMeta() : {};
     const el = document.getElementById('qpos-cats');
     if(!el) return;
-    el.innerHTML = cats.map(c=>
-      `<button class="qpos-cat-btn${_catFilter===c?' act':''}" onclick="qposSetCat('${c}',this)">
-        ${catMeta[c]?catMeta[c].label:c}
-       </button>`
-    ).join('');
+    el.innerHTML = cats.map(c=>{
+      let label;
+      if(c==='all'){
+        label = '🍽️ '+(isEn?'All':'الكل');
+      } else {
+        const meta = realCatMeta[c];
+        const emoji = meta && meta.emoji ? meta.emoji+' ' : '';
+        label = (isEn && meta && meta.en) ? (emoji+meta.en) : c;
+      }
+      return `<button class="qpos-cat-btn${_catFilter===c?' act':''}" onclick="qposSetCat('${c}',this)">
+        ${label}
+       </button>`;
+    }).join('');
   }
 
   window.qposSetCat = function(cat, btn){
