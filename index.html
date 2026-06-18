@@ -2268,6 +2268,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <div id="nav-clock" style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;margin-left:6px;border-left:2px solid rgba(201,168,76,0.3);padding-left:8px;">
   <span id="nav-clock-time" style="font-size:15px;font-weight:700;color:var(--gold);font-family:monospace;letter-spacing:2px;"></span>
   <span id="nav-clock-date" style="font-size:9px;color:var(--muted);font-family:Arial,sans-serif;white-space:nowrap;"></span>
+  <span id="nav-clock-hijri" style="font-size:9px;color:var(--muted);opacity:0.75;font-family:Arial,sans-serif;white-space:nowrap;"></span>
 </div>
 <button class="nb act" onclick="goPage('dashboard',this)">📊 <span class="t" data-ar="الرئيسية" data-en="Dashboard">Dashboard</span></button>
 <button class="nb" onclick="goPage('calendar',this)">🗓️ <span class="t" data-ar="التقويم" data-en="Calendar">Calendar</span></button>
@@ -2345,6 +2346,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <div>
     <div id="dash-clock-time" style="font-size:36px;font-weight:700;color:var(--gold);font-family:monospace;letter-spacing:3px;line-height:1;"></div>
     <div id="dash-clock-date" style="font-size:13px;color:var(--muted);margin-top:4px;font-family:Arial,sans-serif;"></div>
+    <div id="dash-clock-hijri" style="font-size:12px;color:#c9a84c;opacity:0.85;margin-top:2px;font-family:Arial,sans-serif;"></div>
   </div>
   <div style="text-align:left;opacity:0.6;">
     <div style="font-size:28px;">🌊</div>
@@ -23930,7 +23932,29 @@ function rebuildGuestRows(savedData){
     dobInp.type="date"; dobInp.id=`${pfx}-dob`; dobInp.className="bm-guest-dob";
     dobInp.value = d.dob||"";
     if(isMain) dobInp.addEventListener("change", ()=>{ if(typeof checkBirthdayAlert==="function") checkBirthdayAlert(); });
-    grid.appendChild(mkFld(isAr ? "🎂 تاريخ الميلاد" : "🎂 Date of Birth", dobInp, false));
+
+    // عمر الضيف + التاريخ الهجري المقابل لتاريخ الميلاد — يتحدّثان تلقائياً عند تغييره
+    const dobHint = document.createElement("div");
+    dobHint.id = `${pfx}-dob-hint`;
+    dobHint.style.cssText = "font-size:10px;color:var(--muted);margin-top:4px;line-height:1.6;min-height:13px;";
+    const updateDobHint = () => {
+      const val = dobInp.value;
+      if(!val){ dobHint.innerHTML = ""; return; }
+      const bd = new Date(val+"T00:00:00");
+      if(isNaN(bd.getTime()) || bd > new Date()){ dobHint.innerHTML = ""; return; }
+      const ageTxt = (typeof calcAgeText === "function") ? calcAgeText(bd, isAr) : "";
+      const hijriTxt = (typeof formatHijriDate === "function") ? formatHijriDate(bd, isAr ? "ar" : "en") : "";
+      let html = "";
+      if(ageTxt) html += isAr ? ("🎈 العمر: <b>"+ageTxt+"</b>") : ("🎈 Age: <b>"+ageTxt+"</b>");
+      if(hijriTxt) html += (html ? "<br>" : "") + "🌙 " + hijriTxt;
+      dobHint.innerHTML = html;
+    };
+    dobInp.addEventListener("change", updateDobHint);
+    updateDobHint();
+
+    const dobFld = mkFld(isAr ? "🎂 تاريخ الميلاد" : "🎂 Date of Birth", dobInp, false);
+    dobFld.appendChild(dobHint);
+    grid.appendChild(dobFld);
 
     // Gender
     const genSel = document.createElement("select");
@@ -28877,6 +28901,56 @@ window.openQRRoomPicker = openQRRoomPicker;
   scheduleMidnight();
 })();
 
+// ══ التاريخ الهجري — Hijri Date Helpers ══
+// تحويل دقيق باستخدام تقويم أم القرى المعتمد في السعودية (عبر Intl المدمج في المتصفح — بدون أي مكتبة خارجية)
+const HIJRI_MONTHS_AR = ["محرم","صفر","ربيع الأول","ربيع الآخر","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
+const HIJRI_MONTHS_EN = ["Muharram","Safar","Rabi' al-awwal","Rabi' al-thani","Jumada al-awwal","Jumada al-thani","Rajab","Sha'ban","Ramadan","Shawwal","Dhu al-Qi'dah","Dhu al-Hijjah"];
+let _hijriCalKey = null; // null = لم يتحدد بعد، false = غير مدعوم في هذا المتصفح
+function detectHijriCalendar(){
+  if(_hijriCalKey !== null) return _hijriCalKey;
+  const candidates = ['islamic-umalqura','islamic'];
+  for(const cal of candidates){
+    try{
+      const fmt = new Intl.DateTimeFormat('en-US',{calendar:cal, day:'numeric', month:'numeric', year:'numeric'});
+      if(fmt.resolvedOptions().calendar === cal){ _hijriCalKey = cal; return cal; }
+    }catch(e){}
+  }
+  _hijriCalKey = false;
+  return false;
+}
+function getHijriParts(date){
+  const cal = detectHijriCalendar();
+  if(!cal) return null;
+  try{
+    const parts = new Intl.DateTimeFormat('en-US',{calendar:cal, day:'numeric', month:'numeric', year:'numeric'}).formatToParts(date);
+    const o = {};
+    parts.forEach(p=>{ if(p.type==='day'||p.type==='month'||p.type==='year') o[p.type]=parseInt(p.value,10); });
+    if(!o.day||!o.month||!o.year) return null;
+    return o;
+  }catch(e){ return null; }
+}
+function formatHijriDate(date, lang){
+  const p = getHijriParts(date);
+  if(!p) return '';
+  const months = (lang==='en') ? HIJRI_MONTHS_EN : HIJRI_MONTHS_AR;
+  const monthName = months[p.month-1] || '';
+  return (lang==='en') ? (p.day+' '+monthName+' '+p.year+' AH') : (p.day+' '+monthName+' '+p.year+'هـ');
+}
+// حساب عمر الشخص (سنوات / شهور / أيام حسب الحالة) من تاريخ الميلاد
+function calcAgeText(dobDate, isAr){
+  const now = new Date();
+  if(isNaN(dobDate.getTime()) || dobDate > now) return '';
+  let years = now.getFullYear() - dobDate.getFullYear();
+  let months = now.getMonth() - dobDate.getMonth();
+  let days = now.getDate() - dobDate.getDate();
+  if(days < 0) months--;
+  if(months < 0){ years--; months += 12; }
+  if(years >= 1) return isAr ? (years+' سنة') : (years+' '+(years===1?'year':'years'));
+  if(months >= 1) return isAr ? (months+' شهر') : (months+' '+(months===1?'month':'months'));
+  const ageDays = Math.max(0, Math.floor((now - dobDate)/86400000));
+  return isAr ? (ageDays+' يوم') : (ageDays+' '+(ageDays===1?'day':'days'));
+}
+
 // ══ NAVBAR CLOCK ══
 (function(){
   const daysAr = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
@@ -28893,18 +28967,24 @@ window.openQRRoomPicker = openQRRoomPicker;
     const hStr = String(h).padStart(2,'0');
     const timeEl = document.getElementById('nav-clock-time');
     const dateEl = document.getElementById('nav-clock-date');
+    const hijriNavEl = document.getElementById('nav-clock-hijri');
     const dashTime = document.getElementById('dash-clock-time');
     const dashDate = document.getElementById('dash-clock-date');
+    const hijriDashEl = document.getElementById('dash-clock-hijri');
     if(!timeEl && !dashTime) return;
     const lang = (typeof currentLang !== 'undefined') ? currentLang : 'ar';
     const timeStr = hStr+':'+m+':'+s+' '+ampm;
     const dateStr = lang === 'en'
       ? daysEn[now.getDay()]+' '+now.getDate()+' '+monthsEn[now.getMonth()]+' '+now.getFullYear()
       : daysAr[now.getDay()]+' '+now.getDate()+' '+monthsAr[now.getMonth()]+' '+now.getFullYear();
+    const hijriStr = formatHijriDate(now, lang);
+    const hijriDisp = hijriStr ? ('🌙 '+hijriStr) : '';
     if(timeEl) timeEl.textContent = timeStr;
     if(dateEl) dateEl.textContent = dateStr;
+    if(hijriNavEl) hijriNavEl.textContent = hijriDisp;
     if(dashTime) dashTime.textContent = timeStr;
     if(dashDate) dashDate.textContent = dateStr;
+    if(hijriDashEl) hijriDashEl.textContent = hijriDisp;
   }
   updateClock();
   setInterval(updateClock, 1000);
