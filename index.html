@@ -18074,6 +18074,18 @@ function _restartVoiceForLang(){
 }
 
 function processVoiceCommand(cmd){
+  // ─── normalize: remove diacritics, extra spaces, lower case ───
+  const norm = (s) => s.toLowerCase()
+    .replace(/[\u064B-\u065F]/g,'') // remove Arabic diacritics
+    .replace(/أ|إ|آ/g,'ا')
+    .replace(/ة/g,'ه')
+    .replace(/ى/g,'ي')
+    .trim();
+  const c = norm(cmd);
+
+  // ─── fuzzy: does text contain any of these tokens? ───
+  const has = (...tokens) => tokens.some(t => c.includes(norm(t)));
+
   const nav = (page, labelAr, labelEn)=>{
     const label = currentLang==='ar' ? labelAr : labelEn;
     const btn = document.querySelector(`.nb[onclick*="${page}"]`);
@@ -18082,18 +18094,34 @@ function processVoiceCommand(cmd){
     document.getElementById('voice-transcript').textContent = '✅ ' + label;
     return true;
   };
-  if(cmd.includes('الرئيسية')||cmd.includes('dashboard')||cmd.includes('home')) return nav('dashboard','الرئيسية','Dashboard');
-  if(cmd.includes('حجوزات')||cmd.includes('bookings')) return nav('bookings','الحجوزات','Bookings');
-  if(cmd.includes('تقويم')||cmd.includes('calendar')) return nav('calendar','التقويم','Calendar');
-  if(cmd.includes('غرف')||cmd.includes('rooms')) return nav('rooms','الغرف','Rooms');
-  if(cmd.includes('مصروف')||cmd.includes('expenses')) return nav('expenses','المصروفات','Expenses');
-  if(cmd.includes('فاتورة')||cmd.includes('invoice')) return nav('invoice','الفاتورة','Invoice');
-  if(cmd.includes('مطعم')||cmd.includes('restaurant')) return nav('restaurant','المطعم','Restaurant');
-  if(cmd.includes('إعدادات')||cmd.includes('اعدادات')||cmd.includes('settings')) return nav('settings','الإعدادات','Settings');
-  if(cmd.includes('analytics')||cmd.includes('تحليل')||cmd.includes('إحصاء')) return nav('analytics','التحليلات','Analytics');
-  if(cmd.includes('حجز جديد')||cmd.includes('new booking')||cmd.includes('إضافة حجز')||cmd.includes('اضافة حجز')){ openBM(); sNotify(currentLang==='ar'?'🎤 أمر صوتي':'🎤 Voice',currentLang==='ar'?'فتح نموذج حجز جديد':'Opening new booking form','success',2500); return true; }
-  if(cmd.includes('قفل')||cmd.includes('lock')){ lockApp(); return true; }
-  if(cmd.includes('تسعير')||cmd.includes('pricing')){ openAIPricing(); return true; }
+
+  // ─── new booking first (before generic booking match) ───
+  if(has('حجز جديد','جديد','new booking','add booking','اضافه','إضافة حجز','اضافة حجز','انشاء حجز','create booking')){
+    openBM();
+    sNotify(currentLang==='ar'?'🎤 أمر صوتي':'🎤 Voice', currentLang==='ar'?'فتح نموذج حجز جديد':'Opening new booking form','success',2500);
+    document.getElementById('voice-transcript').textContent = currentLang==='ar'?'✅ حجز جديد':'✅ New Booking';
+    return true;
+  }
+
+  // ─── navigation commands ───
+  if(has('الرئيسيه','الرئيسية','داشبورد','dashboard','home','رئيسي','الصفحه الرئيسيه','صفحة رئيسية')) return nav('dashboard','الرئيسية','Dashboard');
+  if(has('حجوزات','حجز','bookings','booking','reservations','reservation','الحجوزات')) return nav('bookings','الحجوزات','Bookings');
+  if(has('تقويم','كالندر','calendar','جدول','schedule')) return nav('calendar','التقويم','Calendar');
+  if(has('غرف','غرفه','الغرف','rooms','room')) return nav('rooms','الغرف','Rooms');
+  if(has('مصروف','مصاريف','نفقات','expenses','expense')) return nav('expenses','المصروفات','Expenses');
+  if(has('فاتوره','فاتورة','invoice','invoices')) return nav('invoice','الفاتورة','Invoice');
+  if(has('مطعم','رستوران','restaurant','food','اكل','طعام')) return nav('restaurant','المطعم','Restaurant');
+  if(has('اعدادات','إعدادات','ستينجز','settings','setting','اعداد')) return nav('settings','الإعدادات','Settings');
+  if(has('تحليل','احصائيات','إحصاء','analytics','analytic','تقارير','reports')) return nav('analytics','التحليلات','Analytics');
+  if(has('ديون','دين','debt','debts')) return nav('debt','الديون','Debt');
+  if(has('انتظار','waitlist','قائمة الانتظار')) return nav('waitlist','قائمة الانتظار','Waitlist');
+  if(has('تورز','جولات','tours','tour')) return nav('tours','الجولات','Tours');
+  if(has('هاوس كيبينج','تنظيف','housekeeping','cleaning')) return nav('housekeeping','الغرف','Housekeeping');
+
+  // ─── actions ───
+  if(has('قفل','لوك','lock','اقفل')){ lockApp(); return true; }
+  if(has('تسعير','اسعار','سعر','pricing','price')){ openAIPricing(); return true; }
+
   return false;
 }
 
@@ -18730,17 +18758,19 @@ function applyScanData(){
 <button class="voice-fab" id="voice-fab" onclick="toggleVoice()" title="أوامر صوتية">🎤</button>
 <div class="voice-modal-wrap" id="voice-modal">
   <div class="voice-status" id="voice-status"><span class="t" data-ar="🎤 اضغط للتحدث" data-en="🎤 Press to speak">🎤 Press to speak</span></div>
-  <div class="voice-transcript" id="voice-transcript"><span class="t" data-ar='قل أمراً مثل: "افتح الحجوزات" أو "حجز جديد"' data-en='Say: "bookings", "new booking", "dashboard"'>Say: "bookings", "new booking", "dashboard"</span></div>
+  <div class="voice-transcript" id="voice-transcript"><span class="t" data-ar='قل أمراً مثل: "حجوزات" أو "حجز جديد" أو "غرف"' data-en='Say: "bookings", "new booking", "rooms"'>Say: "bookings", "new booking", "rooms"</span></div>
   <div class="voice-cmds">
     <b style="color:var(--gold);"><span class="t" data-ar="أوامر متاحة:" data-en="Available commands:">Available commands:</span></b><br>
-    🏠 <span class="t" data-ar="الرئيسية" data-en="dashboard">dashboard</span> · 
-    📋 <span class="t" data-ar="الحجوزات" data-en="bookings">bookings</span> · 
-    🗓️ <span class="t" data-ar="التقويم" data-en="calendar">calendar</span> · 
-    🏨 <span class="t" data-ar="الغرف" data-en="rooms">rooms</span><br>
-    💸 <span class="t" data-ar="المصروفات" data-en="expenses">expenses</span> · 
-    ➕ <span class="t" data-ar="حجز جديد" data-en="new booking">new booking</span> · 
-    💡 <span class="t" data-ar="تسعير" data-en="pricing">pricing</span> · 
-    🔒 <span class="t" data-ar="قفل" data-en="lock">lock</span>
+    🏠 <span class="t" data-ar="رئيسية / داشبورد" data-en="home / dashboard">home / dashboard</span><br>
+    📋 <span class="t" data-ar="حجوزات / حجز" data-en="bookings / booking">bookings / booking</span><br>
+    ➕ <span class="t" data-ar="حجز جديد / جديد" data-en="new booking / add">new booking / add</span><br>
+    🗓️ <span class="t" data-ar="تقويم / جدول" data-en="calendar / schedule">calendar / schedule</span><br>
+    🏨 <span class="t" data-ar="غرف / غرفة" data-en="rooms / room">rooms / room</span><br>
+    💸 <span class="t" data-ar="مصروف / مصاريف" data-en="expenses / expense">expenses / expense</span><br>
+    🍽️ <span class="t" data-ar="مطعم / اكل" data-en="restaurant / food">restaurant / food</span><br>
+    ⚙️ <span class="t" data-ar="اعدادات / إعدادات" data-en="settings / setting">settings / setting</span><br>
+    🔒 <span class="t" data-ar="قفل / اقفل" data-en="lock">lock</span> · 
+    💡 <span class="t" data-ar="تسعير / اسعار" data-en="pricing / price">pricing / price</span>
   </div>
 </div>
 
