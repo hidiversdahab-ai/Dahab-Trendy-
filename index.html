@@ -4779,37 +4779,37 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 </select>
 </div>
 </div>
-<div class="sdiv">💰 تعديل السعر / Price Adjustment</div>
+<div class="sdiv">💰 <span class="t" data-ar="تعديل السعر" data-en="Price Adjustment">تعديل السعر</span></div>
 <div style="margin-bottom:10px;">
-<label style="margin-bottom:6px;">اختر نوع التعديل</label>
+<label style="margin-bottom:6px;"><span class="t" data-ar="اختر نوع التعديل" data-en="Select Adjustment Type">اختر نوع التعديل</span></label>
 <div style="display:flex;gap:6px;flex-wrap:wrap;">
 <button type="button" id="price-mode-same" onclick="setPriceMode('same')"
 style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.15);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .15s;">
-➡️ نفس السعر
+➡️ <span class="t" data-ar="نفس السعر" data-en="Same Rate">نفس السعر</span>
 </button>
 <button type="button" id="price-mode-increase" onclick="setPriceMode('increase')"
 style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(37,211,102,0.3);background:rgba(37,211,102,0.07);color:#4cda7a;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .15s;">
-🔺 زيادة
+🔺 <span class="t" data-ar="زيادة" data-en="Increase">زيادة</span>
 </button>
 <button type="button" id="price-mode-decrease" onclick="setPriceMode('decrease')"
 style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(231,76,60,0.3);background:rgba(231,76,60,0.07);color:#e74c3c;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .15s;">
-🔻 نقص
+🔻 <span class="t" data-ar="نقص" data-en="Decrease">نقص</span>
 </button>
 <button type="button" id="price-mode-custom" onclick="setPriceMode('custom')"
 style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(74,144,217,0.3);background:rgba(74,144,217,0.07);color:#7ab8f5;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:all .15s;">
-✏️ سعر محدد
+✏️ <span class="t" data-ar="سعر محدد" data-en="Custom Rate">سعر محدد</span>
 </button>
 </div>
 </div>
 <div id="move-adjust-area" style="display:none;margin-bottom:10px;">
 <div class="g2">
 <div class="fld">
-<label id="move-adjust-label">قيمة التعديل (<span id="move-sym">$</span>)</label>
+<label id="move-adjust-label"><span class="t" data-ar="قيمة التعديل" data-en="Adjustment Value">قيمة التعديل</span> (<span id="move-sym">$</span>)</label>
 <div style="display:flex;gap:6px;align-items:center;">
 <input id="move-newprice" type="number" min="0" step="0.01" placeholder="0" oninput="calcMove()" style="flex:1;">
 <select id="move-adjust-type" onchange="calcMove()" style="width:90px;padding:8px 6px;font-size:12px;">
-<option value="amount">مبلغ (<span id="move-sym2">$</span>)</option>
-<option value="percent">نسبة (%)</option>
+<option value="amount" data-ar="مبلغ" data-en="Amount">مبلغ (<span id="move-sym2">$</span>)</option>
+<option value="percent" data-ar="نسبة" data-en="Percent">نسبة (%)</option>
 </select>
 </div>
 </div>
@@ -15332,11 +15332,11 @@ const n = nts(b.ci, b.co);
 const rateN = n > 0 ? b.total / n : 0;
 document.getElementById("move-info").innerHTML =
 "👤 <strong>" + b.name + "</strong> &nbsp;|&nbsp; " +
-"🏨 غرفة <strong style='color:var(--gold);'>" + b.room + "</strong> (" + b.type + ")<br>" +
-"📅 " + fmtD(b.ci) + " → " + fmtD(b.co) + " &nbsp;|&nbsp; 🌙 " + n + " ليلة<br>" +
-"💰 الإجمالي: <strong style='color:var(--gold);'>" + sym + b.total.toFixed(2) + "</strong>" +
-(paidSum > 0 ? " &nbsp;|&nbsp; ✅ مدفوع: <strong style='color:#4cda7a;'>" + sym + paidSum.toFixed(2) + "</strong>" : "") +
-"<br><span style='color:var(--muted);font-size:11px;'>سعر الليلة الحالي: " + sym + rateN.toFixed(2) + "/ليلة</span>";
+"🏨 Room / غرفة <strong style='color:var(--gold);'>" + b.room + "</strong> (" + b.type + ")<br>" +
+"📅 " + fmtD(b.ci) + " → " + fmtD(b.co) + " &nbsp;|&nbsp; 🌙 " + n + " Night / ليلة<br>" +
+"💰 Total / الإجمالي: <strong style='color:var(--gold);'>" + sym + b.total.toFixed(2) + "</strong>" +
+(paidSum > 0 ? " &nbsp;|&nbsp; ✅ Paid / مدفوع: <strong style='color:#4cda7a;'>" + sym + paidSum.toFixed(2) + "</strong>" : "") +
+"<br><span style='color:var(--muted);font-size:11px;'>Current Rate / سعر الليلة الحالي: " + sym + rateN.toFixed(2) + " / Night / ليلة</span>";
 // Fill room select — only available rooms (not current room, not occupied by other active booking)
 const td = toDay();
 const sel = document.getElementById("move-newroom");
@@ -15397,17 +15397,17 @@ simpleInfo.style.display = "block";
 } else if(mode === "increase"){
 adjustArea.style.display = "block";
 simpleInfo.style.display = "none";
-if(adjLabel) adjLabel.innerHTML = "🔺 مقدار الزيادة";
+if(adjLabel) adjLabel.innerHTML = `🔺 <span class="t" data-ar="مقدار الزيادة" data-en="Increase Amount">مقدار الزيادة</span>`;
 if(adjTypeEl) adjTypeEl.style.display = "";
 } else if(mode === "decrease"){
 adjustArea.style.display = "block";
 simpleInfo.style.display = "none";
-if(adjLabel) adjLabel.innerHTML = "🔻 مقدار النقص";
+if(adjLabel) adjLabel.innerHTML = `🔻 <span class="t" data-ar="مقدار النقص" data-en="Decrease Amount">مقدار النقص</span>`;
 if(adjTypeEl) adjTypeEl.style.display = "";
 } else if(mode === "custom"){
 adjustArea.style.display = "block";
 simpleInfo.style.display = "none";
-if(adjLabel) adjLabel.innerHTML = "✏️ السعر المحدد/الليلة";
+if(adjLabel) adjLabel.innerHTML = `✏️ <span class="t" data-ar="السعر المحدد/الليلة" data-en="Custom Rate/Night">السعر المحدد/الليلة</span>`;
 if(adjTypeEl) adjTypeEl.style.display = "none";
 }
 // Reset price input
@@ -15437,13 +15437,13 @@ const origRateN = nts(b.ci, b.co) > 0 ? b.total / nts(b.ci, b.co) : 0;
 // Update simple info for "same" mode
 const simpleInfo = document.getElementById("move-price-info-simple");
 if(simpleInfo) simpleInfo.innerHTML =
-"سعر الغرفة الحالية: <strong>" + sym + origRateN.toFixed(2) + "</strong>/ليلة<br>" +
-"سعر الغرفة الجديدة (افتراضي): <strong>" + sym + newDefaultRate.toFixed(2) + "</strong>/ليلة";
+"Current Room Rate / سعر الغرفة الحالية: <strong>" + sym + origRateN.toFixed(2) + "</strong> / Night / ليلة<br>" +
+"New Room Default Rate / سعر الغرفة الجديدة (افتراضي): <strong>" + sym + newDefaultRate.toFixed(2) + "</strong> / Night / ليلة";
 // Update adjust area price info
 const pInfo = document.getElementById("move-price-info");
 if(pInfo) pInfo.innerHTML =
-"السعر الحالي: <strong>" + sym + origRateN.toFixed(2) + "</strong>/ليلة<br>" +
-"سعر " + newType + " الافتراضي: <strong>" + sym + newDefaultRate.toFixed(2) + "</strong>/ليلة";
+"Current Rate / السعر الحالي: <strong>" + sym + origRateN.toFixed(2) + "</strong> / Night / ليلة<br>" +
+"Default Rate (" + newType + ") / سعر " + newType + " الافتراضي: <strong>" + sym + newDefaultRate.toFixed(2) + "</strong> / Night / ليلة";
 if (!moveDate || !newRoom) { sumEl.style.display = "none"; return; }
 // Check conflict for selected room on selected date
 const conflict = bookings.find(bk =>
@@ -15478,7 +15478,7 @@ newRate = origRateN + adjVal;
 priceNote = "<span style='color:#4cda7a;font-size:10px;'>🔺 زيادة " + sym + adjVal + " على السعر الأصلي</span>";
 } else {
 newRate = newDefaultRate;
-priceNote = "<span style='color:var(--muted);font-size:10px;'>أدخل مقدار الزيادة</span>";
+priceNote = "<span style='color:var(--muted);font-size:10px;'><span class=\"t\" data-ar=\"أدخل مقدار الزيادة\" data-en=\"Enter increase amount\">أدخل مقدار الزيادة</span></span>";
 }
 } else if(mode === "decrease"){
 if(adjType === "percent" && adjVal > 0){
@@ -15489,11 +15489,11 @@ newRate = Math.max(0, origRateN - adjVal);
 priceNote = "<span style='color:#e74c3c;font-size:10px;'>🔻 خصم " + sym + adjVal + " من السعر الأصلي</span>";
 } else {
 newRate = newDefaultRate;
-priceNote = "<span style='color:var(--muted);font-size:10px;'>أدخل مقدار النقص</span>";
+priceNote = "<span style='color:var(--muted);font-size:10px;'><span class=\"t\" data-ar=\"أدخل مقدار النقص\" data-en=\"Enter decrease amount\">أدخل مقدار النقص</span></span>";
 }
 } else if(mode === "custom"){
 newRate = adjVal > 0 ? adjVal : newDefaultRate;
-priceNote = adjVal > 0 ? "<span style='color:#7ab8f5;font-size:10px;'>✏️ سعر محدد يدوياً</span>" : "<span style='color:var(--muted);font-size:10px;'>أدخل السعر المطلوب</span>";
+priceNote = adjVal > 0 ? "<span style='color:#7ab8f5;font-size:10px;'><span class=\"t\" data-ar=\"✏️ سعر محدد يدوياً\" data-en=\"✏️ Custom rate set\">✏️ سعر محدد يدوياً</span></span>" : "<span style='color:var(--muted);font-size:10px;'><span class=\"t\" data-ar=\"أدخل السعر المطلوب\" data-en=\"Enter desired rate\">أدخل السعر المطلوب</span></span>";
 }
 if(newRate < 0) newRate = 0;
 const costBefore = origRateN * nBefore;
@@ -18023,23 +18023,28 @@ function startVoice(){
   // لغة التعرف الصوتى يجب أن تتبع لغة الواجهة الحالية (عربى/إنجليزى)
   // كانت ثابتة على ar-EG دايماً، فكانت تفهم غلط لما اللغة تكون إنجليزى
   _voiceRecog.lang = currentLang==='ar' ? 'ar-EG' : 'en-US';
-  _voiceRecog.continuous = true;
-  _voiceRecog.interimResults = true;
+  _voiceRecog.continuous = false;
+  _voiceRecog.interimResults = false;
+  _voiceRecog.maxAlternatives = 3;
   _voiceRecog.onstart = ()=>{
     _voiceActive = true;
     document.getElementById('voice-fab').classList.add('listening');
     document.getElementById('voice-status').textContent = currentLang==='ar' ? '🔴 يستمع...' : '🔴 Listening...';
   };
   _voiceRecog.onresult = (e)=>{
-    let final = '';
-    let interim = '';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal) final += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
+    const result = e.results[0];
+    let matched = false;
+    for(let alt=0; alt<result.length; alt++){
+      const transcript = result[alt].transcript.trim();
+      const cmd = currentLang==='ar' ? transcript : transcript.toLowerCase();
+      document.getElementById('voice-transcript').textContent = '🎙️ ' + transcript;
+      if(processVoiceCommand(cmd)){ matched=true; break; }
     }
-    const text = (final||interim).trim().toLowerCase();
-    document.getElementById('voice-transcript').textContent = '🎙️ ' + (final||interim);
-    if(final) processVoiceCommand(final.trim().toLowerCase());
+    if(!matched){
+      const best = result[0].transcript.trim();
+      document.getElementById('voice-transcript').textContent = (currentLang==='ar'?'❓ لم أفهم: "':'❓ Not understood: "') + best + '"';
+    }
+    if(_voiceActive) setTimeout(()=>{ try{ _voiceRecog.start(); }catch(ex){} }, 300);
   };
   _voiceRecog.onerror = (e)=>{
     document.getElementById('voice-status').textContent = (currentLang==='ar'?'⚠️ خطأ: ':'⚠️ Error: ') + e.error;
@@ -18075,6 +18080,7 @@ function processVoiceCommand(cmd){
     goPage(page, btn);
     sNotify(currentLang==='ar'?'🎤 أمر صوتي':'🎤 Voice Command', (currentLang==='ar'?'تم الانتقال إلى ':'Navigated to ') + label, 'success', 2500);
     document.getElementById('voice-transcript').textContent = '✅ ' + label;
+    return true;
   };
   if(cmd.includes('الرئيسية')||cmd.includes('dashboard')||cmd.includes('home')) return nav('dashboard','الرئيسية','Dashboard');
   if(cmd.includes('حجوزات')||cmd.includes('bookings')) return nav('bookings','الحجوزات','Bookings');
@@ -18083,12 +18089,12 @@ function processVoiceCommand(cmd){
   if(cmd.includes('مصروف')||cmd.includes('expenses')) return nav('expenses','المصروفات','Expenses');
   if(cmd.includes('فاتورة')||cmd.includes('invoice')) return nav('invoice','الفاتورة','Invoice');
   if(cmd.includes('مطعم')||cmd.includes('restaurant')) return nav('restaurant','المطعم','Restaurant');
-  if(cmd.includes('إعدادات')||cmd.includes('settings')) return nav('settings','الإعدادات','Settings');
-  if(cmd.includes('analytics')||cmd.includes('تحليل')) return nav('analytics','التحليلات','Analytics');
-  if(cmd.includes('حجز جديد')||cmd.includes('new booking')||cmd.includes('إضافة حجز')){ openBM(); sNotify(currentLang==='ar'?'🎤 أمر صوتي':'🎤 Voice',currentLang==='ar'?'فتح نموذج حجز جديد':'Opening new booking form','success',2500); return; }
-  if(cmd.includes('قفل')||cmd.includes('lock')){ lockApp(); return; }
-  if(cmd.includes('تسعير')||cmd.includes('pricing')){ openAIPricing(); return; }
-  document.getElementById('voice-transcript').textContent = (currentLang==='ar'?'❓ لم أفهم: "':'❓ Not understood: "') + cmd + '"';
+  if(cmd.includes('إعدادات')||cmd.includes('اعدادات')||cmd.includes('settings')) return nav('settings','الإعدادات','Settings');
+  if(cmd.includes('analytics')||cmd.includes('تحليل')||cmd.includes('إحصاء')) return nav('analytics','التحليلات','Analytics');
+  if(cmd.includes('حجز جديد')||cmd.includes('new booking')||cmd.includes('إضافة حجز')||cmd.includes('اضافة حجز')){ openBM(); sNotify(currentLang==='ar'?'🎤 أمر صوتي':'🎤 Voice',currentLang==='ar'?'فتح نموذج حجز جديد':'Opening new booking form','success',2500); return true; }
+  if(cmd.includes('قفل')||cmd.includes('lock')){ lockApp(); return true; }
+  if(cmd.includes('تسعير')||cmd.includes('pricing')){ openAIPricing(); return true; }
+  return false;
 }
 
 // ═══════════════════════════════════════════════════════════
