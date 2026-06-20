@@ -28237,6 +28237,30 @@ console.log('[SW] Dahab Trendy v11 Service Worker loaded ✓');
     }).catch(e=> console.warn('[SW] registration failed:', e));
 
   } catch(e){ console.warn('[SW] Blob URL not supported:', e); }
+
+  // ── Expose functions used by inline onclick="" handlers to global scope ──
+  // (onclick attributes execute in window scope, not inside this IIFE)
+  window.normalizeRoomType = normalizeRoomType;
+  window.rua_getRoomType = rua_getRoomType;
+  window.rua_curKey = rua_curKey;
+  window.rua_sym = rua_sym;
+  window.openRoomUpgradeAssistant = openRoomUpgradeAssistant;
+  window.rua_suggestUpgrade = rua_suggestUpgrade;
+  window.ocrScanReceipt = ocrScanReceipt;
+  window.ocrProcessReceiptFile = ocrProcessReceiptFile;
+  window.rsb_getStatus = rsb_getStatus;
+  window.renderStatusBoard = renderStatusBoard;
+  window.rsb_quickToggle = rsb_quickToggle;
+  window.cb_defaultFAQs = cb_defaultFAQs;
+  window.cb_getFAQs = cb_getFAQs;
+  window.cb_saveFAQs = cb_saveFAQs;
+  window.cb_renderPage = cb_renderPage;
+  window.cb_findReply = cb_findReply;
+  window.cb_sendWA = cb_sendWA;
+  window.cb_openManager = cb_openManager;
+  window.cb_editFAQ = cb_editFAQ;
+  window.cb_saveFAQForm = cb_saveFAQForm;
+  window.cb_deleteFAQ = cb_deleteFAQ;
 })();
 
 
