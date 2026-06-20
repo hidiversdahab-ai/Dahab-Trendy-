@@ -18660,23 +18660,48 @@ function processVoiceCommand(cmd){
 // ═══════════════════════════════════════════════════════════
 // ══ VOICE-TO-BOOKING AI ══
 // ═══════════════════════════════════════════════════════════
+// لما مفيش مفتاح AI، بنحاول نستخرج اسم الضيف من الجملة المنطوقة بطريقة بسيطة
+// (regex بيدور على "باسم"/"اسم"/"for" وياخد اللي بعدها لحد أقرب كلمة وقف)
+function _localExtractGuestName(transcript, isAr){
+  let name = '';
+  if(isAr){
+    const m = transcript.match(/(?:باسم|بإسم|بأسم|اسم الضيف|اسم)\s+([\u0621-\u064A\s]+?)(?:\s+(?:من|لمدة|غرفة|رقم|تليفون|هاتف|جوال|موبايل)(?:\s|$)|$)/);
+    if(m) name = m[1].trim();
+  } else {
+    const m = transcript.match(/\bfor\s+([A-Za-z][A-Za-z\s]*?)(?:\s+(?:from|on|starting|room|for\s+\d|\d+\s+nights?|nights?)\b|$)/i);
+    if(m) name = m[1].trim();
+  }
+  return name;
+}
+
 async function _voiceToBookingAI(transcript){
   const isAr = currentLang==='ar';
   const el = document.getElementById('voice-transcript');
   el.textContent = isAr ? '🤖 يحلل الأمر الصوتي...' : '🤖 Analyzing voice command...';
 
   if(!getAIKey()){
-    // No AI key — open blank form with partial fill if room number detected
+    // No AI key — open blank form with partial fill from simple local parsing
     const roomMatch = transcript.match(/\b(1[0-1][0-9]|10[1-9]|1[0-9]{2})\b/);
+    const guestName = _localExtractGuestName(transcript, isAr);
     openBM();
-    if(roomMatch){
-      setTimeout(()=>{
+    setTimeout(()=>{
+      if(roomMatch){
         const roomSel = document.getElementById('bm-room');
         if(roomSel) roomSel.value = roomMatch[1];
-      }, 200);
-    }
-    el.textContent = isAr ? '✅ فتح نموذج حجز — أكمل البيانات' : '✅ Booking form opened — fill details';
-    sNotify(isAr?'🎤 أمر صوتي':'🎤 Voice', isAr?'فتح نموذج الحجز':'Booking form opened','success',2500);
+      }
+      if(guestName){
+        const nameField = document.getElementById('bm-name');
+        if(nameField) nameField.value = guestName;
+      }
+    }, 200);
+    const filled = [];
+    if(roomMatch) filled.push(isAr?'الغرفة':'Room');
+    if(guestName) filled.push(isAr?'الاسم':'Name');
+    const summary = filled.length>0
+      ? (isAr?'تم ملء: ':'Filled: ')+filled.join('، ')
+      : (isAr?'أكمل البيانات يدوياً':'Fill details manually');
+    el.textContent = '✅ ' + summary;
+    sNotify(isAr?'🎤 أمر صوتي':'🎤 Voice', summary,'success',2500);
     return;
   }
 
