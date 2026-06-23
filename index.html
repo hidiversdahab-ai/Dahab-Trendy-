@@ -7101,7 +7101,7 @@ return "<tr style='"+rowStyle+"'>"+
   return "<div style='width:60px;height:60px;border-radius:50%;background:rgba(201,168,76,0.1);border:1px dashed rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;'>👤</div>";
 })()
 +"<div><div style='font-weight:700;font-size:12px;cursor:pointer;color:var(--gold);text-decoration:underline dotted;' onclick='openGuestCard(\""+b.name.replace(/"/g,"&quot;")+"\")' title='بروفايل الضيف'>"+b.name+guestDot+"</div>"+(b.clientType&&b.clientType!=="individual"&&b.clientName?"<div style='margin-top:2px;'><span style='font-size:8px;padding:1px 6px;border-radius:10px;font-weight:700;background:"+(b.clientType==="agency"?"#cce5ff;color:#004085":"#e8d5f5;color:#6c1f8c")+";'>"+(b.clientType==="agency"?"🏢 ":"🏛️ ")+b.clientName+"</span></div>":"")+
-(checkBlacklist(b.name)?"<div style='margin-top:3px;display:inline-flex;align-items:center;gap:4px;background:#f8d7da;border:1px solid #f5c6cb;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;color:#721c24;cursor:pointer;' onclick=\"openBlacklist()\" title='ضيف محظور — اضغط لعرض التفاصيل'>🚫 Blacklisted</div>":"")+
+(checkBlacklist(b.name, b.idno)?"<div style='margin-top:3px;display:inline-flex;align-items:center;gap:4px;background:#f8d7da;border:1px solid #f5c6cb;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;color:#721c24;cursor:pointer;' onclick=\"openBlacklist()\" title='ضيف محظور — اضغط لعرض التفاصيل'>🚫 Blacklisted</div>":"")+
 "<div style='font-size:10px;color:var(--muted);'>"+b.phone+"</div>"+(b.flightNo?"<div style='font-size:10px;color:#7ab8f5;'>✈️ "+b.flightNo+(b.airline?" · "+b.airline:"")+"</div>":"")+(b.linkedBooking?"<div style='margin-top:3px;background:rgba(52,152,219,0.12);border:1px solid rgba(52,152,219,0.35);border-radius:5px;padding:2px 6px;font-size:9px;color:#7ab8f5;display:inline-block;'>🔗 "+(currentLang==="ar"?"امتداد":"Extension")+": "+b.linkedBooking.id+"</div>":"")+groupTagBadge+bdBadge+"</div></div>"+"</td>"+
 "<td>Rm "+b.room+"<br><span style='font-size:10px;color:var(--muted);'>"+b.type+"</span>"+
 (b.dayuse?"<br><span class='bdg bg-orange' style='font-size:9px;'>🌤️ Day Use</span>":"")+
@@ -7172,7 +7172,7 @@ return "<tr style='"+rowStyle+"'>"+
 +"</button>"+
 "<button class='btn bb bsm' onclick='openBM("+i+")'>✏️</button>"+
 "<button class='btn br bsm' onclick='delBK("+i+")' title='Delete'>🗑</button>"+
-(checkBlacklist(b.name)?"":"<button class='btn bsm' style='background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.4);' onclick='addGuestToBlacklistFromBooking("+i+")' title='إضافة للقائمة السوداء'>🚫</button>")+
+(checkBlacklist(b.name, b.idno)?"":"<button class='btn bsm' style='background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.4);' onclick='addGuestToBlacklistFromBooking("+i+")' title='إضافة للقائمة السوداء'>🚫</button>")+
 (b.status!=="Cancelled" && !isCheckedOut(b) ? "<button class='btn bsm' style='background:#16a085;color:#fff;width:100%;margin-top:3px;' onclick='openMove("+i+")'>🔀 Move Room</button>" : "")+
 (b.status==="Standby" ? "<button class='btn bsm' style='background:#8e44ad;color:#fff;width:100%;margin-top:3px;' onclick='openDepositReq("+i+")'>💰 Deposit Request</button>" : "")+
 (b.depositPaid ? "<div style='margin-top:3px;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.3);border-radius:5px;padding:3px 6px;font-size:9px;color:#4cda7a;text-align:center;'>✅ Deposit Received</div>" : "")+
@@ -7700,9 +7700,11 @@ const name = (document.getElementById("g0-name")?.value || document.getElementBy
 if(!name){alert("Please enter guest name.");return;}
 
 // ══ فحص القائمة السوداء ══
-const blEntry = checkBlacklist(name);
+const _idnoVal = (document.getElementById('bm-idno')?.value||'').trim();
+const blEntry = checkBlacklist(name, _idnoVal);
 if(blEntry && !proceedDespiteBlacklist){
-  showBlacklistAlert(blEntry, ()=>{ proceedDespiteBlacklist=true; saveBM(); });
+  const _matchLabel = blEntry.matchType==='id' ? '🪪 تطابق رقم هوية' : blEntry.matchType==='fuzzy' ? `⚠️ اسم مشابه (${blEntry.entry.name})` : '🚫 تطابق تام';
+  showBlacklistAlert(blEntry.entry, ()=>{ proceedDespiteBlacklist=true; saveBM(); }, _matchLabel);
   return;
 }
 proceedDespiteBlacklist = false; // reset
@@ -19739,15 +19741,44 @@ function renderBlacklist(){
   `).join('');
 }
 
-function checkBlacklist(name){
-  // Returns blacklist entry if found, null otherwise
-  if(!name) return null;
-  const n = name.trim().toLowerCase();
-  return blacklist.find(b=>b.name.trim().toLowerCase()===n) || null;
+function _levenshtein(a, b){
+  const m=a.length, n=b.length;
+  const dp=Array.from({length:m+1},(_,i)=>Array.from({length:n+1},(_,j)=>i===0?j:j===0?i:0));
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
 }
 
-function showBlacklistAlert(entry, onProceed){
+function checkBlacklist(name, idno){
+  if(!name && !idno) return null;
+
+  // 1) تطابق تام برقم البطاقة/الجواز (أولوية قصوى)
+  if(idno){
+    const id = idno.trim().toLowerCase();
+    const byId = blacklist.find(b=> b.idno && b.idno.trim().toLowerCase()===id);
+    if(byId) return { entry: byId, matchType:'id', score:100 };
+  }
+
+  // 2) Fuzzy matching بالاسم
+  if(name){
+    const n = name.trim().toLowerCase();
+    let best = null, bestScore = 999;
+    for(const b of blacklist){
+      const bn = b.name.trim().toLowerCase();
+      if(bn===n) return { entry:b, matchType:'exact', score:100 };
+      const maxDist = n.length > 8 ? 3 : 2;
+      const dist = _levenshtein(n, bn);
+      if(dist <= maxDist && dist < bestScore){ bestScore=dist; best=b; }
+    }
+    if(best) return { entry:best, matchType:'fuzzy', score: bestScore };
+  }
+
+  return null;
+}
+
+function showBlacklistAlert(entry, onProceed, matchLabel){
   document.getElementById('bl-alert-info').innerHTML=`
+    ${matchLabel?`<div style="margin-bottom:8px;background:rgba(231,76,60,0.15);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;color:#e74c3c;">${matchLabel}</div>`:''}
     <div style="margin-bottom:8px;"><strong style="color:#e74c3c;font-size:15px;">🚫 ${entry.name}</strong></div>
     ${entry.phone?`<div>📞 ${entry.phone}</div>`:''}
     ${entry.nat?`<div>🌍 ${entry.nat}</div>`:''}
