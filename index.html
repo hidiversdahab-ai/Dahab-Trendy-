@@ -882,8 +882,8 @@ select option{background:#1a1a2e;color:var(--text)}
 .room-pill.maint{background:rgba(149,165,166,0.2);color:#95a5a6;border:1px solid rgba(149,165,166,0.3);}
 .room-pill.resv{background:rgba(201,168,76,0.2);color:#c9a84c;border:1px solid rgba(201,168,76,0.3);}
 
-#birthday-popup{position:fixed;top:-220px;left:50%;transform:translateX(-50%);z-index:99999;background:linear-gradient(135deg,#1a1400,#2a2000);border:2px solid #f5c518;border-radius:18px;padding:18px 28px;min-width:300px;max-width:460px;text-align:center;box-shadow:0 8px 40px rgba(245,197,24,0.5),0 2px 12px rgba(0,0,0,0.7);transition:top 0.5s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
-#birthday-popup.show{top:18px;}
+#birthday-popup{position:fixed;top:-600px;left:50%;transform:translateX(-50%);z-index:99999;background:linear-gradient(135deg,#1a1400,#2a2000);border:2px solid #f5c518;border-radius:18px;padding:18px 28px 18px 28px;min-width:300px;max-width:460px;text-align:center;box-shadow:0 8px 40px rgba(245,197,24,0.5),0 2px 12px rgba(0,0,0,0.7);transition:top 0.5s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
+#birthday-popup.show{top:18px;pointer-events:all;}#birthday-popup button{pointer-events:all!important;}#birthday-popup.hiding{top:-600px!important;}
 #birthday-popup .bp-emoji{font-size:40px;display:block;margin-bottom:6px;animation:bp-bounce 0.7s ease infinite alternate;}
 #birthday-popup .bp-title{font-size:17px;font-weight:700;color:#f5c518;margin-bottom:5px;letter-spacing:1px;}
 #birthday-popup .bp-msg{font-size:13px;color:#ffe57a;line-height:1.5;}
@@ -19850,7 +19850,7 @@ function showBirthdayPopup(name, room, phone){
   bar.style.transition = 'none'; bar.style.width = '100%';
   popup.classList.add('show');
   setTimeout(()=>{ bar.style.transition = 'width '+duration+'ms linear'; bar.style.width='0%'; }, 50);
-  setTimeout(()=>{ popup.classList.remove('show'); }, duration);
+  setTimeout(()=>{ popup.classList.remove('show'); popup.style.pointerEvents='none'; }, duration);
 }
 
 function sendBdayWA(){
@@ -20338,6 +20338,7 @@ function applyScanData(){
 
 <!-- ══ BIRTHDAY POPUP ══ -->
 <div id="birthday-popup" style="pointer-events:all;">
+  <button onclick="(function(){var p=document.getElementById('birthday-popup');if(p){p.classList.remove('show');p.style.pointerEvents='none';var f=document.getElementById('bp-bar-fill');if(f){f.style.transition='none';f.style.width='100%';}}})()" style="position:absolute;top:8px;left:10px;background:rgba(255,80,80,0.3);border:2px solid rgba(255,120,120,0.7);border-radius:50%;width:34px;height:34px;font-size:20px;color:#ff6b6b;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1;z-index:10;touch-action:manipulation;">✕</button>
   <span class="bp-emoji">🎂</span>
   <div class="bp-title" id="bp-title">🎂 Happy Birthday / عيد ميلاد سعيد</div>
   <div class="bp-msg" id="bp-msg" style="font-size:12px;line-height:1.8;"></div>
