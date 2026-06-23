@@ -3682,9 +3682,9 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
     <div style="font-size:13px;color:#e74c3c;margin-bottom:14px;">Guest is on the Blacklist</div>
   </div>
   <div id="bl-alert-info" style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:8px;padding:14px;margin-bottom:14px;font-size:13px;line-height:1.8;"></div>
-  <div class="flex mt" style="gap:8px;">
-    <button class="btn br" onclick="closeM('bl-alert-modal')" style="flex:1;">🚫 إلغاء الحجز</button>
-    <button class="btn bb" onclick="closeM('bl-alert-modal');proceedDespiteBlacklist=true;saveBM();" style="flex:1;font-size:11px;">⚠️ تجاوز التحذير والمتابعة</button>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px;">
+    <button class="btn bb" onclick="closeM('bl-alert-modal');proceedDespiteBlacklist=true;saveBM();" style="width:100%;font-size:13px;padding:12px;">⚠️ تجاوز التحذير والمتابعة</button>
+    <button class="btn br" onclick="closeM('bl-alert-modal')" style="width:100%;font-size:13px;padding:12px;">🚫 إلغاء الحجز</button>
   </div>
 </div>
 </div>
@@ -7101,7 +7101,7 @@ return "<tr style='"+rowStyle+"'>"+
   return "<div style='width:60px;height:60px;border-radius:50%;background:rgba(201,168,76,0.1);border:1px dashed rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;'>👤</div>";
 })()
 +"<div><div style='font-weight:700;font-size:12px;cursor:pointer;color:var(--gold);text-decoration:underline dotted;' onclick='openGuestCard(\""+b.name.replace(/"/g,"&quot;")+"\")' title='بروفايل الضيف'>"+b.name+guestDot+"</div>"+(b.clientType&&b.clientType!=="individual"&&b.clientName?"<div style='margin-top:2px;'><span style='font-size:8px;padding:1px 6px;border-radius:10px;font-weight:700;background:"+(b.clientType==="agency"?"#cce5ff;color:#004085":"#e8d5f5;color:#6c1f8c")+";'>"+(b.clientType==="agency"?"🏢 ":"🏛️ ")+b.clientName+"</span></div>":"")+
-(checkBlacklist(b.name, b.idno)?"<div style='margin-top:3px;display:inline-flex;align-items:center;gap:4px;background:#f8d7da;border:1px solid #f5c6cb;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;color:#721c24;cursor:pointer;' onclick=\"openBlacklist()\" title='ضيف محظور — اضغط لعرض التفاصيل'>🚫 Blacklisted</div>":"")+
+(checkBlacklist(b.name, b.idno, true)?"<div style='margin-top:3px;display:inline-flex;align-items:center;gap:4px;background:#f8d7da;border:1px solid #f5c6cb;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;color:#721c24;cursor:pointer;' onclick=\"openBlacklist()\" title='ضيف محظور — اضغط لعرض التفاصيل'>🚫 Blacklisted</div>":"")+
 "<div style='font-size:10px;color:var(--muted);'>"+b.phone+"</div>"+(b.flightNo?"<div style='font-size:10px;color:#7ab8f5;'>✈️ "+b.flightNo+(b.airline?" · "+b.airline:"")+"</div>":"")+(b.linkedBooking?"<div style='margin-top:3px;background:rgba(52,152,219,0.12);border:1px solid rgba(52,152,219,0.35);border-radius:5px;padding:2px 6px;font-size:9px;color:#7ab8f5;display:inline-block;'>🔗 "+(currentLang==="ar"?"امتداد":"Extension")+": "+b.linkedBooking.id+"</div>":"")+groupTagBadge+bdBadge+"</div></div>"+"</td>"+
 "<td>Rm "+b.room+"<br><span style='font-size:10px;color:var(--muted);'>"+b.type+"</span>"+
 (b.dayuse?"<br><span class='bdg bg-orange' style='font-size:9px;'>🌤️ Day Use</span>":"")+
@@ -7172,7 +7172,7 @@ return "<tr style='"+rowStyle+"'>"+
 +"</button>"+
 "<button class='btn bb bsm' onclick='openBM("+i+")'>✏️</button>"+
 "<button class='btn br bsm' onclick='delBK("+i+")' title='Delete'>🗑</button>"+
-(checkBlacklist(b.name, b.idno)?"":"<button class='btn bsm' style='background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.4);' onclick='addGuestToBlacklistFromBooking("+i+")' title='إضافة للقائمة السوداء'>🚫</button>")+
+(checkBlacklist(b.name, b.idno, true)?"":"<button class='btn bsm' style='background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.4);' onclick='addGuestToBlacklistFromBooking("+i+")' title='إضافة للقائمة السوداء'>🚫</button>")+
 (b.status!=="Cancelled" && !isCheckedOut(b) ? "<button class='btn bsm' style='background:#16a085;color:#fff;width:100%;margin-top:3px;' onclick='openMove("+i+")'>🔀 Move Room</button>" : "")+
 (b.status==="Standby" ? "<button class='btn bsm' style='background:#8e44ad;color:#fff;width:100%;margin-top:3px;' onclick='openDepositReq("+i+")'>💰 Deposit Request</button>" : "")+
 (b.depositPaid ? "<div style='margin-top:3px;background:rgba(37,211,102,0.1);border:1px solid rgba(37,211,102,0.3);border-radius:5px;padding:3px 6px;font-size:9px;color:#4cda7a;text-align:center;'>✅ Deposit Received</div>" : "")+
@@ -7700,7 +7700,7 @@ const name = (document.getElementById("g0-name")?.value || document.getElementBy
 if(!name){alert("Please enter guest name.");return;}
 
 // ══ فحص القائمة السوداء ══
-const _idnoVal = (document.getElementById('bm-idno')?.value||'').trim();
+const _idnoVal = (document.getElementById('g0-idno')?.value || document.getElementById('bm-idno')?.value || '').trim();
 const blEntry = checkBlacklist(name, _idnoVal);
 if(blEntry && !proceedDespiteBlacklist){
   const _matchLabel = blEntry.matchType==='id' ? '🪪 تطابق رقم هوية' : blEntry.matchType==='fuzzy' ? `⚠️ اسم مشابه (${blEntry.entry.name})` : '🚫 تطابق تام';
@@ -19670,6 +19670,7 @@ function addToBlacklist(){
   };
   blacklist.push(entry);
   sv('dta_blacklist', blacklist);
+  DTA_DB.save('blacklist', entry).catch(()=>{});
   clearBLForm();
   renderBlacklist();
   if(typeof sNotify==='function') sNotify('🚫 تم الحظر','تم إضافة '+name+' للقائمة السوداء','success',3000);
@@ -19681,6 +19682,7 @@ function removeFromBlacklist(id){
   if(!confirm('هل تريد إزالة "'+entry.name+'" من القائمة السوداء؟')) return;
   blacklist = blacklist.filter(b=>b.id!==id);
   sv('dta_blacklist', blacklist);
+  DTA_DB.delete('blacklist', id).catch(()=>{});
   renderBlacklist();
   if(typeof sNotify==='function') sNotify('✅ تمت الإزالة',entry.name+' تمت إزالته من القائمة السوداء','success',3000);
 }
@@ -19749,7 +19751,9 @@ function _levenshtein(a, b){
   return dp[m][n];
 }
 
-function checkBlacklist(name, idno){
+// exactOnly=true → بس تطابق تام أو رقم هوية (للـ booking cards)
+// exactOnly=false → fuzzy كمان (للفحص عند الحجز الجديد)
+function checkBlacklist(name, idno, exactOnly){
   if(!name && !idno) return null;
 
   // 1) تطابق تام برقم البطاقة/الجواز (أولوية قصوى)
@@ -19759,16 +19763,28 @@ function checkBlacklist(name, idno){
     if(byId) return { entry: byId, matchType:'id', score:100 };
   }
 
-  // 2) Fuzzy matching بالاسم
-  if(name){
-    const n = name.trim().toLowerCase();
+  if(!name) return null;
+  const n = name.trim().toLowerCase();
+
+  // 2) تطابق تام بالاسم
+  const exact = blacklist.find(b=> b.name.trim().toLowerCase()===n);
+  if(exact) return { entry:exact, matchType:'exact', score:100 };
+
+  // 3) Fuzzy — بس عند الحجز الجديد مش في عرض الكروت
+  if(!exactOnly){
     let best = null, bestScore = 999;
     for(const b of blacklist){
       const bn = b.name.trim().toLowerCase();
-      if(bn===n) return { entry:b, matchType:'exact', score:100 };
-      const maxDist = n.length > 8 ? 3 : 2;
+      const longer = Math.max(n.length, bn.length);
+      if(longer === 0) continue;
       const dist = _levenshtein(n, bn);
-      if(dist <= maxDist && dist < bestScore){ bestScore=dist; best=b; }
+      // نسمح بفرق 20% بحد أقصى 3 حروف — ومش أقل من 12 حرف كلي
+      const maxDist = Math.min(3, Math.floor(longer * 0.2));
+      if(longer < 12) continue; // أسماء قصيرة → تطابق تام بس
+      if(dist <= maxDist && dist > 0 && dist < bestScore){
+        bestScore = dist;
+        best = b;
+      }
     }
     if(best) return { entry:best, matchType:'fuzzy', score: bestScore };
   }
@@ -27028,7 +27044,7 @@ async function importData(file){
         if(dataKey==='expenses')     { expenses=arr;      LSS('dta_ex',arr); }
         if(dataKey==='restaurantTx') { restaurantTx=arr;  LSS('dta_rest',arr); }
         if(dataKey==='tours')        { tours=arr;         LSS('dta_tours',arr); }
-        if(dataKey==='blacklist')    { blacklist=arr;     LSS('dta_bl',arr); }
+        if(dataKey==='blacklist')    { blacklist=arr;     LSS('dta_blacklist',arr); }
         if(dataKey==='reviews')      { reviews=arr;       LSS('dta_rev',arr); }
         if(dataKey==='waitlist')     { waitlist=arr;      LSS('dta_wl',arr); }
         totalImported += arr.length;
@@ -27713,6 +27729,13 @@ document.addEventListener('DOMContentLoaded', function(){
       sNotify('⚠️ مساحة IDB','استخدمت '+info.usedMB+'MB — صدّر بياناتك','urgent',5000);
     }
   });
+  // تحميل الـ blacklist من IDB عند البداية لضمان الفحص الصحيح
+  DTA_DB.getAll('blacklist').then(arr=>{
+    if(Array.isArray(arr) && arr.length > 0){
+      blacklist = arr;
+      console.log('[Blacklist] Loaded from IDB:', arr.length, 'entries');
+    }
+  }).catch(()=>{});
 });
 
 window.DTA_DB = DTA_DB;
