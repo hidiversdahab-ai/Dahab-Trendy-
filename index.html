@@ -117,378 +117,6 @@
 })();
 </script>
 <!-- ════════════════════════════════════════════════ -->
-<!-- ═══════════════════════════════════════════════════
-     LOCK SCREEN — PIN + Biometric (Face ID / Fingerprint)
-     نظام قفل الشاشة — رقم سري + بصمة وجه/إصبع
-════════════════════════════════════════════════════ -->
-<script>
-(function(){
-  /* ── Config ── */
-  const LS_PIN   = '_dta_lock_pin';   // hashed PIN
-  const LS_SESS  = '_dta_lock_sess';  // session expiry timestamp
-  const LS_CRED  = '_dta_lock_cred';  // WebAuthn credential id
-  const LS_BIOEN = '_dta_lock_bio';   // biometric enabled flag
-  const SESSION_MS = 8 * 60 * 60 * 1000; // 8 hours
-
-  /* ── Simple hash (same style as license) ── */
-  function hashPin(pin) {
-    let h = 5381;
-    for (let i = 0; i < pin.length; i++) h = ((h << 5) + h) ^ pin.charCodeAt(i);
-    return (h >>> 0).toString(16).padStart(8,'0');
-  }
-
-  /* ── Session helpers ── */
-  function isSessionValid() {
-    const exp = parseInt(localStorage.getItem(LS_SESS)||'0');
-    return Date.now() < exp;
-  }
-  function refreshSession() {
-    localStorage.setItem(LS_SESS, (Date.now() + SESSION_MS).toString());
-  }
-
-  /* ── WebAuthn helpers ── */
-  async function isBioAvailable() {
-    try {
-      return !!(window.PublicKeyCredential &&
-        await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
-    } catch(e){ return false; }
-  }
-
-  /* Convert base64url ↔ ArrayBuffer */
-  function b64url(buf) {
-    return btoa(String.fromCharCode(...new Uint8Array(buf)))
-      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-  }
-  function fromB64url(str) {
-    str = str.replace(/-/g,'+').replace(/_/g,'/');
-    while(str.length%4) str+='=';
-    const bin = atob(str);
-    const buf = new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
-    return buf.buffer;
-  }
-
-  async function registerBiometric() {
-    try {
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
-      const userId    = crypto.getRandomValues(new Uint8Array(16));
-      const cred = await navigator.credentials.create({
-        publicKey: {
-          challenge,
-          rp: { name: 'Dahab Trendy', id: location.hostname||'localhost' },
-          user: { id: userId, name: 'manager', displayName: 'مدير النظام' },
-          pubKeyCredParams: [
-            { type:'public-key', alg:-7  },
-            { type:'public-key', alg:-257 }
-          ],
-          authenticatorSelection: {
-            authenticatorAttachment: 'platform',
-            userVerification: 'required'
-          },
-          timeout: 60000
-        }
-      });
-      localStorage.setItem(LS_CRED,  b64url(cred.rawId));
-      localStorage.setItem(LS_BIOEN, '1');
-      return true;
-    } catch(e){ return false; }
-  }
-
-  async function verifyBiometric() {
-    const credId = localStorage.getItem(LS_CRED);
-    if (!credId) return false;
-    try {
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
-      const assertion = await navigator.credentials.get({
-        publicKey: {
-          challenge,
-          allowCredentials: [{ type:'public-key', id: fromB64url(credId) }],
-          userVerification: 'required',
-          timeout: 60000
-        }
-      });
-      return !!assertion;
-    } catch(e){ return false; }
-  }
-
-  /* ══════════════════════════════════════════════
-     LOCK SCREEN UI
-  ══════════════════════════════════════════════ */
-  function showLockScreen(mode) {
-    // mode: 'set' (first time set PIN) | 'unlock' (normal unlock)
-    const hasBio   = localStorage.getItem(LS_BIOEN) === '1';
-    const hasPin   = !!localStorage.getItem(LS_PIN);
-
-    document.documentElement.style.overflow = 'hidden';
-
-    const ov = document.createElement('div');
-    ov.id = 'dta-lock-overlay';
-    ov.style.cssText = [
-      'position:fixed;inset:0;z-index:999998',
-      'background:linear-gradient(160deg,#0a0a14,#141428,#0f1a2e)',
-      'display:flex;align-items:center;justify-content:center',
-      'font-family:Arial,"Tajawal",sans-serif;padding:20px'
-    ].join(';');
-
-    ov.innerHTML = `
-<div style="width:100%;max-width:360px;text-align:center;">
-  <!-- Logo -->
-  <div style="font-size:56px;margin-bottom:6px;filter:drop-shadow(0 0 18px #c9a84c88);">🏨</div>
-  <div style="color:#c9a84c;font-size:18px;font-weight:800;letter-spacing:1px;margin-bottom:4px;">Dahab Trendy</div>
-  <div id="dta-lock-subtitle" style="color:#7a8fa6;font-size:13px;margin-bottom:28px;">
-    ${mode==='set' ? '🔐 إنشاء رقم سري للحماية' : '🔒 أدخل رقم السر للمتابعة'}
-  </div>
-
-  <!-- PIN dots display -->
-  <div id="dta-pin-dots" style="display:flex;justify-content:center;gap:14px;margin-bottom:28px;">
-    ${[0,1,2,3].map(i=>`<div id="dot${i}" style="width:16px;height:16px;border-radius:50%;background:rgba(201,168,76,0.2);border:2px solid rgba(201,168,76,0.4);transition:all .15s;"></div>`).join('')}
-  </div>
-
-  <!-- Error message -->
-  <div id="dta-lock-err" style="display:none;color:#e74c3c;font-size:12px;margin-bottom:12px;min-height:18px;"></div>
-
-  <!-- Number pad -->
-  <div id="dta-numpad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:240px;margin:0 auto 20px;">
-    ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`
-      <button onclick="window._dtaLockKey('${k}')" style="
-        background:rgba(255,255,255,0.06);border:1px solid rgba(201,168,76,0.2);
-        border-radius:12px;padding:16px 0;font-size:20px;font-weight:700;
-        color:${k===''?'transparent':'#f0e6cc'};cursor:${k===''?'default':'pointer'};
-        transition:all .12s;font-family:Arial,sans-serif;
-        ${k===''?'pointer-events:none;':''}"
-        ${k===''?'tabindex="-1"':''}
-      >${k}</button>
-    `).join('')}
-  </div>
-
-  <!-- Biometric button -->
-  <div id="dta-bio-row" style="display:none;margin-bottom:16px;">
-    <button id="dta-bio-btn" onclick="window._dtaBioUnlock()" style="
-      background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.35);
-      border-radius:12px;padding:12px 28px;color:#c9a84c;font-size:14px;
-      font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
-      <span style="font-size:22px;">🪪</span> بصمة الوجه / الإصبع
-    </button>
-  </div>
-
-  <!-- Confirm step (set PIN mode) -->
-  <div id="dta-confirm-hint" style="display:none;color:#7a8fa6;font-size:11px;margin-bottom:8px;"></div>
-
-  <!-- Settings link -->
-  <div id="dta-lock-settings-row" style="margin-top:8px;display:${mode==='unlock'&&hasPin?'block':'none'};">
-    <button onclick="window._dtaForgotPin()" style="background:none;border:none;color:#4a5a6a;font-size:11px;cursor:pointer;text-decoration:underline;">
-      نسيت الرقم السري؟
-    </button>
-  </div>
-
-  <p style="color:#2a3a4a;font-size:10px;margin-top:18px;">© Dahab Trendy System</p>
-</div>`;
-
-    document.body ? document.body.appendChild(ov) : document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(ov));
-
-    /* ── State ── */
-    let entered = '';
-    let confirmMode = false;
-    let firstPin = '';
-
-    /* ── Bio init ── */
-    (async()=>{
-      const bioOk = await isBioAvailable();
-      if (mode === 'unlock' && hasBio && bioOk) {
-        const bioRow = document.getElementById('dta-bio-row');
-        if(bioRow) bioRow.style.display = 'block';
-        /* auto-trigger biometric on load */
-        setTimeout(()=>window._dtaBioUnlock(), 600);
-      }
-      if (mode === 'set' && bioOk) {
-        const bioRow = document.getElementById('dta-bio-row');
-        if(bioRow){
-          bioRow.style.display='block';
-          const btn = document.getElementById('dta-bio-btn');
-          if(btn){ btn.textContent=''; btn.innerHTML='<span style="font-size:22px;">🪪</span> تفعيل بصمة الوجه/الإصبع (اختياري)'; }
-          btn && btn.removeAttribute('onclick') && (btn.onclick = window._dtaEnableBio);
-        }
-      }
-    })();
-
-    /* ── Dot update ── */
-    function updateDots(len){
-      for(let i=0;i<4;i++){
-        const d=document.getElementById('dot'+i);
-        if(!d) continue;
-        if(i<len){ d.style.background='#c9a84c'; d.style.borderColor='#c9a84c'; d.style.transform='scale(1.15)'; }
-        else { d.style.background='rgba(201,168,76,0.2)'; d.style.borderColor='rgba(201,168,76,0.4)'; d.style.transform='scale(1)'; }
-      }
-    }
-
-    function setErr(msg){
-      const el=document.getElementById('dta-lock-err');
-      if(!el) return;
-      el.textContent=msg; el.style.display=msg?'block':'none';
-      if(msg){ el.style.animation='none'; setTimeout(()=>el.style.animation='',10); }
-    }
-
-    function flashError(){
-      const dots=document.getElementById('dta-pin-dots');
-      if(!dots) return;
-      dots.style.animation='none';
-      dots.style.transform='translateX(-8px)';
-      setTimeout(()=>{ dots.style.transform='translateX(8px)'; },60);
-      setTimeout(()=>{ dots.style.transform='translateX(-6px)'; },120);
-      setTimeout(()=>{ dots.style.transform=''; },180);
-    }
-
-    function unlockApp(){
-      refreshSession();
-      const ov=document.getElementById('dta-lock-overlay');
-      if(ov){ ov.style.transition='opacity .3s'; ov.style.opacity='0'; setTimeout(()=>{ ov.remove(); document.documentElement.style.overflow=''; },300); }
-    }
-
-    /* ── Key handler ── */
-    window._dtaLockKey = function(k){
-      setErr('');
-      if(k==='⌫'){ entered=entered.slice(0,-1); updateDots(entered.length); return; }
-      if(k==='' || entered.length>=4) return;
-      entered+=String(k);
-      updateDots(entered.length);
-
-      if(entered.length===4){
-        if(mode==='set'){
-          if(!confirmMode){
-            firstPin=entered; entered=''; confirmMode=true;
-            updateDots(0);
-            const sub=document.getElementById('dta-lock-subtitle');
-            if(sub) sub.textContent='✅ أعد إدخال الرقم السري للتأكيد';
-            const ch=document.getElementById('dta-confirm-hint');
-            if(ch){ ch.textContent='أدخل الرقم مرة أخرى للتأكيد'; ch.style.display='block'; }
-          } else {
-            if(entered===firstPin){
-              localStorage.setItem(LS_PIN, hashPin(entered));
-              unlockApp();
-              /* offer biometric enrollment next */
-              setTimeout(async()=>{
-                const bioOk=await isBioAvailable();
-                if(bioOk && !localStorage.getItem(LS_BIOEN)){
-                  if(confirm('🪪 هل تريد تفعيل بصمة الوجه/الإصبع لفتح التطبيق بسرعة؟')){
-                    const ok=await registerBiometric();
-                    if(typeof sNotify==='function') sNotify(ok?'✅ تم':'❌ فشل', ok?'تم تفعيل البصمة':'لم يتم تفعيل البصمة', ok?'success':'error', 3000);
-                  }
-                }
-              },400);
-            } else {
-              entered=''; updateDots(0);
-              flashError();
-              setErr('❌ الأرقام غير متطابقة — حاول مرة أخرى');
-            }
-          }
-        } else {
-          /* unlock mode */
-          if(hashPin(entered)===localStorage.getItem(LS_PIN)){
-            unlockApp();
-          } else {
-            entered=''; updateDots(0);
-            flashError();
-            setErr('❌ رقم سري خاطئ');
-          }
-        }
-      }
-    };
-
-    /* ── Biometric unlock ── */
-    window._dtaBioUnlock = async function(){
-      const btn=document.getElementById('dta-bio-btn');
-      if(btn){ btn.style.opacity='0.6'; btn.disabled=true; }
-      const ok=await verifyBiometric();
-      if(btn){ btn.style.opacity='1'; btn.disabled=false; }
-      if(ok){ unlockApp(); }
-      else { setErr('❌ لم تنجح البصمة — أدخل الرقم السري'); }
-    };
-
-    /* ── Enable bio (set mode) ── */
-    window._dtaEnableBio = async function(){
-      const ok=await registerBiometric();
-      const bioBtn=document.getElementById('dta-bio-btn');
-      if(ok){
-        if(bioBtn){ bioBtn.innerHTML='<span style="font-size:22px;">✅</span> تم تفعيل البصمة'; bioBtn.style.borderColor='#2ecc71'; bioBtn.style.color='#2ecc71'; }
-      } else {
-        if(bioBtn){ bioBtn.innerHTML='<span style="font-size:22px;">❌</span> لم تُفعَّل البصمة — المتصفح لا يدعمها'; }
-      }
-    };
-
-    /* ── Forgot PIN ── */
-    window._dtaForgotPin = function(){
-      if(!confirm('⚠️ سيتم مسح الرقم السري والبصمة المسجلة. هل أنت متأكد؟')) return;
-      localStorage.removeItem(LS_PIN);
-      localStorage.removeItem(LS_CRED);
-      localStorage.removeItem(LS_BIOEN);
-      localStorage.removeItem(LS_SESS);
-      location.reload();
-    };
-
-    /* ── Keyboard support ── */
-    document.addEventListener('keydown', function kh(e){
-      if(!document.getElementById('dta-lock-overlay')){ document.removeEventListener('keydown',kh); return; }
-      if(e.key>='0'&&e.key<='9') window._dtaLockKey(e.key);
-      else if(e.key==='Backspace') window._dtaLockKey('⌫');
-    });
-  }
-
-  /* ════════════════════════════════════════════════
-     INIT — runs after license check passes
-  ════════════════════════════════════════════════ */
-  function initLock(){
-    if(isSessionValid()) return; // already unlocked this session
-    const hasPin = !!localStorage.getItem(LS_PIN);
-    document.addEventListener('DOMContentLoaded',function(){
-      showLockScreen(hasPin ? 'unlock' : 'set');
-    });
-  }
-
-  /* Hook into license success: override DOMContentLoaded removal */
-  const _origCheckLicense = window._dtaLockInit;
-
-  /* We patch the flow: if license overlay never appears → run lock */
-  /* Use MutationObserver to detect when license-overlay is removed or never added */
-  let licenseResolved = false;
-  function waitForLicenseResolution(){
-    // If no license overlay exists after DOM ready → license is valid → show lock
-    document.addEventListener('DOMContentLoaded', function(){
-      const licOv = document.getElementById('license-overlay');
-      if(!licOv){
-        // license is valid, show lock
-        initLock();
-      } else {
-        // watch for license overlay removal
-        const obs = new MutationObserver(function(){
-          if(!document.getElementById('license-overlay')){
-            obs.disconnect();
-            initLock();
-          }
-        });
-        obs.observe(document.body, { childList:true });
-      }
-    });
-  }
-
-  waitForLicenseResolution();
-
-  /* ── Settings API (call from app settings page) ── */
-  window.DTA_LOCK = {
-    changePIN: function(){ showLockScreen('set'); },
-    disable:   function(){
-      if(!confirm('⚠️ هل تريد إيقاف حماية الشاشة؟')) return;
-      localStorage.removeItem(LS_PIN);
-      localStorage.removeItem(LS_CRED);
-      localStorage.removeItem(LS_BIOEN);
-      localStorage.removeItem(LS_SESS);
-      if(typeof sNotify==='function') sNotify('🔓','تم إيقاف حماية الشاشة','info',3000);
-    },
-    enableBio: registerBiometric,
-    logout:    function(){ localStorage.removeItem(LS_SESS); location.reload(); },
-  };
-})();
-</script>
-<!-- ════════════════════════════════════════════════ -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dahab Trendy v10 — Property System</title>
@@ -882,8 +510,8 @@ select option{background:#1a1a2e;color:var(--text)}
 .room-pill.maint{background:rgba(149,165,166,0.2);color:#95a5a6;border:1px solid rgba(149,165,166,0.3);}
 .room-pill.resv{background:rgba(201,168,76,0.2);color:#c9a84c;border:1px solid rgba(201,168,76,0.3);}
 
-#birthday-popup{position:fixed;top:-600px;left:50%;transform:translateX(-50%);z-index:99999;background:linear-gradient(135deg,#1a1400,#2a2000);border:2px solid #f5c518;border-radius:18px;padding:18px 28px 18px 28px;min-width:300px;max-width:460px;text-align:center;box-shadow:0 8px 40px rgba(245,197,24,0.5),0 2px 12px rgba(0,0,0,0.7);transition:top 0.5s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
-#birthday-popup.show{top:18px;pointer-events:all;}#birthday-popup button{pointer-events:all!important;}#birthday-popup.hiding{top:-600px!important;}
+#birthday-popup{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-130%);z-index:99999;background:linear-gradient(135deg,#1a1400,#2a2000);border:2px solid #f5c518;border-radius:18px;padding:18px 28px;min-width:300px;max-width:460px;text-align:center;box-shadow:0 8px 40px rgba(245,197,24,0.5),0 2px 12px rgba(0,0,0,0.7);transition:transform 0.6s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
+#birthday-popup.show{transform:translateX(-50%) translateY(0);}
 #birthday-popup .bp-emoji{font-size:40px;display:block;margin-bottom:6px;animation:bp-bounce 0.7s ease infinite alternate;}
 #birthday-popup .bp-title{font-size:17px;font-weight:700;color:#f5c518;margin-bottom:5px;letter-spacing:1px;}
 #birthday-popup .bp-msg{font-size:13px;color:#ffe57a;line-height:1.5;}
@@ -9784,13 +9412,6 @@ if(b.invPhotos && b.invPhotos.length){
 // إزالة أي تكرار بناءً على src
 const _seenSrcs = new Set();
 _invIdPhotos = _invIdPhotos.filter(p=>{ if(_seenSrcs.has(p.src)) return false; _seenSrcs.add(p.src); return true; });
-
-// تحميل صور الوجه (بصمة الوجه)
-if(!window._invFacePhotos) window._invFacePhotos = [];
-window._invFacePhotos = [];
-if(b.allGuestsData && b.allGuestsData.length){
-  b.allGuestsData.forEach(g=>{ if(g.face) window._invFacePhotos.push({src:g.face,label:g.name||''}); });
-}
 _renderInvPhotosPreview();
 // Load transfer data into invoice
 const hasTrInv=b.hasTransfer||false;
@@ -11090,7 +10711,6 @@ proformaBanner+
 
     (pics.length ? "<div style='flex-shrink:0;text-align:center;'><div style='font-size:9px;color:#888;margin-bottom:4px;'>🏨 Room</div>"+roomPicsHtml+"</div>" : "")+
     (_invIdPhotos.length ? "<div style='flex-shrink:0;'><div style='font-size:9px;color:#888;margin-bottom:5px;font-weight:700;text-align:center;'>🪪 IDs</div><div style='display:flex;flex-direction:column;gap:7px;align-items:center;'>"+_invIdPhotos.map(p=>"<div style='text-align:center;'><img src='"+p.src+"' style='width:72px;height:72px;object-fit:cover;border-radius:7px;border:2px solid #c9a84c;display:block;'>"+(p.label?"<div style='font-size:8px;color:#888;margin-top:2px;max-width:78px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+p.label+"</div>":"")+"</div>").join('')+"</div></div>" : "")+
-    ((window._invFacePhotos&&window._invFacePhotos.length) ? "<div style='flex-shrink:0;'><div style='font-size:9px;color:#e74c3c;margin-bottom:5px;font-weight:700;text-align:center;'>🤳 Face</div><div style='display:flex;flex-direction:column;gap:7px;align-items:center;'>"+window._invFacePhotos.map(p=>"<div style='text-align:center;'><img src='"+p.src+"' style='width:68px;height:68px;object-fit:cover;border-radius:50%;border:2px solid #e74c3c;display:block;'>"+( p.label?"<div style='font-size:8px;color:#e74c3c;margin-top:2px;max-width:75px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+p.label+"</div>":"")+"</div>").join('')+"</div></div>" : "")+
   "</div>";
 })()+
 "<div class='invp-sec'>Stay Details</div>"+
@@ -19850,7 +19470,15 @@ function showBirthdayPopup(name, room, phone){
   bar.style.transition = 'none'; bar.style.width = '100%';
   popup.classList.add('show');
   setTimeout(()=>{ bar.style.transition = 'width '+duration+'ms linear'; bar.style.width='0%'; }, 50);
-  setTimeout(()=>{ popup.classList.remove('show'); popup.style.pointerEvents='none'; }, duration);
+  clearTimeout(popup._autoCloseTimer);
+  popup._autoCloseTimer = setTimeout(()=>{ popup.classList.remove('show'); }, duration);
+}
+
+function closeBirthdayPopup(){
+  const popup = document.getElementById('birthday-popup');
+  if(!popup) return;
+  popup.classList.remove('show');
+  clearTimeout(popup._autoCloseTimer);
 }
 
 function sendBdayWA(){
@@ -20338,7 +19966,7 @@ function applyScanData(){
 
 <!-- ══ BIRTHDAY POPUP ══ -->
 <div id="birthday-popup" style="pointer-events:all;">
-  <button onclick="(function(){var p=document.getElementById('birthday-popup');if(p){p.classList.remove('show');p.style.pointerEvents='none';var f=document.getElementById('bp-bar-fill');if(f){f.style.transition='none';f.style.width='100%';}}})()" style="position:absolute;top:8px;left:10px;background:rgba(255,80,80,0.3);border:2px solid rgba(255,120,120,0.7);border-radius:50%;width:34px;height:34px;font-size:20px;color:#ff6b6b;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1;z-index:10;touch-action:manipulation;">✕</button>
+  <button onclick="closeBirthdayPopup()" style="position:absolute;top:8px;right:10px;background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:18px;width:28px;height:28px;border-radius:50%;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;z-index:1;">×</button>
   <span class="bp-emoji">🎂</span>
   <div class="bp-title" id="bp-title">🎂 Happy Birthday / عيد ميلاد سعيد</div>
   <div class="bp-msg" id="bp-msg" style="font-size:12px;line-height:1.8;"></div>
@@ -25464,86 +25092,7 @@ function rebuildGuestRows(savedData){
     photoHidden.value = savedPhoto;
     photoWrap.appendChild(photoHidden);
 
-    // ======= بصمة الوجه (Face Selfie) =======
-    const savedFace = d.face || "";
-    const faceWrap = document.createElement("div");
-    faceWrap.style.cssText = "position:relative;flex-shrink:0;";
-
-    const faceImg = document.createElement("div");
-    faceImg.id = `${pfx}-face-thumb`;
-    faceImg.innerHTML = savedFace
-      ? `<img src="${savedFace}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e74c3c;cursor:pointer;" onclick="viewGuestFace('${pfx}')" title="${isAr?'عرض بصمة الوجه':'View Face Photo'}">`
-      : `<div style="width:80px;height:80px;border-radius:50%;background:rgba(231,76,60,0.1);border:2px dashed rgba(231,76,60,0.4);display:flex;align-items:center;justify-content:center;font-size:28px;flex-direction:column;gap:1px;"><span>🤳</span></div>`;
-    faceWrap.appendChild(faceImg);
-
-    // زر رفع/كاميرا بصمة الوجه
-    const faceBtn = document.createElement("label");
-    faceBtn.style.cssText = "position:absolute;bottom:-2px;right:-2px;background:#e74c3c;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.4);";
-    faceBtn.title = isAr ? "التقاط بصمة الوجه" : "Capture Face Photo";
-    faceBtn.innerHTML = "😊";
-    const faceInput = document.createElement("input");
-    faceInput.type = "file";
-    faceInput.accept = "image/*";
-    faceInput.capture = "user"; // كاميرا أمامية
-    faceInput.style.display = "none";
-    faceInput.addEventListener("change", function(){
-      const file = this.files[0]; if(!file) return;
-      const reader = new FileReader();
-      reader.onload = function(ev){
-        const img2 = new Image();
-        img2.onload = function(){
-          const canvas = document.createElement("canvas");
-          const MAX = 400; let w=img2.width, h=img2.height;
-          if(w>h){if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}}else{if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}}
-          canvas.width=w; canvas.height=h;
-          canvas.getContext("2d").drawImage(img2,0,0,w,h);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
-          const td = document.getElementById(`${pfx}-face-thumb`);
-          if(td) td.innerHTML = `<img src="${dataUrl}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e74c3c;cursor:pointer;" onclick="viewGuestFace('${pfx}')" title="${isAr?'عرض بصمة الوجه':'View Face Photo'}">`;
-          const hid = document.getElementById(`${pfx}-face-data`);
-          if(hid) hid.value = dataUrl;
-        };
-        img2.src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
-      this.value = "";
-    });
-    faceBtn.appendChild(faceInput);
-    faceWrap.appendChild(faceBtn);
-
-    // حقل مخفي لحفظ بصمة الوجه
-    const faceHidden = document.createElement("input");
-    faceHidden.type = "hidden";
-    faceHidden.id = `${pfx}-face-data`;
-    faceHidden.value = savedFace;
-    faceWrap.appendChild(faceHidden);
-
-    // تسميات أسفل الصورتين
-    const idLabel = document.createElement("div");
-    idLabel.style.cssText = "font-size:9px;color:var(--muted);text-align:center;margin-top:3px;";
-    idLabel.textContent = isAr ? "صورة هوية" : "ID Photo";
-
-    const faceLabel = document.createElement("div");
-    faceLabel.style.cssText = "font-size:9px;color:#e74c3c;text-align:center;margin-top:3px;";
-    faceLabel.textContent = isAr ? "بصمة وجه" : "Face";
-
-    const photoCol = document.createElement("div");
-    photoCol.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:2px;";
-    photoCol.appendChild(photoWrap);
-    photoCol.appendChild(idLabel);
-
-    const faceCol = document.createElement("div");
-    faceCol.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:2px;";
-    faceCol.appendChild(faceWrap);
-    faceCol.appendChild(faceLabel);
-
-    const photosRow = document.createElement("div");
-    photosRow.style.cssText = "display:flex;gap:12px;align-items:flex-start;flex-shrink:0;";
-    photosRow.appendChild(photoCol);
-    photosRow.appendChild(faceCol);
-
-    titleRow.appendChild(photosRow);
-    // ======= نهاية بصمة الوجه =======
+    titleRow.appendChild(photoWrap);
 
     const title = document.createElement("div");
     title.style.cssText = `font-size:11px;font-weight:700;color:${isMain?'var(--gold)':isChild?'#7ab8f5':'var(--muted)'};letter-spacing:1px;`;
@@ -25730,13 +25279,6 @@ function viewGuestPhoto(pfx){
   w.document.write('<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="'+src+'" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;"></body>');
 }
 
-function viewGuestFace(pfx){
-  const src = document.getElementById(`${pfx}-face-data`)?.value;
-  if(!src) return;
-  const w = window.open('','_blank','width=500,height=500');
-  w.document.write('<body style="margin:0;background:#1a0000;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:12px;"><div style="font-size:14px;color:#e74c3c;font-family:sans-serif;">🤳 بصمة الوجه / Face Photo</div><img src="'+src+'" style="max-width:100%;max-height:90%;object-fit:contain;border-radius:50%;border:4px solid #e74c3c;"></body>');
-}
-
 // مزامنة bm-name, bm-phone, etc مع الضيف الرئيسي (للتوافق مع الكود القديم)
 function syncMainGuest(){
   const sync = (newId, oldId) => {
@@ -25771,7 +25313,6 @@ function collectAllGuestData(){
       dob   : document.getElementById(`g${i}-dob`)?.value||'',
       gender: document.getElementById(`g${i}-gender`)?.value||'',
       photo : document.getElementById(`g${i}-photo-data`)?.value||'',
-      face  : document.getElementById(`g${i}-face-data`)?.value||'',
     };
   });
 }
