@@ -117,6 +117,378 @@
 })();
 </script>
 <!-- ════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════
+     LOCK SCREEN — PIN + Biometric (Face ID / Fingerprint)
+     نظام قفل الشاشة — رقم سري + بصمة وجه/إصبع
+════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  /* ── Config ── */
+  const LS_PIN   = '_dta_lock_pin';   // hashed PIN
+  const LS_SESS  = '_dta_lock_sess';  // session expiry timestamp
+  const LS_CRED  = '_dta_lock_cred';  // WebAuthn credential id
+  const LS_BIOEN = '_dta_lock_bio';   // biometric enabled flag
+  const SESSION_MS = 8 * 60 * 60 * 1000; // 8 hours
+
+  /* ── Simple hash (same style as license) ── */
+  function hashPin(pin) {
+    let h = 5381;
+    for (let i = 0; i < pin.length; i++) h = ((h << 5) + h) ^ pin.charCodeAt(i);
+    return (h >>> 0).toString(16).padStart(8,'0');
+  }
+
+  /* ── Session helpers ── */
+  function isSessionValid() {
+    const exp = parseInt(localStorage.getItem(LS_SESS)||'0');
+    return Date.now() < exp;
+  }
+  function refreshSession() {
+    localStorage.setItem(LS_SESS, (Date.now() + SESSION_MS).toString());
+  }
+
+  /* ── WebAuthn helpers ── */
+  async function isBioAvailable() {
+    try {
+      return !!(window.PublicKeyCredential &&
+        await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+    } catch(e){ return false; }
+  }
+
+  /* Convert base64url ↔ ArrayBuffer */
+  function b64url(buf) {
+    return btoa(String.fromCharCode(...new Uint8Array(buf)))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  }
+  function fromB64url(str) {
+    str = str.replace(/-/g,'+').replace(/_/g,'/');
+    while(str.length%4) str+='=';
+    const bin = atob(str);
+    const buf = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) buf[i]=bin.charCodeAt(i);
+    return buf.buffer;
+  }
+
+  async function registerBiometric() {
+    try {
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const userId    = crypto.getRandomValues(new Uint8Array(16));
+      const cred = await navigator.credentials.create({
+        publicKey: {
+          challenge,
+          rp: { name: 'Dahab Trendy', id: location.hostname||'localhost' },
+          user: { id: userId, name: 'manager', displayName: 'مدير النظام' },
+          pubKeyCredParams: [
+            { type:'public-key', alg:-7  },
+            { type:'public-key', alg:-257 }
+          ],
+          authenticatorSelection: {
+            authenticatorAttachment: 'platform',
+            userVerification: 'required'
+          },
+          timeout: 60000
+        }
+      });
+      localStorage.setItem(LS_CRED,  b64url(cred.rawId));
+      localStorage.setItem(LS_BIOEN, '1');
+      return true;
+    } catch(e){ return false; }
+  }
+
+  async function verifyBiometric() {
+    const credId = localStorage.getItem(LS_CRED);
+    if (!credId) return false;
+    try {
+      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const assertion = await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          allowCredentials: [{ type:'public-key', id: fromB64url(credId) }],
+          userVerification: 'required',
+          timeout: 60000
+        }
+      });
+      return !!assertion;
+    } catch(e){ return false; }
+  }
+
+  /* ══════════════════════════════════════════════
+     LOCK SCREEN UI
+  ══════════════════════════════════════════════ */
+  function showLockScreen(mode) {
+    // mode: 'set' (first time set PIN) | 'unlock' (normal unlock)
+    const hasBio   = localStorage.getItem(LS_BIOEN) === '1';
+    const hasPin   = !!localStorage.getItem(LS_PIN);
+
+    document.documentElement.style.overflow = 'hidden';
+
+    const ov = document.createElement('div');
+    ov.id = 'dta-lock-overlay';
+    ov.style.cssText = [
+      'position:fixed;inset:0;z-index:999998',
+      'background:linear-gradient(160deg,#0a0a14,#141428,#0f1a2e)',
+      'display:flex;align-items:center;justify-content:center',
+      'font-family:Arial,"Tajawal",sans-serif;padding:20px'
+    ].join(';');
+
+    ov.innerHTML = `
+<div style="width:100%;max-width:360px;text-align:center;">
+  <!-- Logo -->
+  <div style="font-size:56px;margin-bottom:6px;filter:drop-shadow(0 0 18px #c9a84c88);">🏨</div>
+  <div style="color:#c9a84c;font-size:18px;font-weight:800;letter-spacing:1px;margin-bottom:4px;">Dahab Trendy</div>
+  <div id="dta-lock-subtitle" style="color:#7a8fa6;font-size:13px;margin-bottom:28px;">
+    ${mode==='set' ? '🔐 إنشاء رقم سري للحماية' : '🔒 أدخل رقم السر للمتابعة'}
+  </div>
+
+  <!-- PIN dots display -->
+  <div id="dta-pin-dots" style="display:flex;justify-content:center;gap:14px;margin-bottom:28px;">
+    ${[0,1,2,3].map(i=>`<div id="dot${i}" style="width:16px;height:16px;border-radius:50%;background:rgba(201,168,76,0.2);border:2px solid rgba(201,168,76,0.4);transition:all .15s;"></div>`).join('')}
+  </div>
+
+  <!-- Error message -->
+  <div id="dta-lock-err" style="display:none;color:#e74c3c;font-size:12px;margin-bottom:12px;min-height:18px;"></div>
+
+  <!-- Number pad -->
+  <div id="dta-numpad" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:240px;margin:0 auto 20px;">
+    ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>`
+      <button onclick="window._dtaLockKey('${k}')" style="
+        background:rgba(255,255,255,0.06);border:1px solid rgba(201,168,76,0.2);
+        border-radius:12px;padding:16px 0;font-size:20px;font-weight:700;
+        color:${k===''?'transparent':'#f0e6cc'};cursor:${k===''?'default':'pointer'};
+        transition:all .12s;font-family:Arial,sans-serif;
+        ${k===''?'pointer-events:none;':''}"
+        ${k===''?'tabindex="-1"':''}
+      >${k}</button>
+    `).join('')}
+  </div>
+
+  <!-- Biometric button -->
+  <div id="dta-bio-row" style="display:none;margin-bottom:16px;">
+    <button id="dta-bio-btn" onclick="window._dtaBioUnlock()" style="
+      background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.35);
+      border-radius:12px;padding:12px 28px;color:#c9a84c;font-size:14px;
+      font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+      <span style="font-size:22px;">🪪</span> بصمة الوجه / الإصبع
+    </button>
+  </div>
+
+  <!-- Confirm step (set PIN mode) -->
+  <div id="dta-confirm-hint" style="display:none;color:#7a8fa6;font-size:11px;margin-bottom:8px;"></div>
+
+  <!-- Settings link -->
+  <div id="dta-lock-settings-row" style="margin-top:8px;display:${mode==='unlock'&&hasPin?'block':'none'};">
+    <button onclick="window._dtaForgotPin()" style="background:none;border:none;color:#4a5a6a;font-size:11px;cursor:pointer;text-decoration:underline;">
+      نسيت الرقم السري؟
+    </button>
+  </div>
+
+  <p style="color:#2a3a4a;font-size:10px;margin-top:18px;">© Dahab Trendy System</p>
+</div>`;
+
+    document.body ? document.body.appendChild(ov) : document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(ov));
+
+    /* ── State ── */
+    let entered = '';
+    let confirmMode = false;
+    let firstPin = '';
+
+    /* ── Bio init ── */
+    (async()=>{
+      const bioOk = await isBioAvailable();
+      if (mode === 'unlock' && hasBio && bioOk) {
+        const bioRow = document.getElementById('dta-bio-row');
+        if(bioRow) bioRow.style.display = 'block';
+        /* auto-trigger biometric on load */
+        setTimeout(()=>window._dtaBioUnlock(), 600);
+      }
+      if (mode === 'set' && bioOk) {
+        const bioRow = document.getElementById('dta-bio-row');
+        if(bioRow){
+          bioRow.style.display='block';
+          const btn = document.getElementById('dta-bio-btn');
+          if(btn){ btn.textContent=''; btn.innerHTML='<span style="font-size:22px;">🪪</span> تفعيل بصمة الوجه/الإصبع (اختياري)'; }
+          btn && btn.removeAttribute('onclick') && (btn.onclick = window._dtaEnableBio);
+        }
+      }
+    })();
+
+    /* ── Dot update ── */
+    function updateDots(len){
+      for(let i=0;i<4;i++){
+        const d=document.getElementById('dot'+i);
+        if(!d) continue;
+        if(i<len){ d.style.background='#c9a84c'; d.style.borderColor='#c9a84c'; d.style.transform='scale(1.15)'; }
+        else { d.style.background='rgba(201,168,76,0.2)'; d.style.borderColor='rgba(201,168,76,0.4)'; d.style.transform='scale(1)'; }
+      }
+    }
+
+    function setErr(msg){
+      const el=document.getElementById('dta-lock-err');
+      if(!el) return;
+      el.textContent=msg; el.style.display=msg?'block':'none';
+      if(msg){ el.style.animation='none'; setTimeout(()=>el.style.animation='',10); }
+    }
+
+    function flashError(){
+      const dots=document.getElementById('dta-pin-dots');
+      if(!dots) return;
+      dots.style.animation='none';
+      dots.style.transform='translateX(-8px)';
+      setTimeout(()=>{ dots.style.transform='translateX(8px)'; },60);
+      setTimeout(()=>{ dots.style.transform='translateX(-6px)'; },120);
+      setTimeout(()=>{ dots.style.transform=''; },180);
+    }
+
+    function unlockApp(){
+      refreshSession();
+      const ov=document.getElementById('dta-lock-overlay');
+      if(ov){ ov.style.transition='opacity .3s'; ov.style.opacity='0'; setTimeout(()=>{ ov.remove(); document.documentElement.style.overflow=''; },300); }
+    }
+
+    /* ── Key handler ── */
+    window._dtaLockKey = function(k){
+      setErr('');
+      if(k==='⌫'){ entered=entered.slice(0,-1); updateDots(entered.length); return; }
+      if(k==='' || entered.length>=4) return;
+      entered+=String(k);
+      updateDots(entered.length);
+
+      if(entered.length===4){
+        if(mode==='set'){
+          if(!confirmMode){
+            firstPin=entered; entered=''; confirmMode=true;
+            updateDots(0);
+            const sub=document.getElementById('dta-lock-subtitle');
+            if(sub) sub.textContent='✅ أعد إدخال الرقم السري للتأكيد';
+            const ch=document.getElementById('dta-confirm-hint');
+            if(ch){ ch.textContent='أدخل الرقم مرة أخرى للتأكيد'; ch.style.display='block'; }
+          } else {
+            if(entered===firstPin){
+              localStorage.setItem(LS_PIN, hashPin(entered));
+              unlockApp();
+              /* offer biometric enrollment next */
+              setTimeout(async()=>{
+                const bioOk=await isBioAvailable();
+                if(bioOk && !localStorage.getItem(LS_BIOEN)){
+                  if(confirm('🪪 هل تريد تفعيل بصمة الوجه/الإصبع لفتح التطبيق بسرعة؟')){
+                    const ok=await registerBiometric();
+                    if(typeof sNotify==='function') sNotify(ok?'✅ تم':'❌ فشل', ok?'تم تفعيل البصمة':'لم يتم تفعيل البصمة', ok?'success':'error', 3000);
+                  }
+                }
+              },400);
+            } else {
+              entered=''; updateDots(0);
+              flashError();
+              setErr('❌ الأرقام غير متطابقة — حاول مرة أخرى');
+            }
+          }
+        } else {
+          /* unlock mode */
+          if(hashPin(entered)===localStorage.getItem(LS_PIN)){
+            unlockApp();
+          } else {
+            entered=''; updateDots(0);
+            flashError();
+            setErr('❌ رقم سري خاطئ');
+          }
+        }
+      }
+    };
+
+    /* ── Biometric unlock ── */
+    window._dtaBioUnlock = async function(){
+      const btn=document.getElementById('dta-bio-btn');
+      if(btn){ btn.style.opacity='0.6'; btn.disabled=true; }
+      const ok=await verifyBiometric();
+      if(btn){ btn.style.opacity='1'; btn.disabled=false; }
+      if(ok){ unlockApp(); }
+      else { setErr('❌ لم تنجح البصمة — أدخل الرقم السري'); }
+    };
+
+    /* ── Enable bio (set mode) ── */
+    window._dtaEnableBio = async function(){
+      const ok=await registerBiometric();
+      const bioBtn=document.getElementById('dta-bio-btn');
+      if(ok){
+        if(bioBtn){ bioBtn.innerHTML='<span style="font-size:22px;">✅</span> تم تفعيل البصمة'; bioBtn.style.borderColor='#2ecc71'; bioBtn.style.color='#2ecc71'; }
+      } else {
+        if(bioBtn){ bioBtn.innerHTML='<span style="font-size:22px;">❌</span> لم تُفعَّل البصمة — المتصفح لا يدعمها'; }
+      }
+    };
+
+    /* ── Forgot PIN ── */
+    window._dtaForgotPin = function(){
+      if(!confirm('⚠️ سيتم مسح الرقم السري والبصمة المسجلة. هل أنت متأكد؟')) return;
+      localStorage.removeItem(LS_PIN);
+      localStorage.removeItem(LS_CRED);
+      localStorage.removeItem(LS_BIOEN);
+      localStorage.removeItem(LS_SESS);
+      location.reload();
+    };
+
+    /* ── Keyboard support ── */
+    document.addEventListener('keydown', function kh(e){
+      if(!document.getElementById('dta-lock-overlay')){ document.removeEventListener('keydown',kh); return; }
+      if(e.key>='0'&&e.key<='9') window._dtaLockKey(e.key);
+      else if(e.key==='Backspace') window._dtaLockKey('⌫');
+    });
+  }
+
+  /* ════════════════════════════════════════════════
+     INIT — runs after license check passes
+  ════════════════════════════════════════════════ */
+  function initLock(){
+    if(isSessionValid()) return; // already unlocked this session
+    const hasPin = !!localStorage.getItem(LS_PIN);
+    document.addEventListener('DOMContentLoaded',function(){
+      showLockScreen(hasPin ? 'unlock' : 'set');
+    });
+  }
+
+  /* Hook into license success: override DOMContentLoaded removal */
+  const _origCheckLicense = window._dtaLockInit;
+
+  /* We patch the flow: if license overlay never appears → run lock */
+  /* Use MutationObserver to detect when license-overlay is removed or never added */
+  let licenseResolved = false;
+  function waitForLicenseResolution(){
+    // If no license overlay exists after DOM ready → license is valid → show lock
+    document.addEventListener('DOMContentLoaded', function(){
+      const licOv = document.getElementById('license-overlay');
+      if(!licOv){
+        // license is valid, show lock
+        initLock();
+      } else {
+        // watch for license overlay removal
+        const obs = new MutationObserver(function(){
+          if(!document.getElementById('license-overlay')){
+            obs.disconnect();
+            initLock();
+          }
+        });
+        obs.observe(document.body, { childList:true });
+      }
+    });
+  }
+
+  waitForLicenseResolution();
+
+  /* ── Settings API (call from app settings page) ── */
+  window.DTA_LOCK = {
+    changePIN: function(){ showLockScreen('set'); },
+    disable:   function(){
+      if(!confirm('⚠️ هل تريد إيقاف حماية الشاشة؟')) return;
+      localStorage.removeItem(LS_PIN);
+      localStorage.removeItem(LS_CRED);
+      localStorage.removeItem(LS_BIOEN);
+      localStorage.removeItem(LS_SESS);
+      if(typeof sNotify==='function') sNotify('🔓','تم إيقاف حماية الشاشة','info',3000);
+    },
+    enableBio: registerBiometric,
+    logout:    function(){ localStorage.removeItem(LS_SESS); location.reload(); },
+  };
+})();
+</script>
+<!-- ════════════════════════════════════════════════ -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dahab Trendy v10 — Property System</title>
@@ -814,6 +1186,25 @@ select option{background:#1a1a2e;color:var(--text)}
   .nav{display:none!important;}
 }
 
+/* ── وضع landscape على الموبايل ──
+   بنستخدم max-height بدل max-width لأن عرض الموبايل في الوضع الأفقي
+   غالباً بيبقى أكبر من 768px (ارتفاعه الأصلي وهو في البورتريه)،
+   فلو اعتمدنا على max-width بس، الـ bottom-nav كان بيختفي ويظهر
+   مكانه شريط تنقل سطح المكتب اللي مش مصمم للمس. */
+@media (orientation:landscape) and (max-height:500px){
+  #bottom-nav{display:flex;flex-direction:column;}
+  #bottom-nav .bn-inner{height:46px;}
+  #bottom-nav .bn-icon{font-size:16px;}
+  #bottom-nav .bn-item{font-size:8px;padding:4px 2px;}
+  body{padding-bottom:54px;}
+  .nav{display:none!important;}
+  .page{padding:8px 14px;}
+  .g2,.g3,.g4{grid-template-columns:repeat(2,1fr)!important;}
+  .card{padding:12px;}
+  #bn-more-menu{bottom:46px;max-height:calc(100vh - 56px);}
+  #bn-more-menu .bn-more-grid{grid-template-columns:repeat(6,1fr);}
+}
+
 /* ── DEBT TRACKER PAGE ── */
 #page-debt{padding:16px;max-width:1200px;margin:0 auto;}
 #page-debt.on{display:block;}
@@ -1451,28 +1842,54 @@ label {
     <div style="font-size:28px;margin-bottom:8px;">🔐</div>
     <div style="color:var(--gold);font-size:16px;font-weight:700;letter-spacing:1px;">Dahab Trendy</div>
     <div style="color:var(--muted);font-size:11px;margin-top:4px;" id="pin-subtitle">أدخل رمز الدخول</div>
-    <div class="pin-dots">
-      <div class="pin-dot" id="pd0"></div>
-      <div class="pin-dot" id="pd1"></div>
-      <div class="pin-dot" id="pd2"></div>
-      <div class="pin-dot" id="pd3"></div>
+
+    <div id="pin-normal-panel">
+      <div class="pin-dots">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+      </div>
+      <div class="pin-error" id="pin-error"></div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pinPress('1')">1</button>
+        <button class="pin-key" onclick="pinPress('2')">2</button>
+        <button class="pin-key" onclick="pinPress('3')">3</button>
+        <button class="pin-key" onclick="pinPress('4')">4</button>
+        <button class="pin-key" onclick="pinPress('5')">5</button>
+        <button class="pin-key" onclick="pinPress('6')">6</button>
+        <button class="pin-key" onclick="pinPress('7')">7</button>
+        <button class="pin-key" onclick="pinPress('8')">8</button>
+        <button class="pin-key" onclick="pinPress('9')">9</button>
+        <button class="pin-key" onclick="pinPress('clear')" style="font-size:13px;color:var(--muted);">مسح</button>
+        <button class="pin-key" onclick="pinPress('0')">0</button>
+        <button class="pin-key" onclick="pinPress('del')" style="font-size:18px;">⌫</button>
+      </div>
+      <div style="margin-top:10px;text-align:center;">
+        <a href="javascript:void(0)" onclick="pinForgotOpen()" style="color:var(--gold);font-size:12px;text-decoration:underline;">نسيت الرمز؟</a>
+      </div>
     </div>
-    <div class="pin-error" id="pin-error"></div>
-    <div class="pin-pad">
-      <button class="pin-key" onclick="pinPress('1')">1</button>
-      <button class="pin-key" onclick="pinPress('2')">2</button>
-      <button class="pin-key" onclick="pinPress('3')">3</button>
-      <button class="pin-key" onclick="pinPress('4')">4</button>
-      <button class="pin-key" onclick="pinPress('5')">5</button>
-      <button class="pin-key" onclick="pinPress('6')">6</button>
-      <button class="pin-key" onclick="pinPress('7')">7</button>
-      <button class="pin-key" onclick="pinPress('8')">8</button>
-      <button class="pin-key" onclick="pinPress('9')">9</button>
-      <button class="pin-key" onclick="pinPress('clear')" style="font-size:13px;color:var(--muted);">مسح</button>
-      <button class="pin-key" onclick="pinPress('0')">0</button>
-      <button class="pin-key" onclick="pinPress('del')" style="font-size:18px;">⌫</button>
+
+    <!-- لوحة إدخال رمز الاسترجاع -->
+    <div id="pin-recovery-panel" class="hidden" style="margin-top:6px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.6;">أدخلي رمز الاسترجاع المكوّن من 8 خانات اللي اتسجّل وقت تفعيل القفل</div>
+      <input id="pin-recovery-input" type="text" maxlength="9" placeholder="XXXX-XXXX" style="width:100%;text-align:center;letter-spacing:2px;padding:11px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(201,168,76,0.3);color:#f0e6cc;text-transform:uppercase;font-size:15px;direction:ltr;" oninput="this.value=this.value.toUpperCase()">
+      <div id="pin-recovery-error" style="color:#e74c3c;font-size:11px;margin-top:6px;min-height:14px;"></div>
+      <button class="pin-key" style="width:100%;margin-top:8px;border-radius:8px;" onclick="pinVerifyRecovery()">✅ تحقق من الرمز</button>
+      <div style="margin-top:10px;text-align:center;">
+        <a href="javascript:void(0)" onclick="pinForgotClose()" style="color:var(--muted);font-size:11px;text-decoration:underline;">رجوع</a>
+      </div>
     </div>
-    <div style="margin-top:14px;font-size:10px;color:var(--muted);">الرمز الافتراضي: 1234</div>
+
+    <!-- لوحة تعيين رمز جديد بعد التحقق من الاسترجاع -->
+    <div id="pin-newpin-panel" class="hidden" style="margin-top:6px;">
+      <div style="font-size:12px;color:#25D366;margin-bottom:8px;">✅ الرمز صحيح — دخلي رمز جديد (4 أرقام)</div>
+      <input id="pin-newpin-input" type="password" maxlength="4" placeholder="••••" style="width:100%;text-align:center;letter-spacing:6px;font-size:18px;padding:11px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(201,168,76,0.3);color:#f0e6cc;">
+      <div id="pin-newpin-error" style="color:#e74c3c;font-size:11px;margin-top:6px;min-height:14px;"></div>
+      <button class="pin-key" style="width:100%;margin-top:8px;border-radius:8px;" onclick="pinSaveNewFromRecovery()">💾 حفظ ودخول</button>
+    </div>
+
+    <div id="pin-default-hint" style="margin-top:14px;font-size:10px;color:var(--muted);">الرمز الافتراضي: 1234</div>
   </div>
 </div>
 <!-- Smart Notifications Container -->
@@ -3770,6 +4187,13 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
     <div class="fld"><label>الرمز الجديد</label><input type="password" id="pin-new" maxlength="4" placeholder="••••" style="letter-spacing:4px;font-size:16px;"></div>
   </div>
   <button class="btn bg" onclick="savePINChange()" style="margin-top:8px;">💾 حفظ الرمز الجديد</button>
+  <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(201,168,76,0.2);">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.7;">🔑 رمز الاسترجاع بيستخدم في حالة نسيان رمز الدخول من شاشة القفل.</div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn bb" style="flex:1;font-size:12px;" onclick="showRecoveryCodeModal(ensureRecoveryCode())">👁️ عرض رمز الاسترجاع</button>
+      <button class="btn bb" style="flex:1;font-size:12px;" onclick="if(confirm('توليد رمز استرجاع جديد؟ الرمز القديم لن يعمل بعدها.')){localStorage.removeItem('dahab_pin_recovery');showRecoveryCodeModal(ensureRecoveryCode());}">🔄 توليد رمز جديد</button>
+    </div>
+  </div>
 </div>
 <div id="pin-status" style="font-size:11px;margin-top:8px;"></div>
 </div>
@@ -9360,6 +9784,13 @@ if(b.invPhotos && b.invPhotos.length){
 // إزالة أي تكرار بناءً على src
 const _seenSrcs = new Set();
 _invIdPhotos = _invIdPhotos.filter(p=>{ if(_seenSrcs.has(p.src)) return false; _seenSrcs.add(p.src); return true; });
+
+// تحميل صور الوجه (بصمة الوجه)
+if(!window._invFacePhotos) window._invFacePhotos = [];
+window._invFacePhotos = [];
+if(b.allGuestsData && b.allGuestsData.length){
+  b.allGuestsData.forEach(g=>{ if(g.face) window._invFacePhotos.push({src:g.face,label:g.name||''}); });
+}
 _renderInvPhotosPreview();
 // Load transfer data into invoice
 const hasTrInv=b.hasTransfer||false;
@@ -10659,6 +11090,7 @@ proformaBanner+
 
     (pics.length ? "<div style='flex-shrink:0;text-align:center;'><div style='font-size:9px;color:#888;margin-bottom:4px;'>🏨 Room</div>"+roomPicsHtml+"</div>" : "")+
     (_invIdPhotos.length ? "<div style='flex-shrink:0;'><div style='font-size:9px;color:#888;margin-bottom:5px;font-weight:700;text-align:center;'>🪪 IDs</div><div style='display:flex;flex-direction:column;gap:7px;align-items:center;'>"+_invIdPhotos.map(p=>"<div style='text-align:center;'><img src='"+p.src+"' style='width:72px;height:72px;object-fit:cover;border-radius:7px;border:2px solid #c9a84c;display:block;'>"+(p.label?"<div style='font-size:8px;color:#888;margin-top:2px;max-width:78px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+p.label+"</div>":"")+"</div>").join('')+"</div></div>" : "")+
+    ((window._invFacePhotos&&window._invFacePhotos.length) ? "<div style='flex-shrink:0;'><div style='font-size:9px;color:#e74c3c;margin-bottom:5px;font-weight:700;text-align:center;'>🤳 Face</div><div style='display:flex;flex-direction:column;gap:7px;align-items:center;'>"+window._invFacePhotos.map(p=>"<div style='text-align:center;'><img src='"+p.src+"' style='width:68px;height:68px;object-fit:cover;border-radius:50%;border:2px solid #e74c3c;display:block;'>"+( p.label?"<div style='font-size:8px;color:#e74c3c;margin-top:2px;max-width:75px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+p.label+"</div>":"")+"</div>").join('')+"</div></div>" : "")+
   "</div>";
 })()+
 "<div class='invp-sec'>Stay Details</div>"+
@@ -17635,9 +18067,114 @@ function requireAIKey(){
 // ═══════════════════════════════════════════════════════════
 let _pinBuffer = '';
 const DEFAULT_PIN = '1234';
+const PIN_MAX_ATTEMPTS = 5;          // محاولات قبل القفل المؤقت
+const PIN_LOCKOUT_BASE_MS = 60000;   // مدة القفل الأولى: دقيقة، وتتضاعف كل مرة
+const PIN_LOCKOUT_MAX_MS = 30*60000; // أقصى مدة قفل: 30 دقيقة
 
 function getPIN(){ return localStorage.getItem('dahab_pin') || DEFAULT_PIN; }
 function isPINEnabled(){ return localStorage.getItem('dahab_pin_enabled') === '1'; }
+
+// ══ رمز استرجاع PIN (Master Recovery Code) ══
+function getRecoveryCode(){ return localStorage.getItem('dahab_pin_recovery') || ''; }
+function _genRecoveryCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // بدون حروف/أرقام ملتبسة (I,1,O,0)
+  let s='';
+  for(let i=0;i<8;i++){ s+=chars[Math.floor(Math.random()*chars.length)]; if(i===3) s+='-'; }
+  return s;
+}
+function ensureRecoveryCode(){
+  let code = getRecoveryCode();
+  if(!code){
+    code = _genRecoveryCode();
+    localStorage.setItem('dahab_pin_recovery', code);
+  }
+  return code;
+}
+function showRecoveryCodeModal(code){
+  const old = document.getElementById('rc-modal-overlay');
+  if(old) old.remove();
+  const ov=document.createElement('div');
+  ov.id='rc-modal-overlay';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML = '<div style="background:#1a1a2e;border:1px solid rgba(201,168,76,0.4);border-radius:14px;padding:24px;max-width:340px;width:100%;text-align:center;font-family:Arial,sans-serif;">'
+    +'<div style="font-size:32px;margin-bottom:10px;">🔑</div>'
+    +'<div style="color:#c9a84c;font-size:16px;font-weight:800;margin-bottom:10px;">رمز استرجاع PIN الخاص بك</div>'
+    +'<div style="color:#f0e6cc;font-size:11px;line-height:1.7;margin-bottom:14px;">احتفظي بالرمز ده في مكان آمن (ورقة، أو نوت في موبايل تاني) — هتحتاجيه لو نسيتي رمز الدخول. مش هيُعرض تاني تلقائيًا.</div>'
+    +'<div style="background:rgba(255,255,255,0.08);border:1px dashed rgba(201,168,76,0.5);border-radius:10px;padding:14px;font-size:22px;letter-spacing:3px;color:#c9a84c;font-weight:800;direction:ltr;margin-bottom:16px;">'+code+'</div>'
+    +'<button id="rc-modal-ok" style="width:100%;padding:12px;background:#c9a84c;color:#1a1a2e;border:none;border-radius:8px;font-weight:800;font-size:14px;cursor:pointer;">✅ احتفظت بالرمز</button>'
+    +'</div>';
+  document.body.appendChild(ov);
+  document.getElementById('rc-modal-ok').onclick = ()=> ov.remove();
+}
+
+function pinForgotOpen(){
+  document.getElementById('pin-normal-panel').classList.add('hidden');
+  document.getElementById('pin-default-hint').classList.add('hidden');
+  document.getElementById('pin-newpin-panel').classList.add('hidden');
+  document.getElementById('pin-recovery-panel').classList.remove('hidden');
+  document.getElementById('pin-recovery-input').value='';
+  document.getElementById('pin-recovery-error').textContent='';
+}
+function pinForgotClose(){
+  document.getElementById('pin-recovery-panel').classList.add('hidden');
+  document.getElementById('pin-newpin-panel').classList.add('hidden');
+  document.getElementById('pin-default-hint').classList.remove('hidden');
+  document.getElementById('pin-normal-panel').classList.remove('hidden');
+}
+function pinVerifyRecovery(){
+  const val = document.getElementById('pin-recovery-input').value.trim().toUpperCase();
+  const stored = getRecoveryCode();
+  const errEl = document.getElementById('pin-recovery-error');
+  if(!stored){
+    errEl.textContent='لا يوجد رمز استرجاع محفوظ على هذا الجهاز';
+    return;
+  }
+  if(val !== stored){
+    errEl.textContent='❌ رمز الاسترجاع غير صحيح';
+    return;
+  }
+  // فك أي قفل مؤقت ناتج عن محاولات فاشلة
+  localStorage.removeItem('dahab_pin_fails');
+  localStorage.removeItem('dahab_pin_lockout_level');
+  localStorage.removeItem('dahab_pin_lock_until');
+  document.getElementById('pin-recovery-panel').classList.add('hidden');
+  document.getElementById('pin-newpin-panel').classList.remove('hidden');
+  document.getElementById('pin-newpin-input').value='';
+  document.getElementById('pin-newpin-error').textContent='';
+}
+function pinSaveNewFromRecovery(){
+  const nw = document.getElementById('pin-newpin-input').value;
+  const errEl = document.getElementById('pin-newpin-error');
+  if(nw.length!==4 || !/^\d{4}$/.test(nw)){
+    errEl.textContent='يجب أن يكون الرمز 4 أرقام';
+    return;
+  }
+  localStorage.setItem('dahab_pin', nw);
+  localStorage.setItem('dahab_pin_session', Date.now().toString());
+  document.getElementById('pin-overlay').classList.add('hidden');
+  pinForgotClose();
+  sNotify('✅ تم تغيير الرمز','تم حفظ رمز جديد والدخول للنظام','success',3500);
+  if(typeof _resetIdleTimer==='function') _resetIdleTimer();
+}
+
+function _pinLockUntil(){ return parseInt(localStorage.getItem('dahab_pin_lock_until')||'0',10); }
+function _isPinLockedOut(){ return Date.now() < _pinLockUntil(); }
+
+function _startPinLockoutCountdown(until){
+  const errEl = document.getElementById('pin-error');
+  (function tick(){
+    const remain = until - Date.now();
+    if(remain <= 0){
+      if(errEl) errEl.textContent = '';
+      localStorage.removeItem('dahab_pin_lock_until');
+      return;
+    }
+    const mins = Math.floor(remain/60000);
+    const secs = Math.floor((remain%60000)/1000);
+    if(errEl) errEl.textContent = '🔒 محاولات كثيرة خاطئة — حاول بعد '+(mins>0?mins+' د ':'')+secs+' ث';
+    setTimeout(tick, 1000);
+  })();
+}
 
 function lockApp(){
   if(!isPINEnabled()){
@@ -17649,9 +18186,11 @@ function lockApp(){
   document.getElementById('pin-overlay').classList.remove('hidden');
   document.getElementById('pin-error').textContent='';
   document.getElementById('pin-subtitle').textContent='أدخل رمز الدخول';
+  if(_isPinLockedOut()) _startPinLockoutCountdown(_pinLockUntil());
 }
 
 function pinPress(k){
+  if(_isPinLockedOut()) return; // مقفول مؤقتاً بسبب محاولات فاشلة
   if(k==='clear'){_pinBuffer='';updatePinDots();return;}
   if(k==='del'){_pinBuffer=_pinBuffer.slice(0,-1);updatePinDots();return;}
   if(_pinBuffer.length>=4) return;
@@ -17670,12 +18209,29 @@ function updatePinDots(){
 }
 
 function checkPIN(){
+  if(_isPinLockedOut()) return;
   if(_pinBuffer === getPIN()){
     document.getElementById('pin-overlay').classList.add('hidden');
     localStorage.setItem('dahab_pin_session', Date.now().toString());
+    localStorage.removeItem('dahab_pin_fails');
+    localStorage.removeItem('dahab_pin_lockout_level');
+    localStorage.removeItem('dahab_pin_lock_until');
     sNotify('✅ تم الدخول','مرحباً بك في Dahab Trendy 🌊','success',2500);
+    if(typeof _resetIdleTimer==='function') _resetIdleTimer();
   } else {
-    document.getElementById('pin-error').textContent='❌ رمز خاطئ — حاول مرة أخرى';
+    const fails = (parseInt(localStorage.getItem('dahab_pin_fails')||'0',10)) + 1;
+    if(fails >= PIN_MAX_ATTEMPTS){
+      const level = (parseInt(localStorage.getItem('dahab_pin_lockout_level')||'0',10)) + 1;
+      localStorage.setItem('dahab_pin_lockout_level', level.toString());
+      const duration = Math.min(PIN_LOCKOUT_BASE_MS * Math.pow(2, level-1), PIN_LOCKOUT_MAX_MS);
+      const until = Date.now() + duration;
+      localStorage.setItem('dahab_pin_lock_until', until.toString());
+      localStorage.setItem('dahab_pin_fails','0');
+      _startPinLockoutCountdown(until);
+    } else {
+      localStorage.setItem('dahab_pin_fails', fails.toString());
+      document.getElementById('pin-error').textContent='❌ رمز خاطئ — محاولات متبقية: '+(PIN_MAX_ATTEMPTS-fails);
+    }
     document.getElementById('pin-overlay').querySelector('.pin-box').style.animation='none';
     setTimeout(()=>{
       document.getElementById('pin-overlay').querySelector('.pin-box').style.animation='';
@@ -17696,6 +18252,10 @@ function togglePINSetting(){
     lbl.textContent='مفعّل ✅';
     st.innerHTML='<span style="color:#25D366;">✅ القفل مفعّل — الرمز الافتراضي: 1234</span>';
     sNotify('🔐 تم تفعيل القفل','استخدم 1234 كرمز افتراضي أو غيّره الآن','success',4000);
+    const hadCode = !!getRecoveryCode();
+    const code = ensureRecoveryCode();
+    if(!hadCode) setTimeout(()=>showRecoveryCodeModal(code), 500);
+    if(typeof _resetIdleTimer==='function') _resetIdleTimer();
   } else {
     localStorage.removeItem('dahab_pin_enabled');
     sec.style.display='none';
@@ -17748,6 +18308,24 @@ function loadPINSettings(){
     }
   }
 })();
+
+// ══ FEATURE 10b: AUTO-LOCK ON IDLE (بيشتغل بس لو قفل PIN مفعّل) ══
+const PIN_IDLE_TIMEOUT_MS = 5*60*1000; // 5 دقايق خمول
+let _idleTimer = null;
+function _resetIdleTimer(){
+  if(_idleTimer){ clearTimeout(_idleTimer); _idleTimer=null; }
+  if(!isPINEnabled()) return;
+  const ov = document.getElementById('pin-overlay');
+  if(ov && !ov.classList.contains('hidden')) return; // أصلاً مقفول
+  _idleTimer = setTimeout(()=>{
+    const ov2 = document.getElementById('pin-overlay');
+    if(ov2 && ov2.classList.contains('hidden')) lockApp();
+  }, PIN_IDLE_TIMEOUT_MS);
+}
+['mousemove','mousedown','keydown','touchstart','scroll','click'].forEach(function(evt){
+  document.addEventListener(evt, _resetIdleTimer, {passive:true});
+});
+_resetIdleTimer();
 
 // ═══════════════════════════════════════════════════════════
 // ══ FEATURE 11: ADVANCED ANALYTICS (v20 Enhanced) ══
@@ -24885,7 +25463,86 @@ function rebuildGuestRows(savedData){
     photoHidden.value = savedPhoto;
     photoWrap.appendChild(photoHidden);
 
-    titleRow.appendChild(photoWrap);
+    // ======= بصمة الوجه (Face Selfie) =======
+    const savedFace = d.face || "";
+    const faceWrap = document.createElement("div");
+    faceWrap.style.cssText = "position:relative;flex-shrink:0;";
+
+    const faceImg = document.createElement("div");
+    faceImg.id = `${pfx}-face-thumb`;
+    faceImg.innerHTML = savedFace
+      ? `<img src="${savedFace}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e74c3c;cursor:pointer;" onclick="viewGuestFace('${pfx}')" title="${isAr?'عرض بصمة الوجه':'View Face Photo'}">`
+      : `<div style="width:80px;height:80px;border-radius:50%;background:rgba(231,76,60,0.1);border:2px dashed rgba(231,76,60,0.4);display:flex;align-items:center;justify-content:center;font-size:28px;flex-direction:column;gap:1px;"><span>🤳</span></div>`;
+    faceWrap.appendChild(faceImg);
+
+    // زر رفع/كاميرا بصمة الوجه
+    const faceBtn = document.createElement("label");
+    faceBtn.style.cssText = "position:absolute;bottom:-2px;right:-2px;background:#e74c3c;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.4);";
+    faceBtn.title = isAr ? "التقاط بصمة الوجه" : "Capture Face Photo";
+    faceBtn.innerHTML = "😊";
+    const faceInput = document.createElement("input");
+    faceInput.type = "file";
+    faceInput.accept = "image/*";
+    faceInput.capture = "user"; // كاميرا أمامية
+    faceInput.style.display = "none";
+    faceInput.addEventListener("change", function(){
+      const file = this.files[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        const img2 = new Image();
+        img2.onload = function(){
+          const canvas = document.createElement("canvas");
+          const MAX = 400; let w=img2.width, h=img2.height;
+          if(w>h){if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}}else{if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}}
+          canvas.width=w; canvas.height=h;
+          canvas.getContext("2d").drawImage(img2,0,0,w,h);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+          const td = document.getElementById(`${pfx}-face-thumb`);
+          if(td) td.innerHTML = `<img src="${dataUrl}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e74c3c;cursor:pointer;" onclick="viewGuestFace('${pfx}')" title="${isAr?'عرض بصمة الوجه':'View Face Photo'}">`;
+          const hid = document.getElementById(`${pfx}-face-data`);
+          if(hid) hid.value = dataUrl;
+        };
+        img2.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+      this.value = "";
+    });
+    faceBtn.appendChild(faceInput);
+    faceWrap.appendChild(faceBtn);
+
+    // حقل مخفي لحفظ بصمة الوجه
+    const faceHidden = document.createElement("input");
+    faceHidden.type = "hidden";
+    faceHidden.id = `${pfx}-face-data`;
+    faceHidden.value = savedFace;
+    faceWrap.appendChild(faceHidden);
+
+    // تسميات أسفل الصورتين
+    const idLabel = document.createElement("div");
+    idLabel.style.cssText = "font-size:9px;color:var(--muted);text-align:center;margin-top:3px;";
+    idLabel.textContent = isAr ? "صورة هوية" : "ID Photo";
+
+    const faceLabel = document.createElement("div");
+    faceLabel.style.cssText = "font-size:9px;color:#e74c3c;text-align:center;margin-top:3px;";
+    faceLabel.textContent = isAr ? "بصمة وجه" : "Face";
+
+    const photoCol = document.createElement("div");
+    photoCol.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:2px;";
+    photoCol.appendChild(photoWrap);
+    photoCol.appendChild(idLabel);
+
+    const faceCol = document.createElement("div");
+    faceCol.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:2px;";
+    faceCol.appendChild(faceWrap);
+    faceCol.appendChild(faceLabel);
+
+    const photosRow = document.createElement("div");
+    photosRow.style.cssText = "display:flex;gap:12px;align-items:flex-start;flex-shrink:0;";
+    photosRow.appendChild(photoCol);
+    photosRow.appendChild(faceCol);
+
+    titleRow.appendChild(photosRow);
+    // ======= نهاية بصمة الوجه =======
 
     const title = document.createElement("div");
     title.style.cssText = `font-size:11px;font-weight:700;color:${isMain?'var(--gold)':isChild?'#7ab8f5':'var(--muted)'};letter-spacing:1px;`;
@@ -25072,6 +25729,13 @@ function viewGuestPhoto(pfx){
   w.document.write('<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="'+src+'" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;"></body>');
 }
 
+function viewGuestFace(pfx){
+  const src = document.getElementById(`${pfx}-face-data`)?.value;
+  if(!src) return;
+  const w = window.open('','_blank','width=500,height=500');
+  w.document.write('<body style="margin:0;background:#1a0000;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:12px;"><div style="font-size:14px;color:#e74c3c;font-family:sans-serif;">🤳 بصمة الوجه / Face Photo</div><img src="'+src+'" style="max-width:100%;max-height:90%;object-fit:contain;border-radius:50%;border:4px solid #e74c3c;"></body>');
+}
+
 // مزامنة bm-name, bm-phone, etc مع الضيف الرئيسي (للتوافق مع الكود القديم)
 function syncMainGuest(){
   const sync = (newId, oldId) => {
@@ -25106,6 +25770,7 @@ function collectAllGuestData(){
       dob   : document.getElementById(`g${i}-dob`)?.value||'',
       gender: document.getElementById(`g${i}-gender`)?.value||'',
       photo : document.getElementById(`g${i}-photo-data`)?.value||'',
+      face  : document.getElementById(`g${i}-face-data`)?.value||'',
     };
   });
 }
@@ -30493,7 +31158,6 @@ function saveQRSettings(){
     display: 'standalone',
     background_color: '#0f0f1a',
     theme_color: '#c9a84c',
-    orientation: 'portrait-primary',
     icons: [
       {src: icon192, sizes:'192x192', type:'image/png', purpose:'any maskable'},
       {src: icon512, sizes:'512x512', type:'image/png', purpose:'any maskable'}
