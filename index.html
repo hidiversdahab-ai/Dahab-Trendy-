@@ -562,11 +562,11 @@ select option{background:#1a1a2e;color:var(--text)}
 .pin-error{color:#e74c3c;font-size:12px;margin-top:8px;min-height:18px;}
 
 /* ══ FEATURE 13: Voice Commands ══ */
-.voice-fab{position:fixed;bottom:22px;left:22px;z-index:500;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s;}
+.voice-fab{position:fixed;bottom:22px;left:22px;z-index:1200;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s;}
 .voice-fab:hover{transform:scale(1.1);}
 .voice-fab.listening{background:linear-gradient(135deg,#e74c3c,#c0392b);box-shadow:0 4px 20px rgba(231,76,60,0.6);animation:voice-pulse 1s infinite;}
 @keyframes voice-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
-.voice-modal-wrap{position:fixed;bottom:90px;left:22px;z-index:501;background:#1e2a3a;border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;min-width:260px;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.5);display:none;}
+.voice-modal-wrap{position:fixed;bottom:90px;left:22px;z-index:1201;background:#1e2a3a;border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;min-width:260px;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.5);display:none;}
 .voice-modal-wrap.on{display:block;}
 .voice-status{font-size:13px;color:var(--gold);font-weight:700;margin-bottom:6px;}
 .voice-transcript{font-size:12px;color:var(--text);min-height:36px;background:rgba(0,0,0,0.2);border-radius:7px;padding:7px 10px;margin-bottom:8px;line-height:1.5;}
