@@ -562,11 +562,11 @@ select option{background:#1a1a2e;color:var(--text)}
 .pin-error{color:#e74c3c;font-size:12px;margin-top:8px;min-height:18px;}
 
 /* ══ FEATURE 13: Voice Commands ══ */
-.voice-fab{position:fixed;bottom:22px;left:22px;z-index:500;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s;}
+.voice-fab{position:fixed;bottom:22px;left:22px;z-index:1200;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s;}
 .voice-fab:hover{transform:scale(1.1);}
 .voice-fab.listening{background:linear-gradient(135deg,#e74c3c,#c0392b);box-shadow:0 4px 20px rgba(231,76,60,0.6);animation:voice-pulse 1s infinite;}
 @keyframes voice-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
-.voice-modal-wrap{position:fixed;bottom:90px;left:22px;z-index:501;background:#1e2a3a;border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;min-width:260px;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.5);display:none;}
+.voice-modal-wrap{position:fixed;bottom:90px;left:22px;z-index:1201;background:#1e2a3a;border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;min-width:260px;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.5);display:none;}
 .voice-modal-wrap.on{display:block;}
 .voice-status{font-size:13px;color:var(--gold);font-weight:700;margin-bottom:6px;}
 .voice-transcript{font-size:12px;color:var(--text);min-height:36px;background:rgba(0,0,0,0.2);border-radius:7px;padding:7px 10px;margin-bottom:8px;line-height:1.5;}
@@ -13877,7 +13877,7 @@ showToast("✓ Exported as HTML!");
 }
 async function shareBackupWA(){
 const qrSettings2=JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
-const data={bookings,prices,duPrices,roomSt,policies,expenses,exRate,restaurantTx,tours,events,restMenu,roomPhotos,waitlist,qrSettings:qrSettings2,savedAt:new Date().toISOString()};
+const data={bookings,prices,duPrices,roomSt,roomTypes,policies,expenses,exRate,restaurantTx,tours,events,restMenu,roomPhotos,waitlist,qrSettings:qrSettings2,savedAt:new Date().toISOString()};
 const dataStr=JSON.stringify(data,null,2);
 const html=`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -18768,7 +18768,7 @@ function startVoice(){
       const best = result[0].transcript.trim();
       document.getElementById('voice-transcript').textContent = (currentLang==='ar'?'❓ لم أفهم: "':'❓ Not understood: "') + best + '"';
     }
-    if(_voiceActive) setTimeout(()=>{ try{ _voiceRecog.start(); }catch(ex){} }, 300);
+    if(_voiceActive && _voiceModalOpen) setTimeout(()=>{ try{ _voiceRecog.start(); }catch(ex){} }, 300);
   };
   _voiceRecog.onerror = (e)=>{
     document.getElementById('voice-status').textContent = (currentLang==='ar'?'⚠️ خطأ: ':'⚠️ Error: ') + e.error;
@@ -18776,15 +18776,19 @@ function startVoice(){
     document.getElementById('voice-fab').classList.remove('listening');
   };
   _voiceRecog.onend = ()=>{
-    if(_voiceActive) _voiceRecog.start();
+    if(_voiceActive && _voiceModalOpen) _voiceRecog.start();
+    else _voiceActive = false;
   };
   _voiceRecog.start();
 }
 
 function stopVoice(){
-  if(_voiceRecog){ _voiceRecog.stop(); _voiceRecog = null; }
+  _voiceModalOpen = false;
   _voiceActive = false;
+  if(_voiceRecog){ try{ _voiceRecog.stop(); }catch(ex){} _voiceRecog = null; }
   document.getElementById('voice-fab').classList.remove('listening');
+  const modal = document.getElementById('voice-modal');
+  if(modal) modal.classList.remove('on');
   document.getElementById('voice-status').textContent = currentLang==='ar' ? '🎤 اضغط للتحدث' : '🎤 Press to speak';
 }
 
@@ -18891,8 +18895,8 @@ async function _voiceToBookingAI(transcript){
         if(roomSel) roomSel.value = roomMatch[1];
       }
       if(guestName){
-        const nameField = document.getElementById('bm-name');
-        if(nameField) nameField.value = guestName;
+        const nameField = document.getElementById('g0-name') || document.getElementById('bm-name');
+        if(nameField){ nameField.value = guestName; if(typeof syncMainGuest==='function') syncMainGuest(); }
       }
     }, 200);
     const filled = [];
@@ -18944,8 +18948,14 @@ Rules:
     await new Promise(r=>setTimeout(r,250));
 
     let filled = [];
-    if(parsed.name){ const f=document.getElementById('bm-name'); if(f){f.value=parsed.name; filled.push(isAr?'الاسم':'Name');} }
-    if(parsed.phone){ const f=document.getElementById('bm-phone'); if(f){f.value=parsed.phone; filled.push(isAr?'الهاتف':'Phone');} }
+    if(parsed.name){
+      const f=document.getElementById('g0-name')||document.getElementById('bm-name');
+      if(f){f.value=parsed.name; filled.push(isAr?'الاسم':'Name'); if(typeof syncMainGuest==='function') syncMainGuest();}
+    }
+    if(parsed.phone){
+      const f=document.getElementById('g0-phone')||document.getElementById('bm-phone');
+      if(f){f.value=parsed.phone; filled.push(isAr?'الهاتف':'Phone');}
+    }
     if(parsed.room){ const f=document.getElementById('bm-room'); if(f){f.value=parsed.room; filled.push(isAr?'الغرفة':'Room');} }
     if(parsed.ci){ const f=document.getElementById('bm-ci'); if(f){f.value=parsed.ci; filled.push(isAr?'الوصول':'Check-in');} }
     if(parsed.co){ const f=document.getElementById('bm-co'); if(f){f.value=parsed.co; filled.push(isAr?'المغادرة':'Check-out');} }
@@ -19836,7 +19846,10 @@ function applyScanData(){
 <!-- ═══════ FEATURE 13: VOICE COMMANDS FAB ═══════ -->
 <button class="voice-fab" id="voice-fab" onclick="toggleVoice()" title="أوامر صوتية">🎤</button>
 <div class="voice-modal-wrap" id="voice-modal">
-  <div class="voice-status" id="voice-status"><span class="t" data-ar="🎤 اضغط للتحدث" data-en="🎤 Press to speak">🎤 Press to speak</span></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+    <div class="voice-status" id="voice-status" style="margin-bottom:0;"><span class="t" data-ar="🎤 اضغط للتحدث" data-en="🎤 Press to speak">🎤 Press to speak</span></div>
+    <button onclick="toggleVoice()" style="background:rgba(231,76,60,0.2);border:1px solid rgba(231,76,60,0.5);color:#e74c3c;border-radius:8px;padding:4px 10px;font-size:13px;cursor:pointer;font-weight:700;line-height:1;">⏹ <span class="t" data-ar="إيقاف" data-en="Stop">Stop</span></button>
+  </div>
   <div class="voice-transcript" id="voice-transcript"><span class="t" data-ar='قل أمراً أو احجز بصوتك مباشرة' data-en='Say a command or book by voice'>Say a command or book by voice</span></div>
   <div class="voice-cmds">
     <b style="color:var(--gold);"><span class="t" data-ar="🤖 حجز صوتي ذكي:" data-en="🤖 Smart Voice Booking:">🤖 Smart Voice Booking:</span></b><br>
