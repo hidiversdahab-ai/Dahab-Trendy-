@@ -6657,7 +6657,10 @@ return s+paidEGP;
 },0)+cancelRevEGP;
 const unpaidEGP=revEGP-collectedEGP;
 const expEGP=dbExpenses.reduce((s,e)=>s+e.egp,0);
-const netEGP=collectedEGP-expEGP;
+const restIncEGP=restaurantTx.filter(t=>t.type==="income").reduce((s,t)=>s+t.egp,0);
+const restExpEGP=restaurantTx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.egp,0);
+const restNetEGP=restIncEGP-restExpEGP;
+const netEGP=collectedEGP-expEGP+restNetEGP;
 const occupiedCount=[...new Set(active.map(b=>String(b.room)))].length;
 const activeRoomSet=new Set(active.map(b=>String(b.room)));
 const reservedRooms=[...new Set(reserved.map(b=>String(b.room)))];
@@ -6716,7 +6719,9 @@ mkFin("£"+netRevAfterCommEGP.toFixed(0), ar?"صافي الإيرادات (بع�
 mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
 mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid Balance","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
 mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
-mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح":"Net Profit","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",netEGP>=0?"#27ae60":"#e74c3c");
+(restIncEGP>0||restExpEGP>0?
+  mkFin("🍽️ £"+restNetEGP.toFixed(0), ar?"إيراد المطعم (صافي)":"Restaurant Net","rgba(201,168,76,0.08)","rgba(201,168,76,0.22)","#f39c12"):"")+
+mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",netEGP>=0?"#27ae60":"#e74c3c");
 
 // ── تفاصيل العمولات ──
 const commSec = document.getElementById("db-commission-section");
@@ -15477,18 +15482,27 @@ if(!list.length){tb.innerHTML="<tr><td colspan='9'><div class='empty'>لا تو�
 tb.innerHTML=[...list].reverse().map(t=>{
 const idx=restaurantTx.indexOf(t);
 const isInc=t.type==="income";
-return "<tr>"+
-"<td>"+fmtD(t.date)+"</td>"+
-"<td><span class='bdg "+(isInc?"bg-green":"bg-red")+"'>"+(isInc?"🟢 دخول":"🔴 خروج")+"</span></td>"+
-"<td style='font-weight:700;'>"+t.desc+"</td>"+
-"<td style='color:"+(isInc?"#4cda7a":"#e74c3c")+";font-weight:700;'>"+(isInc?"+":"−")+"£"+t.egp.toFixed(2)+"</td>"+
-"<td style='color:var(--muted);'>"+(isInc?"+":"−")+"$"+t.usd.toFixed(2)+"</td>"+
-"<td style='color:#a8d8a8;'>"+(isInc?"+":"−")+"€"+(t.eur||+(t.egp/eurRate).toFixed(2))+"</td>"+
-"<td style='color:var(--muted);'>"+t.method+"</td>"+
-"<td style='color:var(--muted);font-size:11px;'>"+(t.notes||"—")+"</td>"+
-"<td><button class='btn bb bsm' onclick='openRestM("+idx+")' style='margin-right:3px;'>✏️</button>"+
-"<button class='btn br bsm' onclick='delRest("+idx+")'>🗑</button></td>"+
-"</tr>";
+const amtColor=isInc?"#4cda7a":"#e74c3c";
+const sign=isInc?"+":"−";
+return "<tr><td colspan='9' style='padding:4px 0;border:none;'>" +
+"<div style='background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;'>" +
+"<div style='display:flex;align-items:center;gap:6px;'>" +
+  "<span class='bdg "+(isInc?"bg-green":"bg-red")+"' style='white-space:nowrap;flex-shrink:0;'>"+(isInc?"🟢 دخول":"🔴 خروج")+"</span>" +
+  "<span style='font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;'>"+t.desc+"</span>" +
+  "<span style='color:"+amtColor+";font-weight:700;font-size:15px;white-space:nowrap;flex-shrink:0;'>"+sign+"£"+t.egp.toFixed(2)+"</span>" +
+"</div>" +
+"<div style='display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;'>" +
+  "<div style='display:flex;align-items:center;gap:8px;flex-wrap:wrap;'>" +
+    "<span style='color:var(--muted);font-size:11px;'>📅 "+fmtD(t.date)+"</span>" +
+    (t.method?"<span style='color:var(--muted);font-size:11px;'>💳 "+t.method+"</span>":"")+
+    (t.notes?"<span style='color:var(--muted);font-size:11px;'>📝 "+t.notes+"</span>":"")+
+  "</div>" +
+  "<div style='display:flex;gap:5px;flex-shrink:0;'>" +
+    "<button class='btn bb bsm' onclick='openRestM("+idx+")'>✏️</button>" +
+    "<button class='btn br bsm' onclick='delRest("+idx+")'>🗑️</button>" +
+  "</div>" +
+"</div>" +
+"</div></td></tr>";
 }).join("");
 }
 function filterRest(type,btn){
@@ -22933,6 +22947,17 @@ async function doPreviewGuestPageFromModal(){
   setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
 
+function deletePOSOrder(orderId){
+  if(!confirm("🗑️ حذف هذا الطلب؟\nDelete this order?")) return;
+  const idx = restaurantTx.findIndex(t=>t.id===orderId);
+  if(idx===-1){ sNotify("⚠️","لم يتم العثور على الطلب","info",2500); return; }
+  restaurantTx.splice(idx,1);
+  sv("dta_rest", restaurantTx);
+  renderPOSTodayOrders();
+  renderRestaurant();
+  sNotify("🗑️","تم حذف الطلب","success",2500);
+}
+
 function renderPOSTodayOrders(){
   const el = document.getElementById("pos-today-orders");
   if(!el) return;
@@ -22943,10 +22968,11 @@ function renderPOSTodayOrders(){
   el.innerHTML = `<div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:8px;">إجمالي اليوم: £${totalToday.toFixed(0)} — ${orders.length} طلب</div>`+
   orders.map((t,i)=>`
     <div style="background:rgba(230,126,34,0.07);border:1px solid rgba(230,126,34,0.2);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:11px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
         <span style="font-weight:700;color:var(--gold);">£${t.egp.toFixed(0)}</span>
         <span style="color:var(--muted);font-size:10px;">${t.method}</span>
         ${t.room?`<span style="background:rgba(201,168,76,0.15);color:var(--gold);border-radius:4px;padding:1px 6px;font-size:9px;">غرفة ${t.room}</span>`:""}
+        <button onclick="deletePOSOrder('${t.id}')" style="margin-right:auto;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.35);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;flex-shrink:0;" title="حذف الطلب">🗑️</button>
       </div>
       <div style="color:var(--muted);margin-top:3px;font-size:10px;">${t.items?t.items.map(c=>c.emoji+""+c.name+"×"+c.qty).join(", "):t.desc}</div>
       ${t.notes?`<div style="color:var(--muted);font-size:9px;margin-top:2px;">📝 ${t.notes}</div>`:""}
@@ -23446,18 +23472,27 @@ renderRestaurant = function(){
   tb.innerHTML=[...list].reverse().map(t=>{
   const idx=restaurantTx.indexOf(t);
   const isInc=t.type==="income";
-  return "<tr>"+
-  "<td>"+fmtD(t.date)+"</td>"+
-  "<td><span class='bdg "+(isInc?"bg-green":"bg-red")+"'>"+(t.posOrder?"🧾 POS":isInc?"🟢 دخول":"🔴 خروج")+"</span>"+(t.room?"<br><span style='font-size:9px;color:var(--gold);'>غرفة "+t.room+"</span>":"")+"</td>"+
-  "<td style='font-weight:700;'>"+t.desc+"</td>"+
-  "<td style='color:"+(isInc?"#4cda7a":"#e74c3c")+";font-weight:700;'>"+(isInc?"+":"−")+"£"+t.egp.toFixed(2)+"</td>"+
-  "<td style='color:var(--muted);'>"+(isInc?"+":"−")+"$"+t.usd.toFixed(2)+"</td>"+
-  "<td style='color:#a8d8a8;'>"+(isInc?"+":"−")+"€"+(t.eur||+(t.egp/eurRate).toFixed(2))+"</td>"+
-  "<td style='color:var(--muted);'>"+t.method+"</td>"+
-  "<td style='color:var(--muted);font-size:11px;'>"+(t.notes||"—")+"</td>"+
-  "<td><button class='btn bb bsm' onclick='openRestM("+idx+")' style='margin-right:3px;'>✏️</button>"+
-  "<button class='btn br bsm' onclick='delRest("+idx+")'>🗑</button></td>"+
-  "</tr>";
+  const amtColor=isInc?"#4cda7a":"#e74c3c";
+  const sign=isInc?"+":"−";
+  const isPOS=!!t.posOrder;
+  return "<tr><td colspan='9' style='padding:4px 0;border:none;'>" +
+  "<div style='background:"+(isPOS?"rgba(230,126,34,0.06)":"rgba(255,255,255,0.04)")+";border:1px solid "+(isPOS?"rgba(230,126,34,0.25)":"rgba(255,255,255,0.08)")+";border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;'>" +
+  "<div style='display:flex;align-items:flex-start;gap:6px;'>" +
+    "<span class='bdg "+(isInc?"bg-green":"bg-red")+"' style='white-space:nowrap;flex-shrink:0;margin-top:2px;'>"+(isPOS?"🧾 POS":isInc?"🟢 دخول":"🔴 خروج")+"</span>" +
+    "<span style='font-weight:700;font-size:13px;flex:1;min-width:0;word-break:break-word;line-height:1.4;'>"+t.desc+"</span>" +
+    "<span style='color:"+amtColor+";font-weight:700;font-size:15px;white-space:nowrap;flex-shrink:0;'>"+sign+"£"+t.egp.toFixed(2)+"</span>" +
+  "</div>" +
+  "<div style='display:flex;align-items:center;gap:6px;flex-wrap:wrap;'>" +
+    "<span style='color:var(--muted);font-size:11px;'>📅 "+fmtD(t.date)+"</span>" +
+    (t.room?"<span style='color:var(--gold);font-size:11px;'>🏨 "+t.room+"</span>":"")+
+    (t.method?"<span style='color:var(--muted);font-size:11px;'>💳 "+t.method+"</span>":"")+
+    (t.notes?"<span style='color:var(--muted);font-size:11px;'>📝 "+t.notes+"</span>":"")+
+  "</div>" +
+  "<div style='display:flex;gap:6px;'>" +
+    (isPOS?"":"<button class='btn bb' style='flex:1;padding:8px;font-size:13px;' onclick='openRestM("+idx+")'>✏️ تعديل</button>")+
+    "<button class='btn br' style='flex:1;padding:8px;font-size:13px;font-weight:700;' onclick='delRest("+idx+")'>🗑️ حذف</button>" +
+  "</div>" +
+  "</div></td></tr>";
   }).join("");
 };
 
