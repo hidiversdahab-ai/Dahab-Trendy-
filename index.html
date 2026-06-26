@@ -12635,7 +12635,7 @@ async function downloadGrpInvoicePDF(){
     sNotify('⏳','جاري تحضير PDF...','info',2000);
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-    // Inject Arabic font fix then use document.write (works on GitHub Pages)
+    // Inject Arabic font fix — use Blob URL (avoids CSP block on GitHub Pages)
     const htmlFixed = html.replace('</head>', `
 <style>
 * { -webkit-print-color-adjust: exact !important; }
@@ -12647,12 +12647,15 @@ body, table, td, th, div, span, p {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 </head>`);
+    const blob = new Blob([htmlFixed], {type:'text/html;charset=utf-8'});
+    const blobUrl = URL.createObjectURL(blob);
     const iframe = document.createElement('iframe');
     iframe.style.cssText = "position:fixed;top:0;left:-900px;width:800px;height:1px;border:none;z-index:99999;opacity:0.01;pointer-events:none;";
+    iframe.src = blobUrl;
     document.body.appendChild(iframe);
+    await new Promise(r=>{ iframe.onload = r; setTimeout(r,3000); });
     const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    iframeDoc.open(); iframeDoc.write(htmlFixed); iframeDoc.close();
-    await new Promise(r=>setTimeout(r,1800));
+    await new Promise(r=>setTimeout(r,800));
     const fullH = iframeDoc.documentElement.scrollHeight || 1400;
     iframe.style.height = fullH + 'px';
     iframeDoc.body.style.margin = '0';
@@ -12664,6 +12667,7 @@ body, table, td, th, div, span, p {
       onclone: (doc) => { doc.documentElement.style.direction='rtl'; doc.body.style.margin='0'; }
     });
     document.body.removeChild(iframe);
+    URL.revokeObjectURL(blobUrl);
     const {jsPDF} = window.jspdf;
     const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
     const imgW=210, imgH=(canvas.height*imgW)/canvas.width, pageH=297;
