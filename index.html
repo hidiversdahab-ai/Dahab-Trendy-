@@ -22707,7 +22707,7 @@ function showPOSReceipt(tx){
       ${tx.customer?`<div style="font-size:11px;">👤 ${tx.customer}</div>`:""}
     </div>
     <div style="margin-bottom:8px;">
-      ${tx.items.map(c=>`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span>${c.emoji} ${c.name} ×${c.qty}</span><span style="font-weight:700;">£${(c.price*c.qty).toFixed(0)}</span></div>`).join("")}
+      ${tx.items.map(c=>{const _a=(c.name||"").trim(),_e=(c.nameEn||"").trim(),_d=_a||_e,_s=(_e&&_e.toLowerCase()!==_d.toLowerCase())?" / "+_e:"";return `<div style="display:flex;justify-content:space-between;padding:2px 0;"><span>${c.emoji} ${_d}${_s} ×${c.qty}</span><span style="font-weight:700;">£${(c.price*c.qty).toFixed(0)}</span></div>`;}).join("")}
     </div>
     <div style="border-top:1px dashed #ccc;padding-top:8px;">
       ${tx.disc>0?`<div style="display:flex;justify-content:space-between;color:#888;"><span>${en?'Subtotal':'المجموع'}</span><span>£${tx.subtotal.toFixed(0)}</span></div><div style="display:flex;justify-content:space-between;color:#e74c3c;"><span>${en?'Discount':'خصم'} ${tx.disc}%</span><span>−£${(tx.subtotal-tx.egp).toFixed(0)}</span></div>`:""}
@@ -22761,9 +22761,9 @@ function printRestaurantInvoice(){
   const subtotal = tx.subtotal || tx.egp;
   const discAmt = tx.disc > 0 ? (subtotal * tx.disc/100) : 0;
   const total = tx.egp;
-  const payMethod = tx.method==="كاش"||tx.method==="cash" ? "💵 نقداً" :
-                   tx.method==="card"||tx.method==="بطاقة" ? "💳 بطاقة بنكية" :
-                   tx.room ? `🏨 على حساب الغرفة ${tx.room}` : tx.method;
+  const payMethod = tx.method==="كاش"||tx.method==="cash" ? "💵 Cash / كاش" :
+                   tx.method==="card"||tx.method==="بطاقة" ? "💳 Card / بطاقة" :
+                   tx.method==="room" || tx.room ? `🏨 Room Charge / غرفة ${tx.room}` : tx.method;
 
   const html = `<!DOCTYPE html>
 <html dir="rtl" lang="ar">
@@ -22953,7 +22953,8 @@ function sendPOSReceiptWA(){
     lines.push(`Discount ${tx.disc}%: −£${(tx.subtotal-tx.egp).toFixed(0)}`);
   }
   lines.push(`*Total: £${tx.egp.toFixed(0)}*`);
-  lines.push(`💳 ${tx.method}`);
+  const _mWA=tx.method==="كاش"||tx.method==="cash"?"💵 Cash":tx.method==="card"||tx.method==="بطاقة"?"💳 Card":tx.method==="room"?"🏨 Room Charge":tx.method;
+  lines.push(`💳 ${_mWA}`);
   if(tx.notes) lines.push(`📝 ${tx.notes}`);
   lines.push("");
   lines.push("Thank you for your visit 🙏");
