@@ -12234,8 +12234,31 @@ function sendGrpWA(){
   const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy",phone:""};
   const d = getGrpData();
   if(!d.ci||!d.co){sNotify('⚠️','أدخل تواريخ الإقامة أولاً','warning',2000);return;}
-  const roomLines = grpRooms.map(r=>`  • ${r.qty}× ${r.type} — ${d.sym}${r.pricePerNight}/ليلة = ${d.sym}${(r.qty*r.pricePerNight*d.nights).toFixed(2)}`).join('\n');
-  const msg =
+  const en = (typeof isEn==='function')?isEn():false;
+  const roomLines = grpRooms.map(r=>`  • ${r.qty}× ${r.type} — ${d.sym}${r.pricePerNight}/${en?'night':'ليلة'} = ${d.sym}${(r.qty*r.pricePerNight*d.nights).toFixed(2)}`).join('\n');
+  const msg = en ?
+`🏨 *${prop.name} — Group Invoice*
+━━━━━━━━━━━━━━━━━━
+🏢 Company: *${d.company}*${d.contact?'\n👤 Contact: '+d.contact:''}${d.phone?'\n📞 '+d.phone:''}
+
+📅 Check-in: *${fmtD(d.ci)}*
+📅 Check-out: *${fmtD(d.co)}*
+🌙 Nights: *${d.nights}*
+👥 Guests (approx): *${d.totalGuests}*
+
+━━━━━━━━━━━━━━━━━━
+🏨 *Rooms:*
+${roomLines}
+
+💵 Rooms Total: ${d.sym}${d.roomsTotal.toFixed(2)}${d.commission>0?'\n🤝 Commission: −'+d.sym+d.commission.toFixed(2):''}
+━━━━━━━━━━━━━━━━━━
+💰 *Grand Total: ${d.sym}${d.grandTotal.toFixed(2)}*
+🏢 Paid by Company: ${d.sym}${d.paidCompany.toFixed(2)}
+👥 Paid by Guests: ${d.sym}${d.paidGuests.toFixed(2)}${d.deposit>0?'\n💎 Deposit: '+d.sym+d.deposit.toFixed(2)+' ('+d.depositMethod+')'+(d.depositNotes?' — '+d.depositNotes:''):''}
+${d.remaining>0?'⚠️ Balance Due: '+d.sym+d.remaining.toFixed(2):'✅ Fully Settled'}
+━━━━━━━━━━━━━━━━━━
+📞 ${prop.phone}`
+:
 `🏨 *${prop.name} — فاتورة جروب*
 ━━━━━━━━━━━━━━━━━━
 🏢 الشركة: *${d.company}*${d.contact?'\n👤 المسؤول: '+d.contact:''}${d.phone?'\n📞 '+d.phone:''}
@@ -12266,7 +12289,8 @@ function printGrpInvoice(){
   if(!d.ci||!d.co){sNotify('⚠️','أدخل تواريخ الإقامة أولاً','warning',2000);return;}
   const sym = d.sym;
   const invoiceNum = 'GRP-'+Date.now().toString().slice(-6);
-  const today = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
+  const en = (typeof isEn==='function')?isEn():false;
+  const today = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'})+'  /  '+new Date().toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric'});
 
   const roomRows = grpRooms.map((r,i)=>`
     <tr>
@@ -12278,8 +12302,8 @@ function printGrpInvoice(){
       <td style="text-align:right;font-weight:700;color:#1a1a2e;">${sym}${(r.qty*r.pricePerNight*d.nights).toFixed(2)}</td>
     </tr>`).join('');
 
-  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
-  <title>فاتورة جروب — ${d.company}</title>
+  const html = `<!DOCTYPE html><html dir="${en?'ltr':'rtl'}" lang="${en?'en':'ar'}"><head><meta charset="UTF-8">
+  <title>${en?'Group Invoice':'فاتورة جروب'} — ${d.company}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Arial',sans-serif;background:#f4f4f4;color:#222;padding:30px;}
@@ -12370,34 +12394,37 @@ function printGrpInvoice(){
 
       <!-- COMPANY INFO -->
       <div class="sec">
-        <div class="sec-title">🏢 بيانات الشركة</div>
+        <div class="sec-title">🏢 بيانات الشركة / Company Info</div>
         <div class="info-grid">
-          <div class="info-item"><div class="info-label">اسم الشركة</div><div class="info-val">${d.company}</div></div>
-          <div class="info-item"><div class="info-label">المسؤول</div><div class="info-val">${d.contact||'—'}</div></div>
-          <div class="info-item"><div class="info-label">التليفون</div><div class="info-val">${d.phone||'—'}</div></div>
-          <div class="info-item"><div class="info-label">البريد الإلكتروني</div><div class="info-val">${d.email||'—'}</div></div>
+          <div class="info-item"><div class="info-label">اسم الشركة / Company Name</div><div class="info-val">${d.company}</div></div>
+          <div class="info-item"><div class="info-label">المسؤول / Contact Person</div><div class="info-val">${d.contact||'—'}</div></div>
+          <div class="info-item"><div class="info-label">التليفون / Phone</div><div class="info-val">${d.phone||'—'}</div></div>
+          <div class="info-item"><div class="info-label">البريد الإلكتروني / Email</div><div class="info-val">${d.email||'—'}</div></div>
         </div>
       </div>
 
       <!-- STAY DETAILS -->
       <div class="sec">
-        <div class="sec-title">📅 تفاصيل الإقامة</div>
+        <div class="sec-title">📅 تفاصيل الإقامة / Stay Details</div>
         <div class="info-grid">
-          <div class="info-item"><div class="info-label">تاريخ الوصول</div><div class="info-val">🛬 ${fmtD(d.ci)}</div></div>
-          <div class="info-item"><div class="info-label">تاريخ المغادرة</div><div class="info-val">🛫 ${fmtD(d.co)}</div></div>
-          <div class="info-item"><div class="info-label">عدد الليالي</div><div class="info-val">🌙 ${d.nights} ليلة</div></div>
-          <div class="info-item"><div class="info-label">عدد الأفراد (تقريبي)</div><div class="info-val">👥 ${d.totalGuests} فرد</div></div>
+          <div class="info-item"><div class="info-label">تاريخ الوصول / Check-in</div><div class="info-val">🛬 ${fmtD(d.ci)}</div></div>
+          <div class="info-item"><div class="info-label">تاريخ المغادرة / Check-out</div><div class="info-val">🛫 ${fmtD(d.co)}</div></div>
+          <div class="info-item"><div class="info-label">عدد الليالي / Nights</div><div class="info-val">🌙 ${d.nights} ليلة / Night${d.nights>1?'s':''}</div></div>
+          <div class="info-item"><div class="info-label">عدد الأفراد / Guests (approx.)</div><div class="info-val">👥 ${d.totalGuests}</div></div>
         </div>
       </div>
 
       <!-- ROOMS TABLE -->
       <div class="sec">
-        <div class="sec-title">🛏 تفاصيل الغرف</div>
+        <div class="sec-title">🛏 تفاصيل الغرف / Room Details</div>
         <table>
           <thead><tr>
-            <th>#</th><th>نوع الغرفة</th><th style="text-align:center;">العدد</th>
-            <th style="text-align:center;">الليالي</th><th style="text-align:right;">سعر الليلة</th>
-            <th style="text-align:right;">الإجمالي</th>
+            <th>#</th>
+            <th>نوع الغرفة<br><small style="opacity:.7;font-weight:400;">Room Type</small></th>
+            <th style="text-align:center;">العدد<br><small style="opacity:.7;font-weight:400;">Qty</small></th>
+            <th style="text-align:center;">الليالي<br><small style="opacity:.7;font-weight:400;">Nights</small></th>
+            <th style="text-align:right;">سعر الليلة<br><small style="opacity:.7;font-weight:400;">Rate/Night</small></th>
+            <th style="text-align:right;">الإجمالي<br><small style="opacity:.7;font-weight:400;">Total</small></th>
           </tr></thead>
           <tbody>${roomRows}</tbody>
         </table>
@@ -12405,31 +12432,31 @@ function printGrpInvoice(){
 
       <!-- TOTALS -->
       <div class="sec">
-        <div class="sec-title">💰 الحساب</div>
+        <div class="sec-title">💰 الحساب / Summary</div>
         <div class="totals-wrap">
-          <div class="total-row sub"><span>💵 إجمالي الغرف</span><span>${sym}${d.roomsTotal.toFixed(2)}</span></div>
-          ${d.commission>0?`<div class="total-row comm"><span>🤝 كوميشن (${d.commType==='percent'?d.commVal+'%':sym+d.commVal})</span><span>− ${sym}${d.commission.toFixed(2)}</span></div>`:''}
-          <div class="total-row grand"><span>الإجمالي الكلي</span><span class="grand-val">${sym}${d.grandTotal.toFixed(2)}</span></div>
-          ${d.paidCompany>0?`<div class="total-row paid-row"><span>✅ مدفوع من الشركة</span><span>− ${sym}${d.paidCompany.toFixed(2)}</span></div>`:''}
-          ${d.paidGuests>0?`<div class="total-row paid-row"><span>✅ مدفوع من الضيوف</span><span>− ${sym}${d.paidGuests.toFixed(2)}</span></div>`:''}
-          ${d.deposit>0?`<div class="total-row" style="color:#2980b9;border-top:1px dashed rgba(52,152,219,0.4);margin-top:4px;padding-top:6px;"><span>💎 جدية الحجز${d.depositMethod?' · '+d.depositMethod:''}</span><span>${sym}${d.deposit.toFixed(2)}</span></div>`:''}
+          <div class="total-row sub"><span>💵 إجمالي الغرف / Rooms Total</span><span>${sym}${d.roomsTotal.toFixed(2)}</span></div>
+          ${d.commission>0?`<div class="total-row comm"><span>🤝 كوميشن / Commission (${d.commType==='percent'?d.commVal+'%':sym+d.commVal})</span><span>− ${sym}${d.commission.toFixed(2)}</span></div>`:''}
+          <div class="total-row grand"><span>الإجمالي الكلي / Grand Total</span><span class="grand-val">${sym}${d.grandTotal.toFixed(2)}</span></div>
+          ${d.paidCompany>0?`<div class="total-row paid-row"><span>✅ مدفوع من الشركة / Paid by Company</span><span>− ${sym}${d.paidCompany.toFixed(2)}</span></div>`:''}
+          ${d.paidGuests>0?`<div class="total-row paid-row"><span>✅ مدفوع من الضيوف / Paid by Guests</span><span>− ${sym}${d.paidGuests.toFixed(2)}</span></div>`:''}
+          ${d.deposit>0?`<div class="total-row" style="color:#2980b9;border-top:1px dashed rgba(52,152,219,0.4);margin-top:4px;padding-top:6px;"><span>💎 جدية الحجز / Deposit${d.depositMethod?' · '+d.depositMethod:''}</span><span>${sym}${d.deposit.toFixed(2)}</span></div>`:''}
           ${d.deposit>0&&d.depositNotes?`<div style="font-size:10px;color:#7ab8f5;text-align:right;margin-top:2px;padding-bottom:4px;">📝 ${d.depositNotes}</div>`:''}
           <div class="total-row ${d.remaining>0?'remaining':'settled'}">
-            <span>${d.remaining>0?'⚠️ المبلغ المتبقي':'✅ مسدد بالكامل'}</span>
+            <span>${d.remaining>0?'⚠️ المبلغ المتبقي / Remaining Balance':'✅ مسدد بالكامل / Fully Settled'}</span>
             <span>${d.remaining>0?sym+d.remaining.toFixed(2):'✅'}</span>
           </div>
         </div>
         <div style="text-align:right;margin-top:10px;">
           <span class="status-badge ${d.remaining<=0?'status-paid':d.paidCompany>0||d.paidGuests>0||d.deposit>0?'status-partial':'status-pending'}">
-            ${d.remaining<=0?'✅ مسدد بالكامل':d.paidCompany>0||d.paidGuests>0||d.deposit>0?'🔶 مدفوع جزئياً':'⏳ في الانتظار'}
+            ${d.remaining<=0?'✅ مسدد / Paid':d.paidCompany>0||d.paidGuests>0||d.deposit>0?'🔶 مدفوع جزئياً / Partially Paid':'⏳ في الانتظار / Pending'}
           </span>
         </div>
       </div>
 
       <!-- SIGNATURE -->
       <div class="sig-wrap">
-        <div class="sig-box">توقيع الشركة<br><br><br>_______________________<br>${d.company}</div>
-        <div class="sig-box">توقيع الفندق<br><br><br>_______________________<br>${prop.name}</div>
+        <div class="sig-box">توقيع الشركة / Company Signature<br><br><br>_______________________<br>${d.company}</div>
+        <div class="sig-box">توقيع الفندق / Hotel Signature<br><br><br>_______________________<br>${prop.name}</div>
       </div>
 
     </div><!-- end inv-body -->
@@ -12438,7 +12465,7 @@ function printGrpInvoice(){
     <div class="inv-footer">
       <span class="footer-gold">${prop.name}</span> &nbsp;·&nbsp; <span dir="ltr">${prop.phone||''}</span> &nbsp;·&nbsp; ${prop.email||''}<br>
       ${prop.address||''}<br>
-      <span style="font-size:10px;opacity:0.7;">شكراً لثقتكم بنا — هذه الفاتورة وثيقة رسمية معتمدة</span>
+      <span style="font-size:10px;opacity:0.7;">شكراً لثقتكم بنا / Thank you for choosing us — هذه الفاتورة وثيقة رسمية معتمدة / Official Invoice</span>
     </div>
 
   </div><!-- end page -->
@@ -12461,7 +12488,8 @@ async function downloadGrpInvoicePDF(){
   const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy",phone:"",address:"",email:""};
   const sym = d.sym;
   const invoiceNum = 'GRP-'+Date.now().toString().slice(-6);
-  const today = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
+  const en = (typeof isEn==='function')?isEn():false;
+  const today = new Date().toLocaleDateString(en?'en-GB':'ar-EG',{year:'numeric',month:'long',day:'numeric'});
   const roomRows = grpRooms.map((r,i)=>`
     <tr>
       <td>${i+1}</td>
@@ -12526,63 +12554,74 @@ async function downloadGrpInvoicePDF(){
       </div>
       <div class="inv-block">
         <div class="inv-badge">GROUP INVOICE</div>
-        <div class="inv-num">رقم: ${invoiceNum}</div>
+        <div class="inv-num">${en?'No:':'رقم:'} ${invoiceNum}</div>
         <div class="inv-date">📅 ${today}</div>
       </div>
     </div>
     <div class="gold-bar"></div>
     <div class="inv-body">
       <div class="sec">
-        <div class="sec-title">🏢 بيانات الشركة</div>
+        <div class="sec-title">🏢 بيانات الشركة / Company Info</div>
         <div class="info-grid">
-          <div class="info-item"><div class="info-label">اسم الشركة</div><div class="info-val">${d.company}</div></div>
-          <div class="info-item"><div class="info-label">المسؤول</div><div class="info-val">${d.contact||'—'}</div></div>
-          <div class="info-item"><div class="info-label">التليفون</div><div class="info-val">${d.phone||'—'}</div></div>
-          <div class="info-item"><div class="info-label">البريد الإلكتروني</div><div class="info-val">${d.email||'—'}</div></div>
+          <div class="info-item"><div class="info-label">اسم الشركة / Company Name</div><div class="info-val">${d.company}</div></div>
+          <div class="info-item"><div class="info-label">المسؤول / Contact Person</div><div class="info-val">${d.contact||'—'}</div></div>
+          <div class="info-item"><div class="info-label">التليفون / Phone</div><div class="info-val">${d.phone||'—'}</div></div>
+          <div class="info-item"><div class="info-label">البريد الإلكتروني / Email</div><div class="info-val">${d.email||'—'}</div></div>
         </div>
       </div>
       <div class="sec">
-        <div class="sec-title">📅 تفاصيل الإقامة</div>
+        <div class="sec-title">📅 تفاصيل الإقامة / Stay Details</div>
         <div class="info-grid">
-          <div class="info-item"><div class="info-label">تاريخ الوصول</div><div class="info-val">🛬 ${fmtD(d.ci)}</div></div>
-          <div class="info-item"><div class="info-label">تاريخ المغادرة</div><div class="info-val">🛫 ${fmtD(d.co)}</div></div>
-          <div class="info-item"><div class="info-label">عدد الليالي</div><div class="info-val">🌙 ${d.nights} ليلة</div></div>
-          <div class="info-item"><div class="info-label">عدد الأفراد</div><div class="info-val">👥 ${d.totalGuests} فرد</div></div>
+          <div class="info-item"><div class="info-label">تاريخ الوصول / Check-in</div><div class="info-val">🛬 ${fmtD(d.ci)}</div></div>
+          <div class="info-item"><div class="info-label">تاريخ المغادرة / Check-out</div><div class="info-val">🛫 ${fmtD(d.co)}</div></div>
+          <div class="info-item"><div class="info-label">عدد الليالي / Nights</div><div class="info-val">🌙 ${d.nights} ليلة / Night${d.nights>1?'s':''}</div></div>
+          <div class="info-item"><div class="info-label">عدد الأفراد / Guests (approx.)</div><div class="info-val">👥 ${d.totalGuests}</div></div>
         </div>
       </div>
       <div class="sec">
-        <div class="sec-title">🛏 تفاصيل الغرف</div>
+        <div class="sec-title">🛏 تفاصيل الغرف / Room Details</div>
         <table>
-          <thead><tr><th>#</th><th>نوع الغرفة</th><th style="text-align:center;">العدد</th><th style="text-align:center;">الليالي</th><th style="text-align:right;">سعر الليلة</th><th style="text-align:right;">الإجمالي</th></tr></thead>
+          <thead><tr>
+            <th>#</th>
+            <th>نوع الغرفة<br><small style="opacity:.7;font-weight:400;">Room Type</small></th>
+            <th style="text-align:center;">العدد<br><small style="opacity:.7;font-weight:400;">Qty</small></th>
+            <th style="text-align:center;">الليالي<br><small style="opacity:.7;font-weight:400;">Nights</small></th>
+            <th style="text-align:right;">سعر الليلة<br><small style="opacity:.7;font-weight:400;">Rate/Night</small></th>
+            <th style="text-align:right;">الإجمالي<br><small style="opacity:.7;font-weight:400;">Total</small></th>
+          </tr></thead>
           <tbody>${roomRows}</tbody>
         </table>
       </div>
       <div class="sec">
-        <div class="sec-title">💰 الحساب</div>
+        <div class="sec-title">💰 الحساب / Summary</div>
         <div class="totals-wrap">
-          <div class="total-row sub"><span>💵 إجمالي الغرف</span><span>${sym}${d.roomsTotal.toFixed(2)}</span></div>
-          ${d.commission>0?`<div class="total-row comm"><span>🤝 كوميشن (${d.commType==='percent'?d.commVal+'%':sym+d.commVal})</span><span>− ${sym}${d.commission.toFixed(2)}</span></div>`:''}
-          <div class="total-row grand"><span>الإجمالي الكلي</span><span class="grand-val">${sym}${d.grandTotal.toFixed(2)}</span></div>
-          ${d.paidCompany>0?`<div class="total-row paid-row"><span>✅ مدفوع من الشركة</span><span>− ${sym}${d.paidCompany.toFixed(2)}</span></div>`:''}
-          ${d.paidGuests>0?`<div class="total-row paid-row"><span>✅ مدفوع من الضيوف</span><span>− ${sym}${d.paidGuests.toFixed(2)}</span></div>`:''}
-          ${d.deposit>0?`<div class="total-row" style="color:#2980b9;border-top:1px dashed rgba(52,152,219,0.4);margin-top:4px;padding-top:6px;"><span>💎 جدية الحجز${d.depositMethod?' · '+d.depositMethod:''}</span><span>${sym}${d.deposit.toFixed(2)}</span></div>`:''}
-          <div class="total-row ${d.remaining>0?'remaining':'settled'}"><span>${d.remaining>0?'⚠️ المبلغ المتبقي':'✅ مسدد بالكامل'}</span><span>${d.remaining>0?sym+d.remaining.toFixed(2):'✅'}</span></div>
+          <div class="total-row sub"><span>💵 إجمالي الغرف / Rooms Total</span><span>${sym}${d.roomsTotal.toFixed(2)}</span></div>
+          ${d.commission>0?`<div class="total-row comm"><span>🤝 كوميشن / Commission (${d.commType==='percent'?d.commVal+'%':sym+d.commVal})</span><span>− ${sym}${d.commission.toFixed(2)}</span></div>`:''}
+          <div class="total-row grand"><span>الإجمالي الكلي / Grand Total</span><span class="grand-val">${sym}${d.grandTotal.toFixed(2)}</span></div>
+          ${d.paidCompany>0?`<div class="total-row paid-row"><span>✅ مدفوع من الشركة / Paid by Company</span><span>− ${sym}${d.paidCompany.toFixed(2)}</span></div>`:''}
+          ${d.paidGuests>0?`<div class="total-row paid-row"><span>✅ مدفوع من الضيوف / Paid by Guests</span><span>− ${sym}${d.paidGuests.toFixed(2)}</span></div>`:''}
+          ${d.deposit>0?`<div class="total-row" style="color:#2980b9;border-top:1px dashed rgba(52,152,219,0.4);margin-top:4px;padding-top:6px;"><span>💎 جدية الحجز / Deposit${d.depositMethod?' · '+d.depositMethod:''}</span><span>${sym}${d.deposit.toFixed(2)}</span></div>`:''}
+          ${d.deposit>0&&d.depositNotes?`<div style="font-size:10px;color:#7ab8f5;text-align:right;margin-top:2px;padding-bottom:4px;">📝 ${d.depositNotes}</div>`:''}
+          <div class="total-row ${d.remaining>0?'remaining':'settled'}">
+            <span>${d.remaining>0?'⚠️ المبلغ المتبقي / Remaining Balance':'✅ مسدد بالكامل / Fully Settled'}</span>
+            <span>${d.remaining>0?sym+d.remaining.toFixed(2):'✅'}</span>
+          </div>
         </div>
         <div style="text-align:right;margin-top:10px;">
           <span class="status-badge ${d.remaining<=0?'status-paid':d.paidCompany>0||d.paidGuests>0||d.deposit>0?'status-partial':'status-pending'}">
-            ${d.remaining<=0?'✅ مسدد بالكامل':d.paidCompany>0||d.paidGuests>0||d.deposit>0?'🔶 مدفوع جزئياً':'⏳ في الانتظار'}
+            ${d.remaining<=0?'✅ مسدد / Paid':d.paidCompany>0||d.paidGuests>0||d.deposit>0?'🔶 مدفوع جزئياً / Partially Paid':'⏳ في الانتظار / Pending'}
           </span>
         </div>
       </div>
       <div class="sig-wrap">
-        <div class="sig-box">توقيع الشركة<br><br><br>_______________________<br>${d.company}</div>
-        <div class="sig-box">توقيع الفندق<br><br><br>_______________________<br>${prop.name}</div>
+        <div class="sig-box">توقيع الشركة / Company Signature<br><br><br>_______________________<br>${d.company}</div>
+        <div class="sig-box">توقيع الفندق / Hotel Signature<br><br><br>_______________________<br>${prop.name}</div>
       </div>
     </div>
     <div class="inv-footer">
       <span class="footer-gold">${prop.name}</span> &nbsp;·&nbsp; <span dir="ltr">${prop.phone||''}</span> &nbsp;·&nbsp; ${prop.email||''}<br>
       ${prop.address||''}<br>
-      <span style="font-size:10px;opacity:0.7;">شكراً لثقتكم بنا — هذه الفاتورة وثيقة رسمية معتمدة</span>
+      <span style="font-size:10px;opacity:0.7;">شكراً لثقتكم بنا / Thank you for choosing us — هذه الفاتورة وثيقة رسمية معتمدة / Official Invoice</span>
     </div>
   </div></body></html>`;
 
@@ -12596,13 +12635,26 @@ async function downloadGrpInvoicePDF(){
     sNotify('⏳','جاري تحضير PDF...','info',2000);
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = "position:fixed;top:0;left:50%;transform:translateX(-50%);width:800px;background:#fff;z-index:-9999;";
-    wrapper.innerHTML = html.replace(/<!DOCTYPE.*?<body>/s,'').replace(/<\/body>.*$/s,'');
-    document.body.appendChild(wrapper);
-    await new Promise(r=>setTimeout(r,400));
-    const canvas = await html2canvas(wrapper, {scale:2, useCORS:true, backgroundColor:'#ffffff', logging:false, width:800});
-    document.body.removeChild(wrapper);
+    // Use blob URL iframe for correct Arabic/RTL rendering
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const blobUrl = URL.createObjectURL(blob);
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = "position:fixed;top:0;left:-900px;width:800px;height:1px;border:none;z-index:99999;opacity:0.01;";
+    document.body.appendChild(iframe);
+    await new Promise((res,rej)=>{ iframe.onload=res; iframe.onerror=rej; iframe.src=blobUrl; });
+    await new Promise(r=>setTimeout(r,1000));
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    const fullH = iframeDoc.documentElement.scrollHeight;
+    iframe.style.height = fullH + 'px';
+    await new Promise(r=>setTimeout(r,300));
+    iframeDoc.body.style.margin='0';
+    const canvas = await html2canvas(iframeDoc.documentElement, {
+      scale:2, useCORS:true, allowTaint:true, backgroundColor:'#ffffff',
+      logging:false, width:800, windowWidth:800,
+      scrollX:0, scrollY:0, height: fullH
+    });
+    document.body.removeChild(iframe);
+    URL.revokeObjectURL(blobUrl);
     const {jsPDF} = window.jspdf;
     const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
     const imgW=210, imgH=(canvas.height*imgW)/canvas.width, pageH=297;
