@@ -12625,51 +12625,32 @@ async function downloadGrpInvoicePDF(){
     </div>
   </div></body></html>`;
 
-  const loadScript = (src) => new Promise((res,rej)=>{
-    if(document.querySelector('script[src="'+src+'"]')){ res(); return; }
-    const s = document.createElement('script');
-    s.src = src; s.onload = res; s.onerror = rej;
-    document.head.appendChild(s);
-  });
   try{
-    sNotify('⏳','جاري تحضير PDF...','info',2000);
-    // Open Blob URL in new window → user prints/saves as PDF (RTL-safe, no html2canvas issues)
+    sNotify('⏳','جاري تحضير الفاتورة...','info',1500);
     const htmlFixed = html.replace('</head>', `
 <style>
 * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 body, table, td, th, div, span, p {
   font-family: 'Cairo', 'Amiri', 'Segoe UI', Tahoma, Arial, sans-serif !important;
-  -webkit-font-smoothing: antialiased;
 }
-@page { size: A4; margin: 0; }
-@media print {
-  body { padding: 0 !important; }
-  .page { max-width: 100% !important; }
-}
+@page { size: A4; margin: 10mm; }
+@media print { body { padding: 0 !important; } .page { max-width: 100% !important; } }
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 </head>`);
+    const fname = 'GroupInvoice_'+d.company.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'_').substring(0,25)+'_'+new Date().toISOString().split('T')[0]+'.html';
     const blob = new Blob([htmlFixed], {type:'text/html;charset=utf-8'});
-    const blobUrl = URL.createObjectURL(blob);
-    const w = window.open(blobUrl, '_blank');
-    if(w){
-      sNotify('✅','افتحت نافذة الفاتورة — اختر «حفظ كـ PDF» من قائمة الطباعة','success',4000);
-      setTimeout(()=>URL.revokeObjectURL(blobUrl), 60000);
-    } else {
-      URL.revokeObjectURL(blobUrl);
-      throw new Error('popup_blocked');
-    }
-  }catch(e){
-    console.error(e);
-    // Fallback: HTML download
-    const blob = new Blob([html],{type:'text/html;charset=utf-8'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'GroupInvoice_'+d.company+'_'+new Date().toISOString().split('T')[0]+'.html';
+    a.download = fname;
+    document.body.appendChild(a);
     a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href),10000);
-    sNotify('📄','تم تحميل الفاتورة كـ HTML','info',3000);
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(a.href), 10000);
+    sNotify('✅','تم تحميل الفاتورة — افتحها واطبعها كـ PDF','success',4000);
+  }catch(e){
+    console.error(e);
+    sNotify('❌','حدث خطأ أثناء التحميل','error',3000);
   }
 }
 
