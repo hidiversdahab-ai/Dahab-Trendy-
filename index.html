@@ -5873,6 +5873,29 @@ function LSS(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}cat
   return false;
 }}
 let bookings   = LS("dta_bk",[]);
+// ── migration: grp bookings قديمة كانت بتحفظ total = gross (قبل الكوميشن)
+// دلوقتي total = net (بعد الكوميشن) — نصحح تلقائيًا
+(function migrateGrpNetTotal(){
+  if(localStorage.getItem('_grp_net_migrated_v1')) return;
+  let changed = false;
+  bookings = bookings.map(b=>{
+    if((b.commissionAmt||0)>0 && b.groupId){
+      // القديم: total = gross, الجديد: total = net
+      // نتحقق: لو total > commissionAmt والفرق بيعمل sense
+      const expectedNet = (b.total||0) - (b.commissionAmt||0);
+      if(expectedNet > 0 && expectedNet < b.total){
+        changed = true;
+        return {...b, total: expectedNet};
+      }
+    }
+    return b;
+  });
+  if(changed){
+    LSS("dta_bk", bookings);
+    console.log('[Migration] grp bookings total → net done');
+  }
+  localStorage.setItem('_grp_net_migrated_v1','1');
+})();
 let prices     = LS("dta_pr",JSON.parse(JSON.stringify(DEF_PRICES)));
 let duPrices   = LS("dta_du",JSON.parse(JSON.stringify(DEF_DU_PRICES)));
 // roomPhotos: { type: [url1, url2, ...] } — متعددة صور لكل نوع غرفة
@@ -6667,8 +6690,8 @@ const reserved=dbBookings.filter(b=>b.ci>td&&b.status!=="Cancelled"&&b.status!==
 const reservedStandby=dbBookings.filter(b=>b.ci>td&&b.status==="Standby");
 const ciTd=dbBookings.filter(b=>b.ci===td&&b.status!=="Cancelled");
 const coTd=dbBookings.filter(b=>b.co===td&&b.status!=="Cancelled"&&!b.coConfirmed);
-// إيرادات الحجوزات العادية
-const revEGP_normal=dbBookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
+// إيرادات الحجوزات العادية (الإجمالي قبل الكوميشن = total + commissionAmt لأن total هو الصافي)
+const revEGP_normal=dbBookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{ const gross=(b.total||0)+(b.commissionAmt||0); return s+(b.cur==="USD"?gross*exRate:b.cur==="EUR"?gross*eurRate:gross); },0);
 // إيرادات خصومات الإلغاء (isDeduction)
 const cancelRevEGP=dbBookings.filter(b=>b.status==="Cancelled").reduce((s,b)=>{
   const ded=calcDeductions(b);
@@ -13182,11 +13205,18 @@ function saveGrpBooking(){
   if(!d.ci||!d.co||!d.company){sNotify('⚠️','أدخل بيانات الشركة والتواريخ','warning',2000);return;}
   const grpId = 'GRP-'+Date.now().toString().slice(-6);
   let added = 0;
-  const totalRoomsCount = grpRooms.filter(r=>r.roomNum).length;
-  const commPerRoom = totalRoomsCount > 0 ? d.commission / totalRoomsCount : 0;
+  const totalRoomsBase = grpRooms.filter(r=>r.roomNum).reduce((s,r)=>s+(r.pricePerNight*d.nights),0);
   grpRooms.forEach(r=>{
     if(!r.roomNum){ return; }
     const roomBase = r.pricePerNight * d.nights;
+    // حساب نصيب الغرفة من الكوميشن بالتناسب
+    let commForRoom = 0;
+    if(d.commType==='percent'){
+      commForRoom = roomBase * d.commVal / 100;
+    } else if(d.commType==='fixed' && totalRoomsBase>0){
+      commForRoom = d.commission * (roomBase / totalRoomsBase);
+    }
+    const roomNet = roomBase - commForRoom;
     const info = roomTypes['room_'+r.roomNum] || {type: r.type};
     const bk={
       id:Date.now()+Math.random(),
@@ -13198,8 +13228,8 @@ function saveGrpBooking(){
       co:d.co,
       adults:getRoomCapacity(info.type, r.roomNum),
       children:0,
-      total: roomBase,
-      commissionAmt: commPerRoom,
+      total: roomNet,
+      commissionAmt: commForRoom,
       commissionPct: d.commType==='percent' ? d.commVal : 0,
       commissionType: d.commType,
       paid:0,
@@ -16398,7 +16428,7 @@ ROOMS.forEach(room=>{
 const occPct=Math.round(occupiedSlots/totalSlots*100);
 // Month revenue
 const monthRev=bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(monthStr))
-  .reduce((s,b)=>s+(b.cur==="USD"?b.total*(exRate||50):b.cur==="EUR"?b.total*(eurRate||55):b.total),0);
+  .reduce((s,b)=>{ const g=(b.total||0)+(b.commissionAmt||0); return s+(b.cur==="USD"?g*(exRate||50):b.cur==="EUR"?g*(eurRate||55):g); },0);
 // Update stats bar if exists
 const statsBar=document.getElementById("cal-stats-bar");
 if(statsBar){
@@ -16407,7 +16437,7 @@ if(statsBar){
 // Finance Cards (same as Dashboard)
 const calFinEl=document.getElementById("cal-finance");
 if(calFinEl){
-  const calRevEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>s+(b.cur==="USD"?b.total*(exRate||50):b.cur==="EUR"?b.total*(eurRate||55):b.total),0);
+  const calRevEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{ const g=(b.total||0)+(b.commissionAmt||0); return s+(b.cur==="USD"?g*(exRate||50):b.cur==="EUR"?g*(eurRate||55):g); },0);
   const calCommEGP=bookings.filter(b=>b.status!=="Cancelled"&&(b.commissionAmt||0)>0).reduce((s,b)=>{
     return s+(b.cur==="USD"?(b.commissionAmt*(exRate||50)):b.cur==="EUR"?(b.commissionAmt*(eurRate||55)):(b.commissionAmt||0));
   },0);
