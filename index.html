@@ -6032,7 +6032,7 @@ function genNo(){const d=new Date();return "DTA-"+d.getFullYear()+pad(d.getMonth
 function genEId(){return "EX-"+Date.now();}
 function pad(n){return String(n).padStart(2,"0");}
 function toDay(){return new Date().toISOString().split("T")[0];}
-function fmtD(s){if(!s)return"—";return new Date(s).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});}
+function fmtD(s){if(!s)return"—";const dt=new Date(s);const d=String(dt.getDate()).padStart(2,"0");const m=String(dt.getMonth()+1).padStart(2,"0");return d+"/"+m+"/"+dt.getFullYear();}
 function nts(a,b){if(!a||!b)return 0;return Math.max(0,Math.round((new Date(b)-new Date(a))/86400000));}
 // ══ نظام التاريخ الهجري (Hijri Calendar Utilities) ══
 const HIJRI_MONTHS_AR=['محرم','صفر','ربيع الأول','ربيع الآخر','جمادى الأولى','جمادى الآخرة','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
@@ -12489,7 +12489,7 @@ async function downloadGrpInvoicePDF(){
   const sym = d.sym;
   const invoiceNum = 'GRP-'+Date.now().toString().slice(-6);
   const en = (typeof isEn==='function')?isEn():false;
-  const today = new Date().toLocaleDateString(en?'en-GB':'ar-EG',{year:'numeric',month:'long',day:'numeric'});
+  const _td=new Date();const today=String(_td.getDate()).padStart(2,'0')+'/'+String(_td.getMonth()+1).padStart(2,'0')+'/'+_td.getFullYear();
   const roomRows = grpRooms.map((r,i)=>`
     <tr>
       <td>${i+1}</td>
