@@ -5896,6 +5896,29 @@ let bookings   = LS("dta_bk",[]);
   }
   localStorage.setItem('_grp_net_migrated_v1','1');
 })();
+
+// ── migration: individual bookings قديمة كانت بتحفظ total = gross (قبل الكوميشن)
+// دلوقتي total = net (بعد الكوميشن) — نصحح تلقائيًا
+(function migrateIndivNetTotal(){
+  if(localStorage.getItem('_indiv_net_migrated_v1')) return;
+  let changed = false;
+  bookings = bookings.map(b=>{
+    if((b.commissionAmt||0)>0 && !b.groupId){
+      const expectedNet = (b.total||0) - (b.commissionAmt||0);
+      if(expectedNet > 0 && expectedNet < b.total){
+        changed = true;
+        return {...b, total: expectedNet};
+      }
+    }
+    return b;
+  });
+  if(changed){
+    LSS("dta_bk", bookings);
+    console.log('[Migration] individual bookings total → net done');
+  }
+  localStorage.setItem('_indiv_net_migrated_v1','1');
+})();
+
 let prices     = LS("dta_pr",JSON.parse(JSON.stringify(DEF_PRICES)));
 let duPrices   = LS("dta_du",JSON.parse(JSON.stringify(DEF_DU_PRICES)));
 // roomPhotos: { type: [url1, url2, ...] } — متعددة صور لكل نوع غرفة
@@ -6690,8 +6713,8 @@ const reserved=dbBookings.filter(b=>b.ci>td&&b.status!=="Cancelled"&&b.status!==
 const reservedStandby=dbBookings.filter(b=>b.ci>td&&b.status==="Standby");
 const ciTd=dbBookings.filter(b=>b.ci===td&&b.status!=="Cancelled");
 const coTd=dbBookings.filter(b=>b.co===td&&b.status!=="Cancelled"&&!b.coConfirmed);
-// إيرادات الحجوزات العادية (الإجمالي قبل الكوميشن = total + commissionAmt لأن total هو الصافي)
-const revEGP_normal=dbBookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{ const gross=(b.total||0)+(b.commissionAmt||0); return s+(b.cur==="USD"?gross*exRate:b.cur==="EUR"?gross*eurRate:gross); },0);
+// إيرادات الحجوزات العادية (total = الصافي بعد الكوميشن)
+const revEGP_normal=dbBookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{ const net=(b.total||0); return s+(b.cur==="USD"?net*exRate:b.cur==="EUR"?net*eurRate:net); },0);
 // إيرادات خصومات الإلغاء (isDeduction)
 const cancelRevEGP=dbBookings.filter(b=>b.status==="Cancelled").reduce((s,b)=>{
   const ded=calcDeductions(b);
@@ -6766,10 +6789,9 @@ mkStat(reservedCount, ar?"محجوزة":"Reserved")+
 mkStat(Math.max(0,availableCount), ar?"متاحة":"Available")+
 mkStat(ciTd.length, ar?"وصول اليوم":"Check-ins Today");
 document.getElementById("db-finance").innerHTML=
-mkFin("£"+revEGP.toFixed(0), ar?"إجمالي الإيرادات":"Total Revenue","rgba(201,168,76,0.1)","rgba(201,168,76,0.25)","var(--gold)")+
+mkFin("£"+revEGP.toFixed(0), ar?"صافي الإيرادات":"Net Revenue","rgba(201,168,76,0.1)","rgba(201,168,76,0.25)","var(--gold)")+
 (cancelRevEGP>0?mkFin("↩️ £"+cancelRevEGP.toFixed(0), ar?"رسوم الإلغاء":"Cancellation Fees","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c"):"")+
-(totalCommEGP_db>0?mkFin("−£"+totalCommEGP_db.toFixed(0), ar?"عمولات الشركات":"Agency Commissions","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c")+
-mkFin("£"+netRevAfterCommEGP.toFixed(0), ar?"صافي الإيرادات (بعد العمولة)":"Net Revenue (After Commission)","rgba(155,89,182,0.1)","rgba(155,89,182,0.3)","#c39bd3"):"")+
+(totalCommEGP_db>0?mkFin("−£"+totalCommEGP_db.toFixed(0), ar?"عمولات الشركات":"Agency Commissions","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c"):"")+
 mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
 mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid Balance","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
 mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
@@ -6881,7 +6903,7 @@ if(commSec){
       const pct = ag.commPct>0 ? ag.commPct+"%" : ((ag.grossEGP>0?(ag.commEGP/ag.grossEGP*100).toFixed(1):0)+"%");
       const bkList = ag.bookings.map(b=>`
         <tr style="font-size:11px;border-bottom:1px solid rgba(255,255,255,0.04);">
-          <td style="padding:4px 8px;color:var(--muted);">غرفة ${b.room}</td>
+          <td style="padding:4px 8px;color:var(--muted);">${ar?'غرفة':'Room'} ${b.room}</td>
           <td style="padding:4px 8px;">${b.name}</td>
           <td style="padding:4px 8px;color:var(--muted);">${b.ci} ← ${b.co}</td>
           <td style="padding:4px 8px;text-align:right;">£${(b.cur==="USD"?(b.total+b.commissionAmt)*exRate:b.cur==="EUR"?(b.total+b.commissionAmt)*eurRate:(b.total+(b.commissionAmt||0))).toFixed(0)}</td>
@@ -6894,20 +6916,20 @@ if(commSec){
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 14px;background:rgba(230,126,34,0.07);cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:13px;font-weight:700;color:#e67e22;">🏢 ${ag.name}</span>
-            <span style="font-size:11px;color:var(--muted);">${ag.bookings.length} حجز</span>
-            <span style="font-size:11px;background:rgba(230,126,34,0.15);color:#e67e22;padding:2px 7px;border-radius:5px;font-weight:700;">${pct} كوميشن</span>
+            <span style="font-size:11px;color:var(--muted);">${ag.bookings.length} ${ar?'حجز':'booking(s)'}</span>
+            <span style="font-size:11px;background:rgba(230,126,34,0.15);color:#e67e22;padding:2px 7px;border-radius:5px;font-weight:700;">${pct} ${ar?'كوميشن':'commission'}</span>
           </div>
           <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
             <div style="text-align:center;">
-              <div style="font-size:11px;color:var(--muted);">إجمالي</div>
+              <div style="font-size:11px;color:var(--muted);">${ar?'إجمالي':'Gross'}</div>
               <div style="font-size:13px;font-weight:700;color:var(--text);">£${ag.grossEGP.toFixed(0)}</div>
             </div>
             <div style="text-align:center;">
-              <div style="font-size:11px;color:var(--muted);">الكوميشن</div>
+              <div style="font-size:11px;color:var(--muted);">${ar?'الكوميشن':'Commission'}</div>
               <div style="font-size:13px;font-weight:700;color:#e67e22;">−£${ag.commEGP.toFixed(0)}</div>
             </div>
             <div style="text-align:center;">
-              <div style="font-size:11px;color:var(--muted);">الصافي</div>
+              <div style="font-size:11px;color:var(--muted);">${ar?'الصافي':'Net'}</div>
               <div style="font-size:14px;font-weight:700;color:#2ecc71;">£${ag.netEGP.toFixed(0)}</div>
             </div>
             <span style="font-size:16px;color:var(--muted);">▾</span>
@@ -6919,18 +6941,18 @@ if(commSec){
           <table style="width:100%;border-collapse:collapse;font-size:12px;">
             <thead>
               <tr style="background:rgba(255,255,255,0.03);">
-                <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:10px;">غرفة</th>
-                <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:10px;">الضيف</th>
-                <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:10px;">الفترة</th>
-                <th style="padding:5px 8px;text-align:right;color:var(--gold);font-size:10px;">إجمالي</th>
-                <th style="padding:5px 8px;text-align:right;color:#e67e22;font-size:10px;">كوميشن</th>
-                <th style="padding:5px 8px;text-align:right;color:#2ecc71;font-size:10px;">صافي</th>
+                <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:10px;">${ar?'غرفة':'Room'}</th>
+                <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:10px;">${ar?'الضيف':'Guest'}</th>
+                <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:10px;">${ar?'الفترة':'Period'}</th>
+                <th style="padding:5px 8px;text-align:right;color:var(--gold);font-size:10px;">${ar?'إجمالي':'Gross'}</th>
+                <th style="padding:5px 8px;text-align:right;color:#e67e22;font-size:10px;">${ar?'كوميشن':'Comm.'}</th>
+                <th style="padding:5px 8px;text-align:right;color:#2ecc71;font-size:10px;">${ar?'صافي':'Net'}</th>
               </tr>
             </thead>
             <tbody>${bkList}</tbody>
             <tfoot>
               <tr style="background:rgba(255,255,255,0.04);font-weight:700;">
-                <td colspan="3" style="padding:6px 8px;font-size:11px;color:var(--muted);">الإجمالي</td>
+                <td colspan="3" style="padding:6px 8px;font-size:11px;color:var(--muted);">${ar?'الإجمالي':'Total'}</td>
                 <td style="padding:6px 8px;text-align:right;">£${ag.grossEGP.toFixed(0)}</td>
                 <td style="padding:6px 8px;text-align:right;color:#e67e22;">−£${ag.commEGP.toFixed(0)}</td>
                 <td style="padding:6px 8px;text-align:right;color:#2ecc71;">£${ag.netEGP.toFixed(0)}</td>
@@ -6944,15 +6966,15 @@ if(commSec){
 
     commSec.innerHTML = `
     <div class="card" style="border-color:rgba(230,126,34,0.3);">
-      <div class="ctitle" style="color:#e67e22;">🤝 تفاصيل العمولات — ${agencies.length} شركة / وكالة
-        <span style="float:left;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0;">اضغط على الشركة للتفاصيل ▾</span>
+      <div class="ctitle" style="color:#e67e22;">🤝 ${ar?'تفاصيل العمولات':'Commission Details'} — ${agencies.length} ${ar?'شركة / وكالة':'companies / agencies'}
+        <span style="float:left;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0;">${ar?'اضغط على الشركة للتفاصيل':'Tap for details'} ▾</span>
       </div>
       <!-- بار ملخص سريع -->
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
-        ${mkFin("£"+totalCommEGP_db.toFixed(0),"إجمالي العمولات المخصومة","rgba(230,126,34,0.08)","rgba(230,126,34,0.25)","#e67e22")}
-        ${mkFin("£"+revEGP.toFixed(0),"إجمالي الإيرادات","rgba(201,168,76,0.08)","rgba(201,168,76,0.25)","var(--gold)")}
-        ${mkFin("£"+netRevAfterCommEGP.toFixed(0),"صافي الإيرادات","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#2ecc71")}
-        ${mkFin(((totalCommEGP_db/revEGP)*100).toFixed(1)+"%","نسبة العمولة الكلية","rgba(155,89,182,0.08)","rgba(155,89,182,0.25)","#c39bd3")}
+        ${mkFin("£"+totalCommEGP_db.toFixed(0),ar?"إجمالي العمولات المخصومة":"Total Commissions","rgba(230,126,34,0.08)","rgba(230,126,34,0.25)","#e67e22")}
+        ${mkFin("£"+revEGP.toFixed(0),ar?"إجمالي الإيرادات":"Total Revenue","rgba(201,168,76,0.08)","rgba(201,168,76,0.25)","var(--gold)")}
+        ${mkFin("£"+netRevAfterCommEGP.toFixed(0),ar?"صافي الإيرادات":"Net Revenue","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#2ecc71")}
+        ${mkFin(((totalCommEGP_db/revEGP)*100).toFixed(1)+"%",ar?"نسبة العمولة الكلية":"Overall Commission %","rgba(155,89,182,0.08)","rgba(155,89,182,0.25)","#c39bd3")}
       </div>
       <!-- تفاصيل كل شركة -->
       ${rows}
@@ -7930,7 +7952,9 @@ if(prepaidInput > existPaidSum){
 }
 }
 const paidSum=existingPayments.reduce((s,pm)=>s+pm.amount,0);
-const total=isDU?rate:nightTotal;
+const grossTotal=isDU?rate:nightTotal;
+const commAmt=parseFloat(document.getElementById("bm-commission-amount").value)||0;
+const total=commAmt>0 ? grossTotal-commAmt : grossTotal;
 // Determine status based on payments
 let payStatus=status;
 if(existingPayments.length>0){
@@ -7958,7 +7982,7 @@ room,
 type,ci,co,cur,
 customPrice:customP,
 nightPrices:(!isDU&&nightPrices.length===n&&n>0)?[...nightPrices]:[],
-total:isDU?rate:nightTotal,
+total:total,
 status:payStatus,
 method:document.getElementById("bm-method").value,
 prepay:paidSum,
@@ -16428,7 +16452,7 @@ ROOMS.forEach(room=>{
 const occPct=Math.round(occupiedSlots/totalSlots*100);
 // Month revenue
 const monthRev=bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(monthStr))
-  .reduce((s,b)=>{ const g=(b.total||0)+(b.commissionAmt||0); return s+(b.cur==="USD"?g*(exRate||50):b.cur==="EUR"?g*(eurRate||55):g); },0);
+  .reduce((s,b)=>{ const net=(b.total||0); return s+(b.cur==="USD"?net*(exRate||50):b.cur==="EUR"?net*(eurRate||55):net); },0);
 // Update stats bar if exists
 const statsBar=document.getElementById("cal-stats-bar");
 if(statsBar){
@@ -16437,7 +16461,7 @@ if(statsBar){
 // Finance Cards (same as Dashboard)
 const calFinEl=document.getElementById("cal-finance");
 if(calFinEl){
-  const calRevEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{ const g=(b.total||0)+(b.commissionAmt||0); return s+(b.cur==="USD"?g*(exRate||50):b.cur==="EUR"?g*(eurRate||55):g); },0);
+  const calRevEGP=bookings.filter(b=>b.status!=="Cancelled").reduce((s,b)=>{ const net=(b.total||0); return s+(b.cur==="USD"?net*(exRate||50):b.cur==="EUR"?net*(eurRate||55):net); },0);
   const calCommEGP=bookings.filter(b=>b.status!=="Cancelled"&&(b.commissionAmt||0)>0).reduce((s,b)=>{
     return s+(b.cur==="USD"?(b.commissionAmt*(exRate||50)):b.cur==="EUR"?(b.commissionAmt*(eurRate||55)):(b.commissionAmt||0));
   },0);
