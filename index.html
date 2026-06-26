@@ -22932,31 +22932,31 @@ function sendPOSReceiptWA(){
   if(!lastPOSOrder) return;
   const tx = lastPOSOrder;
   const prop = (typeof PROP!=="undefined"&&PROP) ? PROP : {};
-  const now = new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"});
+  const now = new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
 
   // Build WhatsApp message
   const lines = [
-    "🧾 *فاتورة المطعم — "+(prop.name||"Dahab Trendy")+"*",
+    "🧾 *Restaurant Invoice — "+(prop.name||"Dahab Trendy")+"*",
     "📅 "+tx.date+" · ⏰ "+now,
-    tx.room ? "🏨 غرفة "+tx.room : "",
+    tx.room ? "🏨 Room "+tx.room : "",
     tx.customer ? "👤 "+tx.customer : "",
     "",
     "〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️",
-    "*الطلب:*",
+    "*Order:*",
   ];
   tx.items.forEach(c=>{
     const _arN=(c.name||'').trim(),_enN=(c.nameEn||'').trim(),_dN=_arN||_enN,_sfx=(_enN&&_enN.toLowerCase()!==_dN.toLowerCase())?' / '+_enN:'';lines.push(`  ${c.emoji} ${_dN}${_sfx}  ×${c.qty}  = *£${(c.price*c.qty).toFixed(0)}*`);
   });
   lines.push("〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️");
   if(tx.disc>0){
-    lines.push(`المجموع: £${tx.subtotal.toFixed(0)}`);
-    lines.push(`خصم ${tx.disc}%: −£${(tx.subtotal-tx.egp).toFixed(0)}`);
+    lines.push(`Subtotal: £${tx.subtotal.toFixed(0)}`);
+    lines.push(`Discount ${tx.disc}%: −£${(tx.subtotal-tx.egp).toFixed(0)}`);
   }
-  lines.push(`*الإجمالي: £${tx.egp.toFixed(0)}*`);
+  lines.push(`*Total: £${tx.egp.toFixed(0)}*`);
   lines.push(`💳 ${tx.method}`);
   if(tx.notes) lines.push(`📝 ${tx.notes}`);
   lines.push("");
-  lines.push("شكراً لتعاملكم معنا 🙏");
+  lines.push("Thank you for your visit 🙏");
   if(prop.phone) lines.push("📞 "+prop.phone);
 
   const msg = lines.filter(l=>l!==null&&l!==undefined).join("\n");
