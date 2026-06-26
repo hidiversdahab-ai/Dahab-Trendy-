@@ -12633,15 +12633,18 @@ async function downloadGrpInvoicePDF(){
   });
   try{
     sNotify('⏳','جاري تحضير PDF...','info',2000);
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-    // Inject Arabic font fix — use Blob URL (avoids CSP block on GitHub Pages)
+    // Open Blob URL in new window → user prints/saves as PDF (RTL-safe, no html2canvas issues)
     const htmlFixed = html.replace('</head>', `
 <style>
-* { -webkit-print-color-adjust: exact !important; }
+* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 body, table, td, th, div, span, p {
   font-family: 'Cairo', 'Amiri', 'Segoe UI', Tahoma, Arial, sans-serif !important;
   -webkit-font-smoothing: antialiased;
+}
+@page { size: A4; margin: 0; }
+@media print {
+  body { padding: 0 !important; }
+  .page { max-width: 100% !important; }
 }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12649,33 +12652,14 @@ body, table, td, th, div, span, p {
 </head>`);
     const blob = new Blob([htmlFixed], {type:'text/html;charset=utf-8'});
     const blobUrl = URL.createObjectURL(blob);
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = "position:fixed;top:0;left:-900px;width:800px;height:1px;border:none;z-index:99999;opacity:0.01;pointer-events:none;";
-    iframe.src = blobUrl;
-    document.body.appendChild(iframe);
-    await new Promise(r=>{ iframe.onload = r; setTimeout(r,3000); });
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    await new Promise(r=>setTimeout(r,800));
-    const fullH = iframeDoc.documentElement.scrollHeight || 1400;
-    iframe.style.height = fullH + 'px';
-    iframeDoc.body.style.margin = '0';
-    await new Promise(r=>setTimeout(r,400));
-    const canvas = await html2canvas(iframeDoc.documentElement, {
-      scale:2, useCORS:true, allowTaint:true, backgroundColor:'#ffffff',
-      logging:false, width:800, windowWidth:800,
-      scrollX:0, scrollY:0, height: fullH,
-      onclone: (doc) => { doc.documentElement.style.direction='rtl'; doc.body.style.margin='0'; }
-    });
-    document.body.removeChild(iframe);
-    URL.revokeObjectURL(blobUrl);
-    const {jsPDF} = window.jspdf;
-    const pdf = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
-    const imgW=210, imgH=(canvas.height*imgW)/canvas.width, pageH=297;
-    let y=0;
-    while(y<imgH){ if(y>0)pdf.addPage(); pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,-y,imgW,imgH); y+=pageH; }
-    const date=new Date().toISOString().split('T')[0];
-    pdf.save('GroupInvoice_'+d.company.replace(/[^a-zA-Z0-9\u0600-\u06FF]/g,'_').substring(0,25)+'_'+date+'.pdf');
-    sNotify('✅','تم تحميل PDF بنجاح','success',2500);
+    const w = window.open(blobUrl, '_blank');
+    if(w){
+      sNotify('✅','افتحت نافذة الفاتورة — اختر «حفظ كـ PDF» من قائمة الطباعة','success',4000);
+      setTimeout(()=>URL.revokeObjectURL(blobUrl), 60000);
+    } else {
+      URL.revokeObjectURL(blobUrl);
+      throw new Error('popup_blocked');
+    }
   }catch(e){
     console.error(e);
     // Fallback: HTML download
