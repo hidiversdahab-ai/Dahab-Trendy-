@@ -3691,7 +3691,7 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
     <div class="fld" style="margin-top:8px;margin-bottom:0;"><label style="color:#e74c3c;">سبب الحظر *</label><textarea id="bl-reason" rows="2" placeholder="اكتب سبب الحظر بالتفصيل..." style="border-color:rgba(231,76,60,0.4);resize:vertical;"></textarea></div>
     <div class="flex mt" style="gap:8px;">
       <button class="btn br" onclick="addToBlacklist()" style="flex:1;">🚫 إضافة للقائمة السوداء</button>
-      <button class="btn bb" onclick="clearBLForm()" style="">🗑 مسح</button>
+      <button class="btn bb" onclick="clearBLForm()" style="">🗑 <span class="t" data-ar="مسح" data-en="Clear">مسح</span></button>
     </div>
   </div>
   <!-- البحث -->
@@ -4502,40 +4502,40 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
           </select>
         </div>
         <div class="fld" style="margin-bottom:10px;">
-          <label>👤 اسم الزبون (اختياري)</label>
+          <label>👤 <span class="t" data-ar="اسم الزبون (اختياري)" data-en="Customer Name (optional)">اسم الزبون (اختياري)</span></label>
           <input id="pos-customer" placeholder="مثال: طاولة 3 / Ahmed..." style="padding:6px 8px;font-size:12px;">
         </div>
         <div id="pos-cart" style="min-height:80px;margin-bottom:10px;"></div>
         <div id="pos-total-area" style="background:rgba(201,168,76,0.08);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;display:none;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:var(--muted);">المجموع الجزئي:</span><span id="pos-subtotal" style="color:var(--text);font-weight:700;"></span></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:var(--muted);"><span class="t" data-ar="المجموع الجزئي:" data-en="Subtotal:">المجموع الجزئي:</span></span><span id="pos-subtotal" style="color:var(--text);font-weight:700;"></span></div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-            <span style="color:var(--muted);">خصم %:</span>
+            <span style="color:var(--muted);"><span class="t" data-ar="خصم %:" data-en="Discount %:">خصم %:</span></span>
             <input id="pos-discount" type="number" min="0" max="100" value="0" oninput="calcPOSTotal()" style="width:60px;padding:3px 6px;font-size:12px;text-align:center;">
           </div>
           <div style="display:flex;justify-content:space-between;border-top:1px solid var(--bdr);padding-top:7px;margin-top:4px;">
-            <span style="color:var(--gold);font-weight:700;font-size:14px;">الإجمالي:</span>
+            <span style="color:var(--gold);font-weight:700;font-size:14px;"><span class="t" data-ar="الإجمالي:" data-en="Total:">الإجمالي:</span></span>
             <span id="pos-total" style="color:var(--gold);font-weight:700;font-size:16px;"></span>
           </div>
         </div>
         <div class="fld" style="margin-bottom:10px;">
-          <label>💳 طريقة الدفع</label>
+          <label>💳 <span class="t" data-ar="طريقة الدفع" data-en="Payment Method">طريقة الدفع</span></label>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <button type="button" id="pos-pay-cash" onclick="setPOSPayMethod('cash')" style="flex:1;padding:8px 4px;border-radius:7px;border:2px solid rgba(37,211,102,0.5);background:rgba(37,211,102,0.15);color:#4cda7a;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">💵 كاش</button>
-            <button type="button" id="pos-pay-card" onclick="setPOSPayMethod('card')" style="flex:1;padding:8px 4px;border-radius:7px;border:2px solid rgba(74,144,217,0.3);background:transparent;color:#7ab8f5;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">💳 بطاقة</button>
-            <button type="button" id="pos-pay-room" onclick="setPOSPayMethod('room')" style="flex:1;padding:8px 4px;border-radius:7px;border:2px solid rgba(201,168,76,0.3);background:transparent;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">🏨 غرفة</button>
+            <button type="button" id="pos-pay-cash" onclick="setPOSPayMethod('cash')" style="flex:1;padding:8px 4px;border-radius:7px;border:2px solid rgba(37,211,102,0.5);background:rgba(37,211,102,0.15);color:#4cda7a;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">💵 <span class="t" data-ar="كاش" data-en="Cash">كاش</span></button>
+            <button type="button" id="pos-pay-card" onclick="setPOSPayMethod('card')" style="flex:1;padding:8px 4px;border-radius:7px;border:2px solid rgba(74,144,217,0.3);background:transparent;color:#7ab8f5;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">💳 <span class="t" data-ar="بطاقة" data-en="Card">بطاقة</span></button>
+            <button type="button" id="pos-pay-room" onclick="setPOSPayMethod('room')" style="flex:1;padding:8px 4px;border-radius:7px;border:2px solid rgba(201,168,76,0.3);background:transparent;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">🏨 <span class="t" data-ar="غرفة" data-en="Room">غرفة</span></button>
           </div>
         </div>
         <div class="fld" style="margin-bottom:12px;">
-          <label>📝 ملاحظات الطلب</label>
+          <label>📝 <span class="t" data-ar="ملاحظات الطلب" data-en="Order Notes">ملاحظات الطلب</span></label>
           <input id="pos-notes" placeholder="مثال: بدون بصل، سكر خفيف..." style="padding:6px 8px;font-size:12px;">
         </div>
         <div style="display:flex;gap:7px;">
           <button class="btn" style="background:#e74c3c;color:#fff;flex:1;" onclick="clearPOSCart()">🗑 مسح</button>
-          <button class="btn" style="background:#e67e22;color:#fff;flex:2;font-size:14px;font-weight:700;" onclick="submitPOSOrder()">✅ تأكيد الطلب</button>
+          <button class="btn" style="background:#e67e22;color:#fff;flex:2;font-size:14px;font-weight:700;" onclick="submitPOSOrder()">✅ <span class="t" data-ar="تأكيد الطلب" data-en="Confirm Order">تأكيد الطلب</span></button>
         </div>
       </div>
       <div class="card">
-        <div class="ctitle">📋 طلبات اليوم</div>
+        <div class="ctitle">📋 <span class="t" data-ar="طلبات اليوم" data-en="Today's Orders">طلبات اليوم</span></div>
         <div id="pos-today-orders"></div>
       </div>
     </div>
@@ -4601,7 +4601,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     <div style="display:flex;gap:8px;">
       <button class="btn" onclick="drinksClearOrder()" style="flex:1;background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);font-weight:700;">🗑 مسح</button>
       <button class="btn" onclick="drinksSelectAll()" style="flex:1;background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.3);font-weight:700;">✅ تحديد الكل</button>
-      <button class="btn" onclick="sendDrinksOrderWA()" style="flex:1;background:linear-gradient(135deg,rgba(37,211,102,0.2),rgba(18,140,126,0.2));color:#25d366;border:1px solid rgba(37,211,102,0.4);font-weight:700;font-size:13px;">💬 واتساب</button>
+      <button class="btn" onclick="sendDrinksOrderWA()" style="flex:1;background:linear-gradient(135deg,rgba(37,211,102,0.2),rgba(18,140,126,0.2));color:#25d366;border:1px solid rgba(37,211,102,0.4);font-weight:700;font-size:13px;">💬 WhatsApp</button>
     </div>
     <button class="btn bg" onclick="importSelectedDrinks()" style="width:100%;font-weight:700;font-size:13px;">💾 إضافة للمنيو (المحدد)</button>
   </div>
@@ -4674,19 +4674,19 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 <div class="mdl" style="max-width:380px;">
   <div style="text-align:center;margin-bottom:14px;">
     <div style="font-size:32px;">🧾</div>
-    <div style="color:var(--gold);font-weight:700;font-size:16px;margin-top:5px;">تم تأكيد الطلب!</div>
+    <div style="color:var(--gold);font-weight:700;font-size:16px;margin-top:5px;"><span class="t" data-ar="تم تأكيد الطلب!" data-en="Order Confirmed!">تم تأكيد الطلب!</span></div>
   </div>
   <div id="pos-receipt-content" style="background:#fff;color:#1a1a2e;border-radius:8px;padding:14px;font-size:11px;font-family:monospace;"></div>
   <div id="pos-room-charge-badge" style="display:none;margin-top:10px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:8px 12px;text-align:center;">
-    <div style="color:var(--gold);font-size:12px;font-weight:700;">🏨 تم الإضافة على حساب الغرفة</div>
+    <div style="color:var(--gold);font-size:12px;font-weight:700;">🏨 <span class="t" data-ar="تم الإضافة على حساب الغرفة" data-en="Added to Room Charge">تم الإضافة على حساب الغرفة</span></div>
     <div style="margin-top:4px;"><span style="background:#fff3cd;color:#856404;border-radius:12px;padding:2px 10px;font-size:10px;font-weight:700;">⏳ Pending — سيُحسم عند الدفع النهائي</span></div>
   </div>
   <div class="flex mt" style="flex-wrap:wrap;gap:6px;">
-    <button class="btn bgr" onclick="sendPOSReceiptWA()" style="flex:1;min-width:80px;">💬 واتساب</button>
-    <button class="btn bg" onclick="printPOSReceipt()" style="flex:1;min-width:80px;">🖨️ طباعة</button>
-    <button class="btn" onclick="printRestaurantInvoice()" style="flex:1;min-width:80px;background:linear-gradient(135deg,#2471a3,#3498db);color:#fff;font-weight:700;border:none;">📄 فاتورة رسمية</button>
-    <button class="btn" onclick="printKitchenOrder()" style="flex:1;min-width:80px;background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;font-weight:700;border:none;">👨‍🍳 أوردر المطبخ</button>
-    <button class="btn bb" onclick="closeM('pos-receipt-modal')" style="flex:1;min-width:80px;">إغلاق</button>
+    <button class="btn bgr" onclick="sendPOSReceiptWA()" style="flex:1;min-width:80px;">💬 WhatsApp</button>
+    <button class="btn bg" onclick="printPOSReceipt()" style="flex:1;min-width:80px;">🖨️ <span class="t" data-ar="طباعة" data-en="Print">طباعة</span></button>
+    <button class="btn" onclick="printRestaurantInvoice()" style="flex:1;min-width:80px;background:linear-gradient(135deg,#2471a3,#3498db);color:#fff;font-weight:700;border:none;">📄 <span class="t" data-ar="فاتورة رسمية" data-en="Official Invoice">فاتورة رسمية</span></button>
+    <button class="btn" onclick="printKitchenOrder()" style="flex:1;min-width:80px;background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;font-weight:700;border:none;">👨‍🍳 <span class="t" data-ar="أوردر المطبخ" data-en="Kitchen Order">أوردر المطبخ</span></button>
+    <button class="btn bb" onclick="closeM('pos-receipt-modal')" style="flex:1;min-width:80px;"><span class="t" data-ar="إغلاق" data-en="Close">إغلاق</span></button>
   </div>
 </div>
 </div>
@@ -21905,6 +21905,16 @@ window.dtaFixDrinkNames = async function(){
         item.name = match.name;
         item.nameEn = match.nameEn || item.nameEn || "";
         fixed++;
+      } else {
+        // سواب عام: لو الاسم إنجليزي و nameEn فاضي أو نفسه — نحرك الإنجليزي لـ nameEn ونخلي name فاضي مؤقتاً
+        const enName = (item.name||"").trim();
+        const enInNameEn = (item.nameEn||"").trim();
+        if(enName && (!enInNameEn || enInNameEn.toLowerCase()===enName.toLowerCase())){
+          list.push(enName+" → (nameEn="+enName+", name cleared)");
+          item.nameEn = enName;
+          item.name = ""; // سيحتاج المستخدم يضيف الاسم العربي لاحقاً
+          fixed++;
+        }
       }
     });
     if(fixed){
@@ -21914,7 +21924,7 @@ window.dtaFixDrinkNames = async function(){
       renderMenuBrowse();
       renderPOSMenu();
       renderPOSCatQuick();
-      sNotify("✅ تم الإصلاح", "تم تصحيح "+fixed+" صنف إلى الاسم العربي الصحيح", "success", 4000);
+      sNotify("✅ تم الإصلاح", "تم تصحيح "+fixed+" صنف — راجع الأصناف وأضف الاسم العربي لما هو فاضي", "success", 5000);
     } else {
       sNotify("ℹ️", "لا توجد أصناف تحتاج إصلاح", "info", 2500);
     }
@@ -22636,7 +22646,7 @@ function submitPOSOrder(){
   const methodLabel = {cash:"💵 كاش",card:"💳 بطاقة",room:"🏨 على الغرفة"}[posPayMethod]||"كاش";
   const roomGuest = room ? bookings.find(b=>String(b.room)===String(room)&&b.ci<=toDay()&&b.co>=toDay()&&b.status!=="Cancelled") : null;
   const tableNo = document.getElementById("pos-table")?.value.trim()||"";
-  const orderDesc = posCart.map(c=>`${c.emoji}${c.name}${c.nameEn?(' / '+c.nameEn):''}×${c.qty}`).join(", ");
+  const orderDesc = posCart.map(c=>{const _s=(c.nameEn&&c.nameEn.trim()&&c.nameEn.trim().toLowerCase()!==c.name.trim().toLowerCase())?' / '+c.nameEn.trim():'';return c.emoji+c.name+_s+'×'+c.qty;}).join(", ");
   const tableLabel = tableNo ? ` — ترابيزة ${tableNo}` : "";
   const fullDesc = `🧾 POS: ${orderDesc}`+(customer?` — ${customer}`:"")+(room?` — غرفة ${room}`:"")+tableLabel;
 
@@ -22686,49 +22696,58 @@ function submitPOSOrder(){
 function showPOSReceipt(tx){
   const el = document.getElementById("pos-receipt-content");
   if(!el) return;
-  const now = new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"});
+  const en = isEn();
+  const _nt=new Date();const now=String(_nt.getHours()).padStart(2,"0")+":"+String(_nt.getMinutes()).padStart(2,"0");
   el.innerHTML = `
     <div style="text-align:center;border-bottom:1px dashed #ccc;padding-bottom:8px;margin-bottom:8px;">
       <div style="font-weight:700;font-size:13px;">${PROP&&PROP.name?PROP.name:"Dahab Trendy"}</div>
       <div style="color:#888;font-size:10px;">${toDay()} · ${now}</div>
-      ${tx.tableNo?`<div style="color:#e67e22;font-size:12px;font-weight:700;">🪑 ترابيزة ${tx.tableNo}</div>`:""}
-      ${tx.room?`<div style="color:#888;font-size:10px;">غرفة ${tx.room}</div>`:""}
+      ${tx.tableNo?`<div style="color:#e67e22;font-size:12px;font-weight:700;">🪑 ${en?'Table':'ترابيزة'} ${tx.tableNo}</div>`:""}
+      ${tx.room?`<div style="color:#888;font-size:10px;">${en?'Room':'غرفة'} ${tx.room}</div>`:""}
       ${tx.customer?`<div style="font-size:11px;">👤 ${tx.customer}</div>`:""}
     </div>
     <div style="margin-bottom:8px;">
       ${tx.items.map(c=>`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span>${c.emoji} ${c.name} ×${c.qty}</span><span style="font-weight:700;">£${(c.price*c.qty).toFixed(0)}</span></div>`).join("")}
     </div>
     <div style="border-top:1px dashed #ccc;padding-top:8px;">
-      ${tx.disc>0?`<div style="display:flex;justify-content:space-between;color:#888;"><span>المجموع</span><span>£${tx.subtotal.toFixed(0)}</span></div><div style="display:flex;justify-content:space-between;color:#e74c3c;"><span>خصم ${tx.disc}%</span><span>−£${(tx.subtotal-tx.egp).toFixed(0)}</span></div>`:""}
-      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px;margin-top:4px;"><span>الإجمالي</span><span>£${tx.egp.toFixed(0)}</span></div>
-      <div style="color:#888;font-size:10px;margin-top:3px;">${tx.method}</div>
+      ${tx.disc>0?`<div style="display:flex;justify-content:space-between;color:#888;"><span>${en?'Subtotal':'المجموع'}</span><span>£${tx.subtotal.toFixed(0)}</span></div><div style="display:flex;justify-content:space-between;color:#e74c3c;"><span>${en?'Discount':'خصم'} ${tx.disc}%</span><span>−£${(tx.subtotal-tx.egp).toFixed(0)}</span></div>`:""}
+      <div style="display:flex;justify-content:space-between;font-weight:700;font-size:14px;margin-top:4px;"><span>${en?'Total':'الإجمالي'}</span><span>£${tx.egp.toFixed(0)}</span></div>
+      <div style="color:#888;font-size:10px;margin-top:3px;">${tx.method==="كاش"||tx.method==="cash"?"💵 Cash / كاش":tx.method==="card"||tx.method==="بطاقة"?"💳 Card / بطاقة":tx.method==="room"?"🏨 Room Charge / غرفة":tx.method}</div>
       ${tx.notes?`<div style="color:#888;font-size:10px;margin-top:3px;">📝 ${tx.notes}</div>`:""}
     </div>
-    <div style="text-align:center;border-top:1px dashed #ccc;margin-top:8px;padding-top:8px;color:#aaa;font-size:9px;">شكراً لزيارتكم 🙏</div>
+    <div style="text-align:center;border-top:1px dashed #ccc;margin-top:8px;padding-top:8px;color:#aaa;font-size:9px;">${en?'Thank you for visiting us 🙏':'شكراً لزيارتكم 🙏'}</div>
   `;
   // Show/hide room charge badge
   const badge = document.getElementById("pos-room-charge-badge");
   if(badge) badge.style.display = (posPayMethod==="room" && tx.room) ? "block" : "none";
   document.getElementById("pos-receipt-modal").classList.add("on");
+  if(typeof _translateDOM==="function") setTimeout(_translateDOM,50);
 }
 
 function printPOSReceipt(){
   const el = document.getElementById("pos-receipt-content");
   if(!el) return;
-  const w = window.open("","_blank","width=380,height=600");
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title>
-  <style>body{font-family:monospace;font-size:12px;padding:16px;max-width:320px;margin:0 auto;}</style>
-  </head><body>${el.innerHTML}<script>window.onload=()=>window.print();<\/script></body></html>`);
-  w.document.close();
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Receipt</title>
+  <style>body{font-family:monospace;font-size:12px;padding:16px;max-width:320px;margin:0 auto;}@media print{body{padding:0;}}</style>
+  </head><body>${el.innerHTML}</body></html>`;
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Receipt_'+new Date().toISOString().split('T')[0]+'.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+  sNotify('✅','تم تحميل الإيصال','success',3000);
 }
 
 function printRestaurantInvoice(){
   if(!lastPOSOrder){ sNotify("⚠️","لا يوجد طلب لإصدار فاتورة له","info",2500); return; }
   const tx = lastPOSOrder;
   const prop = (typeof PROP!=="undefined"&&PROP) ? PROP : {};
-  const now = new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"});
+  const _rnt=new Date();const now=String(_rnt.getHours()).padStart(2,"0")+":"+String(_rnt.getMinutes()).padStart(2,"0");
   const invNo = "REST-" + Date.now().toString().slice(-6);
-  const issueDate = new Date().toLocaleDateString("ar-EG",{year:"numeric",month:"long",day:"numeric"});
+  const _id=new Date();const issueDate=String(_id.getDate()).padStart(2,"0")+"/"+String(_id.getMonth()+1).padStart(2,"0")+"/"+_id.getFullYear();
 
   const itemsRows = tx.items.map((c,i)=>`
     <tr>
@@ -22815,21 +22834,21 @@ function printRestaurantInvoice(){
         ${prop.phone?`<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:6px;">📞 ${prop.phone}</div>`:""}
       </div>
       <div class="inv-no-badge">
-        <div class="lbl">رقم الفاتورة</div>
+        <div class="lbl">Invoice No / رقم الفاتورة</div>
         <div class="val">${invNo}</div>
       </div>
     </div>
     <div class="inv-meta">
       <div class="inv-meta-block">
-        <div class="lbl">تاريخ الإصدار</div>
+        <div class="lbl">Date / تاريخ الإصدار</div>
         <div class="val">📅 ${issueDate}</div>
       </div>
       <div class="inv-meta-block">
-        <div class="lbl">الوقت</div>
+        <div class="lbl">Time / الوقت</div>
         <div class="val">⏰ ${now}</div>
       </div>
       ${tx.room?`<div class="inv-meta-block">
-        <div class="lbl">رقم الغرفة</div>
+        <div class="lbl">Room / رقم الغرفة</div>
         <div class="val">🏨 غرفة ${tx.room}</div>
       </div>`:""}
     </div>
@@ -22851,9 +22870,9 @@ function printRestaurantInvoice(){
         <tr>
           <th style="width:40px;text-align:center;">#</th>
           <th>الصنف / Item</th>
-          <th style="width:60px;text-align:center;">الكمية</th>
-          <th style="width:80px;">السعر</th>
-          <th style="width:90px;">الإجمالي</th>
+          <th style="width:60px;text-align:center;">Qty / الكمية</th>
+          <th style="width:80px;">Price / السعر</th>
+          <th style="width:90px;">Total / الإجمالي</th>
         </tr>
       </thead>
       <tbody>${itemsRows}</tbody>
@@ -22863,46 +22882,50 @@ function printRestaurantInvoice(){
     <div class="totals-box">
       <div class="totals-inner">
         <div class="totals-row">
-          <span style="color:#555;">المجموع الجزئي</span>
+          <span style="color:#555;">Subtotal / المجموع الجزئي</span>
           <span style="font-weight:700;">£${subtotal.toFixed(0)}</span>
         </div>
         ${tx.disc>0?`<div class="totals-row disc-row">
-          <span>خصم ${tx.disc}%</span>
+          <span>Discount / خصم ${tx.disc}%</span>
           <span>− £${discAmt.toFixed(0)}</span>
         </div>`:""}
         <div class="totals-row total-final">
-          <span style="font-weight:700;font-size:14px;">الإجمالي النهائي</span>
+          <span style="font-weight:700;font-size:14px;">Total / الإجمالي النهائي</span>
           <span class="amount">£${total.toFixed(0)}</span>
         </div>
       </div>
     </div>
 
     <!-- Payment Method -->
-    <div class="inv-section-title" style="margin-top:24px;">طريقة السداد</div>
-    <div class="payment-badge">${payMethod} — مدفوع ✅</div>
+    <div class="inv-section-title" style="margin-top:24px;">Payment Method / طريقة السداد</div>
+    <div class="payment-badge">${payMethod} — ✅ Paid / مدفوع</div>
     ${tx.room&&tx.method==="room"?`<div class="room-charge-note">⏳ تم إضافة هذا المبلغ على حساب الغرفة ${tx.room} وسيُحسم عند الدفع النهائي عند المغادرة.</div>`:""}
     ${tx.notes?`<div style="margin-top:12px;font-size:12px;color:#555;background:#faf7f0;border-radius:8px;padding:10px 14px;border:1px solid #f0e8cc;">📝 <strong>ملاحظات:</strong> ${tx.notes}</div>`:""}
   </div>
 
   <!-- Footer -->
   <div class="inv-footer">
-    <strong>${prop.name||"Dahab Trendy"}</strong> — شكراً لتعاملكم معنا 🙏
+    <strong>${prop.name||"Dahab Trendy"}</strong> — Thank you / شكراً لتعاملكم معنا 🙏
     ${prop.phone?`<br>📞 ${prop.phone}`:""}
     <br><span style="font-size:10px;opacity:.6;">هذه فاتورة رسمية من مطعم الفندق</span>
   </div>
 </div>
 
-<div class="no-print" style="text-align:center;margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-  <button onclick="window.print()" style="background:#1a1a2e;color:#c9a84c;border:none;padding:12px 28px;font-size:14px;font-weight:700;border-radius:8px;cursor:pointer;letter-spacing:1px;">🖨️ طباعة / حفظ PDF</button>
-  <button onclick="window.close()" style="background:#e74c3c;color:#fff;border:none;padding:12px 20px;font-size:14px;font-weight:700;border-radius:8px;cursor:pointer;">✕ إغلاق</button>
+<div class="no-print" style="text-align:center;margin-top:20px;">
+  <button onclick="window.print()" style="background:#1a1a2e;color:#c9a84c;border:none;padding:14px 40px;font-size:15px;font-weight:700;border-radius:8px;cursor:pointer;letter-spacing:1px;">🖨️ طباعة / حفظ PDF</button>
 </div>
 </body>
 </html>`;
 
-  const w = window.open("","_blank","width=780,height=900");
-  if(!w){ sNotify("⚠️","يرجى السماح بالنوافذ المنبثقة","info",3000); return; }
-  w.document.write(html);
-  w.document.close();
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'RestInvoice_'+(tx.table||tx.customer||invNo).replace(/[^a-zA-Z0-9؀-ۿ]/g,'_').substring(0,20)+'_'+new Date().toISOString().split('T')[0]+'.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+  sNotify('✅','تم تحميل الفاتورة — افتحها واطبعها كـ PDF','success',4000);
 }
 
 function sendPOSReceiptWA(){
@@ -22922,7 +22945,7 @@ function sendPOSReceiptWA(){
     "*الطلب:*",
   ];
   tx.items.forEach(c=>{
-    lines.push(`  ${c.emoji} ${c.name}  ×${c.qty}  = *£${(c.price*c.qty).toFixed(0)}*`);
+    const _arN=(c.name||'').trim(),_enN=(c.nameEn||'').trim(),_dN=_arN||_enN,_sfx=(_enN&&_enN.toLowerCase()!==_dN.toLowerCase())?' / '+_enN:'';lines.push(`  ${c.emoji} ${_dN}${_sfx}  ×${c.qty}  = *£${(c.price*c.qty).toFixed(0)}*`);
   });
   lines.push("〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️");
   if(tx.disc>0){
@@ -31700,7 +31723,7 @@ window.openQRRoomPicker = openQRRoomPicker;
     const {subtotal, disc, total} = _calcTotals();
     const td = (typeof toDay==='function')?toDay():new Date().toISOString().split('T')[0];
     const methodLabel = {cash:'💵 كاش',card:'💳 بطاقة',transfer:'🏦 تحويل بنكي',room:'🏨 على الغرفة'}[_payMethod]||'كاش';
-    const orderDesc = _cart.map(c=>`${c.emoji}${c.name}${c.nameEn?(' / '+c.nameEn):''}×${c.qty}`).join(', ');
+    const orderDesc = _cart.map(c=>{const _s=(c.nameEn&&c.nameEn.trim()&&c.nameEn.trim().toLowerCase()!==c.name.trim().toLowerCase())?' / '+c.nameEn.trim():'';return c.emoji+c.name+_s+'×'+c.qty;}).join(', ');
     const roomGuest = _targetMode==='room' && _targetRoom
       ? (typeof bookings!=='undefined'?bookings:[]).find(b=>String(b.room)===String(_targetRoom)&&b.ci<=td&&b.co>td&&b.status!=='Cancelled')
       : null;
