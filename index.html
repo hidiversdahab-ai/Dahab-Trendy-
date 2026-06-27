@@ -6795,7 +6795,41 @@ mkFin("£"+revEGP.toFixed(0), ar?"صافي الإيرادات":"Net Revenue","rg
 mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
 mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid Balance","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
 mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
-mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",netEGP>=0?"#27ae60":"#e74c3c");
+mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",netEGP>=0?"#27ae60":"#e74c3c")+
+(()=>{
+  /* ── العهدات (multi-entry, IDB) ── */
+  const custList = window._custodyList || [];
+  const fromProfit = custList.filter(c=>c.type==='from_profit');
+  const fromOwner  = custList.filter(c=>c.type==='from_owner');
+  const totalFromProfit = fromProfit.reduce((s,c)=>s+c.amt,0);
+  const totalFromOwner  = fromOwner.reduce((s,c)=>s+c.amt,0);
+  const availNet = netEGP - totalFromProfit - totalFromOwner;
+
+  if(custList.length===0) return `<div style="text-align:center;margin-top:4px;">
+    <button onclick="openCustodyModal()" style="background:none;border:1px dashed rgba(201,168,76,0.3);color:var(--muted);border-radius:8px;padding:6px 14px;font-size:11px;cursor:pointer;">
+      🔒 ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
+
+  let html='';
+  fromProfit.forEach(c=>{
+    html+=mkFin("🔒 £"+c.amt.toLocaleString(),
+      (ar?"عهدة (من الربح)":"Custody (from profit)")+(c.note?" — "+c.note:""),
+      "rgba(122,90,200,0.08)","rgba(122,90,200,0.22)","#9b59b6",
+      `onclick="openCustodyModal('${c.id}')"`);
+  });
+  fromOwner.forEach(c=>{
+    html+=mkFin("🏦 £"+c.amt.toLocaleString(),
+      (ar?"عهدة مالك (خارج الربح)":"Owner Custody (external)")+(c.note?" — "+c.note:""),
+      "rgba(52,152,219,0.08)","rgba(52,152,219,0.22)","#3498db",
+      `onclick="openCustodyModal('${c.id}')"`);
+  });
+  html+=`<div style="text-align:center;margin-top:2px;">
+    <button onclick="openCustodyModal()" style="background:none;border:1px dashed rgba(201,168,76,0.25);color:var(--muted);border-radius:8px;padding:4px 12px;font-size:10px;cursor:pointer;">+ ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
+  const netBg=availNet>=0?"39,174,96":"231,76,60";
+  const netLabel=availNet>=0?(ar?"الربح المتاح فعلاً":"Available Net Profit"):(ar?"⚠️ عجز — مديونية على المكان":"⚠️ Deficit");
+  html+=mkFin((availNet<0?"−":"")+"£"+Math.abs(availNet).toLocaleString(),
+    netLabel,`rgba(${netBg},0.1)`,`rgba(${netBg},0.25)`,availNet>=0?"#27ae60":"#e74c3c");
+  return html;
+})();
 
 // ══ RESTAURANT DASHBOARD SECTION ══
 const restSec = document.getElementById("db-restaurant-section");
@@ -7153,7 +7187,11 @@ function renderLiveDash(){
 }
 
 function mkStat(n,l){return "<div class='sbox'><div class='snum'>"+n+"</div><div class='slbl'>"+l+"</div></div>";}
-function mkFin(n,l,bg,br,col){return "<div style='text-align:center;padding:11px;background:"+bg+";border-radius:10px;border:1px solid "+br+";'><div style='font-size:20px;font-weight:700;color:"+col+";'>"+n+"</div><div style='font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;text-transform:uppercase;'>"+l+"</div></div>";}
+function mkFin(n,l,bg,br,col,extra){
+  const oc=extra?extra:"";
+  const cursor=extra?"cursor:pointer;":"";
+  return "<div "+oc+" style='text-align:center;padding:11px;background:"+bg+";border-radius:10px;border:1px solid "+br+";"+cursor+"'><div style='font-size:20px;font-weight:700;color:"+col+";'>"+n+"</div><div style='font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;text-transform:uppercase;'>"+l+"</div></div>";
+}
 // ═══════════ GUEST COLOR PALETTE ═══════════
 // Each guest name that has 2+ bookings gets a unique accent color
 const GUEST_COLORS = [
@@ -32228,3 +32266,184 @@ window.renderMinibar = window.renderMinibar;
 
 })();
 </script>
+
+<!-- ══════════════════════════════════════════════════════════
+<!-- ══════════════════════════════════════════════════════════
+     CUSTODY SYSTEM — Multi-entry, IDB-based
+══════════════════════════════════════════════════════════ -->
+
+<!-- Modal -->
+<div id="custody-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--card);border:1px solid rgba(155,89,182,0.4);border-radius:18px;padding:22px;width:100%;max-width:400px;box-shadow:0 10px 50px rgba(0,0,0,0.6);max-height:90vh;overflow-y:auto;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:700;color:#9b59b6;" id="cust-modal-title">🔒 إضافة عهدة</div>
+      <button onclick="closeCustodyModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
+    </div>
+
+    <!-- نوع العهدة -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;">نوع العهدة</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button id="cust-type-profit" onclick="setCustType('from_profit')"
+          style="padding:10px 8px;border-radius:10px;border:2px solid rgba(155,89,182,0.5);background:rgba(155,89,182,0.15);color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">
+          🔒 من الربح<br><span style="font-size:10px;font-weight:400;opacity:0.8;">مبلغ موجود في الـ Net Profit</span>
+        </button>
+        <button id="cust-type-owner" onclick="setCustType('from_owner')"
+          style="padding:10px 8px;border-radius:10px;border:2px solid rgba(52,152,219,0.3);background:rgba(52,152,219,0.05);color:#3498db;font-size:12px;font-weight:700;cursor:pointer;">
+          🏦 من المالك<br><span style="font-size:10px;font-weight:400;opacity:0.8;">عهدة من خارج الـ Net Profit</span>
+        </button>
+      </div>
+      <div id="cust-type-hint" style="font-size:11px;color:var(--muted);margin-top:7px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;line-height:1.5;"></div>
+    </div>
+
+    <!-- المبلغ -->
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">المبلغ (£ EGP)</label>
+      <input id="cust-amt-inp" type="number" min="0" step="100" placeholder="0"
+        style="width:100%;padding:11px 14px;background:var(--inp);border:1px solid var(--bdr);border-radius:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;box-sizing:border-box;">
+    </div>
+
+    <!-- الملاحظة -->
+    <div style="margin-bottom:18px;">
+      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">اسم / ملاحظة (اختياري)</label>
+      <input id="cust-note-inp" type="text" placeholder="مثال: عهدة صاحب المكان — عهدة مورد..."
+        style="width:100%;padding:9px 14px;background:var(--inp);border:1px solid var(--bdr);border-radius:10px;color:var(--text);font-size:13px;box-sizing:border-box;">
+    </div>
+
+    <!-- أزرار -->
+    <div style="display:flex;gap:10px;">
+      <button onclick="saveCustodyEntry()" style="flex:1;padding:12px;background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.4);border-radius:10px;color:#9b59b6;font-size:13px;font-weight:700;cursor:pointer;">
+        💾 حفظ
+      </button>
+      <button id="cust-delete-btn" onclick="deleteCustodyEntry()" style="display:none;padding:12px 16px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:10px;color:#e74c3c;font-size:12px;cursor:pointer;">
+        🗑️ حذف
+      </button>
+    </div>
+
+    <!-- قائمة العهدات الموجودة -->
+    <div id="cust-list-section" style="margin-top:18px;border-top:1px solid var(--bdr);padding-top:14px;display:none;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700;letter-spacing:1px;">العهدات الحالية</div>
+      <div id="cust-list-items"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Custody System ──
+window._custodyList = [];
+window._custodyEditId = null;
+window._custodyType = 'from_profit';
+
+const CUST_KEY = 'dta_custody_list';
+
+async function custodyLoad(){
+  try {
+    const data = await DTA_DB.getSetting(CUST_KEY, []);
+    window._custodyList = Array.isArray(data) ? data : [];
+  } catch(e) {
+    window._custodyList = JSON.parse(localStorage.getItem(CUST_KEY)||'[]');
+  }
+}
+
+async function custodySave(){
+  try {
+    await DTA_DB.setSetting(CUST_KEY, window._custodyList);
+  } catch(e){}
+  localStorage.setItem(CUST_KEY, JSON.stringify(window._custodyList));
+}
+
+function setCustType(type){
+  window._custodyType = type;
+  const hints = {
+    from_profit: '💡 المبلغ ده موجود فعلاً في الـ Net Profit — بس هو عهدة مش ربح حقيقي، فهيتطرح منه.',
+    from_owner:  '💡 المبلغ ده جاي من صاحب المكان من برا — مش جزء من الإيرادات. لو الـ Net Profit مش كافي هيظهر عجز (ماينس).'
+  };
+  document.getElementById('cust-type-hint').textContent = hints[type]||'';
+  // highlight active button
+  document.getElementById('cust-type-profit').style.opacity = type==='from_profit'?'1':'0.45';
+  document.getElementById('cust-type-owner').style.opacity  = type==='from_owner' ?'1':'0.45';
+  document.getElementById('cust-type-profit').style.borderWidth = type==='from_profit'?'2px':'1px';
+  document.getElementById('cust-type-owner').style.borderWidth  = type==='from_owner' ?'2px':'1px';
+}
+
+function openCustodyModal(editId){
+  window._custodyEditId = editId || null;
+  const isEdit = !!editId;
+  const entry = isEdit ? window._custodyList.find(c=>c.id===editId) : null;
+
+  document.getElementById('cust-modal-title').textContent = isEdit ? '✏️ تعديل العهدة' : '🔒 إضافة عهدة';
+  document.getElementById('cust-amt-inp').value  = entry ? entry.amt  : '';
+  document.getElementById('cust-note-inp').value = entry ? (entry.note||'') : '';
+  document.getElementById('cust-delete-btn').style.display = isEdit ? 'block' : 'none';
+
+  setCustType(entry ? entry.type : 'from_profit');
+
+  // show existing list
+  renderCustodyList();
+
+  document.getElementById('custody-modal').style.display='flex';
+}
+
+function renderCustodyList(){
+  const list = window._custodyList;
+  const sec  = document.getElementById('cust-list-section');
+  const el   = document.getElementById('cust-list-items');
+  if(list.length===0){ sec.style.display='none'; return; }
+  sec.style.display='block';
+  el.innerHTML = list.map(c=>{
+    const color = c.type==='from_owner'?'#3498db':'#9b59b6';
+    const icon  = c.type==='from_owner'?'🏦':'🔒';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.06);">
+      <div>
+        <span style="font-size:13px;">${icon}</span>
+        <span style="font-size:13px;font-weight:700;color:${color};margin:0 6px;">£${c.amt.toLocaleString()}</span>
+        <span style="font-size:11px;color:var(--muted);">${c.note||''}</span>
+      </div>
+      <button onclick="openCustodyModal('${c.id}')" style="background:none;border:1px solid var(--bdr);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--muted);cursor:pointer;">تعديل</button>
+    </div>`;
+  }).join('');
+}
+
+function closeCustodyModal(){
+  document.getElementById('custody-modal').style.display='none';
+}
+
+async function saveCustodyEntry(){
+  const amt  = parseFloat(document.getElementById('cust-amt-inp').value)||0;
+  const note = document.getElementById('cust-note-inp').value.trim();
+  const type = window._custodyType;
+  if(amt<=0){ alert('ادخل مبلغ أكبر من صفر'); return; }
+
+  if(window._custodyEditId){
+    const idx = window._custodyList.findIndex(c=>c.id===window._custodyEditId);
+    if(idx>-1) window._custodyList[idx] = {...window._custodyList[idx], amt, note, type};
+  } else {
+    window._custodyList.push({ id: 'c_'+Date.now(), amt, note, type, createdAt: new Date().toISOString() });
+  }
+
+  await custodySave();
+  closeCustodyModal();
+  renderDashboard();
+  const icon = type==='from_owner'?'🏦':'🔒';
+  if(typeof sNotify==='function') sNotify(icon+' تم حفظ العهدة','£'+amt.toLocaleString()+(note?' — '+note:''),'success',3000);
+}
+
+async function deleteCustodyEntry(){
+  if(!window._custodyEditId) return;
+  if(!confirm('حذف هذه العهدة؟')) return;
+  window._custodyList = window._custodyList.filter(c=>c.id!==window._custodyEditId);
+  await custodySave();
+  closeCustodyModal();
+  renderDashboard();
+}
+
+window.openCustodyModal  = openCustodyModal;
+window.closeCustodyModal = closeCustodyModal;
+
+// تحميل العهدات عند بدء التشغيل
+(async()=>{ await custodyLoad(); if(typeof renderDashboard==='function') renderDashboard(); })();
+</script>
+
