@@ -7095,7 +7095,7 @@ function renderLiveDash(){
   const lastMonthStr = lastMonthDate.toISOString().slice(0,7);
 
   const calcRevEGP = bks => bks.reduce((s,b)=>s+(b.cur==="USD"?b.total*(exRate||50):b.cur==="EUR"?b.total*(eurRate||55):b.total),0);
-  const active = bookings.filter(b=>b.ci<=td&&b.co>td&&b.status!=="Cancelled"&&!b.coConfirmed);
+  const active = bookings.filter(b=>b.status!=="Cancelled"&&!b.coConfirmed&&(b.dayuse?b.ci===td:(b.ci<=td&&b.co>td)));
   const thisM = bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(thisMonthStr));
   const lastM = bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(lastMonthStr));
   const allActive = bookings.filter(b=>b.status!=="Cancelled");
@@ -9457,19 +9457,24 @@ if(nextIdx!==-1){
     </div>
   </div>`;
   mc2.classList.add("on");
-  document.getElementById("_autoci_yes").addEventListener("click",function(){
-    bookings[nextIdx].ciConfirmed=true;
-    bookings[nextIdx].ciTime=new Date().toISOString();
-    sv("dta_bk",bookings);
-    showToast("🛬 Check-in تلقائي — "+nb.name+" · غرفة "+nb.room);
-    renderBookings();renderRooms();renderDashboard();
-    closeM("auto-ci-modal");
-    setTimeout(()=>openReviewModal(_reviewB),300);
-  });
-  document.getElementById("_autoci_skip").addEventListener("click",function(){
-    closeM("auto-ci-modal");
-    setTimeout(()=>openReviewModal(_reviewB),300);
-  });
+  // FIX: use onclick on mc2 element directly to avoid mobile event listener issues
+  mc2.onclick=function(ev){
+    const t=ev.target;
+    if(t.id==="_autoci_yes"){
+      bookings[nextIdx].ciConfirmed=true;
+      bookings[nextIdx].ciTime=new Date().toISOString();
+      sv("dta_bk",bookings);
+      showToast("🛬 Check-in تلقائي — "+nb.name+" · غرفة "+nb.room);
+      renderBookings();renderRooms();renderDashboard();
+      closeM("auto-ci-modal");
+      mc2.onclick=null;
+      setTimeout(()=>openReviewModal(_reviewB),300);
+    } else if(t.id==="_autoci_skip"){
+      closeM("auto-ci-modal");
+      mc2.onclick=null;
+      setTimeout(()=>openReviewModal(_reviewB),300);
+    }
+  };
 } else {
   setTimeout(()=>openReviewModal(_reviewB),400);
 }
