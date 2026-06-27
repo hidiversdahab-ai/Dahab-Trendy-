@@ -6817,21 +6817,22 @@ mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60
         🔒 ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
   }
 
-  // احسب قد إيه ممكن يتطرح من العهدات (بحد أقصى الـ netEGP المتاح)
-  let remainingNet = Math.max(0, netEGP); // الربح المتاح للطرح
+  /* المنطق الصح:
+     - العجز = المصروفات اللي فاقت الـ Collected (يعني اتدفعت من العهدة)
+     - العجز = max(0, expEGP - collectedEGP) — بس netEGP بيساوي collected - exp
+     - يعني: العجز = max(0, -netEGP)
+     - رصيد العهدة المتبقي = العهدة - العجز
+     - الربح المتاح = max(0, netEGP) — لو Net Profit موجب يبقى فيه ربح زيادة عن العهدة
+  */
+  const deficit = Math.max(0, -netEGP); // قد إيه المصروفات فاقت الإيرادات
+  const totalCustAmt = custList.reduce((s,c)=>s+c.amt, 0);
+
   let html = mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit",
     "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)",
     "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",
     netEGP>=0?"#27ae60":"#e74c3c");
 
-  let totalDeducted = 0;
-
   custList.forEach(c=>{
-    const deducted = Math.min(c.amt, remainingNet); // اللي اتطرح فعلاً
-    remainingNet -= deducted;
-    totalDeducted += deducted;
-    const remaining = c.amt - deducted;          // الباقي في العهدة
-
     const isOwner = c.type==='from_owner';
     const icon  = isOwner ? '🏦' : '🔒';
     const color = isOwner ? '#3498db' : '#9b59b6';
@@ -6839,22 +6840,24 @@ mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60
     const label = (isOwner ? (ar?'عهدة مالك':'Owner Custody') : (ar?'عهدة':'Custody'))
                 + (c.note?' — '+c.note:'');
 
-    // السطر الأساسي: العهدة الكاملة
+    // رصيد العهدة = العهدة - العجز (المصروفات الزيادة عن الإيرادات)
+    const spentFromCust = Math.min(c.amt, deficit);
+    const custBalance   = c.amt - spentFromCust;
+
     html += mkFin(icon+' £'+c.amt.toLocaleString(), label,
       `rgba(${bgC},0.08)`,`rgba(${bgC},0.22)`,color,
       `onclick="openCustodyModal('${c.id}')"`);
 
-    // لو اتطرح منها جزء — اعرض المتبقي
-    if(deducted > 0 && remaining >= 0){
-      const remLabel = ar?`متبقي من العهدة`:`Custody Remaining`;
-      const remColor = remaining>0?color:'var(--muted)';
-      html += mkFin('£'+remaining.toLocaleString(), remLabel,
-        `rgba(${bgC},0.04)`,`rgba(${bgC},0.12)`,remColor);
-    }
+    // رصيد العهدة المتبقي دايماً يظهر
+    const balColor = custBalance>0 ? color : '#e74c3c';
+    const balBg    = custBalance>0 ? bgC   : '231,76,60';
+    html += mkFin('💰 £'+custBalance.toLocaleString(),
+      ar?'رصيد العهدة المتبقي':'Custody Balance',
+      `rgba(${balBg},0.05)`,`rgba(${balBg},0.15)`,balColor);
   });
 
-  // الربح المتاح النهائي (لا يقل عن صفر — العهدة مش بتعمل ماينس)
-  const availNet = Math.max(0, netEGP - totalDeducted);
+  // الربح المتاح = لو Net Profit موجب ومافيش عجز
+  const availNet = Math.max(0, netEGP);
   const netBg = availNet>0?"39,174,96":"100,100,100";
   const netLabel = availNet>0?(ar?"الربح المتاح فعلاً":"Available Net Profit"):(ar?"لا يوجد ربح متاح":"No Available Profit");
   html += mkFin("£"+availNet.toLocaleString(), netLabel,
