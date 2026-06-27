@@ -6824,7 +6824,6 @@ mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60
      - رصيد العهدة المتبقي = العهدة - العجز
      - الربح المتاح = max(0, netEGP) — لو Net Profit موجب يبقى فيه ربح زيادة عن العهدة
   */
-  const deficit = Math.max(0, -netEGP); // قد إيه المصروفات فاقت الإيرادات
   const totalCustAmt = custList.reduce((s,c)=>s+c.amt, 0);
 
   let html = mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit",
@@ -6840,9 +6839,11 @@ mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60
     const label = (isOwner ? (ar?'عهدة مالك':'Owner Custody') : (ar?'عهدة':'Custody'))
                 + (c.note?' — '+c.note:'');
 
-    // رصيد العهدة = العهدة - العجز (المصروفات الزيادة عن الإيرادات)
-    const spentFromCust = Math.min(c.amt, deficit);
-    const custBalance   = c.amt - spentFromCust;
+    // رصيد العهدة = العهدة - المصروفات (المصروفات بتتدفع من العهدة مباشرة)
+    // لو فيه أكتر من عهدة — توزيع المصروفات بالتناسب
+    const ratio = totalCustAmt > 0 ? c.amt / totalCustAmt : 1;
+    const spentFromCust = Math.min(c.amt, expEGP * ratio);
+    const custBalance   = Math.max(0, c.amt - spentFromCust);
 
     html += mkFin(icon+' £'+c.amt.toLocaleString(), label,
       `rgba(${bgC},0.08)`,`rgba(${bgC},0.22)`,color,
