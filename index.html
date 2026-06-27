@@ -6796,15 +6796,17 @@ mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","
 mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid Balance","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
 mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
 (()=>{
-  /* ── Net Profit + العهدات ── */
+  /* ── Net Profit + العهدات ──
+     المنطق:
+     - العهدة رصيد ثابت
+     - من_الربح: تتطرح من Net Profit بس لو كافي، لو مش كافي تفضل زي ما هي
+     - من_المالك: زي من_الربح
+     - الربح المتاح = max(0, netEGP - ما اتطرح فعلاً من العهدات)
+     - العهدة المتبقية = العهدة - ما اتطرح منها
+  ── */
   const custList = window._custodyList || [];
-  const fromProfit = custList.filter(c=>c.type==='from_profit');
-  const fromOwner  = custList.filter(c=>c.type==='from_owner');
-  const totalFromProfit = fromProfit.reduce((s,c)=>s+c.amt,0);
-  const totalFromOwner  = fromOwner.reduce((s,c)=>s+c.amt,0);
-  const availNet = netEGP - totalFromProfit - totalFromOwner;
 
-  // لو مفيش عهدات — اعرض Net Profit العادي + زرار إضافة
+  // لو مفيش عهدات — Net Profit عادي + زرار
   if(custList.length===0){
     return mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit",
       "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)",
@@ -6815,29 +6817,48 @@ mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60
         🔒 ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
   }
 
-  // لو فيه عهدات — Net Profit + كل عهدة + الصافي النهائي
+  // احسب قد إيه ممكن يتطرح من العهدات (بحد أقصى الـ netEGP المتاح)
+  let remainingNet = Math.max(0, netEGP); // الربح المتاح للطرح
   let html = mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit",
     "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)",
     "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",
     netEGP>=0?"#27ae60":"#e74c3c");
 
-  fromProfit.forEach(c=>{
-    html+=mkFin("🔒 −£"+c.amt.toLocaleString(),
-      (ar?"عهدة (من الربح)":"Custody")+(c.note?" — "+c.note:""),
-      "rgba(122,90,200,0.08)","rgba(122,90,200,0.22)","#9b59b6",
+  let totalDeducted = 0;
+
+  custList.forEach(c=>{
+    const deducted = Math.min(c.amt, remainingNet); // اللي اتطرح فعلاً
+    remainingNet -= deducted;
+    totalDeducted += deducted;
+    const remaining = c.amt - deducted;          // الباقي في العهدة
+
+    const isOwner = c.type==='from_owner';
+    const icon  = isOwner ? '🏦' : '🔒';
+    const color = isOwner ? '#3498db' : '#9b59b6';
+    const bgC   = isOwner ? '52,152,219' : '122,90,200';
+    const label = (isOwner ? (ar?'عهدة مالك':'Owner Custody') : (ar?'عهدة':'Custody'))
+                + (c.note?' — '+c.note:'');
+
+    // السطر الأساسي: العهدة الكاملة
+    html += mkFin(icon+' £'+c.amt.toLocaleString(), label,
+      `rgba(${bgC},0.08)`,`rgba(${bgC},0.22)`,color,
       `onclick="openCustodyModal('${c.id}')"`);
-  });
-  fromOwner.forEach(c=>{
-    html+=mkFin("🏦 −£"+c.amt.toLocaleString(),
-      (ar?"عهدة مالك (خارج الربح)":"Owner Custody")+(c.note?" — "+c.note:""),
-      "rgba(52,152,219,0.08)","rgba(52,152,219,0.22)","#3498db",
-      `onclick="openCustodyModal('${c.id}')"`);
+
+    // لو اتطرح منها جزء — اعرض المتبقي
+    if(deducted > 0 && remaining >= 0){
+      const remLabel = ar?`متبقي من العهدة`:`Custody Remaining`;
+      const remColor = remaining>0?color:'var(--muted)';
+      html += mkFin('£'+remaining.toLocaleString(), remLabel,
+        `rgba(${bgC},0.04)`,`rgba(${bgC},0.12)`,remColor);
+    }
   });
 
-  const netBg=availNet>=0?"39,174,96":"231,76,60";
-  const netLabel=availNet>=0?(ar?"الربح المتاح فعلاً":"Available Net Profit"):(ar?"⚠️ عجز — مديونية على المكان":"⚠️ Deficit");
-  html+=mkFin((availNet<0?"−":"")+"£"+Math.abs(availNet).toLocaleString(),
-    netLabel,`rgba(${netBg},0.1)`,`rgba(${netBg},0.25)`,availNet>=0?"#27ae60":"#e74c3c");
+  // الربح المتاح النهائي (لا يقل عن صفر — العهدة مش بتعمل ماينس)
+  const availNet = Math.max(0, netEGP - totalDeducted);
+  const netBg = availNet>0?"39,174,96":"100,100,100";
+  const netLabel = availNet>0?(ar?"الربح المتاح فعلاً":"Available Net Profit"):(ar?"لا يوجد ربح متاح":"No Available Profit");
+  html += mkFin("£"+availNet.toLocaleString(), netLabel,
+    `rgba(${netBg},0.1)`,`rgba(${netBg},0.25)`,availNet>0?"#27ae60":"var(--muted)");
 
   html+=`<div style="text-align:center;margin-top:2px;">
     <button onclick="openCustodyModal()" style="background:none;border:1px dashed rgba(201,168,76,0.25);color:var(--muted);border-radius:8px;padding:4px 12px;font-size:10px;cursor:pointer;">+ ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
