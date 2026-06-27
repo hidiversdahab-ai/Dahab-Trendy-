@@ -9439,10 +9439,9 @@ const nextIdx=bookings.findIndex((bk,idx)=>{
   return bk.ci<=today;
 });
 const _reviewB=JSON.parse(JSON.stringify(b));
-renderBookings();
-renderRooms();
-renderDashboard();
 showToast("🛫 Check-out تم تأكيده — "+_reviewB.name+" · غرفة "+_reviewB.room);
+// ── FIX: أول حاجة نعمل review modal / auto-ci modal قبل أي render
+// عشان الـ renders الـ async مش تأثر عليهم
 if(nextIdx!==-1){
   const nb=bookings[nextIdx];
   let mc2=document.getElementById("auto-ci-modal");
@@ -9457,7 +9456,6 @@ if(nextIdx!==-1){
     </div>
   </div>`;
   mc2.classList.add("on");
-  // FIX: use onclick on mc2 element directly to avoid mobile event listener issues
   mc2.onclick=function(ev){
     const t=ev.target;
     if(t.id==="_autoci_yes"){
@@ -9465,19 +9463,22 @@ if(nextIdx!==-1){
       bookings[nextIdx].ciTime=new Date().toISOString();
       sv("dta_bk",bookings);
       showToast("🛬 Check-in تلقائي — "+nb.name+" · غرفة "+nb.room);
-      renderBookings();renderRooms();renderDashboard();
       closeM("auto-ci-modal");
       mc2.onclick=null;
-      setTimeout(()=>openReviewModal(_reviewB),300);
+      openReviewModal(_reviewB);
+      setTimeout(()=>{renderBookings();renderRooms();renderDashboard();},200);
     } else if(t.id==="_autoci_skip"){
       closeM("auto-ci-modal");
       mc2.onclick=null;
-      setTimeout(()=>openReviewModal(_reviewB),300);
+      openReviewModal(_reviewB);
+      setTimeout(()=>{renderBookings();renderRooms();renderDashboard();},200);
     }
   };
 } else {
-  setTimeout(()=>openReviewModal(_reviewB),400);
+  openReviewModal(_reviewB);
 }
+// ── بعمل الـ renders بعد ما الـ modal اتعمل
+setTimeout(()=>{renderBookings();renderRooms();renderDashboard();},100);
 }
 
 function sendReviewWA(b){
