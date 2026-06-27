@@ -5514,6 +5514,13 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 <div class="fld"><label>Paid By</label>
 <select id="em-paid"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Owner</option></select>
 </div>
+<div class="fld s2">
+  <label>🏦 يتخصم من</label>
+  <select id="em-source" style="font-size:13px;">
+    <option value="net_profit">📈 Net Profit (الربح)</option>
+    <option value="custody">🔒 العهدة (Custody)</option>
+  </select>
+</div>
 <div class="fld s2"><label>Notes</label><textarea id="ex-notes" rows="2"></textarea></div>
 <div class="fld s2">
   <label>🔗 Tag — ربط مصروفات مع بعض</label>
@@ -6734,10 +6741,14 @@ return s+paidEGP;
 },0)+cancelRevEGP;
 const unpaidEGP=revEGP-collectedEGP;
 const expEGP=dbExpenses.reduce((s,e)=>s+e.egp,0);
+// فصل المصروفات: من العهدة / من Net Profit
+const expFromCustody=dbExpenses.filter(e=>e.source==='custody').reduce((s,e)=>s+e.egp,0);
+const expFromNetProfit=dbExpenses.filter(e=>e.source!=='custody').reduce((s,e)=>s+e.egp,0);
 const restIncEGP=restaurantTx.filter(t=>t.type==="income").reduce((s,t)=>s+t.egp,0);
 const restExpEGP=restaurantTx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.egp,0);
 const restNetEGP=restIncEGP-restExpEGP;
-const netEGP=collectedEGP-expEGP+restNetEGP;
+// Net Profit = الإيرادات - مصروفات Net Profit فقط (مش من العهدة)
+const netEGP=collectedEGP-expFromNetProfit+restNetEGP;
 const occupiedCount=[...new Set(active.map(b=>String(b.room)))].length;
 const activeRoomSet=new Set(active.map(b=>String(b.room)));
 const reservedRooms=[...new Set(reserved.map(b=>String(b.room)))];
@@ -6794,21 +6805,14 @@ mkFin("£"+revEGP.toFixed(0), ar?"صافي الإيرادات":"Net Revenue","rg
 (totalCommEGP_db>0?mkFin("−£"+totalCommEGP_db.toFixed(0), ar?"عمولات الشركات":"Agency Commissions","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c"):"")+
 mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
 mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid Balance","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
-mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
+mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات (من الربح)":"Expenses (from Profit)","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
+(expFromCustody>0?mkFin("£"+expFromCustody.toFixed(0), ar?"مصروفات (من العهدة)":"Expenses (from Custody)","rgba(155,89,182,0.08)","rgba(155,89,182,0.22)","#9b59b6"):"")+
 (()=>{
-  /* ── Net Profit + العهدات ──
-     المنطق:
-     - العهدة رصيد ثابت
-     - من_الربح: تتطرح من Net Profit بس لو كافي، لو مش كافي تفضل زي ما هي
-     - من_المالك: زي من_الربح
-     - الربح المتاح = max(0, netEGP - ما اتطرح فعلاً من العهدات)
-     - العهدة المتبقية = العهدة - ما اتطرح منها
-  ── */
   const custList = window._custodyList || [];
 
   // لو مفيش عهدات — Net Profit عادي + زرار
   if(custList.length===0){
-    return mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit",
+    return mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
       "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)",
       "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",
       netEGP>=0?"#27ae60":"#e74c3c")+
@@ -6817,16 +6821,10 @@ mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60
         🔒 ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
   }
 
-  /* المنطق الصح:
-     - العجز = المصروفات اللي فاقت الـ Collected (يعني اتدفعت من العهدة)
-     - العجز = max(0, expEGP - collectedEGP) — بس netEGP بيساوي collected - exp
-     - يعني: العجز = max(0, -netEGP)
-     - رصيد العهدة المتبقي = العهدة - العجز
-     - الربح المتاح = max(0, netEGP) — لو Net Profit موجب يبقى فيه ربح زيادة عن العهدة
-  */
   const totalCustAmt = custList.reduce((s,c)=>s+c.amt, 0);
 
-  let html = mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit",
+  // Net Profit بعد خصم مصروفاته فقط (مش مصروفات العهدة)
+  let html = mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
     "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)",
     "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",
     netEGP>=0?"#27ae60":"#e74c3c");
@@ -6839,17 +6837,17 @@ mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60
     const label = (isOwner ? (ar?'عهدة مالك':'Owner Custody') : (ar?'عهدة':'Custody'))
                 + (c.note?' — '+c.note:'');
 
-    // رصيد العهدة = العهدة - المصروفات (المصروفات بتتدفع من العهدة مباشرة)
-    // لو فيه أكتر من عهدة — توزيع المصروفات بالتناسب
+    // رصيد العهدة = العهدة - المصروفات المخصومة منها فعلاً
+    // لو فيه أكتر من عهدة — توزيع بالتناسب
     const ratio = totalCustAmt > 0 ? c.amt / totalCustAmt : 1;
-    const spentFromCust = Math.min(c.amt, expEGP * ratio);
+    const spentFromCust = Math.min(c.amt, expFromCustody * ratio);
     const custBalance   = Math.max(0, c.amt - spentFromCust);
 
     html += mkFin(icon+' £'+c.amt.toLocaleString(), label,
       `rgba(${bgC},0.08)`,`rgba(${bgC},0.22)`,color,
       `onclick="openCustodyModal('${c.id}')"`);
 
-    // رصيد العهدة المتبقي دايماً يظهر
+    // رصيد العهدة المتبقي
     const balColor = custBalance>0 ? color : '#e74c3c';
     const balBg    = custBalance>0 ? bgC   : '231,76,60';
     html += mkFin('💰 £'+custBalance.toLocaleString(),
@@ -6864,7 +6862,16 @@ mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60
   html += mkFin("£"+availNet.toLocaleString(), netLabel,
     `rgba(${netBg},0.1)`,`rgba(${netBg},0.25)`,availNet>0?"#27ae60":"var(--muted)");
 
-  html+=`<div style="text-align:center;margin-top:2px;">
+  // زرار تحويل Net Profit للعهدة (بيظهر بس لو فيه ربح متاح)
+  if(availNet>0){
+    html += `<div style="text-align:center;margin-top:6px;">
+      <button onclick="openTransferToCustomdy(${availNet})" style="background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.4);color:#9b59b6;border-radius:8px;padding:7px 16px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">
+        💸 ${ar?'تحويل الربح إلى العهدة':'Transfer Profit to Custody'}
+      </button>
+    </div>`;
+  }
+
+  html+=`<div style="text-align:center;margin-top:6px;">
     <button onclick="openCustodyModal()" style="background:none;border:1px dashed rgba(201,168,76,0.25);color:var(--muted);border-radius:8px;padding:4px 12px;font-size:10px;cursor:pointer;">+ ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
   return html;
 })();
@@ -10153,6 +10160,7 @@ document.getElementById("em-usd").value=e.usd;
 document.getElementById("em-eur").value=(e.eur||+(e.egp/eurRate).toFixed(2));
 document.getElementById("em-amount").value=e.cur==="USD"?e.usd:e.cur==="EUR"?(e.eur||+(e.egp/eurRate).toFixed(2)):e.egp;
 document.getElementById("em-paid").value=e.paid||"Cash";
+document.getElementById("em-source").value=e.source||"net_profit";
 document.getElementById("ex-notes").value=e.notes||"";
 document.getElementById("em-tag").value=e.tag||"";
 } else {
@@ -10163,6 +10171,7 @@ document.getElementById("em-amount").value="";
 document.getElementById("em-egp").value="";
 document.getElementById("em-usd").value="";
 document.getElementById("em-paid").value="Cash";
+document.getElementById("em-source").value="net_profit";
 }
 document.getElementById("ex-modal").classList.add("on");
 }
@@ -10199,6 +10208,7 @@ eur:parseFloat(eur.toFixed(2)),
 paid:document.getElementById("em-paid").value,
 notes:document.getElementById("ex-notes").value,
 tag:document.getElementById("em-tag").value.trim(),
+source:document.getElementById("em-source").value||"net_profit",
 };
 if(exEdit!==null) expenses[exEdit]=ex; else expenses.push(ex);
 sv("dta_ex",expenses);
@@ -32505,6 +32515,81 @@ async function deleteCustodyEntry(){
   renderDashboard();
 }
 
+// ── Transfer Net Profit → Custody ──
+function openTransferToCustomdy(availNet){
+  const custList = window._custodyList || [];
+  if(custList.length === 0){
+    alert('أضف عهدة أولاً قبل التحويل');
+    openCustodyModal();
+    return;
+  }
+
+  // لو عهدة واحدة — اعرض confirm مباشرة
+  if(custList.length === 1){
+    const c = custList[0];
+    const label = (c.note ? c.note : 'العهدة');
+    if(!confirm(`تحويل £${availNet.toLocaleString()} من Net Profit إلى "${label}"؟\n\nبعد التحويل:\n• Net Profit = £0\n• العهدة = £${(c.amt + availNet).toLocaleString()}`)) return;
+    _doTransfer(c.id, availNet);
+    return;
+  }
+
+  // لو أكتر من عهدة — اعرض modal اختيار
+  const options = custList.map(c =>
+    `<button onclick="_doTransfer('${c.id}', ${availNet}); document.getElementById('transfer-modal').remove();"
+      style="width:100%;padding:10px 14px;margin-bottom:8px;background:rgba(155,89,182,0.12);border:1px solid rgba(155,89,182,0.4);border-radius:10px;color:#9b59b6;font-size:13px;font-weight:700;cursor:pointer;text-align:right;">
+      🔒 ${c.note||'عهدة'} — رصيد حالي: £${c.amt.toLocaleString()}
+    </button>`
+  ).join('');
+
+  const modal = document.createElement('div');
+  modal.id = 'transfer-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML = `
+    <div style="background:var(--card);border-radius:16px;padding:20px;max-width:380px;width:100%;border:1px solid rgba(155,89,182,0.3);">
+      <div style="font-size:15px;font-weight:700;color:#9b59b6;margin-bottom:4px;">💸 تحويل £${availNet.toLocaleString()} إلى عهدة</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px;">اختر العهدة اللي هتحول إليها الربح</div>
+      ${options}
+      <button onclick="document.getElementById('transfer-modal').remove()" style="width:100%;padding:8px;background:none;border:1px solid var(--bdr);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;margin-top:4px;">إلغاء</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function _doTransfer(custId, amount){
+  const custList = window._custodyList || [];
+  const idx = custList.findIndex(c => c.id === custId);
+  if(idx === -1){ alert('عهدة مش موجودة'); return; }
+
+  // نضيف المبلغ للعهدة
+  custList[idx].amt += amount;
+
+  // نضيف مصروف من Net Profit بمبلغ التحويل عشان يصفّر الربح
+  const transferExp = {
+    id: 'ex_tr_' + Date.now(),
+    branchId: window.DTA_BRANCH ? DTA_BRANCH.getActive().id : 'main',
+    date: new Date().toISOString().split('T')[0],
+    cat: 'Other',
+    desc: '💸 تحويل إلى العهدة — ' + (custList[idx].note || 'عهدة'),
+    cur: 'EGP',
+    egp: amount,
+    usd: +(amount / (window.exRate || 50)).toFixed(2),
+    eur: +(amount / (window.eurRate || 55)).toFixed(2),
+    paid: 'Transfer',
+    notes: 'تحويل تلقائي من Net Profit إلى العهدة',
+    tag: '',
+    source: 'net_profit',  // بيتخصم من Net Profit
+  };
+
+  expenses.push(transferExp);
+  sv('dta_ex', expenses);
+
+  await custodySave();
+  renderDashboard();
+  if(typeof sNotify === 'function')
+    sNotify('✅ تم التحويل', '£' + amount.toLocaleString() + ' أضيفت للعهدة وصفّرت الربح', 'success', 4000);
+}
+
+window.openTransferToCustomdy = openTransferToCustomdy;
+window._doTransfer = _doTransfer;
 window.openCustodyModal  = openCustodyModal;
 window.closeCustodyModal = closeCustodyModal;
 
