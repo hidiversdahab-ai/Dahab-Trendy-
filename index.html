@@ -6708,7 +6708,7 @@ const _dbBranch = (typeof DTA_BRANCH!=='undefined') ? DTA_BRANCH.getActive() : n
 const dbRooms = _dbBranch ? Array.from({length:_dbBranch.roomCount},(_,i)=>_dbBranch.roomStart+i) : ROOMS;
 const dbBookings = _dbBranch ? bookings.filter(b=> b.branchId ? b.branchId===_dbBranch.id : _dbBranch.id==='main') : bookings;
 const dbExpenses = _dbBranch ? expenses.filter(e=> e.branchId ? e.branchId===_dbBranch.id : _dbBranch.id==='main') : expenses;
-const active=dbBookings.filter(b=>b.ci<=td&&b.co>td&&b.status!=="Cancelled"&&!b.coConfirmed);
+const active=dbBookings.filter(b=>b.status!=="Cancelled"&&!b.coConfirmed&&(b.dayuse?b.ci===td:(b.ci<=td&&b.co>td)));
 const reserved=dbBookings.filter(b=>b.ci>td&&b.status!=="Cancelled"&&b.status!=="Standby");
 const reservedStandby=dbBookings.filter(b=>b.ci>td&&b.status==="Standby");
 const ciTd=dbBookings.filter(b=>b.ci===td&&b.status!=="Cancelled");
@@ -7095,7 +7095,8 @@ function renderLiveDash(){
   const lastMonthStr = lastMonthDate.toISOString().slice(0,7);
 
   const calcRevEGP = bks => bks.reduce((s,b)=>s+(b.cur==="USD"?b.total*(exRate||50):b.cur==="EUR"?b.total*(eurRate||55):b.total),0);
-  const active = bookings.filter(b=>b.ci<=td&&b.co>td&&b.status!=="Cancelled"&&!b.coConfirmed);
+  // ✅ FIX: include Day Use bookings (co===ci===td) in active count
+  const active = bookings.filter(b=>b.status!=="Cancelled"&&!b.coConfirmed&&(b.dayuse?b.ci===td:(b.ci<=td&&b.co>td)));
   const thisM = bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(thisMonthStr));
   const lastM = bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsWith(lastMonthStr));
   const allActive = bookings.filter(b=>b.status!=="Cancelled");
@@ -7866,19 +7867,22 @@ if(blEntry && !proceedDespiteBlacklist){
   return;
 }
 proceedDespiteBlacklist = false; // reset
+const isDU=document.getElementById("bm-dayuse").checked;
 const ci=document.getElementById("bm-ci").value;
 const co=document.getElementById("bm-co").value;
-if(!ci||!co||nts(ci,co)<=0){alert("Please enter valid check-in and check-out dates.");return;}
+if(!isDU && (!ci||!co||nts(ci,co)<=0)){alert("Please enter valid check-in and check-out dates.");return;}
+if(isDU && !ci){alert("Please enter a valid date for Day Use.");return;}
 const room=document.getElementById("bm-room").value;
 const status=document.getElementById("bm-status").value;
 // Push undo snapshot before any changes
 if(bkEdit!==null) pushUndo("تعديل حجز: "+(bookings[bkEdit]?.name||name), getUndoSnapshot());
 // Check room conflict (skip cancelled bookings and the booking being edited)
-if(status!=="Cancelled"){
+if(status!=="Cancelled" && !isDU){
 const conflictIdx=bookings.findIndex((b,idx)=>{
 if(idx===bkEdit) return false;
 if(b.status==="Cancelled") return false;
 if(b.status==="Standby") return false; // Standby مش تعارض حقيقي
+if(b.dayuse) return false; // Day Use مش تعارض مع حجز عادي
 if(b.room!==room) return false;
 return ci<b.co && co>b.ci;
 });
@@ -7913,7 +7917,6 @@ saveData();
 }
 const type=document.getElementById("bm-type").value;
 const cur=document.getElementById("bm-cur").value;
-const isDU=document.getElementById("bm-dayuse").checked;
 const n=isDU?0:nts(ci,co);
 const p=isDU?(duPrices[type]||{usd:0,egp:0,eur:0}):(prices[type]||{usd:0,egp:0,eur:0});
 const baseRate=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
@@ -9376,7 +9379,25 @@ const b=bookings[i];
 const now=new Date();
 const timeStr=now.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
 const dateStr=now.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
-if(!confirm("🛫 تأكيد Check-out للضيف: "+b.name+"\nغرفة: "+b.room+"\nالوقت: "+dateStr+" "+timeStr+"\n\nهل أنت متأكد؟")) return;
+// ✅ FIX: modal بدل confirm() — Chrome mobile كان بيبلوك الـ confirm فالـ Review Banner ما كانش يظهر
+let mc=document.getElementById("confirm-co-modal");
+if(!mc){mc=document.createElement("div");mc.id="confirm-co-modal";mc.className="ovl";document.body.appendChild(mc);}
+mc.innerHTML=`<div class="modal" style="max-width:360px;text-align:center;">
+  <div style="font-size:32px;margin-bottom:8px;">🛫</div>
+  <h3 style="color:var(--gold);margin:0 0 8px;">تأكيد Check-out</h3>
+  <p style="color:var(--muted);font-size:13px;margin:0 0 4px;">${b.name}</p>
+  <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">غرفة ${b.room} · ${dateStr} ${timeStr}</p>
+  <div style="display:flex;gap:8px;">
+    <button class="btn bg" style="flex:1;font-weight:700;" onclick="closeM('confirm-co-modal');_doCO(${i});">✅ تأكيد</button>
+    <button class="btn bb" style="flex:1;" onclick="closeM('confirm-co-modal')">إلغاء</button>
+  </div>
+</div>`;
+mc.classList.add("on");
+}
+
+function _doCO(i){
+const b=bookings[i];
+const now=new Date();
 b.coConfirmed=true;
 b.coTime=now.toISOString();
 b.laundryNeeded=true;
@@ -9392,8 +9413,7 @@ bookings.forEach((bk,idx)=>{
   if(bk.co<=today2) bk.coConfirmed=true;
 });
 sv("dta_bk",bookings);
-// ✅ FIX v14-20: Immediately free the room upon manual CO confirmation
-// (don't wait for autoUpdateRooms 11AM time check)
+// Immediately free the room
 const coRoomKey = String(b.room);
 if(roomSt[coRoomKey] !== "maintenance"){
   roomSt[coRoomKey] = "available";
@@ -9408,16 +9428,16 @@ if(bk.room!==b.room) return false;
 if(bk.ciConfirmed) return false;
 return bk.ci<=today;
 });
+const _reviewB = JSON.parse(JSON.stringify(b)); // snapshot before render
 renderBookings();
 renderRooms();
 renderDashboard();
-showToast("🛫 Check-out تم تأكيده — "+b.name+" · غرفة "+b.room);
+showToast("🛫 Check-out تم تأكيده — "+_reviewB.name+" · غرفة "+_reviewB.room);
 if(nextIdx!==-1){
 const nb=bookings[nextIdx];
-// show next CI prompt as modal so Review popup works correctly
-let mc=document.getElementById("auto-ci-modal");
-if(!mc){mc=document.createElement("div");mc.id="auto-ci-modal";mc.className="ovl";document.body.appendChild(mc);}
-mc.innerHTML=`<div class="modal" style="max-width:380px;text-align:center;">
+let mc2=document.getElementById("auto-ci-modal");
+if(!mc2){mc2=document.createElement("div");mc2.id="auto-ci-modal";mc2.className="ovl";document.body.appendChild(mc2);}
+mc2.innerHTML=`<div class="modal" style="max-width:380px;text-align:center;">
   <div style="font-size:28px;margin-bottom:8px;">🛬</div>
   <h3 style="color:var(--gold);margin:0 0 8px;">Check-in تلقائي؟</h3>
   <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">يوجد حجز للغرفة ${nb.room}<br>${nb.name} — ${fmtD(nb.ci)}</p>
@@ -9429,14 +9449,14 @@ mc.innerHTML=`<div class="modal" style="max-width:380px;text-align:center;">
       showToast('🛬 Check-in تلقائي — ${nb.name} · غرفة ${nb.room}');
       renderBookings();renderRooms();renderDashboard();
       closeM('auto-ci-modal');
-      setTimeout(()=>openReviewModal(${JSON.stringify(b).replace(/'/g,"\\'")}),200);
+      setTimeout(()=>openReviewModal(${JSON.stringify(_reviewB).replace(/'/g,"\\'")}),300);
     ">✅ نعم</button>
-    <button class="btn bb" style="flex:1;" onclick="closeM('auto-ci-modal');setTimeout(()=>openReviewModal(${JSON.stringify(b).replace(/'/g,"\\'")}),200);">تخطي</button>
+    <button class="btn bb" style="flex:1;" onclick="closeM('auto-ci-modal');setTimeout(()=>openReviewModal(${JSON.stringify(_reviewB).replace(/'/g,"\\'")}),300);">تخطي</button>
   </div>
 </div>`;
-mc.classList.add("on");
+mc2.classList.add("on");
 } else {
-setTimeout(()=>openReviewModal(b),400);
+setTimeout(()=>openReviewModal(_reviewB),300);
 }
 }
 
@@ -9487,17 +9507,20 @@ function openReviewModal(b){
     return `<a href="${url}" target="_blank" class="btn" style="flex:1;min-width:80px;background:#25D366;color:#fff;text-decoration:none;padding:9px 4px;border-radius:10px;font-size:12px;font-weight:700;text-align:center;">${l.flag} ${l.label}</a>`;
   }).join('');
 
-  let m=document.getElementById("review-request-modal");
-  if(!m){
-    m=document.createElement("div");
-    m.id="review-request-modal";
-    m.className="ovl";
-    document.body.appendChild(m);
-  }
+  // Close all other open modals first
+  document.querySelectorAll('.ovl.on').forEach(o=>{ if(o.id!=='review-request-modal') o.classList.remove('on'); });
+  // Remove old instance if any, always recreate fresh
+  const old=document.getElementById("review-request-modal");
+  if(old) old.remove();
+  const m=document.createElement("div");
+  m.id="review-request-modal";
+  // Use inline styles instead of class to guarantee z-index above everything
+  m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:12px;";
+  document.body.appendChild(m);
   m.innerHTML=`
-    <div class="mdl" style="max-width:420px;text-align:center;">
+    <div class="mdl" style="max-width:420px;text-align:center;position:relative;z-index:100000;">
       <div style="display:flex;justify-content:flex-end;margin-bottom:4px;">
-        <button onclick="closeM('review-request-modal')" style="background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.5);color:#e74c3c;font-size:20px;font-weight:700;cursor:pointer;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+        <button onclick="document.getElementById('review-request-modal').remove()" style="background:rgba(231,76,60,0.15);border:1px solid rgba(231,76,60,0.5);color:#e74c3c;font-size:20px;font-weight:700;cursor:pointer;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
       </div>
       <div style="font-size:36px;margin-bottom:8px;">⭐</div>
       <h3 style="color:var(--gold);margin:0 0 4px;">${ar?"اطلب Review من الضيف":"Request a Guest Review"}</h3>
@@ -9510,9 +9533,9 @@ function openReviewModal(b){
         <a href="${gmLink}" target="_blank" class="btn" style="flex:1;background:#4285F4;color:#fff;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">📍 Google Maps</a>
         <a href="${taLink}" target="_blank" class="btn" style="flex:1;background:#34E0A1;color:#000;text-decoration:none;padding:10px 6px;border-radius:10px;font-size:13px;">✈️ TripAdvisor</a>
       </div>
-      <button class="btn br" onclick="closeM('review-request-modal')" style="width:100%;padding:12px;font-size:15px;font-weight:700;">✕ ${ar?"إغلاق":"Close"}</button>
+      <button class="btn br" onclick="document.getElementById('review-request-modal').remove()" style="width:100%;padding:12px;font-size:15px;font-weight:700;">✕ ${ar?"إغلاق":"Close"}</button>
     </div>`;
-  m.classList.add("on");
+  m.addEventListener('click',e=>{ if(e.target===m) m.remove(); });
 }
 
 let loadInvIdx = -1;
@@ -14621,6 +14644,14 @@ bookings.filter(b=>b.status!=="Cancelled"&&!b.coConfirmed).forEach(b=>{
 const roomToday = getRoomOnDate(b, td);
 const curSt = roomSt[roomToday] || "available";
 if(curSt==="maintenance") return;
+// ✅ FIX: Day Use — حجز نهاري في نفس اليوم → Occupied فوراً
+if(b.dayuse && b.ci===td){
+if(curSt!=="occupied"){
+roomSt[roomToday]="occupied";
+changes.push("🔴 غرفة "+roomToday+" → Occupied Day Use ("+b.name+")");
+}
+return;
+}
 // ✅ FIX: إذا تم تأكيد الـ CI يدوياً (ciConfirmed) والضيف لسه موجود → occupied فوراً بصرف النظر عن الوقت
 if(b.ciConfirmed && b.ci<=td && b.co>td){
 if(curSt!=="occupied"){
@@ -14641,7 +14672,7 @@ else if(b.co===td && timeNow>=checkOutTime){
 const stillActive=bookings.find(bk=>
 bk!==b && bk.status!=="Cancelled" &&
 String(getRoomOnDate(bk,td))===String(roomToday) &&
-bk.ci<=td && bk.co>td
+(bk.dayuse ? bk.ci===td : (bk.ci<=td && bk.co>td))
 );
 if(!stillActive && curSt!=="available"){
 roomSt[roomToday]="available";
@@ -14663,7 +14694,7 @@ if(roomSt[r]==="maintenance") return;
 const anyoneHere = bookings.find(bk=>
 bk.status!=="Cancelled" && !bk.coConfirmed &&
 String(getRoomOnDate(bk,td))===String(r) &&
-bk.ci<=td && bk.co>td
+(bk.dayuse ? bk.ci===td : (bk.ci<=td && bk.co>td))
 );
 if(!anyoneHere && roomSt[r]==="occupied"){
 roomSt[r]="available";
@@ -16735,7 +16766,7 @@ const thisMonthStr=now.toISOString().slice(0,7);
 const lastMonthDate=new Date(now.getFullYear(),now.getMonth()-1,1);
 const lastMonthStr=lastMonthDate.toISOString().slice(0,7);
 
-const active=bookings.filter(b=>b.ci<=td&&b.co>td&&b.status!=="Cancelled"&&!b.coConfirmed);
+const active=bookings.filter(b=>b.status!=="Cancelled"&&!b.coConfirmed&&(b.dayuse?b.ci===td:(b.ci<=td&&b.co>td)));
 const ciTd=bookings.filter(b=>b.ci===td&&b.status!=="Cancelled");
 const coTd=bookings.filter(b=>b.co===td&&b.status!=="Cancelled"&&!b.coConfirmed);
 const pending=bookings.filter(b=>b.status==="Pending"||b.status==="Partial");
@@ -29263,11 +29294,11 @@ Thank you for your time! 😊`,
         }
       };
     }
-    // patch confirmCO
-    const _co = window.confirmCO;
-    if(typeof _co === 'function' && _config.autoSend){
-      window.confirmCO = function(idx){
-        _co(idx);
+    // patch _doCO (actual CO logic — confirmCO now just shows modal)
+    const _doCO_orig = window._doCO;
+    if(typeof window._doCO === 'function' && _config.autoSend){
+      window._doCO = function(idx){
+        _doCO_orig(idx);
         const bk = (window.bookings||[])[idx];
         if(bk && bk.phone){
           const remaining = (bk.total||0) - (typeof calcPaid==='function'?calcPaid(bk):bk.prepay||0);
