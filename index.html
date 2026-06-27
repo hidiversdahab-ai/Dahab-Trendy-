@@ -16535,7 +16535,16 @@ function renderCharts(){
 }
 // Patch renderDashboard to also call renderCharts
 const _origRenderDashboard=renderDashboard;
-renderDashboard=function(){_origRenderDashboard.apply(this,arguments);if(typeof updateBirthdayBadge==='function') updateBirthdayBadge();renderEmptyRoomAlerts();renderLaundryAlerts();};
+renderDashboard=function(){
+  // ── تأكد إن العهدات محملة قبل الـ render (sync fallback) ──
+  if(!window._custodyList || window._custodyList.length===0){
+    try{ window._custodyList=JSON.parse(localStorage.getItem('dta_custody_list')||'[]'); }catch(e){}
+  }
+  _origRenderDashboard.apply(this,arguments);
+  if(typeof updateBirthdayBadge==='function') updateBirthdayBadge();
+  renderEmptyRoomAlerts();
+  renderLaundryAlerts();
+};
 // استدعاء فوري عشان يشتغل من أول تحميل الصفحة (قبل الـ patch كان بيتستدعى renderDashboard)
 renderEmptyRoomAlerts();renderLaundryAlerts();
 // ════════════════════════════════════════════
@@ -32340,19 +32349,37 @@ window._custodyType = 'from_profit';
 const CUST_KEY = 'dta_custody_list';
 
 async function custodyLoad(){
+  // حمّل من localStorage أولاً فوراً (sync) عشان الـ render الأول يشوفه
+  try{ window._custodyList = JSON.parse(localStorage.getItem(CUST_KEY)||'[]'); }catch(e){ window._custodyList=[]; }
+  // ثم حدّث من IDB (أدق وأمان)
   try {
-    const data = await DTA_DB.getSetting(CUST_KEY, []);
-    window._custodyList = Array.isArray(data) ? data : [];
-  } catch(e) {
-    window._custodyList = JSON.parse(localStorage.getItem(CUST_KEY)||'[]');
+    const data = await DTA_DB.getSetting(CUST_KEY, null);
+    if(Array.isArray(data) && data.length > 0){
+      window._custodyList = data;
+      // sync back to localStorage
+      localStorage.setItem(CUST_KEY, JSON.stringify(data));
+      if(typeof renderDashboard==='function') renderDashboard();
+    }
+  } catch(e) {}
+  // ── Migrate old single-entry format (dta_custody_amt → dta_custody_list) ──
+  if(window._custodyList.length===0){
+    const oldAmt  = parseFloat(localStorage.getItem('dta_custody_amt')||'0');
+    const oldNote = localStorage.getItem('dta_custody_note')||'';
+    if(oldAmt>0){
+      window._custodyList = [{id:'c_migrated',amt:oldAmt,note:oldNote,type:'from_profit',createdAt:new Date().toISOString()}];
+      localStorage.setItem(CUST_KEY, JSON.stringify(window._custodyList));
+      localStorage.removeItem('dta_custody_amt');
+      localStorage.removeItem('dta_custody_note');
+    }
   }
 }
 
 async function custodySave(){
+  // حفظ فوري في localStorage أولاً عشان الـ renderDashboard يلاقيه
+  localStorage.setItem(CUST_KEY, JSON.stringify(window._custodyList));
   try {
     await DTA_DB.setSetting(CUST_KEY, window._custodyList);
   } catch(e){}
-  localStorage.setItem(CUST_KEY, JSON.stringify(window._custodyList));
 }
 
 function setCustType(type){
