@@ -6855,8 +6855,8 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات (من الربح)":"E
       `rgba(${balBg},0.05)`,`rgba(${balBg},0.15)`,balColor);
   });
 
-  // الربح المتاح = لو Net Profit موجب ومافيش عجز
-  const availNet = Math.max(0, netEGP);
+  // الربح المتاح = Net Profit ناقص العهدة الكلية
+  const availNet = Math.max(0, netEGP - totalCustAmt);
   const netBg = availNet>0?"39,174,96":"100,100,100";
   const netLabel = availNet>0?(ar?"الربح المتاح فعلاً":"Available Net Profit"):(ar?"لا يوجد ربح متاح":"No Available Profit");
   html += mkFin("£"+availNet.toLocaleString(), netLabel,
@@ -32559,33 +32559,13 @@ async function _doTransfer(custId, amount){
   const idx = custList.findIndex(c => c.id === custId);
   if(idx === -1){ alert('عهدة مش موجودة'); return; }
 
-  // نضيف المبلغ للعهدة
+  // نضيف المبلغ للعهدة فقط — availNet بيتحسب تلقائياً = netEGP - totalCustAmt
   custList[idx].amt += amount;
-
-  // نضيف مصروف من Net Profit بمبلغ التحويل عشان يصفّر الربح
-  const transferExp = {
-    id: 'ex_tr_' + Date.now(),
-    branchId: window.DTA_BRANCH ? DTA_BRANCH.getActive().id : 'main',
-    date: new Date().toISOString().split('T')[0],
-    cat: 'Other',
-    desc: '💸 تحويل إلى العهدة — ' + (custList[idx].note || 'عهدة'),
-    cur: 'EGP',
-    egp: amount,
-    usd: +(amount / (window.exRate || 50)).toFixed(2),
-    eur: +(amount / (window.eurRate || 55)).toFixed(2),
-    paid: 'Transfer',
-    notes: 'تحويل تلقائي من Net Profit إلى العهدة',
-    tag: '',
-    source: 'net_profit',  // بيتخصم من Net Profit
-  };
-
-  expenses.push(transferExp);
-  sv('dta_ex', expenses);
 
   await custodySave();
   renderDashboard();
   if(typeof sNotify === 'function')
-    sNotify('✅ تم التحويل', '£' + amount.toLocaleString() + ' أضيفت للعهدة وصفّرت الربح', 'success', 4000);
+    sNotify('✅ تم التحويل', '£' + amount.toLocaleString() + ' أضيفت للعهدة — Available Net Profit = £0', 'success', 4000);
 }
 
 window.openTransferToCustomdy = openTransferToCustomdy;
