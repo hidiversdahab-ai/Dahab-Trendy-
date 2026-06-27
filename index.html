@@ -6795,9 +6795,8 @@ mkFin("£"+revEGP.toFixed(0), ar?"صافي الإيرادات":"Net Revenue","rg
 mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
 mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid Balance","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
 mkFin("£"+expEGP.toFixed(0), ar?"المصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
-mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)","rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",netEGP>=0?"#27ae60":"#e74c3c")+
 (()=>{
-  /* ── العهدات (multi-entry, IDB) ── */
+  /* ── Net Profit + العهدات ── */
   const custList = window._custodyList || [];
   const fromProfit = custList.filter(c=>c.type==='from_profit');
   const fromOwner  = custList.filter(c=>c.type==='from_owner');
@@ -6805,29 +6804,43 @@ mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total N
   const totalFromOwner  = fromOwner.reduce((s,c)=>s+c.amt,0);
   const availNet = netEGP - totalFromProfit - totalFromOwner;
 
-  if(custList.length===0) return `<div style="text-align:center;margin-top:4px;">
-    <button onclick="openCustodyModal()" style="background:none;border:1px dashed rgba(201,168,76,0.3);color:var(--muted);border-radius:8px;padding:6px 14px;font-size:11px;cursor:pointer;">
-      🔒 ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
+  // لو مفيش عهدات — اعرض Net Profit العادي + زرار إضافة
+  if(custList.length===0){
+    return mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit",
+      "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)",
+      "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",
+      netEGP>=0?"#27ae60":"#e74c3c")+
+    `<div style="text-align:center;margin-top:4px;">
+      <button onclick="openCustodyModal()" style="background:none;border:1px dashed rgba(201,168,76,0.3);color:var(--muted);border-radius:8px;padding:6px 14px;font-size:11px;cursor:pointer;">
+        🔒 ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
+  }
 
-  let html='';
+  // لو فيه عهدات — Net Profit + كل عهدة + الصافي النهائي
+  let html = mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح الإجمالي":"Total Net Profit",
+    "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)",
+    "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",
+    netEGP>=0?"#27ae60":"#e74c3c");
+
   fromProfit.forEach(c=>{
-    html+=mkFin("🔒 £"+c.amt.toLocaleString(),
-      (ar?"عهدة (من الربح)":"Custody (from profit)")+(c.note?" — "+c.note:""),
+    html+=mkFin("🔒 −£"+c.amt.toLocaleString(),
+      (ar?"عهدة (من الربح)":"Custody")+(c.note?" — "+c.note:""),
       "rgba(122,90,200,0.08)","rgba(122,90,200,0.22)","#9b59b6",
       `onclick="openCustodyModal('${c.id}')"`);
   });
   fromOwner.forEach(c=>{
-    html+=mkFin("🏦 £"+c.amt.toLocaleString(),
-      (ar?"عهدة مالك (خارج الربح)":"Owner Custody (external)")+(c.note?" — "+c.note:""),
+    html+=mkFin("🏦 −£"+c.amt.toLocaleString(),
+      (ar?"عهدة مالك (خارج الربح)":"Owner Custody")+(c.note?" — "+c.note:""),
       "rgba(52,152,219,0.08)","rgba(52,152,219,0.22)","#3498db",
       `onclick="openCustodyModal('${c.id}')"`);
   });
-  html+=`<div style="text-align:center;margin-top:2px;">
-    <button onclick="openCustodyModal()" style="background:none;border:1px dashed rgba(201,168,76,0.25);color:var(--muted);border-radius:8px;padding:4px 12px;font-size:10px;cursor:pointer;">+ ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
+
   const netBg=availNet>=0?"39,174,96":"231,76,60";
   const netLabel=availNet>=0?(ar?"الربح المتاح فعلاً":"Available Net Profit"):(ar?"⚠️ عجز — مديونية على المكان":"⚠️ Deficit");
   html+=mkFin((availNet<0?"−":"")+"£"+Math.abs(availNet).toLocaleString(),
     netLabel,`rgba(${netBg},0.1)`,`rgba(${netBg},0.25)`,availNet>=0?"#27ae60":"#e74c3c");
+
+  html+=`<div style="text-align:center;margin-top:2px;">
+    <button onclick="openCustodyModal()" style="background:none;border:1px dashed rgba(201,168,76,0.25);color:var(--muted);border-radius:8px;padding:4px 12px;font-size:10px;cursor:pointer;">+ ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
   return html;
 })();
 
