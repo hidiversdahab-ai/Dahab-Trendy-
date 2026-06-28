@@ -4040,6 +4040,20 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 <label>Pickup Sign Name / الاسم على اللافتة</label>
 <input id="bm-pickup-sign" placeholder="Name for airport sign" disabled style="opacity:0.5;">
 </div>
+<div class="fld" style="margin-bottom:0;" id="bm-face-photo-wrap">
+<label>📷 صورة الضيف / Guest Photo <span style="font-size:10px;color:var(--muted);">(تظهر في اللافتة)</span></label>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  <label for="bm-face-photo-input" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:rgba(201,168,76,0.12);border:1.5px solid rgba(201,168,76,0.4);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:var(--gold);">
+    📂 اختر صورة
+    <input type="file" id="bm-face-photo-input" accept="image/*" style="display:none;" onchange="bmLoadFacePhoto(this)">
+  </label>
+  <button type="button" class="btn bb bsm" onclick="bmClearFacePhoto()" title="مسح الصورة" style="font-size:11px;">✕ مسح</button>
+  <div id="bm-face-photo-preview" style="display:none;position:relative;">
+    <img id="bm-face-photo-img" src="" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+  </div>
+</div>
+<input type="hidden" id="bm-face-photo">
+</div>
 </div>
 </div>
 <div class="fld">
@@ -7532,6 +7546,34 @@ return "<tr style='"+rowStyle+"'>"+
 "</td></tr>";
 }).join("");
 }
+// ═══════════ GUEST FACE PHOTO (AIRPORT SIGN) ═══════════
+function bmLoadFacePhoto(input){
+  const file=input.files&&input.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const b64=e.target.result;
+    document.getElementById('bm-face-photo').value=b64;
+    document.getElementById('bm-face-photo-img').src=b64;
+    document.getElementById('bm-face-photo-preview').style.display='block';
+  };
+  reader.readAsDataURL(file);
+}
+function bmClearFacePhoto(){
+  document.getElementById('bm-face-photo').value='';
+  document.getElementById('bm-face-photo-img').src='';
+  document.getElementById('bm-face-photo-preview').style.display='none';
+  document.getElementById('bm-face-photo-input').value='';
+}
+function bmSetFacePhoto(src){
+  if(src){
+    document.getElementById('bm-face-photo').value=src;
+    document.getElementById('bm-face-photo-img').src=src;
+    document.getElementById('bm-face-photo-preview').style.display='block';
+  } else {
+    bmClearFacePhoto();
+  }
+}
 // ═══════════ AIRPORT TRANSFER TOGGLE ═══════════
 // ═══════════ AIRLINE AUTO-DETECT ═══════════
 const AIRLINES = {
@@ -8071,6 +8113,7 @@ document.getElementById("bm-flight").value=b.flightNo||"";
 document.getElementById("bm-airline").value=b.airline||"";
 document.getElementById("bm-pickup-datetime").value=b.pickupDatetime||"";
 document.getElementById("bm-pickup-sign").value=b.pickupSign||b.name||"";
+bmSetFacePhoto(b.facePhoto||'');
 toggleTransfer();
 toggleDayUse();
 // Prepaid
@@ -8121,6 +8164,7 @@ document.getElementById("bm-flight").value="";
 document.getElementById("bm-airline").value="";
 document.getElementById("bm-pickup-datetime").value="";
 document.getElementById("bm-pickup-sign").value="";
+bmClearFacePhoto();
 toggleTransfer();
 toggleDayUse();
 // Clear linked booking
@@ -8288,6 +8332,7 @@ flightNo:document.getElementById("bm-flight").value,
 airline:document.getElementById("bm-airline").value,
 pickupDatetime:document.getElementById("bm-pickup-datetime").value,
 pickupSign:document.getElementById("bm-pickup-sign").value||document.getElementById("bm-name").value.trim(),
+facePhoto:document.getElementById("bm-face-photo").value||'',
 ciConfirmed:document.getElementById("bm-walkin").checked ? true : (bkEdit!==null?(bookings[bkEdit].ciConfirmed||false):false),
 ciTime:document.getElementById("bm-walkin").checked ? new Date().toISOString() : (bkEdit!==null?(bookings[bkEdit].ciTime||null):null),
 coConfirmed:bkEdit!==null?(bookings[bkEdit].coConfirmed||false):false,
