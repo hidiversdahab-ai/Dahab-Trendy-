@@ -16941,7 +16941,7 @@ function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalend
 function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
 function calToday(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();}
 function renderCalendar(){
-// ── تأكد إن العهدات محملة قبل الـ render (sync fallback) — مطابق للـ Dashboard ──
+// ── sync fallback: تأكد إن العهدات محملة قبل الـ render ──
 if(!window._custodyList || window._custodyList.length===0){
   try{ window._custodyList=JSON.parse(localStorage.getItem('dta_custody_list')||'[]'); }catch(e){}
 }
@@ -33078,19 +33078,21 @@ async function _confirmTransfer(availNet){
   const idx = custList.findIndex(c => c.id === custId);
   if(idx === -1){ alert('عهدة مش موجودة'); return; }
 
-  // سجّل التحويل في قائمة التحويلات فقط (لا تزود c.amt الأصلية)
-  if(!custList[idx].transfers) custList[idx].transfers = [];
-  custList[idx].transfers.push({
+  // entry جديد from_profit بدل transfers عشان نتجنب الخصم المضاعف
+  const refNote = custList[idx].note || 'عهدة';
+  window._custodyList.push({
     id: 't_' + Date.now(),
-    amount: amount,
-    date: new Date().toISOString(),
-    note: 'تحويل من Net Profit'
+    amt: amount,
+    note: 'تحويل → ' + refNote,
+    type: 'from_profit',
+    createdAt: new Date().toISOString()
   });
 
   document.getElementById('transfer-modal').remove();
 
   await custodySave();
   renderDashboard();
+  if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){}
   if(typeof sNotify === 'function')
     sNotify('✅ تم التحويل', '£' + amount.toLocaleString() + ' أضيفت للعهدة وخُصمت من Net Profit', 'success', 3500);
 }
@@ -33099,15 +33101,17 @@ async function _doTransfer(custId, amount){
   const custList = window._custodyList || [];
   const idx = custList.findIndex(c => c.id === custId);
   if(idx === -1){ alert('عهدة مش موجودة'); return; }
-  if(!custList[idx].transfers) custList[idx].transfers = [];
-  custList[idx].transfers.push({
+  const refNote = custList[idx].note || 'عهدة';
+  window._custodyList.push({
     id: 't_' + Date.now(),
-    amount: amount,
-    date: new Date().toISOString(),
-    note: 'تحويل من Net Profit'
+    amt: amount,
+    note: 'تحويل → ' + refNote,
+    type: 'from_profit',
+    createdAt: new Date().toISOString()
   });
   await custodySave();
   renderDashboard();
+  if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){}
   if(typeof sNotify === 'function')
     sNotify('✅ تم التحويل', '£' + amount.toLocaleString() + ' أضيفت للعهدة', 'success', 3500);
 }
