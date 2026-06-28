@@ -6828,21 +6828,10 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   // Net Profit المعروض = بعد خصم المحوّل للعهدة
   const displayNetEGP = netEGP - totalTransferred;
 
-  // تحويلات المالك — خصمها من Net Profit أيضاً
-  const ownerTxList = window._ownerTxList || [];
-  const totalOwnerTransferred = ownerTxList.reduce((s,t)=>s+t.amount,0);
-  const finalNetEGP = displayNetEGP - totalOwnerTransferred;
-
-  // ── رندر بلوك تحويلات المالك ──
-  const ownerSec = document.getElementById("db-owner-transfer-section");
-  if(ownerSec){
-    ownerSec.innerHTML = _renderOwnerTransferBlock(finalNetEGP, totalOwnerTransferred, ownerTxList, ar);
-  }
-
-  let html = mkFin("£"+finalNetEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
-    "rgba("+(finalNetEGP>=0?"39,174,96":"231,76,60")+",0.1)",
-    "rgba("+(finalNetEGP>=0?"39,174,96":"231,76,60")+",0.25)",
-    finalNetEGP>=0?"#27ae60":"#e74c3c");
+  let html = mkFin("£"+displayNetEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
+    "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.1)",
+    "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.25)",
+    displayNetEGP>=0?"#27ae60":"#e74c3c");
 
   if(custList.length===0){
     // مفيش عهدة — بس زرار إضافة
@@ -6853,8 +6842,7 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   }
 
   // ── بلوك العهدة الموحّد ──
-  // availNet = ما تبقى من Net Profit بعد خصم المحوّل للعهدة + المالك
-  const availNet = Math.max(0, finalNetEGP);
+  const availNet = Math.max(0, displayNetEGP);
   const custBalance = Math.max(0, totalCustAmt - expFromCustody);
 
   // صف لكل عهدة: الاسم + المبلغ + زرار تعديل
@@ -6893,12 +6881,22 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
       <span style="font-size:14px;font-weight:800;color:${availNet>0?'#27ae60':'var(--muted)'};">£${availNet.toLocaleString()}</span>
     </div>
     <div style="display:flex;gap:6px;margin-top:10px;">
-      ${availNet>0?`<button onclick="openTransferToCustomdy(${availNet},${finalNetEGP})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${ar?'تحويل للعهدة':'Transfer'}</button>`:''}
+      ${availNet>0?`<button onclick="openTransferToCustomdy(${availNet},${availNet})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${ar?'تحويل للعهدة':'Transfer'}</button>`:''}
       <button onclick="openCustodyModal()" style="flex:1;padding:9px;background:none;border:1px dashed rgba(155,89,182,0.3);border-radius:8px;color:var(--muted);font-size:11px;cursor:pointer;">+ ${ar?'عهدة جديدة':'Add Custody'}</button>
     </div>
   </div>`;
 
   return html;
+})();
+
+// ── رندر بلوك تحويلات المالك (منفصل عن db-finance تماماً) ──
+(function(){
+  const ownerTxList = window._ownerTxList || [];
+  const totalOwnerTransferred = ownerTxList.reduce(function(s,t){ return s+t.amount; },0);
+  const ownerSec = document.getElementById("db-owner-transfer-section");
+  if(ownerSec && typeof _renderOwnerTransferBlock==='function'){
+    ownerSec.innerHTML = _renderOwnerTransferBlock(netEGP, totalOwnerTransferred, ownerTxList, ar);
+  }
 })();
 
 // ══ RESTAURANT DASHBOARD SECTION ══
