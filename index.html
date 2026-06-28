@@ -32611,7 +32611,6 @@ async function custodyLoad(){
       window._custodyList = data;
       // sync back to localStorage
       localStorage.setItem(CUST_KEY, JSON.stringify(data));
-      if(typeof renderDashboard==='function') renderDashboard();
     }
   } catch(e) {}
   // ── Migrate old single-entry format (dta_custody_amt → dta_custody_list) ──
