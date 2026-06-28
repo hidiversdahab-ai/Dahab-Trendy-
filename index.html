@@ -1457,6 +1457,24 @@ label {
 <meta name="apple-mobile-web-app-title" content="Dahab Trendy">
 </head>
 <body>
+<script>
+// لما المتصفح يرجع من الخلفية، اعمل reload عشان تقرأ أحدث البيانات
+(function(){
+  var _hidden = false;
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
+      _hidden = true;
+    } else if(_hidden){
+      _hidden = false;
+      // انتظر ثانية عشان المتصفح يكمل الـ restore، ثم reload
+      setTimeout(function(){
+        window.location.reload();
+      }, 800);
+    }
+  });
+})();
+</script>
+
 <!-- PWA Install Bar -->
 <div id="pwa-install-bar">
   <span>📱 ثبّت Dahab Trendy على هاتفك للوصول السريع!</span>
@@ -2411,7 +2429,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 <div id="db-commission-section" style="display:none;margin-bottom:12px;"></div>
 <!-- ══ OWNER TRANSFER SECTION ══ -->
-<div id="db-owner-transfer-section" style="margin-bottom:12px;"></div>
+
 <!-- ══ RESTAURANT REVENUE SECTION ══ -->
 <div id="db-restaurant-section" style="display:none;margin-bottom:12px;"></div>
 <div class="g2">
@@ -6868,13 +6886,14 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   // from_profit مع transfers: الأصلي + التحويلات الإضافية
   // from_owner: لا يُخصم
   const totalTransferred = custList.reduce((s,c)=>{
-    if(c.type === 'from_owner') return s;
+    if(c.type === 'from_owner' || c.type === 'to_owner') return s;
     const extra = (c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s + c.amt + extra;
   }, 0);
   // Net Profit المعروض = بعد خصم المحوّل للعهدة + تحويلات المالك
-  const totalOwnerTx = (window._ownerTxList||[]).reduce(function(s,t){ return s+t.amount; },0);
-  const displayNetEGP = netEGP - totalTransferred - totalOwnerTx;
+  const totalOwnerTx  = (window._ownerTxList||[]).reduce(function(s,t){ return s+t.amount; },0);
+  const totalToOwner  = custList.filter(c=>c.type==='to_owner').reduce((s,c)=>s+c.amt,0);
+  const displayNetEGP = netEGP - totalTransferred - totalOwnerTx - totalToOwner;
 
   let html = mkFin("£"+displayNetEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
     "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.1)",
@@ -6893,14 +6912,22 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   const availNet = Math.max(0, displayNetEGP);
   const custBalance = Math.max(0, totalCustAmt - expFromCustody);
 
-  // صف لكل عهدة: الاسم + المبلغ + زرار تعديل
+  // صف لكل عهدة: الاسم + المبلغ + النوع + زرار تعديل (bilingual)
   const custRows = custList.map(c=>{
-    const label = (c.note||'عهدة') + (c.type==='from_owner'?' 🏦':'');
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-      <span style="font-size:12px;color:var(--muted);">${label}</span>
+    const isToOwner   = c.type==='to_owner';
+    const isFromOwner = c.type==='from_owner';
+    const color = isFromOwner?'#3498db':isToOwner?'#e67e22':'#9b59b6';
+    const icon  = isFromOwner?'🏦':isToOwner?'👤':'🔒';
+    const typeLabel = isFromOwner?(ar?'من المالك':'From Owner'):isToOwner?(ar?'للمالك':'To Owner'):(ar?'من الربح':'From Profit');
+    const noteTxt = c.note||(isToOwner?(ar?'تحويل للمالك':'Owner Transfer'):isFromOwner?(ar?'عهدة من المالك':'Owner Custody'):(ar?'عهدة':'Custody'));
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div>
+        <div style="font-size:12px;color:var(--text);">${icon} ${noteTxt}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:1px;">${typeLabel}</div>
+      </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:13px;font-weight:700;color:#9b59b6;">£${c.amt.toLocaleString()}</span>
-        <button onclick="openCustodyModal('${c.id}')" style="background:none;border:1px solid rgba(155,89,182,0.3);border-radius:5px;padding:2px 7px;font-size:10px;color:#9b59b6;cursor:pointer;">✏️</button>
+        <span style="font-size:13px;font-weight:700;color:${color};">£${c.amt.toLocaleString()}</span>
+        <button onclick="openCustodyModal('${c.id}')" style="background:none;border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:2px 7px;font-size:10px;color:var(--muted);cursor:pointer;">✏️</button>
       </div>
     </div>`;
   }).join('');
@@ -6937,23 +6964,7 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   return html;
 })();
 
-// ── رندر بلوك تحويلات المالك (منفصل عن db-finance تماماً) ──
-(function(){
-  const ownerTxList = window._ownerTxList || [];
-  const totalOwnerTransferred = ownerTxList.reduce(function(s,t){ return s+t.amount; },0);
-  const ownerSec = document.getElementById("db-owner-transfer-section");
-  if(ownerSec && typeof _renderOwnerTransferBlock==='function'){
-    // خصم تحويلات العهدة أيضاً من netEGP قبل حساب المتبقي للمالك
-    const custList = window._custodyList || [];
-    const totalCustodyTransferred = custList.reduce(function(s,c){
-      if(c.type === 'from_owner') return s;
-      var extra = (c.transfers||[]).reduce(function(ss,t){ return ss+t.amount; },0);
-      return s + c.amt + extra;
-    }, 0);
-    const netAfterOwner = netEGP - totalCustodyTransferred - totalOwnerTransferred;
-    ownerSec.innerHTML = _renderOwnerTransferBlock(netAfterOwner, totalOwnerTransferred, ownerTxList, ar);
-  }
-})();
+
 
 // ══ RESTAURANT DASHBOARD SECTION ══
 const restSec = document.getElementById("db-restaurant-section");
@@ -27481,7 +27492,7 @@ async function exportData(){
       DTA_DB.getAll('waitlist').catch(()=>typeof waitlist!=='undefined'?waitlist:[]),
     ]);
     // جلب تحويلات المالك والعهدات من IDB
-    const ownerTxData  = await DTA_DB.getSetting(OWNER_TX_KEY, window._ownerTxList||[]).catch(()=>window._ownerTxList||[]);
+    const ownerTxData  = await DTA_DB.getSetting('dta_owner_transfers', window._ownerTxList||[]).catch(()=>window._ownerTxList||[]);
     const custodyData  = await DTA_DB.getSetting(CUST_KEY, window._custodyList||[]).catch(()=>window._custodyList||[]);
     const data = {
       ts: new Date().toISOString(),
@@ -27663,8 +27674,8 @@ async function importData(file){
     // استيراد تحويلات المالك
     if(Array.isArray(data.ownerTransfers) && data.ownerTransfers.length > 0){
       window._ownerTxList = data.ownerTransfers;
-      try{ localStorage.setItem(OWNER_TX_KEY, JSON.stringify(window._ownerTxList)); }catch(e){}
-      await DTA_DB.setSetting(OWNER_TX_KEY, window._ownerTxList).catch(()=>{});
+      try{ localStorage.setItem('dta_owner_transfers', JSON.stringify(window._ownerTxList)); }catch(e){}
+      await DTA_DB.setSetting('dta_owner_transfers', window._ownerTxList).catch(()=>{});
     }
     // استيراد العهدات
     if(Array.isArray(data.custodyList) && data.custodyList.length > 0){
@@ -32518,21 +32529,25 @@ window.renderMinibar = window.renderMinibar;
 
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <div style="font-size:16px;font-weight:700;color:#9b59b6;" id="cust-modal-title">🔒 إضافة عهدة</div>
+      <div style="font-size:16px;font-weight:700;color:#9b59b6;" id="cust-modal-title">🔒 <span id="cust-modal-title-txt">إضافة عهدة / Add Custody</span></div>
       <button onclick="closeCustodyModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
     </div>
 
     <!-- نوع العهدة -->
     <div style="margin-bottom:14px;">
-      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;">نوع العهدة</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;">نوع العهدة / Type</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
         <button id="cust-type-profit" onclick="setCustType('from_profit')"
-          style="padding:10px 8px;border-radius:10px;border:2px solid rgba(155,89,182,0.5);background:rgba(155,89,182,0.15);color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">
-          🔒 من الربح<br><span style="font-size:10px;font-weight:400;opacity:0.8;">مبلغ موجود في الـ Net Profit</span>
+          style="padding:10px 6px;border-radius:10px;border:2px solid rgba(155,89,182,0.5);background:rgba(155,89,182,0.15);color:#9b59b6;font-size:11px;font-weight:700;cursor:pointer;">
+          🔒 من الربح<br><span style="font-size:9px;font-weight:400;opacity:0.8;">From Profit</span>
         </button>
         <button id="cust-type-owner" onclick="setCustType('from_owner')"
-          style="padding:10px 8px;border-radius:10px;border:2px solid rgba(52,152,219,0.3);background:rgba(52,152,219,0.05);color:#3498db;font-size:12px;font-weight:700;cursor:pointer;">
-          🏦 من المالك<br><span style="font-size:10px;font-weight:400;opacity:0.8;">عهدة من خارج الـ Net Profit</span>
+          style="padding:10px 6px;border-radius:10px;border:2px solid rgba(52,152,219,0.3);background:rgba(52,152,219,0.05);color:#3498db;font-size:11px;font-weight:700;cursor:pointer;">
+          🏦 من المالك<br><span style="font-size:9px;font-weight:400;opacity:0.8;">From Owner</span>
+        </button>
+        <button id="cust-type-to-owner" onclick="setCustType('to_owner')"
+          style="padding:10px 6px;border-radius:10px;border:2px solid rgba(230,126,34,0.3);background:rgba(230,126,34,0.05);color:#e67e22;font-size:11px;font-weight:700;cursor:pointer;">
+          👤 للمالك<br><span style="font-size:9px;font-weight:400;opacity:0.8;">To Owner</span>
         </button>
       </div>
       <div id="cust-type-hint" style="font-size:11px;color:var(--muted);margin-top:7px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;line-height:1.5;"></div>
@@ -32622,16 +32637,20 @@ async function custodySave(){
 
 function setCustType(type){
   window._custodyType = type;
+  const ar = typeof currentLang!=='undefined' && currentLang==='ar';
   const hints = {
-    from_profit: '💡 المبلغ ده موجود فعلاً في الـ Net Profit — بس هو عهدة مش ربح حقيقي، فهيتطرح منه.',
-    from_owner:  '💡 المبلغ ده جاي من صاحب المكان من برا — مش جزء من الإيرادات. لو الـ Net Profit مش كافي هيظهر عجز (ماينس).'
+    from_profit: ar?'💡 المبلغ موجود في الـ Net Profit — عهدة مش ربح حقيقي، هيتطرح منه.':'💡 Amount already in Net Profit — it\'s a custody, not real profit, will be deducted.',
+    from_owner:  ar?'💡 المبلغ جاي من المالك من برا — مش جزء من الإيرادات.':'💡 Amount from owner outside revenues — won\'t affect Net Profit.',
+    to_owner:    ar?'💡 سحب من الربح للمالك — هيتطرح من الـ Net Profit.':'💡 Withdrawal from profit to owner — will be deducted from Net Profit.'
   };
   document.getElementById('cust-type-hint').textContent = hints[type]||'';
   // highlight active button
-  document.getElementById('cust-type-profit').style.opacity = type==='from_profit'?'1':'0.45';
-  document.getElementById('cust-type-owner').style.opacity  = type==='from_owner' ?'1':'0.45';
-  document.getElementById('cust-type-profit').style.borderWidth = type==='from_profit'?'2px':'1px';
-  document.getElementById('cust-type-owner').style.borderWidth  = type==='from_owner' ?'2px':'1px';
+  const tp = document.getElementById('cust-type-profit');
+  const to = document.getElementById('cust-type-owner');
+  const tt = document.getElementById('cust-type-to-owner');
+  if(tp){ tp.style.opacity = type==='from_profit'?'1':'0.45'; tp.style.borderWidth = type==='from_profit'?'2px':'1px'; }
+  if(to){ to.style.opacity = type==='from_owner' ?'1':'0.45'; to.style.borderWidth = type==='from_owner' ?'2px':'1px'; }
+  if(tt){ tt.style.opacity = type==='to_owner'   ?'1':'0.45'; tt.style.borderWidth = type==='to_owner'   ?'2px':'1px'; }
 }
 
 function openCustodyModal(editId){
@@ -32639,7 +32658,10 @@ function openCustodyModal(editId){
   const isEdit = !!editId;
   const entry = isEdit ? window._custodyList.find(c=>c.id===editId) : null;
 
-  document.getElementById('cust-modal-title').textContent = isEdit ? '✏️ تعديل العهدة' : '🔒 إضافة عهدة';
+  const ar2 = typeof currentLang!=='undefined' && currentLang==='ar';
+  document.getElementById('cust-modal-title').innerHTML = isEdit
+    ? (ar2?'✏️ تعديل':'✏️ Edit')
+    : '🔒 ' + (ar2?'إضافة عهدة / تحويل':'Add Custody / Transfer');
   document.getElementById('cust-amt-inp').value  = entry ? entry.amt  : '';
   document.getElementById('cust-note-inp').value = entry ? (entry.note||'') : '';
   document.getElementById('cust-delete-btn').style.display = isEdit ? 'block' : 'none';
@@ -32692,8 +32714,10 @@ async function saveCustodyEntry(){
   await custodySave();
   closeCustodyModal();
   renderDashboard();
-  const icon = type==='from_owner'?'🏦':'🔒';
-  if(typeof sNotify==='function') sNotify(icon+' تم حفظ العهدة','£'+amt.toLocaleString()+(note?' — '+note:''),'success',3000);
+  const ar3 = typeof currentLang!=='undefined' && currentLang==='ar';
+  const icon = type==='from_owner'?'🏦':type==='to_owner'?'👤':'🔒';
+  const msg  = type==='to_owner'?(ar3?'تم تسجيل تحويل للمالك':'Owner transfer saved'):( ar3?'تم حفظ العهدة':'Custody saved');
+  if(typeof sNotify==='function') sNotify(icon+' '+msg,'£'+amt.toLocaleString()+(note?' — '+note:''),'success',3000);
 }
 
 async function deleteCustodyEntry(){
@@ -32828,50 +32852,68 @@ window.resetAllCustody = resetAllCustody;
 
 // ══════════════════════════════════════════════════════════
 //  OWNER MONEY TRANSFER — تحويلات المالك من Net Profit
+//  منطق بسيط: localStorage فقط كمصدر للحقيقة
 // ══════════════════════════════════════════════════════════
-const OWNER_TX_KEY = 'dta_owner_transfers';
 
-// تحميل فوري sync من localStorage (PRIMARY storage)
-try{ window._ownerTxList = JSON.parse(localStorage.getItem(OWNER_TX_KEY)||'[]'); }catch(e){ window._ownerTxList=[]; }
+var OWNER_TX_KEY = 'dta_owner_transfers';
 
-// طلب persist() لمنع المتصفح من مسح البيانات تلقائياً
-if(navigator.storage && navigator.storage.persist){
-  navigator.storage.persist().then(function(granted){
-    console.log('[OwnerTx] Storage persist:', granted ? 'granted' : 'not granted');
-  }).catch(function(){});
+// ── حفظ وتحميل — IDB أولاً (primary)، localStorage ثانياً (backup) ──
+function _otxRead(){
+  try{ return JSON.parse(localStorage.getItem(OWNER_TX_KEY)||'[]'); }
+  catch(e){ return []; }
+}
+
+function _otxWrite(list){
+  try{ localStorage.setItem(OWNER_TX_KEY, JSON.stringify(list)); }
+  catch(e){ console.warn('[ownerTx] localStorage write failed:', e); }
 }
 
 async function ownerTxLoad(){
-  var lsData = [];
-  try{ lsData = JSON.parse(localStorage.getItem(OWNER_TX_KEY)||'[]'); }catch(e){ lsData=[]; }
+  // حاول تقرأ من IDB أولاً (أكثر ثباتاً على Android content://)
   var idbData = null;
-  try{ idbData = await DTA_DB.getSetting(OWNER_TX_KEY, null); }catch(e){}
-  // IDB هو المصدر الأساسي دايماً — لو فيه بيانات استخدمها
+  try{
+    if(window.DTA_DB && typeof DTA_DB.getSetting === 'function'){
+      idbData = await DTA_DB.getSetting(OWNER_TX_KEY, null);
+    }
+  }catch(e){}
+
   if(Array.isArray(idbData) && idbData.length > 0){
     window._ownerTxList = idbData;
-    try{ localStorage.setItem(OWNER_TX_KEY, JSON.stringify(idbData)); }catch(e){}
-  } else if(lsData.length > 0){
-    // fallback: لو IDB فاضي خد من localStorage وارفعهم لـ IDB
-    window._ownerTxList = lsData;
-    try{ await DTA_DB.setSetting(OWNER_TX_KEY, lsData); }catch(e){}
+    // زامن localStorage مع IDB
+    _otxWrite(idbData);
   } else {
-    window._ownerTxList = [];
+    // IDB فاضي — جرب localStorage كـ fallback
+    var lsData = _otxRead();
+    window._ownerTxList = lsData;
+    // لو فيه بيانات في LS، احفظهم في IDB
+    if(lsData.length > 0 && window.DTA_DB){
+      try{ await DTA_DB.setSetting(OWNER_TX_KEY, lsData); }catch(e){}
+    }
   }
-  console.log('[ownerTxLoad] Loaded', (window._ownerTxList||[]).length, 'transfers');
 }
 
 async function ownerTxSave(){
-  try{ localStorage.setItem(OWNER_TX_KEY, JSON.stringify(window._ownerTxList)); }catch(e){}
-  try{ await DTA_DB.setSetting(OWNER_TX_KEY, window._ownerTxList); }catch(e){}
+  var list = window._ownerTxList || [];
+  // احفظ في IDB أولاً (primary)
+  try{
+    if(window.DTA_DB && typeof DTA_DB.setSetting === 'function'){
+      await DTA_DB.setSetting(OWNER_TX_KEY, list);
+    }
+  }catch(e){ console.warn('[ownerTx] IDB write failed:', e); }
+  // احفظ في localStorage كـ backup
+  _otxWrite(list);
 }
 
+// تحميل فوري — يتم تحديثه async بعد ما DTA_DB يجهز
+window._ownerTxList = _otxRead(); // sync من LS كقيمة مبدئية
+
+// ── فتح modal التحويل ───────────────────────────────────
 function openOwnerTransferModal(availNet){
   const old = document.getElementById('owner-tx-modal');
   if(old) old.remove();
 
-  const ar = currentLang==="ar";
+  const ar = currentLang==='ar';
 
-  // Build modal with createElement (no innerHTML button issues)
   const overlay = document.createElement('div');
   overlay.id = 'owner-tx-modal';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -32879,52 +32921,49 @@ function openOwnerTransferModal(availNet){
   const box = document.createElement('div');
   box.style.cssText = 'background:var(--card);border-radius:18px;padding:24px;max-width:360px;width:100%;border:1px solid rgba(230,126,34,0.45);box-shadow:0 8px 40px rgba(0,0,0,0.7);';
 
-  box.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-      <div style="font-size:17px;font-weight:800;color:#e67e22;">💰 ${ar?'تحويل للمالك':'Transfer to Owner'}</div>
-      <button id="otx-close-x" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
-    </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">${ar?'الربح المتاح:':'Available:'} <b style="color:#27ae60;">£${availNet.toLocaleString()}</b></div>
+  box.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+      '<div style="font-size:17px;font-weight:800;color:#e67e22;">&#x1F4B0; ' + (ar?'تحويل للمالك':'Transfer to Owner') + '</div>' +
+      '<button id="otx-close-x" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">&times;</button>' +
+    '</div>' +
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:18px;">' + (ar?'الربح المتاح:':'Available:') + ' <b style="color:#27ae60;">\u00a3' + availNet.toLocaleString() + '</b></div>' +
+    '<label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">' + (ar?'المبلغ (£)':'Amount (£)') + '</label>' +
+    '<input id="otx-amount" type="number" min="1" value="' + availNet + '" style="width:100%;padding:12px;background:rgba(230,126,34,0.08);border:1px solid rgba(230,126,34,0.4);border-radius:10px;color:var(--text);font-size:24px;font-weight:800;text-align:center;box-sizing:border-box;margin-bottom:10px;">' +
+    '<label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">' + (ar?'طريقة التحويل':'Method') + '</label>' +
+    '<select id="otx-method" style="width:100%;padding:10px;background:var(--card);border:1px solid rgba(230,126,34,0.35);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:10px;">' +
+      '<option value="Cash">&#x1F4B5; ' + (ar?'كاش':'Cash') + '</option>' +
+      '<option value="Bank Transfer">&#x1F3E6; ' + (ar?'تحويل بنكي':'Bank Transfer') + '</option>' +
+      '<option value="Instapay">&#x1F4F1; Instapay</option>' +
+      '<option value="Vodafone Cash">&#x1F4F2; Vodafone Cash</option>' +
+      '<option value="Other">&#x1F4CB; ' + (ar?'أخرى':'Other') + '</option>' +
+    '</select>' +
+    '<label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">' + (ar?'ملاحظة':'Note') + '</label>' +
+    '<input id="otx-note" type="text" placeholder="' + (ar?'راتب، سحب شخصي...':'salary, withdrawal...') + '" style="width:100%;padding:10px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;color:var(--text);font-size:12px;box-sizing:border-box;margin-bottom:6px;">' +
+    '<div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:14px;">' + (ar?'بعد التحويل:':'After transfer:') + ' <span id="otx-after" style="font-weight:700;color:#e74c3c;">\u00a30</span></div>';
 
-    <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">${ar?'المبلغ (£)':'Amount (£)'}</label>
-    <input id="otx-amount" type="number" min="1" value="${availNet}"
-      style="width:100%;padding:12px;background:rgba(230,126,34,0.08);border:1px solid rgba(230,126,34,0.4);border-radius:10px;color:var(--text);font-size:24px;font-weight:800;text-align:center;box-sizing:border-box;margin-bottom:10px;">
-
-    <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">${ar?'طريقة التحويل':'Method'}</label>
-    <select id="otx-method" style="width:100%;padding:10px;background:var(--card);border:1px solid rgba(230,126,34,0.35);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:10px;">
-      <option value="Cash">💵 ${ar?'كاش':'Cash'}</option>
-      <option value="Bank Transfer">🏦 ${ar?'تحويل بنكي':'Bank Transfer'}</option>
-      <option value="Instapay">📱 Instapay</option>
-      <option value="Vodafone Cash">📲 Vodafone Cash</option>
-      <option value="Other">📋 ${ar?'أخرى':'Other'}</option>
-    </select>
-
-    <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">${ar?'ملاحظة':'Note'}</label>
-    <input id="otx-note" type="text" placeholder="${ar?'راتب، سحب شخصي...':'salary, withdrawal...'}"
-      style="width:100%;padding:10px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;color:var(--text);font-size:12px;box-sizing:border-box;margin-bottom:6px;">
-
-    <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:14px;">
-      ${ar?'بعد التحويل:':'After transfer:'} <span id="otx-after" style="font-weight:700;color:#e74c3c;">£0</span>
-    </div>`;
-
-  // Confirm button - created via JS, no innerHTML
+  // زر التأكيد
   const confirmBtn = document.createElement('button');
   confirmBtn.style.cssText = 'width:100%;padding:13px;background:rgba(230,126,34,0.2);border:1px solid rgba(230,126,34,0.55);border-radius:10px;color:#e67e22;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px;display:block;';
-  confirmBtn.textContent = '✅ ' + (ar?'تأكيد التحويل':'Confirm Transfer');
+  confirmBtn.textContent = '\u2705 ' + (ar?'تأكيد التحويل':'Confirm Transfer');
   confirmBtn.addEventListener('click', async function(){
-    const amount = parseFloat(document.getElementById('otx-amount').value)||0;
-    const method = document.getElementById('otx-method').value;
-    const note   = (document.getElementById('otx-note').value||'').trim() || (ar?'تحويل للمالك':'Owner Transfer');
-    if(amount <= 0){ alert(ar?'ادخل مبلغ':'Enter amount'); return; }
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = (ar?'جاري الحفظ...':'Saving...');
+    var amount = parseFloat(document.getElementById('otx-amount').value)||0;
+    var method = document.getElementById('otx-method').value;
+    var note   = (document.getElementById('otx-note').value||'').trim() || (ar?'تحويل للمالك':'Owner Transfer');
+    if(amount <= 0){ alert(ar?'ادخل مبلغ أكبر من صفر':'Enter amount greater than zero'); confirmBtn.disabled=false; confirmBtn.textContent='\u2705 '+(ar?'تأكيد التحويل':'Confirm Transfer'); return; }
+    // أضف للقائمة
     if(!window._ownerTxList) window._ownerTxList = [];
     window._ownerTxList.push({ id:'otx_'+Date.now(), amount:amount, method:method, note:note, date:new Date().toISOString() });
+    // احفظ وانتظر
     await ownerTxSave();
     overlay.remove();
     renderDashboard();
-    if(typeof sNotify==='function') sNotify('✅ تم التحويل للمالك','£'+amount.toLocaleString()+' — '+method,'success',3500);
+    if(typeof sNotify==='function') sNotify('\u2705 تم التحويل للمالك', '\u00a3'+amount.toLocaleString()+' \u2014 '+method, 'success', 3500);
   });
 
-  const cancelBtn = document.createElement('button');
+  // زر الإلغاء
+  var cancelBtn = document.createElement('button');
   cancelBtn.style.cssText = 'width:100%;padding:10px;background:none;border:1px solid var(--bdr);border-radius:10px;color:var(--muted);font-size:12px;cursor:pointer;display:block;';
   cancelBtn.textContent = ar?'إلغاء':'Cancel';
   cancelBtn.addEventListener('click', function(){ overlay.remove(); });
@@ -32934,139 +32973,102 @@ function openOwnerTransferModal(availNet){
   overlay.appendChild(box);
   document.body.appendChild(overlay);
 
-  // close X
+  // زر الإغلاق X
   document.getElementById('otx-close-x').addEventListener('click', function(){ overlay.remove(); });
 
-  // live preview
-  const amtInp = document.getElementById('otx-amount');
-  const afterEl = document.getElementById('otx-after');
+  // معاينة مباشرة للمبلغ المتبقي
+  var amtInp = document.getElementById('otx-amount');
+  var afterEl = document.getElementById('otx-after');
   amtInp.addEventListener('input', function(){
-    const v = Math.max(0, parseFloat(amtInp.value)||0);
-    const after = availNet - v;
-    afterEl.textContent = '£' + after.toLocaleString();
-    afterEl.style.color = after >= 0 ? '#f39c12' : '#e74c3c';
+    var v = Math.max(0, parseFloat(amtInp.value)||0);
+    afterEl.textContent = '\u00a3' + (availNet - v).toLocaleString();
+    afterEl.style.color = (availNet - v) >= 0 ? '#f39c12' : '#e74c3c';
   });
-  // set initial after value
-  afterEl.textContent = '£0';
+  afterEl.textContent = '\u00a3' + (availNet - (parseFloat(amtInp.value)||0)).toLocaleString();
   amtInp.focus(); amtInp.select();
 }
 
-window.confirmOwnerTransfer = function(){
-  const amountEl = document.getElementById('otx-amount');
-  const methodEl = document.getElementById('otx-method');
-  const noteEl   = document.getElementById('otx-note');
-
-  if(!amountEl){ alert('خطأ: لم يُعثر على الحقول'); return; }
-
-  const amount  = parseFloat(amountEl.value)||0;
-  const method  = methodEl ? methodEl.value : 'Cash';
-  const note    = (noteEl ? noteEl.value : '').trim() || 'تحويل للمالك';
-
-  if(amount <= 0){ alert('ادخل مبلغ أكبر من صفر'); return; }
-
-  if(!window._ownerTxList) window._ownerTxList = [];
-
-  const entry = {
-    id: 'otx_' + Date.now(),
-    amount: amount,
-    method: method,
-    note: note,
-    date: new Date().toISOString()
-  };
-
-  window._ownerTxList.push(entry);
-  ownerTxSave();
-
-  const modal = document.getElementById('owner-tx-modal');
-  if(modal) modal.remove();
-
-  renderDashboard();
-
-  if(typeof sNotify==='function')
-    sNotify('✅ تم التحويل للمالك', '£'+amount.toLocaleString()+' — '+method, 'success', 3500);
-};
-
+// ── حذف تحويل ──────────────────────────────────────────
 function deleteOwnerTx(id){
-  const ar = currentLang==="ar";
+  var ar = currentLang==='ar';
   if(!confirm(ar?'حذف هذا التحويل؟':'Delete this transfer?')) return;
   window._ownerTxList = (window._ownerTxList||[]).filter(function(t){ return t.id!==id; });
   ownerTxSave();
   renderDashboard();
-  if(typeof sNotify==='function') sNotify('🗑️ حذف', ar?'تم حذف التحويل':'Transfer deleted', 'info', 2500);
+  if(typeof sNotify==='function') sNotify('\uD83D\uDDD1\uFE0F ' + (ar?'حذف':'Deleted'), ar?'تم حذف التحويل':'Transfer deleted', 'info', 2500);
 }
 
+// ── سجل التحويلات ───────────────────────────────────────
 function openOwnerTxHistory(){
-  const ar = currentLang==="ar";
-  const old = document.getElementById('otx-history-modal');
+  var ar = currentLang==='ar';
+  var old = document.getElementById('otx-history-modal');
   if(old) old.remove();
-  const txList = (window._ownerTxList||[]).slice().reverse();
-  const rows = txList.map(t=>{
-    const d = new Date(t.date);
-    const dateStr = d.toLocaleDateString('ar-EG',{day:'2-digit',month:'short',year:'numeric'});
-    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-      <div>
-        <div style="font-size:12px;font-weight:600;color:var(--text);">${t.note||'تحويل للمالك'}</div>
-        <div style="font-size:10px;color:var(--muted);">${dateStr}${t.method?' · '+t.method:''}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:13px;font-weight:700;color:#e67e22;">£${t.amount.toLocaleString()}</span>
-        <button onclick="deleteOwnerTx('${t.id}');document.getElementById('otx-history-modal').remove();" style="background:none;border:1px solid rgba(231,76,60,0.3);border-radius:5px;padding:2px 7px;font-size:10px;color:#e74c3c;cursor:pointer;">🗑️</button>
-      </div>
-    </div>`;
+
+  // اقرأ مباشرة من localStorage (الحقيقة الوحيدة)
+  var txList = _otxRead().slice().reverse();
+  var total = txList.reduce(function(s,t){ return s+t.amount; }, 0);
+
+  var rows = txList.map(function(t){
+    var d = new Date(t.date);
+    var dateStr = d.toLocaleDateString('ar-EG',{day:'2-digit',month:'short',year:'numeric'});
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">' +
+      '<div>' +
+        '<div style="font-size:12px;font-weight:600;color:var(--text);">' + (t.note||'تحويل للمالك') + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);">' + dateStr + (t.method?' \u00b7 '+t.method:'') + '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span style="font-size:13px;font-weight:700;color:#e67e22;">\u00a3' + t.amount.toLocaleString() + '</span>' +
+        '<button onclick="deleteOwnerTx(\'' + t.id + '\');var m=document.getElementById(\'otx-history-modal\');if(m)m.remove();" style="background:none;border:1px solid rgba(231,76,60,0.3);border-radius:5px;padding:2px 7px;font-size:10px;color:#e74c3c;cursor:pointer;">\uD83D\uDDD1\uFE0F</button>' +
+      '</div>' +
+    '</div>';
   }).join('');
-  const total = txList.reduce((s,t)=>s+t.amount,0);
-  const modal = document.createElement('div');
+
+  var modal = document.createElement('div');
   modal.id = 'otx-history-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:10000;display:flex;align-items:flex-end;justify-content:center;';
-  modal.innerHTML = `<div style="background:var(--card);border-radius:18px 18px 0 0;padding:20px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;border:1px solid rgba(230,126,34,0.35);">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div style="font-size:15px;font-weight:800;color:#e67e22;">📋 ${ar?'كل تحويلات المالك':'All Owner Transfers'}</div>
-      <button onclick="document.getElementById('otx-history-modal').remove()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
-    </div>
-    ${rows || '<div style="text-align:center;padding:20px;color:var(--muted);">— لا توجد تحويلات —</div>'}
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid rgba(255,255,255,0.08);margin-top:8px;">
-      <span style="font-size:12px;font-weight:700;color:var(--muted);">${ar?'الإجمالي':'Total'}</span>
-      <span style="font-size:16px;font-weight:800;color:#e67e22;">£${total.toLocaleString()}</span>
-    </div>
-    <button onclick="document.getElementById('otx-history-modal').remove()" style="width:100%;padding:11px;background:none;border:1px solid var(--bdr);border-radius:10px;color:var(--muted);font-size:12px;cursor:pointer;margin-top:8px;">${ar?'إغلاق':'Close'}</button>
-  </div>`;
+  modal.innerHTML =
+    '<div style="background:var(--card);border-radius:18px 18px 0 0;padding:20px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;border:1px solid rgba(230,126,34,0.35);">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">' +
+        '<div style="font-size:15px;font-weight:800;color:#e67e22;">&#x1F4CB; ' + (ar?'كل تحويلات المالك':'All Owner Transfers') + '</div>' +
+        '<button onclick="document.getElementById(\'otx-history-modal\').remove()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">&times;</button>' +
+      '</div>' +
+      (rows || '<div style="text-align:center;padding:20px;color:var(--muted);">— ' + (ar?'لا توجد تحويلات':'No transfers yet') + ' —</div>') +
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid rgba(255,255,255,0.08);margin-top:8px;">' +
+        '<span style="font-size:12px;font-weight:700;color:var(--muted);">' + (ar?'الإجمالي':'Total') + '</span>' +
+        '<span style="font-size:16px;font-weight:800;color:#e67e22;">\u00a3' + total.toLocaleString() + '</span>' +
+      '</div>' +
+      '<button onclick="document.getElementById(\'otx-history-modal\').remove()" style="width:100%;padding:11px;background:none;border:1px solid var(--bdr);border-radius:10px;color:var(--muted);font-size:12px;cursor:pointer;margin-top:8px;">' + (ar?'إغلاق':'Close') + '</button>' +
+    '</div>';
   document.body.appendChild(modal);
 }
 
-window.openOwnerTransferModal = openOwnerTransferModal;
-window._confirmOwnerTransfer  = window.confirmOwnerTransfer; // backward compat
-window.deleteOwnerTx          = deleteOwnerTx;
-window.openOwnerTxHistory     = openOwnerTxHistory;
-
-// تحميل تحويلات المالك والعهدات معاً ثم رسم الـ dashboard مرة واحدة
-(async()=>{
-  await Promise.all([ownerTxLoad(), custodyLoad()]);
-  if(typeof renderDashboard==='function') renderDashboard();
-})();
-</script>
-
-<script>
-window.diagOwnerTx = async function(){
-  const ls  = (function(){ try{ return JSON.parse(localStorage.getItem('dta_owner_transfers')||'[]'); }catch(e){ return []; } })();
-  const idb = await DTA_DB.getSetting('dta_owner_transfers', null).catch(()=>null);
-  const ram = window._ownerTxList || [];
-
-  const lines = [
+// ── تشخيص ───────────────────────────────────────────────
+window.diagOwnerTx = function(){
+  var ls  = _otxRead();
+  var ram = window._ownerTxList || [];
+  var lines = [
     '=== تشخيص تحويلات المالك ===',
-    'RAM  (_ownerTxList): ' + ram.length + ' تحويل',
+    'RAM (_ownerTxList) : ' + ram.length + ' تحويل',
     'localStorage       : ' + ls.length  + ' تحويل',
-    'IndexedDB (IDB)    : ' + (Array.isArray(idb) ? idb.length : 'فشل/فاضي'),
     '',
-    ls.length  ? 'LS  آخر: \u00a3' + ls[ls.length-1].amount  + ' | ' + ls[ls.length-1].date  : 'LS: فاضي',
-    (Array.isArray(idb) && idb.length) ? 'IDB آخر: \u00a3' + idb[idb.length-1].amount + ' | ' + idb[idb.length-1].date : 'IDB: فاضي',
+    ls.length ? 'آخر تحويل: \u00a3' + ls[ls.length-1].amount + ' | ' + ls[ls.length-1].date : 'localStorage: فارغ',
+    '',
+    ram.length === ls.length ? '\u2705 RAM و localStorage متطابقان' : '\u26A0\uFE0F RAM و localStorage مختلفان!'
   ];
-
-  if(navigator.storage && navigator.storage.persisted){
-    const p = await navigator.storage.persisted().catch(()=>null);
-    lines.push('');
-    lines.push('Persisted: ' + (p ? 'YES نعم' : 'NO لا'));
-  }
-
   alert(lines.join('\n'));
 };
+
+// ── تصدير الدوال ────────────────────────────────────────
+window.openOwnerTransferModal = openOwnerTransferModal;
+window.deleteOwnerTx          = deleteOwnerTx;
+window.openOwnerTxHistory     = openOwnerTxHistory;
+window.ownerTxLoad            = ownerTxLoad;
+window.ownerTxSave            = ownerTxSave;
+
+// تحميل تحويلات المالك والعهدات ثم رسم الـ dashboard
+(async function(){
+  await ownerTxLoad();
+  if(typeof custodyLoad === 'function') await custodyLoad();
+  if(typeof renderDashboard === 'function') renderDashboard();
+})();
 </script>
