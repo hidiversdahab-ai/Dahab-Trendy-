@@ -6825,8 +6825,9 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
     const extra = (c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s + c.amt + extra;
   }, 0);
-  // Net Profit المعروض = بعد خصم المحوّل للعهدة
-  const displayNetEGP = netEGP - totalTransferred;
+  // Net Profit المعروض = بعد خصم المحوّل للعهدة + تحويلات المالك
+  const totalOwnerTx = (window._ownerTxList||[]).reduce(function(s,t){ return s+t.amount; },0);
+  const displayNetEGP = netEGP - totalTransferred - totalOwnerTx;
 
   let html = mkFin("£"+displayNetEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
     "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.1)",
@@ -6895,7 +6896,15 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   const totalOwnerTransferred = ownerTxList.reduce(function(s,t){ return s+t.amount; },0);
   const ownerSec = document.getElementById("db-owner-transfer-section");
   if(ownerSec && typeof _renderOwnerTransferBlock==='function'){
-    ownerSec.innerHTML = _renderOwnerTransferBlock(netEGP, totalOwnerTransferred, ownerTxList, ar);
+    // خصم تحويلات العهدة أيضاً من netEGP قبل حساب المتبقي للمالك
+    const custList = window._custodyList || [];
+    const totalCustodyTransferred = custList.reduce(function(s,c){
+      if(c.type === 'from_owner') return s;
+      var extra = (c.transfers||[]).reduce(function(ss,t){ return ss+t.amount; },0);
+      return s + c.amt + extra;
+    }, 0);
+    const netAfterOwner = netEGP - totalCustodyTransferred - totalOwnerTransferred;
+    ownerSec.innerHTML = _renderOwnerTransferBlock(netAfterOwner, totalOwnerTransferred, ownerTxList, ar);
   }
 })();
 
