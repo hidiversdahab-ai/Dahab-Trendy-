@@ -6876,7 +6876,7 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
 (()=>{
   const custList = window._custodyList || [];
   // إجمالي العهدة = المبلغ الأصلي + التحويلات الإضافية
-  const totalCustAmt = custList.reduce((s,c)=>{
+  const totalCustAmt = custList.filter(c=>c.type!=='to_owner').reduce((s,c)=>{
     const extra = (c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s + c.amt + extra;
   }, 0);
