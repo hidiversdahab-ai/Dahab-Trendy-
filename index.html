@@ -2409,6 +2409,8 @@ document.addEventListener('DOMContentLoaded', function(){
 <div id="db-finance" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;"></div>
 </div>
 <div id="db-commission-section" style="display:none;margin-bottom:12px;"></div>
+<!-- ══ OWNER TRANSFER SECTION ══ -->
+<div id="db-owner-transfer-section" style="margin-bottom:12px;"></div>
 <!-- ══ RESTAURANT REVENUE SECTION ══ -->
 <div id="db-restaurant-section" style="display:none;margin-bottom:12px;"></div>
 <div class="g2">
@@ -6826,10 +6828,21 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   // Net Profit المعروض = بعد خصم المحوّل للعهدة
   const displayNetEGP = netEGP - totalTransferred;
 
-  let html = mkFin("£"+displayNetEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
-    "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.1)",
-    "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.25)",
-    displayNetEGP>=0?"#27ae60":"#e74c3c");
+  // تحويلات المالك — خصمها من Net Profit أيضاً
+  const ownerTxList = window._ownerTxList || [];
+  const totalOwnerTransferred = ownerTxList.reduce((s,t)=>s+t.amount,0);
+  const finalNetEGP = displayNetEGP - totalOwnerTransferred;
+
+  // ── رندر بلوك تحويلات المالك ──
+  const ownerSec = document.getElementById("db-owner-transfer-section");
+  if(ownerSec){
+    ownerSec.innerHTML = _renderOwnerTransferBlock(finalNetEGP, totalOwnerTransferred, ownerTxList, ar);
+  }
+
+  let html = mkFin("£"+finalNetEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
+    "rgba("+(finalNetEGP>=0?"39,174,96":"231,76,60")+",0.1)",
+    "rgba("+(finalNetEGP>=0?"39,174,96":"231,76,60")+",0.25)",
+    finalNetEGP>=0?"#27ae60":"#e74c3c");
 
   if(custList.length===0){
     // مفيش عهدة — بس زرار إضافة
@@ -6840,8 +6853,8 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   }
 
   // ── بلوك العهدة الموحّد ──
-  // availNet = ما تبقى من Net Profit بعد خصم المحوّل للعهدة
-  const availNet = Math.max(0, displayNetEGP);
+  // availNet = ما تبقى من Net Profit بعد خصم المحوّل للعهدة + المالك
+  const availNet = Math.max(0, finalNetEGP);
   const custBalance = Math.max(0, totalCustAmt - expFromCustody);
 
   // صف لكل عهدة: الاسم + المبلغ + زرار تعديل
@@ -6880,7 +6893,7 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
       <span style="font-size:14px;font-weight:800;color:${availNet>0?'#27ae60':'var(--muted)'};">£${availNet.toLocaleString()}</span>
     </div>
     <div style="display:flex;gap:6px;margin-top:10px;">
-      ${availNet>0?`<button onclick="openTransferToCustomdy(${availNet},${displayNetEGP})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${ar?'تحويل للعهدة':'Transfer'}</button>`:''}
+      ${availNet>0?`<button onclick="openTransferToCustomdy(${availNet},${finalNetEGP})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${ar?'تحويل للعهدة':'Transfer'}</button>`:''}
       <button onclick="openCustodyModal()" style="flex:1;padding:9px;background:none;border:1px dashed rgba(155,89,182,0.3);border-radius:8px;color:var(--muted);font-size:11px;cursor:pointer;">+ ${ar?'عهدة جديدة':'Add Custody'}</button>
     </div>
   </div>`;
@@ -32654,6 +32667,251 @@ async function resetAllCustody(){
   if(typeof sNotify==='function') sNotify('🗑️ تم المسح', 'تم مسح كل بيانات العهدة', 'info', 3000);
 }
 window.resetAllCustody = resetAllCustody;
+
+// ══════════════════════════════════════════════════════════
+//  OWNER MONEY TRANSFER — تحويلات المالك من Net Profit
+// ══════════════════════════════════════════════════════════
+const OWNER_TX_KEY = 'dta_owner_transfers';
+window._ownerTxList = [];
+
+async function ownerTxLoad(){
+  try{ window._ownerTxList = JSON.parse(localStorage.getItem(OWNER_TX_KEY)||'[]'); }catch(e){ window._ownerTxList=[]; }
+  try{
+    const data = await DTA_DB.getSetting(OWNER_TX_KEY, null);
+    if(Array.isArray(data)){ window._ownerTxList = data; localStorage.setItem(OWNER_TX_KEY, JSON.stringify(data)); }
+  }catch(e){}
+}
+
+async function ownerTxSave(){
+  localStorage.setItem(OWNER_TX_KEY, JSON.stringify(window._ownerTxList));
+  try{ await DTA_DB.setSetting(OWNER_TX_KEY, window._ownerTxList); }catch(e){}
+}
+
+function _renderOwnerTransferBlock(finalNetEGP, totalOwnerTransferred, txList, ar){
+  const hasTransfers = txList.length > 0;
+  // بلوك تحويلات المالك
+  const txRows = hasTransfers ? txList.slice().reverse().slice(0,5).map(t=>{
+    const d = new Date(t.date);
+    const dateStr = d.toLocaleDateString('ar-EG',{day:'2-digit',month:'short',year:'numeric'});
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <div>
+        <div style="font-size:12px;color:var(--text);font-weight:600;">${t.note||'تحويل للمالك'}</div>
+        <div style="font-size:10px;color:var(--muted);">${dateStr}${t.method?' · '+t.method:''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:13px;font-weight:700;color:#e67e22;">−£${t.amount.toLocaleString()}</span>
+        <button onclick="deleteOwnerTx('${t.id}')" style="background:none;border:1px solid rgba(231,76,60,0.3);border-radius:5px;padding:2px 7px;font-size:10px;color:#e74c3c;cursor:pointer;" title="حذف">🗑️</button>
+      </div>
+    </div>`;
+  }).join('') : '';
+
+  const moreBtn = txList.length > 5 ? `<div style="text-align:center;margin-top:6px;"><button onclick="openOwnerTxHistory()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;">📋 ${ar?'عرض كل التحويلات ('+txList.length+')':'View all ('+txList.length+')'}  ›</button></div>` : '';
+
+  const availForOwner = Math.max(0, finalNetEGP);
+
+  return `<div style="background:rgba(230,126,34,0.07);border:1px solid rgba(230,126,34,0.3);border-radius:14px;padding:14px 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:12px;font-weight:800;color:#e67e22;letter-spacing:0.5px;">👤 ${ar?'تحويلات المالك':'Owner Transfers'}</div>
+      <button onclick="openOwnerTransferModal(${availForOwner})" style="padding:6px 14px;background:rgba(230,126,34,0.18);border:1px solid rgba(230,126,34,0.5);border-radius:8px;color:#e67e22;font-size:11px;font-weight:800;cursor:pointer;">
+        💰 ${ar?'تحويل جديد':'New Transfer'}
+      </button>
+    </div>
+    ${hasTransfers ? `
+    <div style="margin-bottom:8px;">${txRows}</div>
+    ${moreBtn}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);margin-top:6px;">
+      <span style="font-size:11px;color:var(--muted);">${ar?'إجمالي التحويلات':'Total Transferred'}</span>
+      <span style="font-size:14px;font-weight:800;color:#e67e22;">£${totalOwnerTransferred.toLocaleString()}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;">
+      <span style="font-size:11px;color:var(--muted);">${ar?'الربح المتبقي بعد التحويلات':'Net After Owner Transfers'}</span>
+      <span style="font-size:14px;font-weight:800;color:${availForOwner>0?'#27ae60':'var(--muted)'};">£${availForOwner.toLocaleString()}</span>
+    </div>` :
+    `<div style="text-align:center;padding:10px 0;color:var(--muted);font-size:12px;">— ${ar?'لا توجد تحويلات بعد':'No transfers yet'} —</div>`}
+  </div>`;
+}
+
+function openOwnerTransferModal(availNet){
+  const old = document.getElementById('owner-tx-modal');
+  if(old) old.remove();
+
+  const ar = currentLang==="ar";
+
+  // Build modal with createElement (no innerHTML button issues)
+  const overlay = document.createElement('div');
+  overlay.id = 'owner-tx-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+
+  const box = document.createElement('div');
+  box.style.cssText = 'background:var(--card);border-radius:18px;padding:24px;max-width:360px;width:100%;border:1px solid rgba(230,126,34,0.45);box-shadow:0 8px 40px rgba(0,0,0,0.7);';
+
+  box.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <div style="font-size:17px;font-weight:800;color:#e67e22;">💰 ${ar?'تحويل للمالك':'Transfer to Owner'}</div>
+      <button id="otx-close-x" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">${ar?'الربح المتاح:':'Available:'} <b style="color:#27ae60;">£${availNet.toLocaleString()}</b></div>
+
+    <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">${ar?'المبلغ (£)':'Amount (£)'}</label>
+    <input id="otx-amount" type="number" min="1" value="${availNet}"
+      style="width:100%;padding:12px;background:rgba(230,126,34,0.08);border:1px solid rgba(230,126,34,0.4);border-radius:10px;color:var(--text);font-size:24px;font-weight:800;text-align:center;box-sizing:border-box;margin-bottom:10px;">
+
+    <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">${ar?'طريقة التحويل':'Method'}</label>
+    <select id="otx-method" style="width:100%;padding:10px;background:var(--card);border:1px solid rgba(230,126,34,0.35);border-radius:8px;color:var(--text);font-size:13px;margin-bottom:10px;">
+      <option value="Cash">💵 ${ar?'كاش':'Cash'}</option>
+      <option value="Bank Transfer">🏦 ${ar?'تحويل بنكي':'Bank Transfer'}</option>
+      <option value="Instapay">📱 Instapay</option>
+      <option value="Vodafone Cash">📲 Vodafone Cash</option>
+      <option value="Other">📋 ${ar?'أخرى':'Other'}</option>
+    </select>
+
+    <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">${ar?'ملاحظة':'Note'}</label>
+    <input id="otx-note" type="text" placeholder="${ar?'راتب، سحب شخصي...':'salary, withdrawal...'}"
+      style="width:100%;padding:10px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;color:var(--text);font-size:12px;box-sizing:border-box;margin-bottom:6px;">
+
+    <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:14px;">
+      ${ar?'بعد التحويل:':'After transfer:'} <span id="otx-after" style="font-weight:700;color:#e74c3c;">£0</span>
+    </div>`;
+
+  // Confirm button - created via JS, no innerHTML
+  const confirmBtn = document.createElement('button');
+  confirmBtn.style.cssText = 'width:100%;padding:13px;background:rgba(230,126,34,0.2);border:1px solid rgba(230,126,34,0.55);border-radius:10px;color:#e67e22;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px;display:block;';
+  confirmBtn.textContent = '✅ ' + (ar?'تأكيد التحويل':'Confirm Transfer');
+  confirmBtn.addEventListener('click', function(){
+    const amount = parseFloat(document.getElementById('otx-amount').value)||0;
+    const method = document.getElementById('otx-method').value;
+    const note   = (document.getElementById('otx-note').value||'').trim() || (ar?'تحويل للمالك':'Owner Transfer');
+    if(amount <= 0){ alert(ar?'ادخل مبلغ':'Enter amount'); return; }
+    if(!window._ownerTxList) window._ownerTxList = [];
+    window._ownerTxList.push({ id:'otx_'+Date.now(), amount:amount, method:method, note:note, date:new Date().toISOString() });
+    try{ localStorage.setItem(OWNER_TX_KEY, JSON.stringify(window._ownerTxList)); }catch(e){}
+    try{ DTA_DB.setSetting(OWNER_TX_KEY, window._ownerTxList).catch(function(){}); }catch(e){}
+    overlay.remove();
+    renderDashboard();
+    if(typeof sNotify==='function') sNotify('✅ تم التحويل للمالك','£'+amount.toLocaleString()+' — '+method,'success',3500);
+  });
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.style.cssText = 'width:100%;padding:10px;background:none;border:1px solid var(--bdr);border-radius:10px;color:var(--muted);font-size:12px;cursor:pointer;display:block;';
+  cancelBtn.textContent = ar?'إلغاء':'Cancel';
+  cancelBtn.addEventListener('click', function(){ overlay.remove(); });
+
+  box.appendChild(confirmBtn);
+  box.appendChild(cancelBtn);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  // close X
+  document.getElementById('otx-close-x').addEventListener('click', function(){ overlay.remove(); });
+
+  // live preview
+  const amtInp = document.getElementById('otx-amount');
+  const afterEl = document.getElementById('otx-after');
+  amtInp.addEventListener('input', function(){
+    const v = Math.max(0, parseFloat(amtInp.value)||0);
+    const after = availNet - v;
+    afterEl.textContent = '£' + after.toLocaleString();
+    afterEl.style.color = after >= 0 ? '#f39c12' : '#e74c3c';
+  });
+  // set initial after value
+  afterEl.textContent = '£0';
+  amtInp.focus(); amtInp.select();
+}
+
+window.confirmOwnerTransfer = function(){
+  const amountEl = document.getElementById('otx-amount');
+  const methodEl = document.getElementById('otx-method');
+  const noteEl   = document.getElementById('otx-note');
+
+  if(!amountEl){ alert('خطأ: لم يُعثر على الحقول'); return; }
+
+  const amount  = parseFloat(amountEl.value)||0;
+  const method  = methodEl ? methodEl.value : 'Cash';
+  const note    = (noteEl ? noteEl.value : '').trim() || 'تحويل للمالك';
+
+  if(amount <= 0){ alert('ادخل مبلغ أكبر من صفر'); return; }
+
+  if(!window._ownerTxList) window._ownerTxList = [];
+
+  const entry = {
+    id: 'otx_' + Date.now(),
+    amount: amount,
+    method: method,
+    note: note,
+    date: new Date().toISOString()
+  };
+
+  window._ownerTxList.push(entry);
+
+  // Save sync to localStorage first
+  try{ localStorage.setItem(OWNER_TX_KEY, JSON.stringify(window._ownerTxList)); }catch(e){}
+  // Then try IDB async (non-blocking)
+  try{ DTA_DB.setSetting(OWNER_TX_KEY, window._ownerTxList).catch(function(){}); }catch(e){}
+
+  const modal = document.getElementById('owner-tx-modal');
+  if(modal) modal.remove();
+
+  renderDashboard();
+
+  if(typeof sNotify==='function')
+    sNotify('✅ تم التحويل للمالك', '£'+amount.toLocaleString()+' — '+method, 'success', 3500);
+};
+
+function deleteOwnerTx(id){
+  const ar = currentLang==="ar";
+  if(!confirm(ar?'حذف هذا التحويل؟':'Delete this transfer?')) return;
+  window._ownerTxList = (window._ownerTxList||[]).filter(function(t){ return t.id!==id; });
+  try{ localStorage.setItem(OWNER_TX_KEY, JSON.stringify(window._ownerTxList)); }catch(e){}
+  try{ DTA_DB.setSetting(OWNER_TX_KEY, window._ownerTxList).catch(function(){}); }catch(e){}
+  renderDashboard();
+  if(typeof sNotify==='function') sNotify('🗑️ حذف', ar?'تم حذف التحويل':'Transfer deleted', 'info', 2500);
+}
+
+function openOwnerTxHistory(){
+  const ar = currentLang==="ar";
+  const old = document.getElementById('otx-history-modal');
+  if(old) old.remove();
+  const txList = (window._ownerTxList||[]).slice().reverse();
+  const rows = txList.map(t=>{
+    const d = new Date(t.date);
+    const dateStr = d.toLocaleDateString('ar-EG',{day:'2-digit',month:'short',year:'numeric'});
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);">${t.note||'تحويل للمالك'}</div>
+        <div style="font-size:10px;color:var(--muted);">${dateStr}${t.method?' · '+t.method:''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:13px;font-weight:700;color:#e67e22;">£${t.amount.toLocaleString()}</span>
+        <button onclick="deleteOwnerTx('${t.id}');document.getElementById('otx-history-modal').remove();" style="background:none;border:1px solid rgba(231,76,60,0.3);border-radius:5px;padding:2px 7px;font-size:10px;color:#e74c3c;cursor:pointer;">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+  const total = txList.reduce((s,t)=>s+t.amount,0);
+  const modal = document.createElement('div');
+  modal.id = 'otx-history-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:10000;display:flex;align-items:flex-end;justify-content:center;';
+  modal.innerHTML = `<div style="background:var(--card);border-radius:18px 18px 0 0;padding:20px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;border:1px solid rgba(230,126,34,0.35);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="font-size:15px;font-weight:800;color:#e67e22;">📋 ${ar?'كل تحويلات المالك':'All Owner Transfers'}</div>
+      <button onclick="document.getElementById('otx-history-modal').remove()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    ${rows || '<div style="text-align:center;padding:20px;color:var(--muted);">— لا توجد تحويلات —</div>'}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid rgba(255,255,255,0.08);margin-top:8px;">
+      <span style="font-size:12px;font-weight:700;color:var(--muted);">${ar?'الإجمالي':'Total'}</span>
+      <span style="font-size:16px;font-weight:800;color:#e67e22;">£${total.toLocaleString()}</span>
+    </div>
+    <button onclick="document.getElementById('otx-history-modal').remove()" style="width:100%;padding:11px;background:none;border:1px solid var(--bdr);border-radius:10px;color:var(--muted);font-size:12px;cursor:pointer;margin-top:8px;">${ar?'إغلاق':'Close'}</button>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+window.openOwnerTransferModal = openOwnerTransferModal;
+window._confirmOwnerTransfer  = window.confirmOwnerTransfer; // backward compat
+window.deleteOwnerTx          = deleteOwnerTx;
+window.openOwnerTxHistory     = openOwnerTxHistory;
+
+// تحميل تحويلات المالك عند البدء
+(async()=>{ await ownerTxLoad(); })();
 
 // تحميل العهدات عند بدء التشغيل
 (async()=>{ await custodyLoad(); if(typeof renderDashboard==='function') renderDashboard(); })();
