@@ -6805,79 +6805,86 @@ mkFin("£"+revEGP.toFixed(0), ar?"صافي الإيرادات":"Net Revenue","rg
 (totalCommEGP_db>0?mkFin("−£"+totalCommEGP_db.toFixed(0), ar?"عمولات الشركات":"Agency Commissions","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c"):"")+
 mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
 mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid Balance","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
-mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات (من الربح)":"Expenses (from Profit)","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
-(expFromCustody>0?mkFin("£"+expFromCustody.toFixed(0), ar?"مصروفات (من العهدة)":"Expenses (from Custody)","rgba(155,89,182,0.08)","rgba(155,89,182,0.22)","#9b59b6"):"")+
+mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
 (()=>{
   const custList = window._custodyList || [];
+  // إجمالي العهدة = المبلغ الأصلي + التحويلات الإضافية
+  const totalCustAmt = custList.reduce((s,c)=>{
+    const extra = (c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
+    return s + c.amt + extra;
+  }, 0);
 
-  // لو مفيش عهدات — Net Profit عادي + زرار
+  // إجمالي المحوّل من Net Profit:
+  // from_profit بدون transfers: الأصلي كله محوّل
+  // from_profit مع transfers: الأصلي + التحويلات الإضافية
+  // from_owner: لا يُخصم
+  const totalTransferred = custList.reduce((s,c)=>{
+    if(c.type === 'from_owner') return s;
+    const extra = (c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
+    return s + c.amt + extra;
+  }, 0);
+  // Net Profit المعروض = بعد خصم المحوّل للعهدة
+  const displayNetEGP = netEGP - totalTransferred;
+
+  let html = mkFin("£"+displayNetEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
+    "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.1)",
+    "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.25)",
+    displayNetEGP>=0?"#27ae60":"#e74c3c");
+
   if(custList.length===0){
-    return mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
-      "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)",
-      "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",
-      netEGP>=0?"#27ae60":"#e74c3c")+
-    `<div style="text-align:center;margin-top:4px;">
+    // مفيش عهدة — بس زرار إضافة
+    html += `<div style="text-align:center;margin-top:6px;">
       <button onclick="openCustodyModal()" style="background:none;border:1px dashed rgba(201,168,76,0.3);color:var(--muted);border-radius:8px;padding:6px 14px;font-size:11px;cursor:pointer;">
         🔒 ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
+    return html;
   }
 
-  const totalCustAmt = custList.reduce((s,c)=>s+c.amt, 0);
+  // ── بلوك العهدة الموحّد ──
+  // availNet = ما تبقى من Net Profit بعد خصم المحوّل للعهدة
+  const availNet = Math.max(0, displayNetEGP);
+  const custBalance = Math.max(0, totalCustAmt - expFromCustody);
 
-  // Net Profit بعد خصم مصروفاته فقط (مش مصروفات العهدة)
-  let html = mkFin("£"+netEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
-    "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.1)",
-    "rgba("+(netEGP>=0?"39,174,96":"231,76,60")+",0.25)",
-    netEGP>=0?"#27ae60":"#e74c3c");
-
-  custList.forEach(c=>{
-    const isOwner = c.type==='from_owner';
-    const icon  = isOwner ? '🏦' : '🔒';
-    const color = isOwner ? '#3498db' : '#9b59b6';
-    const bgC   = isOwner ? '52,152,219' : '122,90,200';
-    const label = (isOwner ? (ar?'عهدة مالك':'Owner Custody') : (ar?'عهدة':'Custody'))
-                + (c.note?' — '+c.note:'');
-
-    // رصيد العهدة = العهدة - المصروفات المخصومة منها فعلاً
-    const ratio = totalCustAmt > 0 ? c.amt / totalCustAmt : 1;
-    const spentFromCust = Math.min(c.amt, expFromCustody * ratio);
-    const custBalance   = Math.max(0, c.amt - spentFromCust);
-
-    // العهدة الأصلية
-    html += mkFin(icon+' £'+c.amt.toLocaleString(), label,
-      `rgba(${bgC},0.08)`,`rgba(${bgC},0.22)`,color,
-      `onclick="openCustodyModal('${c.id}')"`);
-
-    // مصروفات من العهدة — دايماً تظهر (حتى لو 0)
-    html += mkFin('💸 £'+spentFromCust.toLocaleString(),
-      ar?'مصروفات من العهدة':'Custody Expenses',
-      'rgba(231,76,60,0.06)','rgba(231,76,60,0.18)','#e74c3c');
-
-    // رصيد العهدة المتبقي — دايماً يظهر
-    const balColor = custBalance>0 ? color : '#e74c3c';
-    const balBg    = custBalance>0 ? bgC   : '231,76,60';
-    html += mkFin('💰 £'+custBalance.toLocaleString(),
-      ar?'رصيد العهدة المتبقي':'Custody Balance',
-      `rgba(${balBg},0.05)`,`rgba(${balBg},0.18)`,balColor);
-  });
-
-  // الربح المتاح = Net Profit ناقص العهدة الكلية
-  const availNet = Math.max(0, netEGP - totalCustAmt);
-  const netBg = availNet>0?"39,174,96":"100,100,100";
-  const netLabel = availNet>0?(ar?"الربح المتاح فعلاً":"Available Net Profit"):(ar?"لا يوجد ربح متاح":"No Available Profit");
-  html += mkFin("£"+availNet.toLocaleString(), netLabel,
-    `rgba(${netBg},0.1)`,`rgba(${netBg},0.25)`,availNet>0?"#27ae60":"var(--muted)");
-
-  // زرار تحويل Net Profit للعهدة (بيظهر بس لو فيه ربح متاح)
-  if(availNet>0){
-    html += `<div style="margin-top:8px;">
-      <button onclick="openTransferToCustomdy(${availNet})" style="background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.4);color:#9b59b6;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;width:100%;">
-        💸 ${ar?'تحويل الربح إلى العهدة':'Transfer Profit to Custody'} — £${availNet.toLocaleString()}
-      </button>
+  // صف لكل عهدة: الاسم + المبلغ + زرار تعديل
+  const custRows = custList.map(c=>{
+    const label = (c.note||'عهدة') + (c.type==='from_owner'?' 🏦':'');
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <span style="font-size:12px;color:var(--muted);">${label}</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:13px;font-weight:700;color:#9b59b6;">£${c.amt.toLocaleString()}</span>
+        <button onclick="openCustodyModal('${c.id}')" style="background:none;border:1px solid rgba(155,89,182,0.3);border-radius:5px;padding:2px 7px;font-size:10px;color:#9b59b6;cursor:pointer;">✏️</button>
+      </div>
     </div>`;
-  }
+  }).join('');
 
-  html+=`<div style="text-align:center;margin-top:6px;">
-    <button onclick="openCustodyModal()" style="background:none;border:1px dashed rgba(201,168,76,0.25);color:var(--muted);border-radius:8px;padding:4px 12px;font-size:10px;cursor:pointer;">+ ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
+  // سطر المصروفات من العهدة (يظهر بس لو فيه مصروفات)
+  const expRow = expFromCustody > 0 ? `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0 0;">
+      <span style="font-size:11px;color:#e74c3c;">💸 ${ar?'مصروفات من العهدة':'Custody Expenses'}</span>
+      <span style="font-size:13px;font-weight:700;color:#e74c3c;">−£${expFromCustody.toLocaleString()}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:8px;">
+      <span style="font-size:11px;color:var(--muted);">${ar?'رصيد العهدة':'Custody Balance'}</span>
+      <span style="font-size:13px;font-weight:700;color:${custBalance>0?'#9b59b6':'#e74c3c'};">£${custBalance.toLocaleString()}</span>
+    </div>` : '';
+
+  html += `<div style="background:rgba(155,89,182,0.07);border:1px solid rgba(155,89,182,0.25);border-radius:12px;padding:12px 14px;margin-top:6px;">
+    <div style="font-size:11px;font-weight:700;color:#9b59b6;margin-bottom:8px;letter-spacing:0.5px;">🔒 ${ar?'العهدة':'CUSTODY'}</div>
+    ${custRows}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 0;margin-top:2px;">
+      <span style="font-size:11px;color:var(--muted);">${ar?'إجمالي العهدة':'Total Custody'}</span>
+      <span style="font-size:14px;font-weight:800;color:#9b59b6;">£${totalCustAmt.toLocaleString()}</span>
+    </div>
+    ${expRow}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0 0;">
+      <span style="font-size:11px;color:var(--muted);">${ar?'الربح المتاح':'Available Profit'}</span>
+      <span style="font-size:14px;font-weight:800;color:${availNet>0?'#27ae60':'var(--muted)'};">£${availNet.toLocaleString()}</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:10px;">
+      ${availNet>0?`<button onclick="openTransferToCustomdy(${availNet},${displayNetEGP})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${ar?'تحويل للعهدة':'Transfer'}</button>`:''}
+      <button onclick="openCustodyModal()" style="flex:1;padding:9px;background:none;border:1px dashed rgba(155,89,182,0.3);border-radius:8px;color:var(--muted);font-size:11px;cursor:pointer;">+ ${ar?'عهدة جديدة':'Add Custody'}</button>
+    </div>
+  </div>`;
+
   return html;
 })();
 
@@ -32390,6 +32397,13 @@ window.renderMinibar = window.renderMinibar;
       <div id="cust-list-items"></div>
     </div>
 
+    <!-- زرار Reset الكامل -->
+    <div style="margin-top:16px;border-top:1px solid rgba(231,76,60,0.15);padding-top:12px;text-align:center;">
+      <button onclick="resetAllCustody()" style="background:none;border:1px solid rgba(231,76,60,0.3);border-radius:8px;padding:7px 16px;font-size:11px;color:#e74c3c;cursor:pointer;">
+        🗑️ مسح كل بيانات العهدة
+      </button>
+    </div>
+
   </div>
 </div>
 
@@ -32521,7 +32535,7 @@ async function deleteCustodyEntry(){
 }
 
 // ── Transfer Net Profit → Custody ──
-function openTransferToCustomdy(availNet){
+function openTransferToCustomdy(availNet, netEGP){
   const custList = window._custodyList || [];
   if(custList.length === 0){
     alert('أضف عهدة أولاً قبل التحويل');
@@ -32529,76 +32543,92 @@ function openTransferToCustomdy(availNet){
     return;
   }
 
-  // بناء قائمة العهدات لو أكتر من واحدة
+  // لو عهدة واحدة بس — حوّل مباشرة بدون اختيار
   const custOptions = custList.length > 1
-    ? `<div style="margin-bottom:10px;">
+    ? `<div style="margin-bottom:12px;">
         <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">اختر العهدة</label>
-        <select id="tr-cust-select" style="width:100%;padding:8px;background:var(--card);border:1px solid var(--bdr);border-radius:8px;color:var(--text);font-size:13px;">
-          ${custList.map(c=>`<option value="${c.id}">🔒 ${c.note||'عهدة'} — £${c.amt.toLocaleString()}</option>`).join('')}
+        <select id="tr-cust-select" style="width:100%;padding:10px;background:var(--card);border:1px solid rgba(155,89,182,0.4);border-radius:8px;color:var(--text);font-size:13px;">
+          ${custList.map(c=>`<option value="${c.id}">${c.note||'عهدة'} — £${c.amt.toLocaleString()}</option>`).join('')}
         </select>
       </div>`
     : `<input type="hidden" id="tr-cust-select" value="${custList[0].id}">`;
 
   const modal = document.createElement('div');
   modal.id = 'transfer-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
   modal.innerHTML = `
-    <div style="background:var(--card);border-radius:18px;padding:22px;max-width:360px;width:100%;border:1px solid rgba(155,89,182,0.35);box-shadow:0 8px 32px rgba(0,0,0,0.5);">
-      <div style="font-size:16px;font-weight:800;color:#9b59b6;margin-bottom:4px;">💸 تحويل من Net Profit</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:16px;">الربح المتاح: <b style="color:#27ae60;">£${availNet.toLocaleString()}</b></div>
+    <div style="background:var(--card);border-radius:18px;padding:24px;max-width:340px;width:100%;border:1px solid rgba(155,89,182,0.4);box-shadow:0 8px 40px rgba(0,0,0,0.6);">
+      <div style="font-size:17px;font-weight:800;color:#9b59b6;margin-bottom:6px;">💸 تحويل إلى العهدة</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">Net Profit المتاح: <b style="color:#27ae60;">£${availNet.toLocaleString()}</b></div>
       ${custOptions}
-      <div style="margin-bottom:14px;">
-        <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:5px;">المبلغ المراد تحويله (£)</label>
-        <input id="tr-amount-inp" type="number" min="1" max="${availNet}" value="${availNet}"
-          style="width:100%;padding:10px;background:rgba(155,89,182,0.08);border:1px solid rgba(155,89,182,0.4);border-radius:10px;color:var(--text);font-size:18px;font-weight:700;text-align:center;box-sizing:border-box;">
-        <div id="tr-preview" style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center;">
-          بعد التحويل: Net Profit = <span id="tr-after-net" style="color:#e74c3c;">£0</span>
-        </div>
+      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;">المبلغ (£)</label>
+      <input id="tr-amount-inp" type="number" min="1" max="${availNet}" value="${availNet}"
+        style="width:100%;padding:12px;background:rgba(155,89,182,0.08);border:1px solid rgba(155,89,182,0.4);border-radius:10px;color:var(--text);font-size:22px;font-weight:800;text-align:center;box-sizing:border-box;margin-bottom:8px;">
+      <div style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:16px;">
+        بعد التحويل: Net Profit = <span id="tr-after-net" style="color:#e74c3c;font-weight:700;">£${(availNet - availNet).toLocaleString()}</span>
       </div>
-      <button onclick="_confirmTransfer()" style="width:100%;padding:12px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:10px;color:#9b59b6;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px;">
+      <button onclick="_confirmTransfer(${availNet})" style="width:100%;padding:13px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:10px;color:#9b59b6;font-size:14px;font-weight:800;cursor:pointer;margin-bottom:8px;">
         ✅ تأكيد التحويل
       </button>
-      <button onclick="document.getElementById('transfer-modal').remove()" style="width:100%;padding:9px;background:none;border:1px solid var(--bdr);border-radius:10px;color:var(--muted);font-size:12px;cursor:pointer;">
+      <button onclick="document.getElementById('transfer-modal').remove()" style="width:100%;padding:10px;background:none;border:1px solid var(--bdr);border-radius:10px;color:var(--muted);font-size:12px;cursor:pointer;">
         إلغاء
       </button>
     </div>`;
   document.body.appendChild(modal);
 
-  // preview live
   const inp = document.getElementById('tr-amount-inp');
+  const afterEl = document.getElementById('tr-after-net');
   inp.addEventListener('input', ()=>{
-    const v = Math.min(parseFloat(inp.value)||0, availNet);
+    const v = Math.min(Math.max(0, parseFloat(inp.value)||0), availNet);
     const afterNet = availNet - v;
-    document.getElementById('tr-after-net').textContent = '£' + afterNet.toLocaleString();
-    document.getElementById('tr-after-net').style.color = afterNet > 0 ? '#f39c12' : '#e74c3c';
+    afterEl.textContent = '£' + afterNet.toLocaleString();
+    afterEl.style.color = afterNet > 0 ? '#f39c12' : '#e74c3c';
   });
 }
 
-async function _confirmTransfer(){
+async function _confirmTransfer(availNet){
   const custList = window._custodyList || [];
   const custId   = document.getElementById('tr-cust-select').value;
   const inp      = document.getElementById('tr-amount-inp');
   const amount   = parseFloat(inp.value) || 0;
 
   if(amount <= 0){ alert('ادخل مبلغ أكبر من صفر'); return; }
+  if(availNet !== undefined && amount > availNet){
+    alert('المبلغ أكبر من الربح المتاح (£' + availNet.toLocaleString() + ')');
+    return;
+  }
 
   const idx = custList.findIndex(c => c.id === custId);
   if(idx === -1){ alert('عهدة مش موجودة'); return; }
 
-  custList[idx].amt += amount;
+  // سجّل التحويل في قائمة التحويلات فقط (لا تزود c.amt الأصلية)
+  if(!custList[idx].transfers) custList[idx].transfers = [];
+  custList[idx].transfers.push({
+    id: 't_' + Date.now(),
+    amount: amount,
+    date: new Date().toISOString(),
+    note: 'تحويل من Net Profit'
+  });
+
   document.getElementById('transfer-modal').remove();
 
   await custodySave();
   renderDashboard();
   if(typeof sNotify === 'function')
-    sNotify('✅ تم التحويل', '£' + amount.toLocaleString() + ' أضيفت للعهدة', 'success', 3500);
+    sNotify('✅ تم التحويل', '£' + amount.toLocaleString() + ' أضيفت للعهدة وخُصمت من Net Profit', 'success', 3500);
 }
 
 async function _doTransfer(custId, amount){
   const custList = window._custodyList || [];
   const idx = custList.findIndex(c => c.id === custId);
   if(idx === -1){ alert('عهدة مش موجودة'); return; }
-  custList[idx].amt += amount;
+  if(!custList[idx].transfers) custList[idx].transfers = [];
+  custList[idx].transfers.push({
+    id: 't_' + Date.now(),
+    amount: amount,
+    date: new Date().toISOString(),
+    note: 'تحويل من Net Profit'
+  });
   await custodySave();
   renderDashboard();
   if(typeof sNotify === 'function')
@@ -32608,8 +32638,22 @@ async function _doTransfer(custId, amount){
 window.openTransferToCustomdy = openTransferToCustomdy;
 window._confirmTransfer = _confirmTransfer;
 window._doTransfer = _doTransfer;
+window._buildTransfersHTML = _buildTransfersHTML;
 window.openCustodyModal  = openCustodyModal;
 window.closeCustodyModal = closeCustodyModal;
+
+async function resetAllCustody(){
+  if(!confirm('⚠️ هيتم مسح كل بيانات العهدة والتحويلات. متأكد؟')) return;
+  window._custodyList = [];
+  localStorage.removeItem(CUST_KEY);
+  localStorage.removeItem('dta_custody_amt');
+  localStorage.removeItem('dta_custody_note');
+  try{ await DTA_DB.setSetting(CUST_KEY, []); }catch(e){}
+  closeCustodyModal();
+  renderDashboard();
+  if(typeof sNotify==='function') sNotify('🗑️ تم المسح', 'تم مسح كل بيانات العهدة', 'info', 3000);
+}
+window.resetAllCustody = resetAllCustody;
 
 // تحميل العهدات عند بدء التشغيل
 (async()=>{ await custodyLoad(); if(typeof renderDashboard==='function') renderDashboard(); })();
