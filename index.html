@@ -6856,7 +6856,7 @@ const restNetEGP=restIncEGP-restExpEGP;
 // to_owner   = رددت للمالك → تُضاف (تقلّل الدين)
 const _fromOwnerTotal=(window._custodyList||[]).filter(c=>c.type==='from_owner').reduce((s,c)=>s+c.amt,0);
 const _toOwnerTotal  =(window._custodyList||[]).filter(c=>c.type==='to_owner'  ).reduce((s,c)=>s+c.amt,0);
-const netEGP=collectedEGP-expFromNetProfit+restNetEGP-_fromOwnerTotal+_toOwnerTotal;
+const netEGP=collectedEGP-expFromNetProfit+restNetEGP-_fromOwnerTotal;
 const occupiedCount=[...new Set(active.map(b=>String(b.room)))].length;
 const activeRoomSet=new Set(active.map(b=>String(b.room)));
 const reservedRooms=[...new Set(reserved.map(b=>String(b.room)))];
@@ -6917,7 +6917,7 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
 (()=>{
   const custList = window._custodyList || [];
   // إجمالي العهدة = المبلغ الأصلي + التحويلات الإضافية
-  const totalCustAmt = custList.filter(c=>c.type!=='to_owner').reduce((s,c)=>{
+  const totalCustAmt = custList.reduce((s,c)=>{
     const extra = (c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s + c.amt + extra;
   }, 0);
@@ -6927,7 +6927,7 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   // from_profit مع transfers: الأصلي + التحويلات الإضافية
   // from_owner: لا يُخصم
   const totalTransferred = custList.reduce((s,c)=>{
-    if(c.type === 'from_owner' || c.type === 'to_owner') return s;
+    if(c.type === 'from_owner') return s; // from_owner already subtracted in netEGP base
     const extra = (c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s + c.amt + extra;
   }, 0);
@@ -6949,7 +6949,7 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   }
 
   // ── بلوك العهدة الموحّد ──
-  const availNet = Math.max(0, displayNetEGP);
+  const availNet = displayNetEGP; // يظهر سالب لو المالك سلّف أكتر من الربح
   const custBalance = Math.max(0, totalCustAmt - expFromCustody);
 
   // صف لكل عهدة: الاسم + المبلغ + النوع + زرار تعديل (bilingual)
@@ -6993,7 +6993,7 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
     ${expRow}
     <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0 0;">
       <span style="font-size:11px;color:var(--muted);">${ar?'الربح المتاح':'Available Profit'}</span>
-      <span style="font-size:14px;font-weight:800;color:${availNet>0?'#27ae60':'var(--muted)'};">£${availNet.toLocaleString()}</span>
+      <span style="font-size:14px;font-weight:800;color:${availNet>0?'#27ae60':availNet<0?'#e74c3c':'var(--muted)'};">£${availNet.toLocaleString()}</span>
     </div>
     <div style="display:flex;gap:6px;margin-top:10px;">
       ${availNet>0?`<button onclick="openTransferToCustomdy(${availNet},${availNet})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${ar?'تحويل للعهدة':'Transfer'}</button>`:''}
@@ -17019,7 +17019,7 @@ if(calFinEl){
   // from_owner = سلفة دين → تُخصم | to_owner = ردّ للمالك → يُضاف (مطابق للـ Dashboard)
   const calFromOwnerTotal=(window._custodyList||[]).filter(c=>c.type==='from_owner').reduce((s,c)=>s+c.amt,0);
   const calToOwnerTotal  =(window._custodyList||[]).filter(c=>c.type==='to_owner'  ).reduce((s,c)=>s+c.amt,0);
-  const calNetEGP=calCollectedEGP-calExpFromNetProfit+calRestNetEGP-calFromOwnerTotal+calToOwnerTotal;
+  const calNetEGP=calCollectedEGP-calExpFromNetProfit+calRestNetEGP-calFromOwnerTotal;
   // ── تحويلات المالك والعهدات ──
   const calOwnerTx=(window._ownerTxList||[]).reduce((s,t)=>s+t.amount,0);
   const calCustList=window._custodyList||[];
@@ -17028,14 +17028,12 @@ if(calFinEl){
     return s+extra;
   },0);
   const calTotalTransferred=calCustList.reduce((s,c)=>{
-    if(c.type==='from_owner'||c.type==='to_owner') return s;
+    if(c.type==='from_owner') return s; // from_owner already subtracted in calNetEGP
     const extra=(c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s+c.amt+extra;
   },0);
-  // from_owner و to_owner اتحسبوا بالفعل في calNetEGP — بلاش double counting
   const calDisplayNet=calNetEGP-calTotalTransferred-calOwnerTx;
-  // مطابق للـ Dashboard: to_owner مش في المجموع
-  const calTotalCustAmt=calCustList.filter(c=>c.type!=='to_owner').reduce((s,c)=>{
+  const calTotalCustAmt=calCustList.reduce((s,c)=>{
     const extra=(c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s+c.amt+extra;
   },0);
@@ -17057,7 +17055,7 @@ if(calFinEl){
       calCustEl.innerHTML='';
     } else {
       const _ar=currentLang==='ar';
-      const calAvailNet=Math.max(0,calDisplayNet);
+      const calAvailNet=calDisplayNet;
       const calCustRows=calCustList.map(c=>{
         const isToOwner=c.type==='to_owner';
         const isFromOwner=c.type==='from_owner';
@@ -17095,7 +17093,7 @@ if(calFinEl){
         ${calExpRow}
         <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0 0;">
           <span style="font-size:11px;color:var(--muted);">${_ar?'الربح المتاح':'Available Profit'}</span>
-          <span style="font-size:14px;font-weight:800;color:${calAvailNet>0?'#27ae60':'var(--muted)'};">£${calAvailNet.toLocaleString()}</span>
+          <span style="font-size:14px;font-weight:800;color:${calAvailNet>0?'#27ae60':calAvailNet<0?'#e74c3c':'var(--muted)'};">£${calAvailNet.toLocaleString()}</span>
         </div>
         <div style="display:flex;gap:6px;margin-top:10px;">
           ${calAvailNet>0?`<button onclick="openTransferToCustomdy(${calAvailNet},${calAvailNet})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${_ar?'تحويل للعهدة':'Transfer'}</button>`:''}
