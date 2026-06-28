@@ -16420,6 +16420,11 @@ if(editcoOvl) editcoOvl.addEventListener("click",e=>{if(e.target===editcoOvl)edi
 fillRoomSel("bm-room");
 applyLang();
 autoUpdateRooms(false);
+// تحميل تحويلات المالك والعهدات من localStorage قبل renderDashboard
+try{ window._ownerTxList = JSON.parse(localStorage.getItem("dta_owner_transfers")||"[]"); }catch(e){ window._ownerTxList=[]; }
+try{ window._custodyList  = JSON.parse(localStorage.getItem("dta_custody_list")||"[]");   }catch(e){ window._custodyList=[]; }
+// renderDashboard هيتعمل بعد ما ownerTxLoad و custodyLoad يخلصوا (في آخر الملف)
+// بس نعمل render مؤقت الأول عشان الصفحة ماتبقاش فاضية
 renderDashboard();
 renderSettings();
 renderExpenses();
@@ -32841,12 +32846,16 @@ async function ownerTxLoad(){
   try{ lsData = JSON.parse(localStorage.getItem(OWNER_TX_KEY)||'[]'); }catch(e){ lsData=[]; }
   var idbData = null;
   try{ idbData = await DTA_DB.getSetting(OWNER_TX_KEY, null); }catch(e){}
-  if(Array.isArray(idbData) && idbData.length > lsData.length){
+  // IDB هو المصدر الأساسي دايماً — لو فيه بيانات استخدمها
+  if(Array.isArray(idbData) && idbData.length > 0){
     window._ownerTxList = idbData;
     try{ localStorage.setItem(OWNER_TX_KEY, JSON.stringify(idbData)); }catch(e){}
-  } else {
+  } else if(lsData.length > 0){
+    // fallback: لو IDB فاضي خد من localStorage وارفعهم لـ IDB
     window._ownerTxList = lsData;
-    if(lsData.length > 0){ try{ await DTA_DB.setSetting(OWNER_TX_KEY, lsData); }catch(e){} }
+    try{ await DTA_DB.setSetting(OWNER_TX_KEY, lsData); }catch(e){}
+  } else {
+    window._ownerTxList = [];
   }
   console.log('[ownerTxLoad] Loaded', (window._ownerTxList||[]).length, 'transfers');
 }
