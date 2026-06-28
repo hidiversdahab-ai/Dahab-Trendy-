@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!--
+╔══════════════════════════════════════════════════════════════╗
+║           © 2025 Hany — Dahab Trendy Accommodation          ║
+║                  جميع الحقوق محفوظة                         ║
+║  يُحظر نسخه أو توزيعه أو تعديله بدون إذن كتابي من المالك   ║
+║  Dahab — South Sinai, Egypt  |  DTA v11                     ║
+╚══════════════════════════════════════════════════════════════╝
+-->
 <!-- ═══════════════════════════════════════════════════
      LICENSE SYSTEM — Dahab Trendy
      لا تعدّل هذا القسم
@@ -3913,6 +3921,23 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 </div>
 </div>
 </div>
+<!-- ══ About Card ══ -->
+<div class="card" style="margin-top:16px;background:linear-gradient(135deg,rgba(201,168,76,0.07),rgba(155,89,182,0.07));border:1px solid rgba(201,168,76,0.3);border-radius:16px;padding:20px;text-align:center;">
+  <div style="font-size:28px;margin-bottom:8px;">🏨</div>
+  <div style="font-size:16px;font-weight:800;color:var(--gold);margin-bottom:4px;">Dahab Trendy Accommodation</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">نظام إدارة الفندق — Hotel Management System</div>
+  <div style="width:60px;height:1px;background:rgba(201,168,76,0.3);margin:0 auto 12px;"></div>
+  <div style="font-size:11px;color:var(--muted);line-height:2;">
+    <div>© 2025 <span style="color:var(--gold);font-weight:700;">Hany</span> — Dahab Trendy Accommodation</div>
+    <div>جميع الحقوق محفوظة · All Rights Reserved</div>
+    <div style="margin-top:4px;">📍 دهب — جنوب سيناء، مصر</div>
+  </div>
+  <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);font-size:10px;color:rgba(255,255,255,0.25);line-height:1.8;">
+    يُحظر نسخ أو توزيع أو تعديل هذا النظام بدون إذن كتابي صريح من المالك<br>
+    No part of this software may be reproduced or distributed without explicit written permission
+  </div>
+</div>
+
 <div class="ovl" id="bk-modal">
 <div class="mdl">
 <div class="mtitle" id="bm-title">+ New Booking</div>
@@ -16941,9 +16966,8 @@ function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalend
 function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
 function calToday(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();}
 function renderCalendar(){
-// ── sync fallback: تأكد إن العهدات محملة قبل الـ render ──
-if(!window._custodyList || window._custodyList.length===0){
-  try{ window._custodyList=JSON.parse(localStorage.getItem('dta_custody_list')||'[]'); }catch(e){}
+if(!window._custodyList||window._custodyList.length===0){
+  try{window._custodyList=JSON.parse(localStorage.getItem('dta_custody_list')||'[]');}catch(e){}
 }
 const days=new Date(calYear,calMonth+1,0).getDate();
 const td=toDay();
@@ -33092,7 +33116,7 @@ async function _confirmTransfer(availNet){
 
   await custodySave();
   renderDashboard();
-  if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){}
+  if(typeof renderCalendar==='function') try{renderCalendar();}catch(e){}
   if(typeof sNotify === 'function')
     sNotify('✅ تم التحويل', '£' + amount.toLocaleString() + ' أضيفت للعهدة وخُصمت من Net Profit', 'success', 3500);
 }
@@ -33111,7 +33135,7 @@ async function _doTransfer(custId, amount){
   });
   await custodySave();
   renderDashboard();
-  if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){}
+  if(typeof renderCalendar==='function') try{renderCalendar();}catch(e){}
   if(typeof sNotify === 'function')
     sNotify('✅ تم التحويل', '£' + amount.toLocaleString() + ' أضيفت للعهدة', 'success', 3500);
 }
@@ -33356,5 +33380,30 @@ window.ownerTxSave            = ownerTxSave;
   await ownerTxLoad();
   if(typeof custodyLoad === 'function') await custodyLoad();
   if(typeof renderDashboard === 'function') renderDashboard();
+})();
+
+// ══ Splash Screen — © Hany, Dahab Trendy ══
+(function(){
+  const splash = document.createElement('div');
+  splash.id = 'dta-splash';
+  splash.style.cssText = 'position:fixed;inset:0;z-index:999998;background:linear-gradient(135deg,#0d0d1a 0%,#1a1a2e 50%,#0d0d1a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Arial,sans-serif;transition:opacity 0.6s ease;opacity:1;';
+  splash.innerHTML = `
+    <div style="text-align:center;padding:30px 20px;">
+      <div style="font-size:56px;margin-bottom:16px;animation:splashPulse 1.5s ease-in-out infinite;">🏨</div>
+      <div style="font-size:22px;font-weight:800;color:#c9a84c;letter-spacing:1px;margin-bottom:6px;">Dahab Trendy</div>
+      <div style="font-size:13px;color:rgba(201,168,76,0.7);margin-bottom:28px;letter-spacing:2px;text-transform:uppercase;">Accommodation</div>
+      <div style="width:50px;height:2px;background:linear-gradient(90deg,transparent,#c9a84c,transparent);margin:0 auto 28px;animation:splashLine 1.5s ease-in-out infinite;"></div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:2;">
+        <div>© 2025 Hany — Dahab Trendy Accommodation</div>
+        <div>جميع الحقوق محفوظة · All Rights Reserved</div>
+        <div style="margin-top:4px;font-size:10px;color:rgba(255,255,255,0.2);">📍 دهب — جنوب سيناء، مصر</div>
+      </div>
+    </div>
+    <style>
+      @keyframes splashPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+      @keyframes splashLine{0%,100%{opacity:0.4;width:50px}50%{opacity:1;width:90px}}
+    </style>`;
+  document.body.appendChild(splash);
+  setTimeout(()=>{splash.style.opacity='0';setTimeout(()=>splash.remove(),650);},2200);
 })();
 </script>
