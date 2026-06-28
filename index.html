@@ -2557,7 +2557,8 @@ document.addEventListener('DOMContentLoaded', function(){
 <div id="cal-stats-bar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
 <div class="card" style="margin-bottom:12px;">
 <div class="ctitle">💰 ملخص مالي كلي</div>
-<div id="cal-finance" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;"></div>
+<div id="cal-finance" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;"></div>
+<div id="cal-custody-block" style="margin-top:10px;"></div>
 </div>
 <div class="card" style="padding:8px;">
 <div class="cal-wrap"><table class="cal-tbl" id="cal-tbl"></table></div>
@@ -6825,8 +6826,12 @@ const expFromNetProfit=dbExpenses.filter(e=>e.source!=='custody').reduce((s,e)=>
 const restIncEGP=restaurantTx.filter(t=>t.type==="income").reduce((s,t)=>s+t.egp,0);
 const restExpEGP=restaurantTx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.egp,0);
 const restNetEGP=restIncEGP-restExpEGP;
-// Net Profit = الإيرادات - مصروفات Net Profit فقط (مش من العهدة)
-const netEGP=collectedEGP-expFromNetProfit+restNetEGP;
+// تحويلات المالك للمكان (from_owner): تعوّض المصروفات ولا تُعدّ إيراداً
+// from_owner = سلفة من المالك (دين عليك) → تُخصم من Net Profit
+// to_owner   = رددت للمالك → تُضاف (تقلّل الدين)
+const _fromOwnerTotal=(window._custodyList||[]).filter(c=>c.type==='from_owner').reduce((s,c)=>s+c.amt,0);
+const _toOwnerTotal  =(window._custodyList||[]).filter(c=>c.type==='to_owner'  ).reduce((s,c)=>s+c.amt,0);
+const netEGP=collectedEGP-expFromNetProfit+restNetEGP-_fromOwnerTotal+_toOwnerTotal;
 const occupiedCount=[...new Set(active.map(b=>String(b.room)))].length;
 const activeRoomSet=new Set(active.map(b=>String(b.room)));
 const reservedRooms=[...new Set(reserved.map(b=>String(b.room)))];
@@ -6901,10 +6906,9 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
     const extra = (c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s + c.amt + extra;
   }, 0);
-  // Net Profit المعروض = بعد خصم المحوّل للعهدة + تحويلات المالك
+  // from_owner و to_owner اتحسبوا بالفعل في netEGP الأساسي
   const totalOwnerTx  = (window._ownerTxList||[]).reduce(function(s,t){ return s+t.amount; },0);
-  const totalToOwner  = custList.filter(c=>c.type==='to_owner').reduce((s,c)=>s+c.amt,0);
-  const displayNetEGP = netEGP - totalTransferred - totalOwnerTx - totalToOwner;
+  const displayNetEGP = netEGP - totalTransferred - totalOwnerTx;
 
   let html = mkFin("£"+displayNetEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
     "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.1)",
@@ -16937,6 +16941,10 @@ function calPrev(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalend
 function calNext(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
 function calToday(){calYear=new Date().getFullYear();calMonth=new Date().getMonth();renderCalendar();}
 function renderCalendar(){
+// ── تأكد إن العهدات محملة قبل الـ render (sync fallback) — مطابق للـ Dashboard ──
+if(!window._custodyList || window._custodyList.length===0){
+  try{ window._custodyList=JSON.parse(localStorage.getItem('dta_custody_list')||'[]'); }catch(e){}
+}
 const days=new Date(calYear,calMonth+1,0).getDate();
 const td=toDay();
 const months=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
@@ -16975,12 +16983,23 @@ if(calFinEl){
     return s+paidEGP;
   },0);
   const calUnpaidEGP=calRevEGP-calCollectedEGP;
+  // ── فصل المصروفات تماماً كـ Dashboard ──
+  const calExpFromCustody=(expenses||[]).filter(e=>e.source==='custody').reduce((s,e)=>s+e.egp,0);
+  const calExpFromNetProfit=(expenses||[]).filter(e=>e.source!=='custody').reduce((s,e)=>s+e.egp,0);
   const calExpEGP=(expenses||[]).reduce((s,e)=>s+e.egp,0);
-  const calNetEGP=calCollectedEGP-calExpEGP;
+  // ── صافي المطعم كـ Dashboard ──
+  const calRestIncEGP=(restaurantTx||[]).filter(t=>t.type==="income").reduce((s,t)=>s+t.egp,0);
+  const calRestExpEGP=(restaurantTx||[]).filter(t=>t.type==="expense").reduce((s,t)=>s+t.egp,0);
+  const calRestNetEGP=calRestIncEGP-calRestExpEGP;
+  // تحويلات المالك للمكان (from_owner): تعوّض المصروفات ولا تُعدّ إيراداً
+  // from_owner = سلفة دين → تُخصم | to_owner = ردّ للمالك → يُضاف (مطابق للـ Dashboard)
+  const calFromOwnerTotal=(window._custodyList||[]).filter(c=>c.type==='from_owner').reduce((s,c)=>s+c.amt,0);
+  const calToOwnerTotal  =(window._custodyList||[]).filter(c=>c.type==='to_owner'  ).reduce((s,c)=>s+c.amt,0);
+  const calNetEGP=calCollectedEGP-calExpFromNetProfit+calRestNetEGP-calFromOwnerTotal+calToOwnerTotal;
   // ── تحويلات المالك والعهدات ──
   const calOwnerTx=(window._ownerTxList||[]).reduce((s,t)=>s+t.amount,0);
   const calCustList=window._custodyList||[];
-  const calExpFromCustody=calCustList.reduce((s,c)=>{
+  const calCustExpFromCustody=calCustList.reduce((s,c)=>{
     const extra=(c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s+extra;
   },0);
@@ -16989,21 +17008,78 @@ if(calFinEl){
     const extra=(c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s+c.amt+extra;
   },0);
-  const calToOwner=calCustList.filter(c=>c.type==='to_owner').reduce((s,c)=>s+c.amt,0);
-  const calDisplayNet=calNetEGP-calTotalTransferred-calOwnerTx-calToOwner;
-  const calTotalCustAmt=calCustList.reduce((s,c)=>s+c.amt,0);
-  const calCustBalance=Math.max(0,calTotalCustAmt-calExpFromCustody);
+  // from_owner و to_owner اتحسبوا بالفعل في calNetEGP — بلاش double counting
+  const calDisplayNet=calNetEGP-calTotalTransferred-calOwnerTx;
+  // مطابق للـ Dashboard: to_owner مش في المجموع
+  const calTotalCustAmt=calCustList.filter(c=>c.type!=='to_owner').reduce((s,c)=>{
+    const extra=(c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
+    return s+c.amt+extra;
+  },0);
+  const calCustBalance=Math.max(0,calTotalCustAmt-calExpFromCustody-calCustExpFromCustody);
   calFinEl.innerHTML=
     mkFin("£"+Math.round(calRevEGP).toLocaleString(),"إجمالي الإيرادات","rgba(201,168,76,0.1)","rgba(201,168,76,0.25)","var(--gold)")+
     (calCommEGP>0?mkFin("−£"+Math.round(calCommEGP).toLocaleString(),"عمولات الشركات","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c")+
     mkFin("£"+Math.round(calNetRevEGP).toLocaleString(),"صافي الإيرادات","rgba(155,89,182,0.1)","rgba(155,89,182,0.3)","#c39bd3"):"")+
     mkFin("£"+Math.round(calCollectedEGP).toLocaleString(),"المحصّل فعلاً","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
     mkFin("£"+Math.round(calUnpaidEGP).toLocaleString(),"المستحق / غير مدفوع","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
-    mkFin("£"+Math.round(calExpEGP).toLocaleString(),"المصروفات","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
-    (calOwnerTx>0?mkFin("−£"+Math.round(calOwnerTx).toLocaleString(),"تحويلات للمالك","rgba(230,126,34,0.08)","rgba(230,126,34,0.22)","#e67e22"):"")+
-    (calTotalTransferred>0?mkFin("−£"+Math.round(calTotalTransferred).toLocaleString(),"محوّل للعهدة","rgba(155,89,182,0.08)","rgba(155,89,182,0.22)","#9b59b6"):"")+
-    (calCustBalance>0?mkFin("£"+Math.round(calCustBalance).toLocaleString(),"رصيد العهدة","rgba(52,152,219,0.08)","rgba(52,152,219,0.22)","#3498db"):"")+
-    mkFin("£"+Math.round(calDisplayNet).toLocaleString(),"صافي الربح","rgba("+(calDisplayNet>=0?"39,174,96":"231,76,60")+",0.1)","rgba("+(calDisplayNet>=0?"39,174,96":"231,76,60")+",0.25)",calDisplayNet>=0?"#27ae60":"#e74c3c");
+    mkFin("£"+Math.round(calExpFromNetProfit).toLocaleString(),"المصروفات","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
+    (calOwnerTx>0?_renderOwnerTransferBlock(calDisplayNet, calOwnerTx, window._ownerTxList||[], currentLang==='ar'):"")+
+    mkFin("£"+Math.round(calDisplayNet).toLocaleString(),"صافي الربح","rgba("+(calDisplayNet>=0?"39,174,96":"231,76,60")+",0.1)","rgba("+(calDisplayNet>=0?"39,174,96":"231,76,60")+",0.25)",calDisplayNet>=0?"#27ae60":"#e74c3c")+
+    '';// custody rendered separately below
+  // ── عرض العهدة في div منفصل تحت الـ grid ──
+  const calCustEl = document.getElementById('cal-custody-block');
+  if(calCustEl){
+    if(!calCustList.length){
+      calCustEl.innerHTML='';
+    } else {
+      const _ar=currentLang==='ar';
+      const calAvailNet=Math.max(0,calDisplayNet);
+      const calCustRows=calCustList.map(c=>{
+        const isToOwner=c.type==='to_owner';
+        const isFromOwner=c.type==='from_owner';
+        const color=isFromOwner?'#3498db':isToOwner?'#e67e22':'#9b59b6';
+        const icon=isFromOwner?'🏦':isToOwner?'👤':'🔒';
+        const typeLabel=isFromOwner?(_ar?'من المالك':'From Owner'):isToOwner?(_ar?'للمالك':'To Owner'):(_ar?'من الربح':'From Profit');
+        const noteTxt=c.note||(isToOwner?(_ar?'تحويل للمالك':'Owner Transfer'):isFromOwner?(_ar?'عهدة من المالك':'Owner Custody'):(_ar?'عهدة':'Custody'));
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <div>
+            <div style="font-size:12px;color:var(--text);">${icon} ${noteTxt}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px;">${typeLabel}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:13px;font-weight:700;color:${color};">£${c.amt.toLocaleString()}</span>
+            <button onclick="openCustodyModal('${c.id}')" style="background:none;border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:2px 7px;font-size:10px;color:var(--muted);cursor:pointer;">✏️</button>
+          </div>
+        </div>`;
+      }).join('');
+      const calExpRow=calExpFromCustody>0?`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0 0;">
+          <span style="font-size:11px;color:#e74c3c;">💸 ${_ar?'مصروفات من العهدة':'Custody Expenses'}</span>
+          <span style="font-size:13px;font-weight:700;color:#e74c3c;">−£${calExpFromCustody.toLocaleString()}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.06);padding-bottom:8px;">
+          <span style="font-size:11px;color:var(--muted);">${_ar?'رصيد العهدة':'Custody Balance'}</span>
+          <span style="font-size:13px;font-weight:700;color:${calCustBalance>0?'#9b59b6':'#e74c3c'};">£${calCustBalance.toLocaleString()}</span>
+        </div>`:'';
+      calCustEl.innerHTML=`<div style="background:rgba(155,89,182,0.07);border:1px solid rgba(155,89,182,0.25);border-radius:12px;padding:12px 14px;">
+        <div style="font-size:11px;font-weight:700;color:#9b59b6;margin-bottom:8px;letter-spacing:0.5px;">🔒 ${_ar?'العهدة':'CUSTODY'}</div>
+        ${calCustRows}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0 0;margin-top:2px;">
+          <span style="font-size:11px;color:var(--muted);">${_ar?'إجمالي العهدة':'Total Custody'}</span>
+          <span style="font-size:14px;font-weight:800;color:#9b59b6;">£${calTotalCustAmt.toLocaleString()}</span>
+        </div>
+        ${calExpRow}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0 0;">
+          <span style="font-size:11px;color:var(--muted);">${_ar?'الربح المتاح':'Available Profit'}</span>
+          <span style="font-size:14px;font-weight:800;color:${calAvailNet>0?'#27ae60':'var(--muted)'};">£${calAvailNet.toLocaleString()}</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          ${calAvailNet>0?`<button onclick="openTransferToCustomdy(${calAvailNet},${calAvailNet})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${_ar?'تحويل للعهدة':'Transfer'}</button>`:''}
+          <button onclick="openCustodyModal()" style="flex:1;padding:9px;background:none;border:1px dashed rgba(155,89,182,0.3);border-radius:8px;color:var(--muted);font-size:11px;cursor:pointer;">+ ${_ar?'عهدة جديدة':'Add Custody'}</button>
+        </div>
+      </div>`;
+    }
+  }
 }
 // Build header row
 let html="<thead><tr><th style='min-width:55px;'>الغرفة</th>";
@@ -23072,7 +23148,7 @@ function renderPOSCart(){
       <div style="display:flex;align-items:center;gap:7px;flex:1;">
         <span style="font-size:18px;">${c.emoji}</span>
         <div>
-          <div style="font-size:12px;font-weight:700;color:var(--text);">${c.name}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text);">${isEn()&&c.nameEn&&c.nameEn.trim()?c.nameEn:c.name}</div>
           <div style="font-size:10px;color:var(--muted);">£${c.price} × ${c.qty} = <strong style="color:var(--gold);">£${(c.price*c.qty).toFixed(0)}</strong></div>
         </div>
       </div>
@@ -23244,7 +23320,7 @@ function printRestaurantInvoice(){
   const itemsRows = tx.items.map((c,i)=>`
     <tr>
       <td style="padding:10px 14px;border-bottom:1px solid #f0e8cc;text-align:center;color:#555;">${i+1}</td>
-      <td style="padding:10px 14px;border-bottom:1px solid #f0e8cc;">${c.emoji||""} ${c.name}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #f0e8cc;">${c.emoji||""} ${isEn()&&c.nameEn&&c.nameEn.trim()?c.nameEn:c.name}</td>
       <td style="padding:10px 14px;border-bottom:1px solid #f0e8cc;text-align:center;">${c.qty}</td>
       <td style="padding:10px 14px;border-bottom:1px solid #f0e8cc;text-align:left;">£${c.price.toFixed(0)}</td>
       <td style="padding:10px 14px;border-bottom:1px solid #f0e8cc;text-align:left;font-weight:700;">£${(c.price*c.qty).toFixed(0)}</td>
@@ -23703,7 +23779,7 @@ function renderPOSTodayOrders(){
         ${t.room?`<span style="background:rgba(201,168,76,0.15);color:var(--gold);border-radius:4px;padding:1px 6px;font-size:9px;">غرفة ${t.room}</span>`:""}
         <button onclick="deletePOSOrder('${t.id}')" style="margin-right:auto;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.35);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;flex-shrink:0;" title="حذف الطلب">🗑️</button>
       </div>
-      <div style="color:var(--muted);margin-top:3px;font-size:10px;">${t.items?t.items.map(c=>c.emoji+""+c.name+"×"+c.qty).join(", "):t.desc}</div>
+      <div style="color:var(--muted);margin-top:3px;font-size:10px;">${t.items?t.items.map(c=>c.emoji+""+(isEn()&&c.nameEn&&c.nameEn.trim()?c.nameEn:c.name)+"×"+c.qty).join(", "):t.desc}</div>
       ${t.notes?`<div style="color:var(--muted);font-size:9px;margin-top:2px;">📝 ${t.notes}</div>`:""}
     </div>`).join("");
 }
@@ -24116,7 +24192,7 @@ function printKitchenOrder(){
   const itemsHTML = tx.items.map((c,i)=>`
     <tr>
       <td class="k-qty">${c.qty}×</td>
-      <td class="k-item">${c.emoji||""} ${c.name}</td>
+      <td class="k-item">${c.emoji||""} ${isEn()&&c.nameEn&&c.nameEn.trim()?c.nameEn:c.name}</td>
       ${c.note ? `<td class="k-note">${c.note}</td>` : "<td></td>"}
     </tr>`).join("");
 
@@ -32826,6 +32902,9 @@ async function custodyLoad(){
       localStorage.removeItem('dta_custody_note');
     }
   }
+  // ── بعد تحميل العهدة من IDB، حدّث الـ Dashboard والـ Calendar لو مفتوحين ──
+  if(typeof renderDashboard==='function') try{ renderDashboard(); }catch(e){}
+  if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){}
 }
 
 async function custodySave(){
@@ -32834,6 +32913,8 @@ async function custodySave(){
   try {
     await DTA_DB.setSetting(CUST_KEY, window._custodyList);
   } catch(e){}
+  // ── بعد الحفظ، حدّث الـ Calendar لو مفتوح ──
+  if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){}
 }
 
 function setCustType(type){
