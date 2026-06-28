@@ -6309,19 +6309,19 @@ function renderLaundryAlerts(){
     const urgency=hoursAgo>=6?'rgba(231,76,60,0.15)':'rgba(230,126,34,0.12)';
     const border=hoursAgo>=6?'rgba(231,76,60,0.5)':'rgba(230,126,34,0.4)';
     const clr=hoursAgo>=6?'#e74c3c':'#e67e22';
-    const timeLabel=coTime?("منذ "+hoursAgo+" ساعة"):"";
+    const timeLabel=coTime?(isEn()?("since "+hoursAgo+" hr"):("منذ "+hoursAgo+" ساعة")):"";
     return "<div style='background:"+urgency+";border:1px solid "+border+";border-radius:8px;padding:9px 13px;display:flex;align-items:center;gap:10px;'>"+
       "<span style='font-size:24px;'>🧺</span>"+
       "<div style='flex:1;'>"+
-        "<div style='font-weight:700;font-size:12px;color:"+clr+";'>غرفة "+b.laundryRoom+"</div>"+
+        "<div style='font-weight:700;font-size:12px;color:"+clr+";"+"'>"+(isEn()?"Room ":"غرفة ")+b.laundryRoom+"</div>"+
         "<div style='font-size:11px;color:var(--muted);margin-top:1px;'>"+b.laundryGuest+" · "+timeLabel+"</div>"+
-        "<div style='font-size:10px;color:var(--muted);margin-top:2px;'>ملايات وفوط تحتاج غسيل</div>"+
+        "<div style='font-size:10px;color:var(--muted);margin-top:2px;'>"+(isEn()?"Sheets & towels need washing":"ملايات وفوط تحتاج غسيل")+"</div>"+
       "</div>"+
-      "<button onclick='markLaundryDone("+i+")' style='background:#27ae60;color:#fff;border:none;padding:7px 13px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;'>✅ تم الغسيل</button>"+
+      "<button onclick='markLaundryDone("+i+")' style='background:#27ae60;color:#fff;border:none;padding:7px 13px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;'>✅ "+(isEn()?"Washed":"تم الغسيل")+"</button>"+
     "</div>";
   });
   el.innerHTML="<div class='card' style='padding:12px 16px;border-color:rgba(230,126,34,0.4);background:rgba(230,126,34,0.03);margin-bottom:0;'>"+
-    "<div class='ctitle' style='color:#e67e22;'>🧺 غرف تحتاج غسيل ملايات وفوط"+
+    "<div class='ctitle' style='color:#e67e22;'>🧺 "+(isEn()?"Rooms Need Laundry":"غرف تحتاج غسيل ملايات وفوط")+
     " <span style='background:#e67e22;color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;'>"+pending.length+"</span></div>"+
     "<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;'>"+cards.join("")+"</div>"+
   "</div>";
@@ -6393,21 +6393,21 @@ function renderEmptyRoomAlerts(){
     const borderClr = emptyDays >= threshold*3 ? 'rgba(231,76,60,0.5)' : emptyDays >= threshold*2 ? 'rgba(230,126,34,0.4)' : 'rgba(149,165,166,0.35)';
     const txtClr = emptyDays >= threshold*3 ? '#e74c3c' : emptyDays >= threshold*2 ? '#e67e22' : '#95a5a6';
     const nextInfo = nextBk
-      ? "<div style='font-size:10px;color:#4cda7a;margin-top:3px;'>📅 حجز قادم: "+nextBk.name+" (خلال "+daysToNext+" يوم)</div>"
-      : "<div style='font-size:10px;color:var(--muted);margin-top:3px;'>⚠️ لا يوجد حجز قادم</div>";
+      ? "<div style='font-size:10px;color:#4cda7a;margin-top:3px;'>📅 "+(isEn()?"Upcoming: "+nextBk.name+" (in "+daysToNext+" days)":"حجز قادم: "+nextBk.name+" (خلال "+daysToNext+" يوم)")+"</div>"
+      : "<div style='font-size:10px;color:var(--muted);margin-top:3px;'>⚠️ "+(isEn()?"No upcoming booking":"لا يوجد حجز قادم")+"</div>";
     return "<div style='background:"+urgency+";border:1px solid "+borderClr+";border-radius:8px;padding:9px 13px;display:flex;align-items:center;gap:10px;'>"+
       "<span style='font-size:22px;'>🏨</span>"+
       "<div style='flex:1;'>"+
-        "<div style='font-weight:700;font-size:12px;color:"+txtClr+";'>غرفة "+r+"</div>"+
-        "<div style='font-size:11px;color:var(--muted);margin-top:1px;'>فاضية منذ <strong style='color:"+txtClr+";'>"+emptyDays+" يوم</strong></div>"+
+        "<div style='font-weight:700;font-size:12px;color:"+txtClr+";"+"'>"+(isEn()?"Room ":"غرفة ")+r+"</div>"+
+        "<div style='font-size:11px;color:var(--muted);margin-top:1px;'>"+(isEn()?"Empty for <strong style='color:"+txtClr+";'>"+emptyDays+" days</strong>":"فاضية منذ <strong style='color:"+txtClr+";'>"+emptyDays+" يوم</strong>")+"</div>"+
         nextInfo+
       "</div>"+
-      "<button onclick='bookRoom("+r+")' style='background:var(--gold);color:#1a1a2e;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;'>➕ احجز</button>"+
+      "<button onclick='bookRoom("+r+")' style='background:var(--gold);color:#1a1a2e;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;'>➕ "+(isEn()?"Book":"احجز")+"</button>"+
     "</div>";
   });
 
   el.innerHTML="<div class='card' style='padding:12px 16px;border-color:rgba(231,76,60,0.35);background:rgba(231,76,60,0.03);margin-bottom:0;'>"+
-    "<div class='ctitle' style='color:#e74c3c;'>🔔 غرف فاضية أكثر من "+threshold+" أيام"+
+    "<div class='ctitle' style='color:#e74c3c;'>🔔 "+(isEn()?"Rooms Empty for more than "+threshold+" days":"غرف فاضية أكثر من "+threshold+" أيام")+
     " <span style='background:#e74c3c;color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;'>"+emptyRooms.length+"</span></div>"+
     "<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;'>"+cards.join("")+"</div>"+
   "</div>";
