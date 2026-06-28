@@ -12306,7 +12306,7 @@ function calcGrpTotal(){
   const paidCompany = parseFloat(document.getElementById('grp-paid-company').value) || 0;
   const paidGuests  = parseFloat(document.getElementById('grp-paid-guests').value) || 0;
   const deposit     = parseFloat(document.getElementById('grp-deposit') ? document.getElementById('grp-deposit').value : 0) || 0;
-  const totalPaid   = paidCompany + paidGuests + deposit;
+  const totalPaid   = paidCompany + paidGuests; // الجدية منفصلة — مش جزء من سداد الإيجار
   const remaining   = grandTotal - totalPaid;
 
   // عدد الأفراد
@@ -12356,12 +12356,57 @@ function calcGrpTotal(){
       ${deposit>0?`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;margin:4px 0;background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.3);border-radius:8px;">
         <span style="color:#7ab8f5;font-weight:700;font-size:13px;">💎 جدية الحجز / Security Deposit</span>
-        <span style="color:#4cda7a;font-weight:700;font-size:14px;">−${sym}${deposit.toFixed(2)}</span>
+        <span style="color:#4cda7a;font-weight:700;font-size:14px;">+${sym}${deposit.toFixed(2)}</span>
       </div>`:''}
-      <div style="display:flex;justify-content:space-between;padding:8px 0;">
-        <span style="font-weight:700;font-size:13px;">${remaining>0?'⚠️ المتبقي':'✅ مسدد بالكامل'}</span>
-        <span style="font-weight:700;font-size:14px;color:${remaining>0?'#e74c3c':'#2ecc71'};">${remaining>0?sym+remaining.toFixed(2):'✅'}</span>
+      ${(()=>{
+        if(deposit<=0 || commission<=0) return '';
+        const companyOwes = deposit - commission;
+        const companyStillOwes = Math.max(0, companyOwes - paidCompany);
+        if(companyStillOwes > 0){
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;margin:6px 0;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.4);border-radius:10px;">
+            <div>
+              <div style="font-size:12px;font-weight:800;color:#e74c3c;">🏢 الشركة مدينة للفندق (جدية − كوميشن)</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;">الجدية (${sym}${deposit.toFixed(0)}) − الكوميشن (${sym}${commission.toFixed(0)})${paidCompany>0?' − دفعت '+sym+paidCompany.toFixed(0):''} = ${sym}${companyStillOwes.toFixed(0)}</div>
+            </div>
+            <span style="font-size:15px;font-weight:800;color:#e74c3c;">${sym}${companyStillOwes.toFixed(2)}</span>
+          </div>`;
+        } else if(companyStillOwes < 0){
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;margin:6px 0;background:rgba(230,126,34,0.1);border:1px solid rgba(230,126,34,0.4);border-radius:10px;">
+            <div>
+              <div style="font-size:12px;font-weight:800;color:#e67e22;">↩️ الفندق يرد للشركة (دفعت أكثر)</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;">المدفوع (${sym}${paidCompany.toFixed(0)}) أكبر من المستحق (${sym}${companyOwes.toFixed(0)})</div>
+            </div>
+            <span style="font-size:15px;font-weight:800;color:#e67e22;">${sym}${Math.abs(companyStillOwes).toFixed(2)}</span>
+          </div>`;
+        } else {
+          return `<div style="padding:8px 12px;margin:6px 0;background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.3);border-radius:10px;font-size:11px;color:#27ae60;font-weight:700;text-align:center;">✅ الشركة سددت مستحقاتها بالكامل</div>`;
+        }
+      })()}
+      <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:8px;display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+        <span style="font-weight:700;font-size:12px;color:var(--muted);">💰 إجمالي المدفوع (بدون الجدية)</span>
+        <span style="font-weight:700;font-size:13px;color:#2ecc71;">${sym}${(paidCompany+paidGuests).toFixed(2)}</span>
       </div>
+      ${(()=>{
+        if(remaining <= 0) return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid rgba(255,255,255,0.08);margin-top:4px;"><span style="font-weight:700;font-size:13px;">✅ مسدد بالكامل</span><span style="font-weight:700;font-size:14px;color:#2ecc71;">✅</span></div>`;
+        const companyOwes2 = (deposit>0&&commission>0) ? Math.max(0, deposit-commission) : 0;
+        const companyStillOwes2 = Math.max(0, companyOwes2 - paidCompany);
+        const guestsOwe2 = Math.max(0, grandTotal - paidGuests - companyOwes2);
+        return `<div style="border-top:2px solid rgba(255,255,255,0.08);margin-top:4px;padding-top:6px;">
+          <div style="font-weight:700;font-size:12px;color:var(--muted);padding:4px 0 6px;">⚠️ تقسيم المتبقي</div>
+          ${companyStillOwes2>0?`<div style="display:flex;justify-content:space-between;padding:6px 10px;margin-bottom:4px;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.3);border-radius:8px;">
+            <span style="font-size:12px;color:#e74c3c;font-weight:700;">🏢 متبقي على الشركة</span>
+            <span style="font-size:13px;font-weight:800;color:#e74c3c;">${sym}${companyStillOwes2.toFixed(2)}</span>
+          </div>`:''}
+          ${guestsOwe2>0?`<div style="display:flex;justify-content:space-between;padding:6px 10px;margin-bottom:4px;background:rgba(52,152,219,0.08);border:1px solid rgba(52,152,219,0.3);border-radius:8px;">
+            <span style="font-size:12px;color:#7ab8f5;font-weight:700;">👥 متبقي على الضيوف</span>
+            <span style="font-size:13px;font-weight:800;color:#7ab8f5;">${sym}${guestsOwe2.toFixed(2)}</span>
+          </div>`:''}
+          <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid rgba(255,255,255,0.08);margin-top:4px;">
+            <span style="font-weight:700;font-size:12px;color:var(--muted);">📊 إجمالي المتبقي</span>
+            <span style="font-weight:700;font-size:14px;color:#e74c3c;">${sym}${remaining.toFixed(2)}</span>
+          </div>
+        </div>`;
+      })()}
     </div>
   `;
 }
@@ -12391,7 +12436,7 @@ function getGrpData(){
   const depositMethod=depositMethodEl?depositMethodEl.value:'';
   const depositNotesEl=document.getElementById('grp-deposit-notes');
   const depositNotes=depositNotesEl?depositNotesEl.value:'';
-  const remaining=grandTotal-paidCompany-paidGuests-deposit;
+  const remaining=grandTotal-paidCompany-paidGuests; // الجدية منفصلة عن سداد الإيجار
   const totalGuests=grpRooms.reduce((sum,r)=>{const cap=ROOM_TYPE_CAPACITY[r.type]||2;return sum+cap;},0);
   return {ci,co,nights,sym,company,phone,contact,email,commType,commVal,commission,roomsTotal,grandTotal,paidCompany,paidGuests,deposit,depositMethod,depositNotes,remaining,totalGuests};
 }
@@ -12421,7 +12466,7 @@ ${roomLines}
 💰 *Grand Total: ${d.sym}${d.grandTotal.toFixed(2)}*
 🏢 Paid by Company: ${d.sym}${d.paidCompany.toFixed(2)}
 👥 Paid by Guests: ${d.sym}${d.paidGuests.toFixed(2)}${d.deposit>0?'\n💎 Deposit: '+d.sym+d.deposit.toFixed(2)+' ('+d.depositMethod+')'+(d.depositNotes?' — '+d.depositNotes:''):''}
-${d.remaining>0?'⚠️ Balance Due: '+d.sym+d.remaining.toFixed(2):'✅ Fully Settled'}
+${d.remaining<=0?'✅ Fully Settled':(()=>{ const cO=(d.deposit>0&&d.commission>0)?Math.max(0,d.deposit-d.commission):0; const cP=d.paidCompany||0; const cS=Math.max(0,cO-cP); const gO=Math.max(0,d.grandTotal-(d.paidGuests||0)-cO); return (cS>0?'🏢 Company Balance: '+d.sym+cS.toFixed(2)+'\n':'')+(gO>0?'👥 Guests Balance: '+d.sym+gO.toFixed(2)+'\n':'')+'⚠️ Total Due: '+d.sym+d.remaining.toFixed(2); })()}
 ━━━━━━━━━━━━━━━━━━
 📞 ${prop.phone}`
 :
@@ -12443,7 +12488,7 @@ ${roomLines}
 💰 *الإجمالي: ${d.sym}${d.grandTotal.toFixed(2)}*
 🏢 مدفوع من الشركة: ${d.sym}${d.paidCompany.toFixed(2)}
 👥 مدفوع من الضيوف: ${d.sym}${d.paidGuests.toFixed(2)}${d.deposit>0?'\n💎 جدية الحجز: '+d.sym+d.deposit.toFixed(2)+' ('+d.depositMethod+')'+(d.depositNotes?' — '+d.depositNotes:''):''}
-${d.remaining>0?'⚠️ المتبقي: '+d.sym+d.remaining.toFixed(2):'✅ مسدد بالكامل'}
+${d.remaining<=0?'✅ مسدد بالكامل':(()=>{ const cO=(d.deposit>0&&d.commission>0)?Math.max(0,d.deposit-d.commission):0; const cP=d.paidCompany||0; const cS=Math.max(0,cO-cP); const gO=Math.max(0,d.grandTotal-(d.paidGuests||0)-cO); return (cS>0?'🏢 متبقي على الشركة: '+d.sym+cS.toFixed(2)+'\n':'')+(gO>0?'👥 متبقي على الضيوف: '+d.sym+gO.toFixed(2)+'\n':'')+'⚠️ إجمالي المتبقي: '+d.sym+d.remaining.toFixed(2); })()}
 ━━━━━━━━━━━━━━━━━━
 📞 ${prop.phone}`;
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
@@ -12607,10 +12652,19 @@ function printGrpInvoice(){
           ${d.paidGuests>0?`<div class="total-row paid-row"><span>✅ مدفوع من الضيوف / Paid by Guests</span><span>− ${sym}${d.paidGuests.toFixed(2)}</span></div>`:''}
           ${d.deposit>0?`<div class="total-row" style="color:#2980b9;border-top:1px dashed rgba(52,152,219,0.4);margin-top:4px;padding-top:6px;"><span>💎 جدية الحجز / Deposit${d.depositMethod?' · '+d.depositMethod:''}</span><span>${sym}${d.deposit.toFixed(2)}</span></div>`:''}
           ${d.deposit>0&&d.depositNotes?`<div style="font-size:10px;color:#7ab8f5;text-align:right;margin-top:2px;padding-bottom:4px;">📝 ${d.depositNotes}</div>`:''}
-          <div class="total-row ${d.remaining>0?'remaining':'settled'}">
-            <span>${d.remaining>0?'⚠️ المبلغ المتبقي / Remaining Balance':'✅ مسدد بالكامل / Fully Settled'}</span>
-            <span>${d.remaining>0?sym+d.remaining.toFixed(2):'✅'}</span>
-          </div>
+          ${(()=>{ if(d.deposit<=0||d.commission<=0) return ''; const compOwes=d.deposit-d.commission; const compPaid=d.paidCompany||0; const compStill=compOwes-compPaid; if(compStill>0) return '<div class="total-row" style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.35);border-radius:6px;padding:8px 10px;margin:6px 0;"><span style="color:#c0392b;font-weight:700;">🏢 الشركة مدينة للفندق / Company Owes Hotel<br><small style="font-size:10px;opacity:.7;">Deposit '+sym+d.deposit.toFixed(0)+' − Commission '+sym+d.commission.toFixed(0)+(compPaid>0?' − Paid '+sym+compPaid.toFixed(0):'')+' = '+sym+compStill.toFixed(0)+'</small></span><span style="color:#c0392b;font-weight:800;">'+sym+compStill.toFixed(2)+'</span></div>'; if(compStill<0) return '<div class="total-row" style="background:rgba(230,126,34,0.08);border:1px solid rgba(230,126,34,0.35);border-radius:6px;padding:8px 10px;margin:6px 0;"><span style="color:#e67e22;font-weight:700;">↩️ الفندق يرد للشركة / Hotel Refunds Company<br><small style="font-size:10px;opacity:.7;">Overpaid '+sym+Math.abs(compStill).toFixed(0)+'</small></span><span style="color:#e67e22;font-weight:800;">'+sym+Math.abs(compStill).toFixed(2)+'</span></div>'; return '<div class="total-row" style="background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.3);border-radius:6px;padding:6px 10px;font-size:11px;color:#27ae60;font-weight:700;text-align:center;">✅ الشركة سددت / Company Settled</div>'; })()}
+          ${(()=>{
+            if(d.remaining<=0) return '<div class="total-row settled"><span>✅ مسدد بالكامل / Fully Settled</span><span>✅</span></div>';
+            const compOwes2 = (d.deposit>0&&d.commission>0)?Math.max(0,d.deposit-d.commission):0;
+            const compPaid2 = d.paidCompany||0;
+            const compStill2 = Math.max(0, compOwes2 - compPaid2);
+            const guestsOwe2 = Math.max(0, d.grandTotal - (d.paidGuests||0) - compOwes2);
+            let html = '';
+            if(compStill2>0) html += '<div class="total-row remaining" style="border-left:3px solid #c0392b;"><span>🏢 متبقي على الشركة / Company Balance</span><span>'+sym+compStill2.toFixed(2)+'</span></div>';
+            if(guestsOwe2>0) html += '<div class="total-row remaining" style="border-left:3px solid #2980b9;"><span>👥 متبقي على الضيوف / Guests Balance</span><span>'+sym+guestsOwe2.toFixed(2)+'</span></div>';
+            html += '<div class="total-row remaining"><span>⚠️ إجمالي المتبقي / Total Remaining</span><span>'+sym+d.remaining.toFixed(2)+'</span></div>';
+            return html;
+          })()}
         </div>
         <div style="text-align:right;margin-top:10px;">
           <span class="status-badge ${d.remaining<=0?'status-paid':d.paidCompany>0||d.paidGuests>0||d.deposit>0?'status-partial':'status-pending'}">
@@ -12768,10 +12822,19 @@ async function downloadGrpInvoicePDF(){
           ${d.paidGuests>0?`<div class="total-row paid-row"><span>✅ مدفوع من الضيوف / Paid by Guests</span><span>− ${sym}${d.paidGuests.toFixed(2)}</span></div>`:''}
           ${d.deposit>0?`<div class="total-row" style="color:#2980b9;border-top:1px dashed rgba(52,152,219,0.4);margin-top:4px;padding-top:6px;"><span>💎 جدية الحجز / Deposit${d.depositMethod?' · '+d.depositMethod:''}</span><span>${sym}${d.deposit.toFixed(2)}</span></div>`:''}
           ${d.deposit>0&&d.depositNotes?`<div style="font-size:10px;color:#7ab8f5;text-align:right;margin-top:2px;padding-bottom:4px;">📝 ${d.depositNotes}</div>`:''}
-          <div class="total-row ${d.remaining>0?'remaining':'settled'}">
-            <span>${d.remaining>0?'⚠️ المبلغ المتبقي / Remaining Balance':'✅ مسدد بالكامل / Fully Settled'}</span>
-            <span>${d.remaining>0?sym+d.remaining.toFixed(2):'✅'}</span>
-          </div>
+          ${(()=>{ if(d.deposit<=0||d.commission<=0) return ''; const compOwes=d.deposit-d.commission; const compPaid=d.paidCompany||0; const compStill=compOwes-compPaid; if(compStill>0) return '<div class="total-row" style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.35);border-radius:6px;padding:8px 10px;margin:6px 0;"><span style="color:#c0392b;font-weight:700;">🏢 الشركة مدينة للفندق / Company Owes Hotel<br><small style="font-size:10px;opacity:.7;">Deposit '+sym+d.deposit.toFixed(0)+' − Commission '+sym+d.commission.toFixed(0)+(compPaid>0?' − Paid '+sym+compPaid.toFixed(0):'')+' = '+sym+compStill.toFixed(0)+'</small></span><span style="color:#c0392b;font-weight:800;">'+sym+compStill.toFixed(2)+'</span></div>'; if(compStill<0) return '<div class="total-row" style="background:rgba(230,126,34,0.08);border:1px solid rgba(230,126,34,0.35);border-radius:6px;padding:8px 10px;margin:6px 0;"><span style="color:#e67e22;font-weight:700;">↩️ الفندق يرد للشركة / Hotel Refunds Company<br><small style="font-size:10px;opacity:.7;">Overpaid '+sym+Math.abs(compStill).toFixed(0)+'</small></span><span style="color:#e67e22;font-weight:800;">'+sym+Math.abs(compStill).toFixed(2)+'</span></div>'; return '<div class="total-row" style="background:rgba(39,174,96,0.08);border:1px solid rgba(39,174,96,0.3);border-radius:6px;padding:6px 10px;font-size:11px;color:#27ae60;font-weight:700;text-align:center;">✅ الشركة سددت / Company Settled</div>'; })()}
+          ${(()=>{
+            if(d.remaining<=0) return '<div class="total-row settled"><span>✅ مسدد بالكامل / Fully Settled</span><span>✅</span></div>';
+            const compOwes2 = (d.deposit>0&&d.commission>0)?Math.max(0,d.deposit-d.commission):0;
+            const compPaid2 = d.paidCompany||0;
+            const compStill2 = Math.max(0, compOwes2 - compPaid2);
+            const guestsOwe2 = Math.max(0, d.grandTotal - (d.paidGuests||0) - compOwes2);
+            let html = '';
+            if(compStill2>0) html += '<div class="total-row remaining" style="border-left:3px solid #c0392b;"><span>🏢 متبقي على الشركة / Company Balance</span><span>'+sym+compStill2.toFixed(2)+'</span></div>';
+            if(guestsOwe2>0) html += '<div class="total-row remaining" style="border-left:3px solid #2980b9;"><span>👥 متبقي على الضيوف / Guests Balance</span><span>'+sym+guestsOwe2.toFixed(2)+'</span></div>';
+            html += '<div class="total-row remaining"><span>⚠️ إجمالي المتبقي / Total Remaining</span><span>'+sym+d.remaining.toFixed(2)+'</span></div>';
+            return html;
+          })()}
         </div>
         <div style="text-align:right;margin-top:10px;">
           <span class="status-badge ${d.remaining<=0?'status-paid':d.paidCompany>0||d.paidGuests>0||d.deposit>0?'status-partial':'status-pending'}">
@@ -13425,19 +13488,27 @@ function saveGrpBooking(){
   if(!d.ci||!d.co||!d.company){sNotify('⚠️','أدخل بيانات الشركة والتواريخ','warning',2000);return;}
   const grpId = 'GRP-'+Date.now().toString().slice(-6);
   let added = 0;
-  const totalRoomsBase = grpRooms.filter(r=>r.roomNum).reduce((s,r)=>s+(r.pricePerNight*d.nights),0);
-  grpRooms.forEach(r=>{
-    if(!r.roomNum){ return; }
+  const validRooms = grpRooms.filter(r=>r.roomNum);
+  const totalRoomsBase = validRooms.reduce((s,r)=>s+(r.pricePerNight*d.nights),0);
+  validRooms.forEach(r=>{
     const roomBase = r.pricePerNight * d.nights;
-    // حساب نصيب الغرفة من الكوميشن بالتناسب
+    const roomRatio = totalRoomsBase>0 ? roomBase/totalRoomsBase : 1/validRooms.length;
     let commForRoom = 0;
-    if(d.commType==='percent'){
-      commForRoom = roomBase * d.commVal / 100;
-    } else if(d.commType==='fixed' && totalRoomsBase>0){
-      commForRoom = d.commission * (roomBase / totalRoomsBase);
-    }
+    if(d.commType==='percent') commForRoom = roomBase * d.commVal / 100;
+    else if(d.commType==='fixed' && totalRoomsBase>0) commForRoom = d.commission * roomRatio;
     const roomNet = roomBase - commForRoom;
     const info = roomTypes['room_'+r.roomNum] || {type: r.type};
+    // توزيع المدفوعات على الغرفة بالتناسب
+    const payments = [];
+    if(d.paidCompany>0){
+      payments.push({id:'p_'+Date.now()+Math.random(),amount:Math.round(d.paidCompany*roomRatio*100)/100,method:'تحويل',note:'مدفوع من الشركة',date:new Date().toISOString()});
+    }
+    if(d.paidGuests>0){
+      payments.push({id:'p_'+Date.now()+Math.random(),amount:Math.round(d.paidGuests*roomRatio*100)/100,method:'كاش',note:'مدفوع من الضيوف',date:new Date().toISOString()});
+    }
+    if(d.deposit>0){
+      payments.push({id:'p_'+Date.now()+Math.random(),amount:Math.round(d.deposit*roomRatio*100)/100,method:d.depositMethod||'كاش',note:'جدية حجز'+(d.depositNotes?' — '+d.depositNotes:''),date:new Date().toISOString()});
+    }
     const bk={
       id:Date.now()+Math.random(),
       room:String(r.roomNum),
@@ -13453,6 +13524,7 @@ function saveGrpBooking(){
       commissionPct: d.commType==='percent' ? d.commVal : 0,
       commissionType: d.commType,
       paid:0,
+      payments: payments,
       status:'Confirmed',
       source:'Corporate',
       notes:`جروب: ${grpId} | مسؤول: ${d.contact}`+(d.deposit>0?` | جدية: ${d.sym}${d.deposit} (${d.depositMethod})`+(d.depositNotes?' — '+d.depositNotes:''):''),
@@ -13521,19 +13593,29 @@ function doConvertGrp(roomNums){
   const grpId = 'GRP-'+Date.now().toString().slice(-6);
   const toConvert = grpRooms.filter(r=>roomNums.includes(r.roomNum));
   let added = 0;
-  // حساب إجمالي الغرف المراد تحويلها فقط (للكوميشن النسبي)
   const toConvertRoomsTotal = toConvert.reduce((sum,r)=>sum+(r.pricePerNight*d.nights),0);
   toConvert.forEach(r=>{
     const info = roomTypes['room_'+r.roomNum]||{type:r.type};
     const roomGross = r.pricePerNight * d.nights;
-    // نصيب الغرفة من الكوميشن بالتناسب مع إجماليها
+    const roomRatio = toConvertRoomsTotal>0 ? roomGross/toConvertRoomsTotal : 1/toConvert.length;
     let commForRoom = 0;
     if(d.commType==='percent'){
       commForRoom = roomGross * d.commVal / 100;
     } else if(d.commType==='fixed' && toConvertRoomsTotal>0){
-      commForRoom = d.commission * (roomGross / toConvertRoomsTotal);
+      commForRoom = d.commission * roomRatio;
     }
     const roomNet = roomGross - commForRoom;
+    // توزيع المدفوعات على الغرفة بالتناسب
+    const payments = [];
+    if(d.paidCompany>0){
+      payments.push({id:'p_'+Date.now()+Math.random(),amount:Math.round(d.paidCompany*roomRatio*100)/100,method:'تحويل',note:'مدفوع من الشركة',date:new Date().toISOString()});
+    }
+    if(d.paidGuests>0){
+      payments.push({id:'p_'+Date.now()+Math.random(),amount:Math.round(d.paidGuests*roomRatio*100)/100,method:'كاش',note:'مدفوع من الضيوف',date:new Date().toISOString()});
+    }
+    if(d.deposit>0){
+      payments.push({id:'p_'+Date.now()+Math.random(),amount:Math.round(d.deposit*roomRatio*100)/100,method:d.depositMethod||'كاش',note:'جدية حجز'+(d.depositNotes?' — '+d.depositNotes:''),date:new Date().toISOString()});
+    }
     bookings.push({
       id:Date.now()+Math.random(),
       room:String(r.roomNum),
@@ -13544,7 +13626,7 @@ function doConvertGrp(roomNums){
       commissionAmt:commForRoom,
       commissionPct:d.commType==='percent'?d.commVal:0,
       commissionType:d.commType,
-      paid:0, status:'Confirmed', source:'Corporate',
+      paid:0, payments:payments, status:'Confirmed', source:'Corporate',
       notes:`جروب: ${grpId} | مسؤول: ${d.contact}`+(d.deposit>0?` | جدية: ${d.sym}${d.deposit} (${d.depositMethod})`+(d.depositNotes?' — '+d.depositNotes:''):''),
       deposit:d.deposit||0,
       depositMethod:d.depositMethod||'',
@@ -32691,6 +32773,8 @@ async function ownerTxLoad(){
     const data = await DTA_DB.getSetting(OWNER_TX_KEY, null);
     if(Array.isArray(data)){ window._ownerTxList = data; localStorage.setItem(OWNER_TX_KEY, JSON.stringify(data)); }
   }catch(e){}
+  // إعادة رسم الـ dashboard بعد تحميل البيانات async
+  if(typeof renderDashboard==='function') renderDashboard();
 }
 
 async function ownerTxSave(){
