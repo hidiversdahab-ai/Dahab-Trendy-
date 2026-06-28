@@ -16900,6 +16900,22 @@ if(calFinEl){
   const calUnpaidEGP=calRevEGP-calCollectedEGP;
   const calExpEGP=(expenses||[]).reduce((s,e)=>s+e.egp,0);
   const calNetEGP=calCollectedEGP-calExpEGP;
+  // ── تحويلات المالك والعهدات ──
+  const calOwnerTx=(window._ownerTxList||[]).reduce((s,t)=>s+t.amount,0);
+  const calCustList=window._custodyList||[];
+  const calExpFromCustody=calCustList.reduce((s,c)=>{
+    const extra=(c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
+    return s+extra;
+  },0);
+  const calTotalTransferred=calCustList.reduce((s,c)=>{
+    if(c.type==='from_owner'||c.type==='to_owner') return s;
+    const extra=(c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
+    return s+c.amt+extra;
+  },0);
+  const calToOwner=calCustList.filter(c=>c.type==='to_owner').reduce((s,c)=>s+c.amt,0);
+  const calDisplayNet=calNetEGP-calTotalTransferred-calOwnerTx-calToOwner;
+  const calTotalCustAmt=calCustList.reduce((s,c)=>s+c.amt,0);
+  const calCustBalance=Math.max(0,calTotalCustAmt-calExpFromCustody);
   calFinEl.innerHTML=
     mkFin("£"+Math.round(calRevEGP).toLocaleString(),"إجمالي الإيرادات","rgba(201,168,76,0.1)","rgba(201,168,76,0.25)","var(--gold)")+
     (calCommEGP>0?mkFin("−£"+Math.round(calCommEGP).toLocaleString(),"عمولات الشركات","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c")+
@@ -16907,7 +16923,10 @@ if(calFinEl){
     mkFin("£"+Math.round(calCollectedEGP).toLocaleString(),"المحصّل فعلاً","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
     mkFin("£"+Math.round(calUnpaidEGP).toLocaleString(),"المستحق / غير مدفوع","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
     mkFin("£"+Math.round(calExpEGP).toLocaleString(),"المصروفات","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
-    mkFin("£"+Math.round(calNetEGP).toLocaleString(),"صافي الربح","rgba("+(calNetEGP>=0?"39,174,96":"231,76,60")+",0.1)","rgba("+(calNetEGP>=0?"39,174,96":"231,76,60")+",0.25)",calNetEGP>=0?"#27ae60":"#e74c3c");
+    (calOwnerTx>0?mkFin("−£"+Math.round(calOwnerTx).toLocaleString(),"تحويلات للمالك","rgba(230,126,34,0.08)","rgba(230,126,34,0.22)","#e67e22"):"")+
+    (calTotalTransferred>0?mkFin("−£"+Math.round(calTotalTransferred).toLocaleString(),"محوّل للعهدة","rgba(155,89,182,0.08)","rgba(155,89,182,0.22)","#9b59b6"):"")+
+    (calCustBalance>0?mkFin("£"+Math.round(calCustBalance).toLocaleString(),"رصيد العهدة","rgba(52,152,219,0.08)","rgba(52,152,219,0.22)","#3498db"):"")+
+    mkFin("£"+Math.round(calDisplayNet).toLocaleString(),"صافي الربح","rgba("+(calDisplayNet>=0?"39,174,96":"231,76,60")+",0.1)","rgba("+(calDisplayNet>=0?"39,174,96":"231,76,60")+",0.25)",calDisplayNet>=0?"#27ae60":"#e74c3c");
 }
 // Build header row
 let html="<thead><tr><th style='min-width:55px;'>الغرفة</th>";
@@ -26437,6 +26456,32 @@ renderSettings=function(){
 window.addEventListener('load',()=>{
   const cid=getDriveClientId();
   setTimeout(()=>{renderDriveBtn();},300);
+  // ── Auto token refresh كل 50 دقيقة ──
+  setInterval(()=>{
+    const clientId=getDriveClientId();
+    if(!clientId) return;
+    const wasConnected=localStorage.getItem('dta_drive_connected')==='1';
+    if(!wasConnected) return;
+    try{
+      const client=google.accounts.oauth2.initTokenClient({
+        client_id:clientId,
+        scope:DRIVE_SCOPE,
+        prompt:'',
+        callback:(resp)=>{
+          if(resp.error){
+            updateDriveStatus('⚠️ انتهت جلسة Drive — اضغط Connect','#e0c068');
+            gDriveToken=null;
+            renderDriveBtn();
+            return;
+          }
+          gDriveToken=resp.access_token;
+          updateDriveStatus('✅ متصل تلقائياً','#4cda7a');
+          syncToDrive(false);
+        }
+      });
+      client.requestAccessToken();
+    }catch(e){ console.warn('[Drive] token refresh failed:',e); }
+  }, 50*60*1000);
 });
 
 // ═══════════════════════════════════════════════
