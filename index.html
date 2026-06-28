@@ -6441,16 +6441,20 @@ const GROUP_COLORS=[
 // Build name → count map, then assign a color only to names that appear 2+ times
 // Enrich alerts with groupTag from bookings
 alerts.forEach(a=>{ a.groupTag=bookings[a.idx]?.groupTag||""; });
-// Build color map: group by groupTag first, then by name (2+ entries)
+// Build color map: count unique booking indexes per key (not alert count)
+// so CI+CO of same booking don't get counted as "group"
 const nameCnt={};
+const keyIdxSeen={};
 alerts.forEach(a=>{
   const key=a.groupTag?("group:"+a.groupTag.trim().toLowerCase()):("name:"+a.name);
-  nameCnt[key]=(nameCnt[key]||0)+1;
+  if(!keyIdxSeen[key]) keyIdxSeen[key]=new Set();
+  keyIdxSeen[key].add(a.idx);
+  nameCnt[key]=keyIdxSeen[key].size;
 });
 const groupColorMap={};
 let colorIdx=0;
 Object.keys(nameCnt).sort().forEach(k=>{
-  if(nameCnt[k]>=2||k.startsWith("group:")){ groupColorMap[k]=GROUP_COLORS[colorIdx%GROUP_COLORS.length]; colorIdx++; }
+  if(nameCnt[k]>=2){ groupColorMap[k]=GROUP_COLORS[colorIdx%GROUP_COLORS.length]; colorIdx++; }
 });
 // Helper: get color for an alert
 function alertGC(a){
