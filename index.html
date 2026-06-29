@@ -16154,7 +16154,7 @@ function updateDA_BookStatus(idx, status){
   renderDA_Bookings();
   renderDA_Summary();
 
-  // لو تأكيد وعنده رقم واتساب — ابعت له رسالة
+  // ✅ تأكيد — ابعت رسالة مباشرة للضيف
   if(status === "confirmed"){
     const b = bks[idx];
     if(b.phone){
@@ -16173,24 +16173,27 @@ function updateDA_BookStatus(idx, status){
     }
   }
 
-  // لو إلغاء وعنده رقم واتساب — ابعت له إشعار الإلغاء
+  // ❌ إلغاء — ابعت إشعار للريسبشين (مش للضيف)
   if(status === "cancelled"){
     const b = bks[idx];
-    if(b.phone){
-      const msg =
-        `❌ *تم إلغاء حجزك · Booking Cancelled*\n\n` +
-        `${b.emoji||'🌅'} *${b.actNameAr||''} · ${b.actNameEn||''}*\n\n` +
-        `👤 ${b.guest}\n` +
-        `📅 التاريخ · Date: *${b.date}*\n` +
-        `🕐 الوقت · Time: *${b.time}*\n` +
-        `👥 الأشخاص · Persons: *${b.persons}*\n\n` +
-        `نأسف على الإلغاء، يسعدنا خدمتك في وقت آخر 🙏\n` +
-        `We're sorry for the cancellation, we look forward to serving you again.\n\n` +
-        `🏨 *Dahab Trendy Accommodation*\n📞 ${PROP.phone}`;
-      window.open("https://wa.me/"+b.phone.replace(/[^0-9]/g,"")+"?text="+encodeURIComponent(msg),"_blank");
-    } else {
-      sNotify("❌ تم الإلغاء","الضيف ليس لديه رقم واتساب · Guest has no WhatsApp","info",3000);
-    }
+    const receptionPhone = PROP.phone.replace(/[^0-9]/g,"");
+    const guestInfo = b.phone ? `📱 واتساب الضيف · Guest WA: ${b.phone}` : `📱 الضيف ليس لديه واتساب · No guest WA`;
+    const msg =
+      `❌ *طلب إلغاء نشاط · Activity Cancellation Request*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `${b.emoji||'🌅'} *${b.actNameAr||''} · ${b.actNameEn||''}*\n\n` +
+      `👤 *الضيف · Guest:* ${b.guest||'—'}\n` +
+      `🏨 *الغرفة · Room:* ${b.room||'—'}\n` +
+      `📅 *التاريخ · Date:* ${b.date||'—'}\n` +
+      `🕐 *الوقت · Time:* ${b.time||'—'}\n` +
+      `👥 *الأشخاص · Persons:* ${b.persons||1}\n` +
+      (b.price?`💰 *الإجمالي · Total:* £${Number(b.price).toLocaleString()}\n`:'') +
+      `\n${guestInfo}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━━\n` +
+      `⚠️ يرجى التواصل مع الضيف وإبلاغه بتأكيد الإلغاء\n` +
+      `Please contact the guest and confirm the cancellation.`;
+    window.open("https://wa.me/"+receptionPhone+"?text="+encodeURIComponent(msg),"_blank");
+    sNotify("❌ تم الإلغاء","تم إرسال إشعار للريسبشين · Reception notified","info",3000);
   }
 }
 
