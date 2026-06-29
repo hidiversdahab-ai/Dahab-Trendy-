@@ -526,6 +526,7 @@ select option{background:#1a1a2e;color:var(--text)}
 #birthday-popup .bp-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;margin-top:14px;overflow:hidden;}
 #birthday-popup .bp-bar-fill{height:100%;background:linear-gradient(90deg,#f5c518,#ff9800);border-radius:2px;width:100%;}
 @keyframes bp-bounce{from{transform:scale(1) rotate(-8deg);}to{transform:scale(1.2) rotate(8deg);}}
+@keyframes da-bounce{0%{transform:scale(0.5);opacity:0;}60%{transform:scale(1.2);}100%{transform:scale(1);opacity:1;}}
 #bday-badge{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99995;background:linear-gradient(135deg,#2e1f00,#1a1400);border:2px solid #f5c518;border-radius:50px;padding:11px 16px 11px 14px;box-shadow:0 4px 28px rgba(245,197,24,0.55),0 2px 10px rgba(0,0,0,0.7);display:none;align-items:center;gap:9px;cursor:pointer;white-space:nowrap;}
 #bday-badge:active{opacity:0.85;}
 #bday-badge .bb-emoji{font-size:24px;flex-shrink:0;}
@@ -1596,6 +1597,7 @@ label {
     <div class="bn-more-item" onclick="bnGo('guestsreg',null);closeBnMore()"><span class="bm-icon">📋</span><span class="t" data-ar="سجل الضيوف" data-en="Guests Reg.">سجل الضيوف</span></div>
     <div class="bn-more-item" onclick="bnGo('restaurant',null);closeBnMore()"><span class="bm-icon">🍽️</span><span class="t" data-ar="مطعم" data-en="Rest.">مطعم</span></div>
     <div class="bn-more-item" onclick="bnGo('tours',null);closeBnMore()"><span class="bm-icon">🏔️</span><span class="t" data-ar="رحلات" data-en="Tours">رحلات</span></div>
+    <div class="bn-more-item" onclick="bnGo('dailyactivity',null);closeBnMore()" style="border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.07);"><span class="bm-icon" style="color:#1abc9c;">🌅</span><span style="color:#1abc9c;" class="t" data-ar="نشاطات يومية" data-en="Daily Activity">نشاطات يومية</span></div>
     <div class="bn-more-item" onclick="bnGo('events',null);closeBnMore()" style="border-color:rgba(241,196,15,0.4);background:rgba(241,196,15,0.07);"><span class="bm-icon" style="color:#f1c40f;">🎉</span><span style="color:#f1c40f;" class="t" data-ar="أحداث" data-en="Events">أحداث</span></div>
     <div class="bn-more-item" onclick="bnGo('reviews',null);closeBnMore()"><span class="bm-icon">⭐</span><span class="t" data-ar="تقييمات" data-en="Reviews">تقييمات</span></div>
     <div class="bn-more-item" onclick="bnGo('chatbot',null);closeBnMore()" style="border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);"><span class="bm-icon">🤖💬</span><span class="t" data-ar="شات بوت" data-en="Chatbot">شات بوت</span></div>
@@ -4172,34 +4174,163 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 <!-- ═══════ TOURS PAGE ═══════ -->
 <div id="page-tours" class="page">
 <div class="flex" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-  <h2 style="color:var(--gold);font-size:18px;margin:0;">🏔️ <span class="t" data-ar="إدارة الرحلات" data-en="Tours Management">إدارة الرحلات</span></h2>
-  <button class="btn bg bsm" onclick="openTourModal()">+ <span class="t" data-ar="رحلة جديدة" data-en="New Tour">رحلة جديدة</span></button>
-</div>
-<!-- Summary Strip -->
-<div id="tours-summary-strip" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px;"></div>
-<!-- Filter Bar -->
-<div class="card" style="padding:8px 12px;margin-bottom:10px;">
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-    <select id="tour-filter-month" onchange="renderTours()" style="flex:1;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
-      <option value="">📅 كل الشهور</option>
-    </select>
-    <select id="tour-filter-pay" onchange="renderTours()" style="flex:1;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
-      <option value="">💳 كل أنواع الدفع</option>
-      <option value="cash">💵 كاش</option>
-      <option value="room">🏨 على الغرفة</option>
-    </select>
+  <h2 style="color:var(--gold);font-size:18px;margin:0;">🏔️ <span class="t" data-ar="الرحلات والنشاطات" data-en="Tours & Activities">الرحلات والنشاطات</span></h2>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+    <button class="btn bg bsm" id="btn-new-tour-main" onclick="openTourModal()">+ <span class="t" data-ar="رحلة جديدة" data-en="New Tour">رحلة جديدة</span></button>
+    <button class="btn bsm" id="btn-new-act-main" style="display:none;background:rgba(26,188,156,0.2);color:#1abc9c;border:1px solid rgba(26,188,156,0.5);font-weight:700;" onclick="openActivityModal()">+ <span class="t" data-ar="نشاط جديد" data-en="New Activity">نشاط جديد</span></button>
   </div>
-  <button class="btn bsm" onclick="clearTourFilters()" style="width:100%;padding:8px;justify-content:center;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--gold);font-weight:700;font-size:13px;">✕ <span class="t" data-ar="مسح" data-en="Clear">مسح</span></button>
 </div>
-<!-- Tours Table -->
-<div class="card" style="padding:0;overflow:hidden;margin-bottom:80px;">
-  <table style="width:100%;border-collapse:collapse;">
-    <tbody id="tours-tbody">
-      <tr><td colspan="7"><div class="empty">لا توجد رحلات. أضف رحلة جديدة.</div></td></tr>
-    </tbody>
-  </table>
+
+<!-- TABS -->
+<div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--bdr);padding-bottom:10px;">
+  <button id="tours-tab-btn" onclick="switchToursTab('tours')" style="padding:8px 18px;border-radius:10px;border:none;background:var(--gold);color:#1a1a2e;font-weight:800;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;transition:all .2s;">🏔️ <span class="t" data-ar="الرحلات المحجوزة" data-en="Booked Tours">الرحلات المحجوزة</span></button>
+  <button id="activities-tab-btn" onclick="switchToursTab('activities')" style="padding:8px 18px;border-radius:10px;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;border:1.5px solid var(--bdr);transition:all .2s;">🎯 <span class="t" data-ar="نشاطات المكان" data-en="Property Activities">نشاطات المكان</span></button>
+</div>
+
+<!-- TOURS PANEL -->
+<div id="tours-panel">
+  <!-- Summary Strip -->
+  <div id="tours-summary-strip" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px;"></div>
+  <!-- Filter Bar -->
+  <div class="card" style="padding:8px 12px;margin-bottom:10px;">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+      <select id="tour-filter-month" onchange="renderTours()" style="flex:1;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
+        <option value="">📅 كل الشهور · All Months</option>
+      </select>
+      <select id="tour-filter-pay" onchange="renderTours()" style="flex:1;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
+        <option value="">💳 كل أنواع الدفع · All Payment</option>
+        <option value="cash">💵 كاش · Cash</option>
+        <option value="room">🏨 على الغرفة · On Room</option>
+      </select>
+    </div>
+    <button class="btn bsm" onclick="clearTourFilters()" style="width:100%;padding:8px;justify-content:center;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--gold);font-weight:700;font-size:13px;">✕ <span class="t" data-ar="مسح" data-en="Clear">مسح</span></button>
+  </div>
+  <!-- Tours Table -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:80px;">
+    <table style="width:100%;border-collapse:collapse;">
+      <tbody id="tours-tbody">
+        <tr><td colspan="7"><div class="empty">لا توجد رحلات. أضف رحلة جديدة.</div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ACTIVITIES PANEL -->
+<div id="activities-panel" style="display:none;">
+  <!-- Info Banner -->
+  <div style="background:rgba(26,188,156,0.08);border:1px solid rgba(26,188,156,0.25);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1abc9c;display:flex;align-items:center;gap:8px;">
+    <span style="font-size:18px;">💡</span>
+    <span>النشاطات اللي تضيفها هنا <strong>تظهر تلقائياً في صفحة الضيف (QR)</strong> — الضيف يقدر يطلبها مباشرة عبر واتساب<br><span style="font-size:11px;opacity:0.8;">Activities you add here <strong>appear automatically on the Guest QR Page</strong> — guests can book via WhatsApp</span></span>
+  </div>
+  <!-- Activities Grid -->
+  <div id="activities-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:80px;">
+    <div class="empty" style="grid-column:1/-1;">لا توجد نشاطات. أضف نشاطاً جديداً.</div>
+  </div>
+</div>
+
+</div>
+
+<!-- ═══════ ACTIVITY MODAL ═══════ -->
+<div class="ovl" id="activity-modal">
+<div class="mdl" style="max-width:460px;display:flex;flex-direction:column;">
+  <div class="mtitle">🎯 <span id="act-modal-title">إضافة نشاط جديد</span></div>
+
+  <div class="g2">
+    <!-- Emoji picker row -->
+    <div class="fld s2">
+      <label>🎨 أيقونة النشاط · Activity Icon</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;" id="act-emoji-picker">
+        <button type="button" onclick="selectActEmoji('🤿')" class="act-emoji-btn">🤿</button>
+        <button type="button" onclick="selectActEmoji('🐪')" class="act-emoji-btn">🐪</button>
+        <button type="button" onclick="selectActEmoji('🏄')" class="act-emoji-btn">🏄</button>
+        <button type="button" onclick="selectActEmoji('🪂')" class="act-emoji-btn">🪂</button>
+        <button type="button" onclick="selectActEmoji('🚵')" class="act-emoji-btn">🚵</button>
+        <button type="button" onclick="selectActEmoji('🧗')" class="act-emoji-btn">🧗</button>
+        <button type="button" onclick="selectActEmoji('⛵')" class="act-emoji-btn">⛵</button>
+        <button type="button" onclick="selectActEmoji('🌅')" class="act-emoji-btn">🌅</button>
+        <button type="button" onclick="selectActEmoji('🏔️')" class="act-emoji-btn">🏔️</button>
+        <button type="button" onclick="selectActEmoji('🎣')" class="act-emoji-btn">🎣</button>
+        <button type="button" onclick="selectActEmoji('🌊')" class="act-emoji-btn">🌊</button>
+        <button type="button" onclick="selectActEmoji('🦅')" class="act-emoji-btn">🦅</button>
+        <button type="button" onclick="selectActEmoji('🎿')" class="act-emoji-btn">🎿</button>
+        <button type="button" onclick="selectActEmoji('🛖')" class="act-emoji-btn">🛖</button>
+        <button type="button" onclick="selectActEmoji('🍃')" class="act-emoji-btn">🍃</button>
+        <button type="button" onclick="selectActEmoji('🌙')" class="act-emoji-btn">🌙</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="act-emoji-preview" style="font-size:36px;line-height:1;">🎯</span>
+        <input id="act-emoji" type="text" placeholder="أو اكتب إيموجي هنا" maxlength="4" style="width:80px;text-align:center;font-size:18px;" oninput="document.getElementById('act-emoji-preview').textContent=this.value||'🎯'">
+      </div>
+    </div>
+
+    <div class="fld">
+      <label>🏷️ اسم النشاط · Activity Name (AR)</label>
+      <input id="act-name" placeholder="مثال: غطس وسنوركل · e.g. Snorkeling">
+    </div>
+    <div class="fld">
+      <label>🏷️ Activity Name (English)</label>
+      <input id="act-name-en" placeholder="e.g. Snorkeling & Diving">
+    </div>
+
+    <div class="fld">
+      <label>💰 السعر للفرد · Price per Person (EGP)</label>
+      <input id="act-price" type="number" min="0" step="1" value="0" placeholder="0">
+    </div>
+    <div class="fld">
+      <label>⏱️ المدة · Duration</label>
+      <input id="act-duration" placeholder="مثال: 3 ساعات · 3 Hours">
+    </div>
+    <div class="fld s2">
+      <label>📝 وصف · Description (shown to guest)</label>
+      <textarea id="act-desc" rows="2" placeholder="وصف مختصر يظهر للضيف · Short description for guest..."></textarea>
+    </div>
+    <div class="fld">
+      <label>🧭 مسؤول · Guide / Contact</label>
+      <input id="act-guide" placeholder="اسم المرشد · Guide name (optional)">
+    </div>
+    <div class="fld">
+      <label>📞 واتساب مخصص · Custom WhatsApp (optional)</label>
+      <input id="act-whatsapp" type="tel" placeholder="رقم مختلف عن رقم الاستقبال · Different from reception" dir="ltr">
+    </div>
+
+    <!-- Availability Toggle -->
+    <div class="fld s2">
+      <div style="display:flex;align-items:center;gap:12px;background:rgba(26,188,156,0.07);border:1px solid rgba(26,188,156,0.2);border-radius:8px;padding:10px 14px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;">
+          <input type="checkbox" id="act-available" checked style="width:16px;height:16px;accent-color:#1abc9c;">
+          <span>✅ <span class="t" data-ar="النشاط متاح الآن · Available Now" data-en="Activity is Available Now">النشاط متاح الآن · Available Now</span></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--bg2);padding:10px 0 4px;border-top:1px solid var(--bdr);">
+    <button class="btn bg" style="flex:1;padding:14px 10px;font-size:14px;" onclick="saveActivity()">💾 <span class="t" data-ar="حفظ النشاط" data-en="Save Activity">حفظ النشاط</span></button>
+    <button class="btn bb" style="padding:14px 10px;font-size:14px;" onclick="closeM('activity-modal')">إلغاء</button>
+  </div>
+  <button id="act-delete-btn" class="btn" style="display:none;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);width:100%;margin-top:6px;" onclick="deleteActivity()">🗑 <span class="t" data-ar="حذف النشاط" data-en="Delete Activity">حذف النشاط</span></button>
 </div>
 </div>
+
+<style>
+/* Activity emoji picker buttons */
+.act-emoji-btn{width:36px;height:36px;border-radius:8px;border:1.5px solid var(--bdr);background:rgba(255,255,255,0.04);font-size:20px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;padding:0;}
+.act-emoji-btn:hover,.act-emoji-btn.sel{border-color:var(--gold);background:rgba(201,168,76,0.15);transform:scale(1.1);}
+/* Activity cards in management page */
+.act-card-mgmt{background:var(--card);border:1.5px solid var(--bdr);border-radius:14px;padding:16px;text-align:center;position:relative;overflow:hidden;transition:all .2s;}
+.act-card-mgmt::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#1abc9c,#16a085);opacity:0.7;}
+.act-card-mgmt.unavailable{opacity:0.5;border-style:dashed;}
+.act-card-mgmt:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3);border-color:rgba(26,188,156,0.5);}
+.act-card-emoji{font-size:40px;margin-bottom:8px;line-height:1;display:block;}
+.act-card-name{font-size:13px;font-weight:800;color:var(--text);margin-bottom:3px;}
+.act-card-name-en{font-size:10px;color:var(--muted);}
+.act-card-price{font-size:16px;font-weight:800;color:#1abc9c;margin:6px 0;}
+.act-card-duration{font-size:10px;color:var(--muted);margin-bottom:8px;}
+.act-card-btns{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;}
+.act-avail-badge{position:absolute;top:8px;right:8px;font-size:9px;font-weight:700;padding:2px 6px;border-radius:8px;}
+.act-avail-badge.on{background:rgba(26,188,156,0.15);color:#1abc9c;border:1px solid rgba(26,188,156,0.4);}
+.act-avail-badge.off{background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.4);}
+</style>
 
 <!-- ═══════ TOUR MODAL ═══════ -->
 <div class="ovl" id="tour-modal">
@@ -4450,6 +4581,289 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   <button id="em-delete-btn" class="btn" style="display:none;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);width:100%;margin-top:6px;" onclick="deleteEvent()">🗑 <span class="t" data-ar="حذف الحدث" data-en="Delete Event">حذف الحدث</span></button>
 </div>
 </div>
+
+<!-- ═══════ DAILY ACTIVITY PAGE ═══════ -->
+<div id="page-dailyactivity" class="page">
+
+<!-- HEADER -->
+<div class="flex" style="margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+  <h2 style="color:var(--gold);font-size:18px;margin:0;">🌅 <span class="t" data-ar="النشاطات اليومية" data-en="Daily Activities">النشاطات اليومية · Daily Activities</span></h2>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+    <button class="btn bg bsm" onclick="openDA_Modal()">+ <span class="t" data-ar="نشاط جديد" data-en="New Activity">نشاط جديد · New</span></button>
+    <button class="btn bsm" onclick="openDA_Kiosk()" style="background:rgba(26,188,156,0.2);color:#1abc9c;border:1px solid rgba(26,188,156,0.5);font-weight:700;">🖥️ <span class="t" data-ar="وضع العرض" data-en="Kiosk Mode">وضع العرض · Kiosk</span></button>
+  </div>
+</div>
+
+<!-- SUMMARY STRIP -->
+<div id="da-summary-strip" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px;"></div>
+
+<!-- BOOKINGS TABS -->
+<div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--bdr);padding-bottom:10px;">
+  <button id="da-tab-activities" onclick="switchDATab('activities')" style="padding:8px 18px;border-radius:10px;border:none;background:var(--gold);color:#1a1a2e;font-weight:800;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;transition:all .2s;">🌅 <span class="t" data-ar="النشاطات" data-en="Activities">النشاطات · Activities</span></button>
+  <button id="da-tab-bookings" onclick="switchDATab('bookings')" style="padding:8px 18px;border-radius:10px;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;border:1.5px solid var(--bdr);transition:all .2s;">📋 <span class="t" data-ar="الحجوزات" data-en="Bookings">الحجوزات · Bookings</span></button>
+</div>
+
+<!-- ACTIVITIES PANEL -->
+<div id="da-panel-activities">
+  <div id="da-activities-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:80px;">
+    <div class="empty" style="grid-column:1/-1;">لا توجد نشاطات · No Activities. أضف نشاطاً جديداً · Add New Activity</div>
+  </div>
+</div>
+
+<!-- BOOKINGS PANEL -->
+<div id="da-panel-bookings" style="display:none;">
+  <!-- Filter -->
+  <div class="card" style="padding:8px 12px;margin-bottom:10px;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <select id="da-filter-date" onchange="renderDA_Bookings()" style="flex:1;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
+        <option value="">📅 كل التواريخ · All Dates</option>
+      </select>
+      <select id="da-filter-status" onchange="renderDA_Bookings()" style="flex:1;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
+        <option value="">كل الحالات · All Status</option>
+        <option value="pending">🟡 معلق · Pending</option>
+        <option value="confirmed">✅ مؤكد · Confirmed</option>
+        <option value="cancelled">❌ ملغي · Cancelled</option>
+      </select>
+      <button class="btn bsm" onclick="clearDA_Filters()" style="padding:6px 12px;background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--gold);font-weight:700;font-size:12px;">✕ مسح · Clear</button>
+    </div>
+  </div>
+  <div id="da-bookings-list" style="margin-bottom:80px;"></div>
+</div>
+
+</div><!-- end page-dailyactivity -->
+
+<!-- ═══════ DAILY ACTIVITY - ADD/EDIT MODAL ═══════ -->
+<div class="ovl" id="da-modal">
+<div class="mdl" style="max-width:480px;display:flex;flex-direction:column;">
+  <div class="mtitle">🌅 <span id="da-modal-title">إضافة نشاط · Add Activity</span></div>
+  <div class="g2">
+    <!-- Emoji -->
+    <div class="fld s2">
+      <label>🎨 أيقونة · Icon</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;" id="da-emoji-picker">
+        <button type="button" onclick="selectDA_Emoji('🤿')" class="act-emoji-btn">🤿</button>
+        <button type="button" onclick="selectDA_Emoji('🐪')" class="act-emoji-btn">🐪</button>
+        <button type="button" onclick="selectDA_Emoji('🏄')" class="act-emoji-btn">🏄</button>
+        <button type="button" onclick="selectDA_Emoji('🪂')" class="act-emoji-btn">🪂</button>
+        <button type="button" onclick="selectDA_Emoji('🚵')" class="act-emoji-btn">🚵</button>
+        <button type="button" onclick="selectDA_Emoji('🧗')" class="act-emoji-btn">🧗</button>
+        <button type="button" onclick="selectDA_Emoji('⛵')" class="act-emoji-btn">⛵</button>
+        <button type="button" onclick="selectDA_Emoji('🌅')" class="act-emoji-btn">🌅</button>
+        <button type="button" onclick="selectDA_Emoji('🏔️')" class="act-emoji-btn">🏔️</button>
+        <button type="button" onclick="selectDA_Emoji('🎣')" class="act-emoji-btn">🎣</button>
+        <button type="button" onclick="selectDA_Emoji('🌊')" class="act-emoji-btn">🌊</button>
+        <button type="button" onclick="selectDA_Emoji('🦅')" class="act-emoji-btn">🦅</button>
+        <button type="button" onclick="selectDA_Emoji('🐠')" class="act-emoji-btn">🐠</button>
+        <button type="button" onclick="selectDA_Emoji('🏕️')" class="act-emoji-btn">🏕️</button>
+        <button type="button" onclick="selectDA_Emoji('🌙')" class="act-emoji-btn">🌙</button>
+        <button type="button" onclick="selectDA_Emoji('🎿')" class="act-emoji-btn">🎿</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="da-emoji-preview" style="font-size:36px;line-height:1;">🌅</span>
+        <input id="da-emoji" type="text" placeholder="إيموجي · Emoji" maxlength="4" style="width:80px;text-align:center;font-size:18px;" oninput="document.getElementById('da-emoji-preview').textContent=this.value||'🌅'">
+      </div>
+    </div>
+    <!-- Names -->
+    <div class="fld">
+      <label>🏷️ اسم النشاط عربي · Arabic Name</label>
+      <input id="da-name-ar" placeholder="مثال: غطس وسنوركل">
+    </div>
+    <div class="fld">
+      <label>🏷️ Activity Name English</label>
+      <input id="da-name-en" placeholder="e.g. Snorkeling & Diving">
+    </div>
+    <!-- Price -->
+    <div class="fld">
+      <label>💰 السعر للفرد · Price per Person (EGP)</label>
+      <input id="da-price" type="number" min="0" step="1" value="0" placeholder="0">
+    </div>
+    <!-- Duration -->
+    <div class="fld">
+      <label>⏱️ المدة · Duration</label>
+      <input id="da-duration" placeholder="مثال: 3 ساعات · 3 Hours">
+    </div>
+    <!-- Description -->
+    <div class="fld s2">
+      <label>📝 وصف عربي · Arabic Description</label>
+      <textarea id="da-desc-ar" rows="2" placeholder="وصف مختصر للنشاط" style="resize:vertical;"></textarea>
+    </div>
+    <div class="fld s2">
+      <label>📝 English Description</label>
+      <textarea id="da-desc-en" rows="2" placeholder="Short activity description" style="resize:vertical;"></textarea>
+    </div>
+    <!-- Availability -->
+    <div class="fld s2">
+      <label>📊 الحالة · Status</label>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;">
+          <input type="radio" name="da-avail" id="da-avail-yes" value="available" checked style="accent-color:var(--gold);width:16px;height:16px;">
+          <span style="color:#2ecc71;font-weight:700;">✅ متاح · Available</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;">
+          <input type="radio" name="da-avail" id="da-avail-no" value="unavailable" style="accent-color:#e74c3c;width:16px;height:16px;">
+          <span style="color:#e74c3c;font-weight:700;">❌ غير متاح · Unavailable</span>
+        </label>
+      </div>
+    </div>
+    <!-- Times -->
+    <div class="fld s2">
+      <label>🕐 أوقات متاحة · Available Times (افصل بفاصلة · comma separated)</label>
+      <input id="da-times" placeholder="مثال: 8:00 AM, 10:00 AM, 2:00 PM, 4:00 PM">
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+    <button class="btn bg" style="flex:1;padding:14px;" onclick="saveDA_Activity()">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ · Save</span></button>
+    <button id="da-delete-btn" class="btn" style="display:none;padding:14px 16px;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);" onclick="deleteDA_Activity()">🗑</button>
+    <button class="btn bb" style="padding:14px 20px;" onclick="closeM('da-modal')"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء · Cancel</span></button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════ DAILY ACTIVITY - BOOKING MODAL (Kiosk) ═══════ -->
+<div class="ovl" id="da-book-modal" style="z-index:9500;">
+<div class="mdl" style="max-width:500px;display:flex;flex-direction:column;">
+  <div class="mtitle" id="da-book-title">🌅 احجز النشاط · Book Activity</div>
+  <div class="g2">
+    <div class="fld s2" style="text-align:center;">
+      <div id="da-book-activity-info" style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:12px;padding:16px;"></div>
+    </div>
+    <div class="fld">
+      <label>👤 اسم الضيف · Guest Name</label>
+      <input id="da-book-guest" placeholder="اسمك · Your Name">
+    </div>
+    <div class="fld">
+      <label>🏨 رقم الغرفة · Room Number</label>
+      <input id="da-book-room" type="number" placeholder="رقم الغرفة · Room No.">
+    </div>
+    <div class="fld">
+      <label>📅 التاريخ · Date</label>
+      <input id="da-book-date" type="date">
+    </div>
+    <div class="fld">
+      <label>🕐 الوقت · Time</label>
+      <select id="da-book-time" style="padding:8px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);width:100%;font-family:Arial,sans-serif;font-size:14px;">
+        <option value="">اختر الوقت · Select Time</option>
+      </select>
+    </div>
+    <div class="fld">
+      <label>👥 عدد الأشخاص · Persons</label>
+      <input id="da-book-persons" type="number" min="1" value="1" placeholder="1">
+    </div>
+    <div class="fld s2">
+      <label>📱 واتساب · WhatsApp (اختياري · Optional)</label>
+      <input id="da-book-phone" type="tel" placeholder="+20..." dir="ltr">
+    </div>
+    <div class="fld s2">
+      <label>📝 ملاحظات · Notes</label>
+      <textarea id="da-book-notes" rows="2" placeholder="أي ملاحظات · Any notes" style="resize:vertical;"></textarea>
+    </div>
+    <!-- Payment Method -->
+    <div class="fld s2">
+      <label>💳 طريقة الدفع · Payment Method</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px;">
+        <button id="da-pay-cash" onclick="setDA_PayMethod('Cash')" type="button" style="padding:10px 6px;border-radius:10px;border:2px solid rgba(46,204,113,0.5);background:rgba(46,204,113,0.12);color:#2ecc71;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:.2s;">💵 كاش<br><span style="font-size:10px;font-weight:400;">Cash</span></button>
+        <button id="da-pay-visa" onclick="setDA_PayMethod('Visa')" type="button" style="padding:10px 6px;border-radius:10px;border:2px solid rgba(52,152,219,0.4);background:rgba(52,152,219,0.08);color:#7ab8f5;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:.2s;">💳 فيزا<br><span style="font-size:10px;font-weight:400;">Visa</span></button>
+        <button id="da-pay-room" onclick="setDA_PayMethod('On Room')" type="button" style="padding:10px 6px;border-radius:10px;border:2px solid rgba(201,168,76,0.4);background:rgba(201,168,76,0.08);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:.2s;">🏨 على الغرفة<br><span style="font-size:10px;font-weight:400;">On Room</span></button>
+      </div>
+      <input type="hidden" id="da-book-payment" value="Cash">
+    </div>
+    <!-- Price Preview -->
+    <div class="fld s2">
+      <div id="da-book-price-preview" style="background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:10px;padding:12px;text-align:center;font-size:16px;font-weight:700;color:#2ecc71;display:none;"></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+    <button class="btn bg" style="flex:1;padding:14px;font-size:15px;" onclick="confirmDA_Booking()">✅ <span class="t" data-ar="تأكيد الحجز" data-en="Confirm Booking">تأكيد الحجز · Confirm</span></button>
+    <button class="btn bb" style="padding:14px 20px;" onclick="closeM('da-book-modal')"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء · Cancel</span></button>
+  </div>
+</div>
+</div>
+
+<!-- ═══════ DAILY ACTIVITY - KIOSK OVERLAY ═══════ -->
+<div id="da-kiosk-overlay" style="display:none;position:fixed;inset:0;z-index:9000;background:linear-gradient(135deg,#0a0a1a 0%,#0f1a2e 50%,#0a1a1a 100%);overflow-y:auto;">
+  <!-- Kiosk Header -->
+  <div style="background:rgba(0,0,0,0.4);backdrop-filter:blur(10px);padding:20px 30px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(201,168,76,0.3);position:sticky;top:0;z-index:10;">
+    <div>
+      <div style="color:var(--gold);font-size:22px;font-weight:800;letter-spacing:1px;">🌅 النشاطات اليومية · Daily Activities</div>
+      <div style="color:#7a8fa6;font-size:13px;margin-top:3px;" id="da-kiosk-subtitle">اختر نشاطك المفضل · Choose Your Activity</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="da-kiosk-clock" style="color:var(--gold);font-size:16px;font-weight:700;"></div>
+      <button onclick="closeDA_Kiosk()" style="background:rgba(231,76,60,0.2);color:#e74c3c;border:1px solid rgba(231,76,60,0.4);border-radius:10px;padding:8px 16px;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;font-size:13px;">✕ إغلاق · Close</button>
+    </div>
+  </div>
+  <!-- Kiosk Cards Grid -->
+  <div id="da-kiosk-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;padding:30px;max-width:1400px;margin:0 auto;"></div>
+
+  <!-- Check Booking Status -->
+  <div style="max-width:500px;margin:0 auto 30px;padding:0 30px;">
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.25);border-radius:16px;padding:24px;">
+      <div style="color:var(--gold);font-size:16px;font-weight:700;margin-bottom:6px;text-align:center;">🔍 تحقق من حجزك · Check Your Booking</div>
+      <div style="color:#6a7a8a;font-size:12px;text-align:center;margin-bottom:14px;">أدخل اسمك أو رقم غرفتك · Enter your name or room number</div>
+      <div style="display:flex;gap:8px;">
+        <input id="da-kiosk-check-input" type="text" placeholder="اسمك أو رقم الغرفة · Name or Room"
+          style="flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(201,168,76,0.3);border-radius:10px;padding:12px;color:#f0e6cc;font-size:14px;outline:none;font-family:Arial,sans-serif;"
+          onkeydown="if(event.key==='Enter') checkDA_KioskBooking()">
+        <button onclick="checkDA_KioskBooking()" style="background:var(--gold);color:#1a1a2e;border:none;border-radius:10px;padding:12px 18px;font-weight:800;font-size:14px;cursor:pointer;font-family:Arial,sans-serif;">🔍</button>
+      </div>
+      <div id="da-kiosk-check-result" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <!-- Kiosk Footer -->
+  <div style="text-align:center;padding:20px;color:#4a5a6a;font-size:12px;border-top:1px solid rgba(255,255,255,0.05);">
+    📞 للاستفسار · For Inquiries: <strong style="color:var(--gold);">+20 109 953 1272</strong> &nbsp;·&nbsp; Dahab Trendy Accommodation
+  </div>
+</div>
+
+<!-- ═══════ KIOSK SUCCESS SCREEN ═══════ -->
+<div id="da-kiosk-success" style="display:none;position:fixed;inset:0;z-index:9600;background:rgba(0,0,0,0.85);backdrop-filter:blur(20px);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px;">
+  <div style="font-size:80px;margin-bottom:20px;animation:da-bounce 0.5s ease;">✅</div>
+  <div style="color:#2ecc71;font-size:28px;font-weight:800;margin-bottom:10px;">تم الحجز بنجاح!</div>
+  <div style="color:#2ecc71;font-size:20px;font-weight:700;margin-bottom:20px;">Booking Confirmed!</div>
+  <div id="da-success-details" style="background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:16px;padding:24px;max-width:400px;color:#e0f0e8;font-size:15px;line-height:2;"></div>
+  <div style="margin-top:24px;color:#7a8fa6;font-size:13px;">سيتم إغلاق هذه الشاشة تلقائياً · Screen will close automatically</div>
+  <div id="da-success-countdown" style="color:var(--gold);font-size:24px;font-weight:700;margin-top:10px;"></div>
+</div>
+
+<!-- ═══════ KIOSK CANCEL CONFIRMATION ═══════ -->
+<div id="da-kiosk-cancel-confirm" style="display:none;position:fixed;inset:0;z-index:9700;background:rgba(0,0,0,0.88);backdrop-filter:blur(20px);align-items:center;justify-content:center;padding:30px;">
+  <div style="background:linear-gradient(145deg,#1a0f0f,#2a1010);border:1.5px solid rgba(231,76,60,0.45);border-radius:24px;padding:36px 28px;max-width:420px;width:100%;text-align:center;">
+    <div style="font-size:64px;margin-bottom:16px;">⚠️</div>
+    <div style="color:#e74c3c;font-size:22px;font-weight:800;margin-bottom:8px;">إلغاء الحجز؟</div>
+    <div style="color:#e74c3c;font-size:16px;font-weight:700;margin-bottom:20px;">Cancel Booking?</div>
+    <div id="da-cancel-confirm-details" style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.25);border-radius:14px;padding:16px;color:#f0d0d0;font-size:14px;line-height:1.9;margin-bottom:24px;"></div>
+    <div style="color:#9a6a6a;font-size:12px;margin-bottom:20px;line-height:1.7;">
+      هل أنت متأكد من إلغاء هذا الحجز؟ لا يمكن التراجع عن هذا الإجراء.<br>
+      <span style="color:#7a5a5a;">Are you sure you want to cancel? This action cannot be undone.</span>
+    </div>
+    <div style="display:flex;gap:12px;">
+      <button id="da-cancel-confirm-btn" style="
+        flex:1;padding:15px;background:rgba(231,76,60,0.2);color:#e74c3c;
+        border:1.5px solid rgba(231,76,60,0.5);border-radius:12px;
+        font-size:15px;font-weight:800;cursor:pointer;font-family:Arial,sans-serif;">
+        ❌ نعم، إلغاء · Yes, Cancel
+      </button>
+      <button onclick="closeDA_CancelConfirm()" style="
+        flex:1;padding:15px;background:rgba(46,204,113,0.15);color:#2ecc71;
+        border:1.5px solid rgba(46,204,113,0.4);border-radius:12px;
+        font-size:15px;font-weight:800;cursor:pointer;font-family:Arial,sans-serif;">
+        ↩️ لا، رجوع · No, Go Back
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ KIOSK CANCELLED SUCCESS SCREEN ═══════ -->
+<div id="da-kiosk-cancelled" style="display:none;position:fixed;inset:0;z-index:9800;background:rgba(0,0,0,0.9);backdrop-filter:blur(20px);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px;">
+  <div style="font-size:80px;margin-bottom:20px;">❌</div>
+  <div style="color:#e74c3c;font-size:26px;font-weight:800;margin-bottom:8px;">تم إلغاء الحجز</div>
+  <div style="color:#e74c3c;font-size:18px;font-weight:700;margin-bottom:24px;">Booking Has Been Cancelled</div>
+  <div id="da-cancelled-details" style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:16px;padding:24px;max-width:400px;width:100%;color:#f0d0d0;font-size:14px;line-height:2;margin-bottom:20px;"></div>
+  <div style="color:#7a8fa6;font-size:13px;">سيتم إغلاق هذه الشاشة تلقائياً · Screen will close automatically</div>
+  <div id="da-cancelled-countdown" style="color:#e74c3c;font-size:24px;font-weight:700;margin-top:10px;"></div>
+</div>
+
 
 <div id="page-restaurant" class="page">
 
@@ -6004,6 +6418,8 @@ let eurRate    = parseFloat(localStorage.getItem("dta_eur_rate")||"55"); // 1 EU
 let usdEurRate = parseFloat(localStorage.getItem("dta_usd_eur")||"0.93"); // 1 USD = EUR
 let bkEdit=null, rmEdit=null, exEdit=null, restEdit=null, tourEdit=null, eventEdit=null;
 let tours = LS("dta_tours",[]);
+let activities = LS("dta_activities",[]);
+let actEdit = null;
 let events = LS("dta_events",[]);
 let restFilter="all";
 let restaurantTx=LS("dta_rest",[]);
@@ -6194,7 +6610,7 @@ document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
 document.querySelectorAll(".nb").forEach(b=>b.classList.remove("act"));
 document.getElementById("page-"+id).classList.add("on");
 if(btn) btn.classList.add("act");
-const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,events:renderEvents,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage,statusboard:renderStatusBoard,chatbot:cb_renderPage};
+const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,events:renderEvents,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage,statusboard:renderStatusBoard,chatbot:cb_renderPage,dailyactivity:renderDailyActivity};
 if(map[id]) map[id]();
 if(id==="invoice"){renderInvRooms();buildPreview();}
 }
@@ -15332,35 +15748,36 @@ function renderTours(){
   const cashRevenue  = tours.filter(t=>t.payMethod==="cash").reduce((s,t)=>s+(t.price||0),0);
   const roomRevenue  = tours.filter(t=>t.payMethod==="room").reduce((s,t)=>s+(t.price||0),0);
   const strip = document.getElementById("tours-summary-strip");
+  const ar = currentLang === 'ar';
   if(strip) strip.innerHTML = `
     <div class="card" style="text-align:center;padding:10px;">
       <div style="font-size:20px;font-weight:700;color:var(--gold);">${tours.length}</div>
-      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">إجمالي الرحلات</div>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">${ar?'إجمالي الرحلات':'Total Tours'}</div>
     </div>
     <div class="card" style="text-align:center;padding:10px;">
       <div style="font-size:16px;font-weight:700;color:#2ecc71;">£${totalRevenue.toLocaleString()}</div>
-      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">إجمالي الإيرادات</div>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">${ar?'إجمالي الإيرادات':'Total Revenue'}</div>
     </div>
     <div class="card" style="text-align:center;padding:10px;">
       <div style="font-size:16px;font-weight:700;color:#f5c518;">£${cashRevenue.toLocaleString()}</div>
-      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">💵 كاش</div>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">💵 ${ar?'كاش':'Cash'}</div>
     </div>
     <div class="card" style="text-align:center;padding:10px;">
       <div style="font-size:16px;font-weight:700;color:#3498db;">£${roomRevenue.toLocaleString()}</div>
-      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">🏨 على الغرفة</div>
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;">🏨 ${ar?'على الغرفة':'On Room'}</div>
     </div>`;
 
   const tbody = document.getElementById("tours-tbody");
   if(!tbody) return;
   if(!list.length){
-    tbody.innerHTML = "<tr><td colspan='7'><div class='empty'>لا توجد رحلات.</div></td></tr>";
+    tbody.innerHTML = `<tr><td colspan='7'><div class='empty'>${ar?'لا توجد رحلات.':'No tours found.'}</div></td></tr>`;
     return;
   }
   tbody.innerHTML = list.slice().reverse().map((t,ri)=>{
     const idx = tours.indexOf(t);
     const payBadge = t.payMethod==="cash"
-      ? "<span style='background:rgba(245,197,24,0.15);color:#f5c518;border:1px solid rgba(245,197,24,0.3);padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;'>💵 كاش</span>"
-      : "<span style='background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.3);padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;'>🏨 غرفة "+t.room+"</span>";
+      ? `<span style='background:rgba(245,197,24,0.15);color:#f5c518;border:1px solid rgba(245,197,24,0.3);padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;'>💵 ${ar?'كاش':'Cash'}</span>`
+      : `<span style='background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.3);padding:1px 6px;border-radius:10px;font-size:9px;font-weight:700;'>🏨 ${ar?'غرفة':'Room'} ${t.room}</span>`;
     const statusBadge = t.payStatus==="paid"
       ? "<span style='background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;'>✅ Paid</span>"
       : t.payStatus==="partial"
@@ -15381,11 +15798,11 @@ function renderTours(){
           <div style="flex:1;min-width:0;">
             <div style="font-weight:700;font-size:13px;color:var(--gold);">🏔️ ${t.name||"—"}</div>
             <div style="font-size:11px;margin-top:3px;">👤 ${t.guest||"—"}${t.guide?" · 🧭 "+t.guide:""}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px;">📅 ${fmtD(t.date)} · 👥 ${t.persons||1} شخص</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">📅 ${fmtD(t.date)} · 👥 ${t.persons||1} ${ar?'شخص':'person(s)'}</div>
             <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
               ${payBadge} ${statusBadge}
               <span style="font-weight:700;color:#2ecc71;font-size:13px;">£${(t.price||0).toLocaleString()}</span>
-              <span style="font-size:10px;color:var(--muted);">(${ppLabel}/فرد)</span>
+              <span style="font-size:10px;color:var(--muted);">(${ppLabel}/${ar?'فرد':'person'})</span>
             </div>
             ${t.notes?`<div style="font-size:10px;color:var(--muted);margin-top:3px;">📝 ${t.notes}</div>`:""}
           </div>
@@ -15402,6 +15819,661 @@ function clearTourFilters(){
   if(p) p.value="";
   renderTours();
 }
+
+/* ═══════════════════════════════════════════════════
+   DAILY ACTIVITY — Full System
+═══════════════════════════════════════════════════ */
+let da_editIdx = null;
+let da_bookActivityIdx = null;
+let da_kioskClockInterval = null;
+let da_successCountdown = null;
+
+function DA_getActivities(){ return LS("dta_daily_activities",[]); }
+function DA_getBookings(){ return LS("dta_daily_bookings",[]); }
+function DA_saveActivities(arr){ sv("dta_daily_activities", arr); }
+function DA_saveBookings(arr){ sv("dta_daily_bookings", arr); }
+
+function renderDailyActivity(){
+  renderDA_Activities();
+  renderDA_Bookings();
+  renderDA_Summary();
+}
+
+function renderDA_Summary(){
+  const acts = DA_getActivities();
+  const bks  = DA_getBookings();
+  const avail = acts.filter(a=>a.status==="available").length;
+  const unavail = acts.filter(a=>a.status==="unavailable").length;
+  const totalBks = bks.length;
+  const todayBks = bks.filter(b=>b.date===new Date().toISOString().slice(0,10)).length;
+  const strip = document.getElementById("da-summary-strip");
+  if(!strip) return;
+  strip.innerHTML = `
+    <div class="card" style="text-align:center;padding:10px;">
+      <div style="font-size:20px;font-weight:700;color:var(--gold);">${acts.length}</div>
+      <div style="font-size:9px;color:var(--muted);">إجمالي النشاطات · Total Activities</div>
+    </div>
+    <div class="card" style="text-align:center;padding:10px;">
+      <div style="font-size:20px;font-weight:700;color:#2ecc71;">${avail}</div>
+      <div style="font-size:9px;color:var(--muted);">✅ متاح · Available</div>
+    </div>
+    <div class="card" style="text-align:center;padding:10px;">
+      <div style="font-size:20px;font-weight:700;color:#e74c3c;">${unavail}</div>
+      <div style="font-size:9px;color:var(--muted);">❌ غير متاح · Unavailable</div>
+    </div>
+    <div class="card" style="text-align:center;padding:10px;">
+      <div style="font-size:20px;font-weight:700;color:#3498db;">${todayBks}</div>
+      <div style="font-size:9px;color:var(--muted);">📅 حجوزات اليوم · Today</div>
+    </div>`;
+}
+
+function renderDA_Activities(){
+  const acts = DA_getActivities();
+  const grid = document.getElementById("da-activities-grid");
+  if(!grid) return;
+  if(!acts.length){
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1;">لا توجد نشاطات · No Activities. أضف نشاطاً جديداً · Add New Activity</div>';
+    return;
+  }
+  grid.innerHTML = acts.map((a,i)=>{
+    const avail = a.status !== "unavailable";
+    return `<div class="card" style="padding:14px;position:relative;border:1.5px solid ${avail?'rgba(46,204,113,0.3)':'rgba(231,76,60,0.3)'};transition:all .2s;">
+      <div style="position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;background:${avail?'rgba(46,204,113,0.15)':'rgba(231,76,60,0.12)'};color:${avail?'#2ecc71':'#e74c3c'};">
+        ${avail?'✅ متاح · Available':'❌ غير متاح · Unavailable'}
+      </div>
+      <div style="font-size:36px;margin-bottom:8px;">${a.emoji||'🌅'}</div>
+      <div style="font-weight:800;font-size:14px;color:var(--gold);">${a.nameAr||'—'}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">${a.nameEn||'—'}</div>
+      ${a.price?`<div style="font-weight:700;color:#2ecc71;font-size:15px;">£${Number(a.price).toLocaleString()} <span style="font-size:10px;color:var(--muted);">/ فرد · Person</span></div>`:''}
+      ${a.duration?`<div style="font-size:11px;color:var(--muted);margin-top:3px;">⏱️ ${a.duration}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+        <button class="btn bg bsm" onclick="openDA_Modal(${i})" style="flex:1;padding:6px;">✏️ تعديل · Edit</button>
+        <button class="btn bsm" onclick="toggleDA_Avail(${i})" style="flex:1;padding:6px;background:${avail?'rgba(231,76,60,0.12)':'rgba(46,204,113,0.12)'};color:${avail?'#e74c3c':'#2ecc71'};border:1px solid ${avail?'rgba(231,76,60,0.3)':'rgba(46,204,113,0.3)'};">
+          ${avail?'❌ إيقاف · Disable':'✅ تفعيل · Enable'}
+        </button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderDA_Bookings(){
+  const bks = DA_getBookings();
+  const filterDate   = (document.getElementById("da-filter-date")||{value:""}).value;
+  const filterStatus = (document.getElementById("da-filter-status")||{value:""}).value;
+
+  // populate date filter
+  const dateSel = document.getElementById("da-filter-date");
+  if(dateSel){
+    const dates = [...new Set(bks.map(b=>b.date).filter(Boolean))].sort().reverse();
+    const cur = dateSel.value;
+    dateSel.innerHTML = '<option value="">📅 كل التواريخ · All Dates</option>' +
+      dates.map(d=>`<option value="${d}" ${d===cur?"selected":""}>${d}</option>`).join("");
+  }
+
+  let list = bks;
+  if(filterDate)   list = list.filter(b=>b.date===filterDate);
+  if(filterStatus) list = list.filter(b=>b.status===filterStatus);
+
+  const container = document.getElementById("da-bookings-list");
+  if(!container) return;
+  if(!list.length){
+    container.innerHTML = '<div class="empty">لا توجد حجوزات · No Bookings</div>';
+    return;
+  }
+  container.innerHTML = list.slice().reverse().map((b,ri)=>{
+    const idx = bks.indexOf(b);
+    const statusColor = {pending:'#f1c40f',confirmed:'#2ecc71',cancelled:'#e74c3c'}[b.status]||'#f1c40f';
+    const statusLabel = {pending:'🟡 معلق · Pending',confirmed:'✅ مؤكد · Confirmed',cancelled:'❌ ملغي · Cancelled'}[b.status]||'🟡 معلق';
+    return `<div class="card" style="padding:12px;margin-bottom:8px;border-left:3px solid ${statusColor};">
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <div style="font-size:28px;">${b.emoji||'🌅'}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;color:var(--gold);">${b.actNameAr||'—'} · ${b.actNameEn||'—'}</div>
+          <div style="font-size:12px;margin-top:3px;">👤 ${b.guest||'—'} &nbsp;·&nbsp; 🏨 غرفة · Room ${b.room||'—'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">📅 ${b.date||'—'} · 🕐 ${b.time||'—'} · 👥 ${b.persons||1} شخص · Person</div>
+          ${b.notes?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">📝 ${b.notes}</div>`:''}
+          <div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;">
+            <span style="background:rgba(${statusColor==='#2ecc71'?'46,204,113':statusColor==='#f1c40f'?'241,196,15':'231,76,60'},0.15);color:${statusColor};border:1px solid ${statusColor}40;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;">${statusLabel}</span>
+            ${b.price?`<span style="font-weight:700;color:#2ecc71;">£${Number(b.price).toLocaleString()}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+          ${b.status!=='confirmed'?`<button class="btn bsm" onclick="updateDA_BookStatus(${idx},'confirmed')" style="background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);padding:6px 10px;font-size:11px;">✅ تأكيد</button>`:''}
+          ${b.status!=='cancelled'?`<button class="btn bsm" onclick="updateDA_BookStatus(${idx},'cancelled')" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);padding:6px 10px;font-size:11px;">❌ إلغاء</button>`:''}
+          ${b.phone?`<button class="btn bsm" onclick="window.open('https://wa.me/${b.phone.replace(/[^0-9]/g,'')}','_blank')" style="background:#25D366;color:#fff;padding:6px 10px;font-size:11px;">📱</button>`:''}
+          <button class="btn bsm" onclick="deleteDA_Booking(${idx})" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);padding:6px 10px;font-size:11px;">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function switchDATab(tab){
+  const apBtn = document.getElementById("da-tab-activities");
+  const bkBtn = document.getElementById("da-tab-bookings");
+  const apPanel = document.getElementById("da-panel-activities");
+  const bkPanel = document.getElementById("da-panel-bookings");
+  if(!apBtn) return;
+  if(tab==="activities"){
+    apBtn.style.background="var(--gold)"; apBtn.style.color="#1a1a2e";
+    bkBtn.style.background="transparent"; bkBtn.style.color="var(--muted)";
+    apPanel.style.display=""; bkPanel.style.display="none";
+  } else {
+    bkBtn.style.background="var(--gold)"; bkBtn.style.color="#1a1a2e";
+    apBtn.style.background="transparent"; apBtn.style.color="var(--muted)";
+    bkPanel.style.display=""; apPanel.style.display="none";
+    renderDA_Bookings();
+  }
+}
+
+function openDA_Modal(idx){
+  da_editIdx = (idx!==undefined)?idx:null;
+  const acts = DA_getActivities();
+  const a = da_editIdx!==null ? acts[da_editIdx] : null;
+  document.getElementById("da-modal-title").textContent = a ? "تعديل النشاط · Edit Activity" : "إضافة نشاط · Add Activity";
+  document.getElementById("da-emoji").value = a?a.emoji||"🌅":"🌅";
+  document.getElementById("da-emoji-preview").textContent = a?a.emoji||"🌅":"🌅";
+  document.getElementById("da-name-ar").value = a?a.nameAr||"":"";
+  document.getElementById("da-name-en").value = a?a.nameEn||"":"";
+  document.getElementById("da-price").value = a?a.price||0:0;
+  document.getElementById("da-duration").value = a?a.duration||"":"";
+  document.getElementById("da-desc-ar").value = a?a.descAr||"":"";
+  document.getElementById("da-desc-en").value = a?a.descEn||"":"";
+  document.getElementById("da-times").value = a?a.times||"":"";
+  document.querySelector('input[name="da-avail"][value="'+(a&&a.status==="unavailable"?"unavailable":"available")+'"]').checked=true;
+  document.getElementById("da-delete-btn").style.display = a?"":"none";
+  document.getElementById("da-modal").classList.add("on");
+}
+
+function selectDA_Emoji(e){
+  document.getElementById("da-emoji").value=e;
+  document.getElementById("da-emoji-preview").textContent=e;
+}
+
+function saveDA_Activity(){
+  const emoji   = document.getElementById("da-emoji").value.trim()||"🌅";
+  const nameAr  = document.getElementById("da-name-ar").value.trim();
+  const nameEn  = document.getElementById("da-name-en").value.trim();
+  const price   = parseFloat(document.getElementById("da-price").value)||0;
+  const duration= document.getElementById("da-duration").value.trim();
+  const descAr  = document.getElementById("da-desc-ar").value.trim();
+  const descEn  = document.getElementById("da-desc-en").value.trim();
+  const times   = document.getElementById("da-times").value.trim();
+  const status  = document.querySelector('input[name="da-avail"]:checked').value;
+  if(!nameAr||!nameEn){ alert("⚠️ أدخل اسم النشاط بالعربي والإنجليزي · Enter both Arabic and English names"); return; }
+  const acts = DA_getActivities();
+  const obj = {id: da_editIdx!==null?(acts[da_editIdx].id||Date.now()):Date.now(), emoji, nameAr, nameEn, price, duration, descAr, descEn, times, status, updatedAt: new Date().toISOString()};
+  if(da_editIdx!==null) acts[da_editIdx]=obj; else acts.push(obj);
+  DA_saveActivities(acts);
+  closeM("da-modal");
+  renderDailyActivity();
+  sNotify("🌅 تم الحفظ · Saved","","success",2500);
+}
+
+function deleteDA_Activity(){
+  if(!confirm("⚠️ حذف النشاط؟ · Delete Activity?")) return;
+  const acts = DA_getActivities();
+  acts.splice(da_editIdx,1);
+  DA_saveActivities(acts);
+  closeM("da-modal");
+  renderDailyActivity();
+}
+
+function toggleDA_Avail(idx){
+  const acts = DA_getActivities();
+  acts[idx].status = acts[idx].status==="unavailable"?"available":"unavailable";
+  DA_saveActivities(acts);
+  renderDA_Activities();
+  renderDA_Summary();
+}
+
+function clearDA_Filters(){
+  const d=document.getElementById("da-filter-date");
+  const s=document.getElementById("da-filter-status");
+  if(d) d.value=""; if(s) s.value="";
+  renderDA_Bookings();
+}
+
+function updateDA_BookStatus(idx, status){
+  const bks = DA_getBookings();
+  bks[idx].status = status;
+  DA_saveBookings(bks);
+  renderDA_Bookings();
+  renderDA_Summary();
+
+  // لو تأكيد وعنده رقم واتساب — ابعت له رسالة
+  if(status === "confirmed"){
+    const b = bks[idx];
+    if(b.phone){
+      const msg =
+        `✅ *تم تأكيد حجزك · Booking Confirmed!*\n\n` +
+        `${b.emoji||'🌅'} *${b.actNameAr||''} · ${b.actNameEn||''}*\n\n` +
+        `👤 ${b.guest}\n` +
+        `📅 التاريخ · Date: *${b.date}*\n` +
+        `🕐 الوقت · Time: *${b.time}*\n` +
+        `👥 الأشخاص · Persons: *${b.persons}*\n` +
+        (b.price?`💰 الإجمالي · Total: *£${Number(b.price).toLocaleString()}*\n`:'') +
+        `\n🏨 *Dahab Trendy Accommodation*\n📞 ${PROP.phone}`;
+      window.open("https://wa.me/"+b.phone.replace(/[^0-9]/g,"")+"?text="+encodeURIComponent(msg),"_blank");
+    } else {
+      sNotify("✅ تم التأكيد","الضيف ليس لديه رقم واتساب · Guest has no WhatsApp","info",3000);
+    }
+  }
+}
+
+function deleteDA_Booking(idx){
+  if(!confirm("⚠️ حذف الحجز؟ · Delete Booking?")) return;
+  const bks = DA_getBookings();
+  bks.splice(idx,1);
+  DA_saveBookings(bks);
+  renderDA_Bookings();
+  renderDA_Summary();
+}
+
+/* ── KIOSK MODE ── */
+function openDA_Kiosk(){
+  const overlay = document.getElementById("da-kiosk-overlay");
+  if(!overlay) return;
+  overlay.style.display="block";
+  document.body.style.overflow="hidden";
+  renderDA_KioskGrid();
+  // Clock
+  function updateClock(){
+    const el = document.getElementById("da-kiosk-clock");
+    const now = new Date();
+    if(el) el.textContent = now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:false})+" · "+now.toLocaleDateString("en-GB");
+  }
+  updateClock();
+  da_kioskClockInterval = setInterval(updateClock, 1000);
+}
+
+function closeDA_Kiosk(){
+  const overlay = document.getElementById("da-kiosk-overlay");
+  if(overlay) overlay.style.display="none";
+  document.body.style.overflow="";
+  if(da_kioskClockInterval) clearInterval(da_kioskClockInterval);
+}
+
+function renderDA_KioskGrid(){
+  const acts = DA_getActivities();
+  const grid = document.getElementById("da-kiosk-grid");
+  if(!grid) return;
+  if(!acts.length){
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#4a5a6a;padding:60px;font-size:18px;">لا توجد نشاطات متاحة حالياً · No Activities Available</div>';
+    return;
+  }
+  grid.innerHTML = acts.map((a,i)=>{
+    const avail = a.status !== "unavailable";
+    return `<div onclick="${avail?`openDA_KioskBook(${i})`:'void(0)'}" style="
+      background:linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
+      border:1.5px solid ${avail?'rgba(201,168,76,0.4)':'rgba(100,100,100,0.3)'};
+      border-radius:20px;padding:28px 22px;text-align:center;
+      cursor:${avail?'pointer':'default'};transition:all .25s;
+      opacity:${avail?1:0.5};
+      ${avail?'box-shadow:0 4px 20px rgba(201,168,76,0.1);':''}"
+      ${avail?`onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 30px rgba(201,168,76,0.2)';" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(201,168,76,0.1)';"`:''}
+    >
+      <div style="font-size:56px;margin-bottom:14px;">${a.emoji||'🌅'}</div>
+      <div style="font-size:20px;font-weight:800;color:${avail?'var(--gold)':'#666'};margin-bottom:4px;">${a.nameAr||'—'}</div>
+      <div style="font-size:14px;color:${avail?'#7ab8f5':'#555'};margin-bottom:12px;">${a.nameEn||'—'}</div>
+      ${a.descAr?`<div style="font-size:12px;color:#6a7a8a;margin-bottom:8px;line-height:1.5;">${a.descAr}</div>`:''}
+      ${a.price?`<div style="font-size:22px;font-weight:800;color:#2ecc71;margin-bottom:8px;">£${Number(a.price).toLocaleString()} <span style="font-size:12px;color:#7a8fa6;">/ فرد · Person</span></div>`:''}
+      ${a.duration?`<div style="font-size:12px;color:#7a8fa6;margin-bottom:12px;">⏱️ ${a.duration}</div>`:''}
+      <div style="margin-top:8px;padding:10px 20px;border-radius:12px;font-weight:700;font-size:14px;
+        background:${avail?'var(--gold)':'rgba(100,100,100,0.2)'};
+        color:${avail?'#1a1a2e':'#555'};">
+        ${avail?'✅ احجز الآن · Book Now':'❌ غير متاح · Unavailable'}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function openDA_KioskBook(idx){
+  da_bookActivityIdx = idx;
+  const acts = DA_getActivities();
+  const a = acts[idx];
+  if(!a) return;
+  // Fill activity info
+  document.getElementById("da-book-title").textContent = `${a.emoji||'🌅'} ${a.nameAr||''} · ${a.nameEn||''}`;
+  document.getElementById("da-book-activity-info").innerHTML = `
+    <div style="font-size:32px;">${a.emoji||'🌅'}</div>
+    <div style="font-size:16px;font-weight:800;color:var(--gold);">${a.nameAr||''}</div>
+    <div style="font-size:13px;color:#7ab8f5;">${a.nameEn||''}</div>
+    ${a.price?`<div style="font-size:18px;font-weight:700;color:#2ecc71;margin-top:6px;">£${Number(a.price).toLocaleString()} / فرد · Person</div>`:''}
+    ${a.duration?`<div style="font-size:12px;color:#7a8fa6;margin-top:4px;">⏱️ ${a.duration}</div>`:''}`;
+  // Fill times
+  const timeSel = document.getElementById("da-book-time");
+  const times = (a.times||"").split(",").map(t=>t.trim()).filter(Boolean);
+  timeSel.innerHTML = '<option value="">اختر الوقت · Select Time</option>' +
+    times.map(t=>`<option value="${t}">${t}</option>`).join("");
+  // Set today as default
+  document.getElementById("da-book-date").value = new Date().toISOString().slice(0,10);
+  document.getElementById("da-book-guest").value = "";
+  document.getElementById("da-book-room").value = "";
+  document.getElementById("da-book-persons").value = "1";
+  document.getElementById("da-book-phone").value = "";
+  document.getElementById("da-book-notes").value = "";
+  // Reset payment method
+  setDA_PayMethod('Cash');
+  // Price preview update
+  const priceEl = document.getElementById("da-book-price-preview");
+  const updatePrice = ()=>{
+    const p = Number(a.price)||0;
+    const n = parseInt(document.getElementById("da-book-persons").value)||1;
+    if(p>0){ priceEl.style.display=""; priceEl.textContent=`💰 الإجمالي · Total: £${(p*n).toLocaleString()}`; }
+    else priceEl.style.display="none";
+  };
+  document.getElementById("da-book-persons").oninput = updatePrice;
+  updatePrice();
+  document.getElementById("da-book-modal").classList.add("on");
+}
+
+function setDA_PayMethod(m){
+  document.getElementById('da-book-payment').value = m;
+  const styles = {
+    'Cash':  {id:'da-pay-cash',  border:'rgba(46,204,113,0.8)',  bg:'rgba(46,204,113,0.25)',  color:'#2ecc71'},
+    'Visa':  {id:'da-pay-visa',  border:'rgba(52,152,219,0.8)',  bg:'rgba(52,152,219,0.25)',  color:'#7ab8f5'},
+    'On Room':{id:'da-pay-room', border:'rgba(201,168,76,0.8)',  bg:'rgba(201,168,76,0.25)',  color:'var(--gold)'}
+  };
+  ['Cash','Visa','On Room'].forEach(k=>{
+    const s = styles[k];
+    const el = document.getElementById(s.id);
+    if(!el) return;
+    if(k===m){
+      el.style.borderColor=s.border; el.style.background=s.bg; el.style.color=s.color; el.style.transform='scale(1.04)';
+    } else {
+      const def = {Cash:'rgba(46,204,113,0.5)',Visa:'rgba(52,152,219,0.4)','On Room':'rgba(201,168,76,0.4)'};
+      const defbg = {Cash:'rgba(46,204,113,0.12)',Visa:'rgba(52,152,219,0.08)','On Room':'rgba(201,168,76,0.08)'};
+      const defc = {Cash:'#2ecc71',Visa:'#7ab8f5','On Room':'var(--gold)'};
+      el.style.borderColor=def[k]; el.style.background=defbg[k]; el.style.color=defc[k]; el.style.transform='scale(1)';
+    }
+  });
+}
+
+function confirmDA_Booking(){
+  const acts = DA_getActivities();
+  const a = acts[da_bookActivityIdx];
+  if(!a) return;
+  const guest   = document.getElementById("da-book-guest").value.trim();
+  const room    = document.getElementById("da-book-room").value.trim();
+  const date    = document.getElementById("da-book-date").value;
+  const time    = document.getElementById("da-book-time").value;
+  const persons = parseInt(document.getElementById("da-book-persons").value)||1;
+  const phone   = document.getElementById("da-book-phone").value.trim();
+  const notes   = document.getElementById("da-book-notes").value.trim();
+  const payment = document.getElementById("da-book-payment").value || "Cash";
+  if(!guest){ alert("⚠️ أدخل اسمك · Enter your name"); return; }
+  if(!date) { alert("⚠️ اختر التاريخ · Select date"); return; }
+  if(!time) { alert("⚠️ اختر الوقت · Select time"); return; }
+  const totalPrice = (Number(a.price)||0) * persons;
+  const bk = {
+    id: Date.now(), actId: a.id, emoji: a.emoji, actNameAr: a.nameAr, actNameEn: a.nameEn,
+    guest, room, date, time, persons, phone, notes, payment,
+    price: totalPrice, pricePerPerson: Number(a.price)||0,
+    status: "pending", createdAt: new Date().toISOString()
+  };
+  const bks = DA_getBookings();
+  bks.push(bk);
+  DA_saveBookings(bks);
+  closeM("da-book-modal");
+
+  // ── إضافة على حساب الغرفة (Room Charge) ──────────────────
+  if(payment === "On Room" && room && totalPrice > 0){
+    const ar = currentLang === 'ar';
+    const targetBooking = bookings.find(b =>
+      String(b.room) === String(room) &&
+      (b.status === "Confirmed" || b.status === "Partial" || b.status === "Pending" || b.status === "Paid")
+    );
+    if(targetBooking){
+      if(!targetBooking.roomCharges) targetBooking.roomCharges = [];
+      const chargeDesc = ar
+        ? `🌅 نشاط: ${a.nameAr} · ${persons} شخص`
+        : `🌅 Activity: ${a.nameEn} · ${persons} person(s)`;
+      targetBooking.roomCharges.push({
+        date: date,
+        amount: totalPrice,
+        desc: chargeDesc,
+        id: "da_" + bk.id,
+        status: "pending",
+        source: "dailyactivity"
+      });
+      if(targetBooking.status === "Paid") targetBooking.status = "Partial";
+      else if(targetBooking.status === "Pending" || !targetBooking.status) targetBooking.status = "Partial";
+      sv("dta_bk", bookings);
+      if(typeof sNotify === 'function')
+        sNotify(
+          ar ? "🏨 تمت الإضافة على الغرفة" : "🏨 Added to Room",
+          ar ? `£${totalPrice.toLocaleString()} أضيفت على غرفة ${room}` : `£${totalPrice.toLocaleString()} added to Room ${room}`,
+          "success", 3500
+        );
+    } else {
+      if(typeof sNotify === 'function')
+        sNotify(
+          ar ? "⚠️ تنبيه" : "⚠️ Warning",
+          ar ? `لم يتم إيجاد حجز نشط للغرفة ${room}` : `No active booking found for Room ${room}`,
+          "info", 4000
+        );
+    }
+  }
+  // ──────────────────────────────────────────────────────────
+
+  // Send WhatsApp to reception
+  const msg = `🌅 *حجز نشاط جديد · New Activity Booking*\n\n` +
+    `${a.emoji} *${a.nameAr} · ${a.nameEn}*\n` +
+    `👤 الضيف · Guest: *${guest}*\n` +
+    `🏨 الغرفة · Room: *${room||'—'}*\n` +
+    `📅 التاريخ · Date: *${date}*\n` +
+    `🕐 الوقت · Time: *${time}*\n` +
+    `👥 الأشخاص · Persons: *${persons}*\n` +
+    (totalPrice?`💰 الإجمالي · Total: *£${totalPrice.toLocaleString()}*\n`:'') +
+    `💳 الدفع · Payment: *${payment}*\n` +
+    (notes?`📝 ملاحظات · Notes: ${notes}\n`:'') +
+    (phone?`📱 واتساب · WA: ${phone}\n`:'');
+  window.open("https://wa.me/"+PROP.phone.replace(/[^0-9]/g,"")+"?text="+encodeURIComponent(msg),"_blank");
+
+  // Show success screen
+  showDA_KioskSuccess(a, bk);
+  renderDA_Summary();
+}
+
+function showDA_KioskSuccess(a, bk){
+  const el = document.getElementById("da-kiosk-success");
+  if(!el) return;
+  el.style.display="flex";
+  document.getElementById("da-success-details").innerHTML = `
+    <div>${a.emoji} <strong>${a.nameAr} · ${a.nameEn}</strong></div>
+    <div>👤 ${bk.guest}</div>
+    <div>🏨 غرفة · Room ${bk.room||'—'}</div>
+    <div>📅 ${bk.date} · 🕐 ${bk.time}</div>
+    <div>👥 ${bk.persons} شخص · Person</div>
+    ${bk.price?`<div style="color:#2ecc71;font-size:18px;margin-top:8px;">💰 £${Number(bk.price).toLocaleString()}</div>`:''}`;
+  let count = 8;
+  const cd = document.getElementById("da-success-countdown");
+  if(cd) cd.textContent = count;
+  da_successCountdown = setInterval(()=>{
+    count--;
+    if(cd) cd.textContent = count;
+    if(count<=0){
+      clearInterval(da_successCountdown);
+      el.style.display="none";
+    }
+  },1000);
+}
+function checkDA_KioskBooking(){
+  const query = (document.getElementById("da-kiosk-check-input").value||"").trim().toLowerCase();
+  const result = document.getElementById("da-kiosk-check-result");
+  if(!query){ result.innerHTML=''; return; }
+
+  const bks = DA_getBookings();
+  const found = bks.filter(b=>
+    (b.guest||"").toLowerCase().includes(query) ||
+    (b.room||"").toString() === query
+  ).slice(-5).reverse(); // آخر 5 حجوزات
+
+  if(!found.length){
+    result.innerHTML = `<div style="text-align:center;color:#e74c3c;padding:12px;font-size:13px;">❌ لا يوجد حجز بهذا الاسم أو الغرفة · No booking found</div>`;
+    return;
+  }
+
+  const statusColor = {pending:'#f1c40f', confirmed:'#2ecc71', cancelled:'#e74c3c'};
+  const statusLabel = {
+    pending:  '🟡 قيد المراجعة · Pending Confirmation',
+    confirmed:'✅ تم التأكيد · Confirmed!',
+    cancelled:'❌ ملغي · Cancelled'
+  };
+
+  result.innerHTML = found.map(b=>{
+    const createdDate = b.createdAt ? new Date(b.createdAt).toLocaleString("en-GB",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",hour12:false}) : '—';
+    const totalPrice = b.price || (b.pricePerPerson && b.persons ? b.pricePerPerson * b.persons : 0);
+    return `
+    <div style="background:rgba(255,255,255,0.04);border:1.5px solid ${statusColor[b.status]||'#f1c40f'}50;border-radius:14px;padding:16px;margin-top:10px;overflow:hidden;">
+      <!-- Header: Activity name + status badge -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="font-size:32px;line-height:1;">${b.emoji||'🌅'}</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;color:var(--gold);font-size:15px;line-height:1.3;">${b.actNameAr||''}</div>
+          <div style="font-size:12px;color:#7ab8f5;">${b.actNameEn||''}</div>
+        </div>
+      </div>
+      <!-- Status badge -->
+      <div style="padding:7px 14px;border-radius:10px;display:inline-block;
+        background:${statusColor[b.status]||'#f1c40f'}22;
+        border:1px solid ${statusColor[b.status]||'#f1c40f'}55;
+        color:${statusColor[b.status]||'#f1c40f'};
+        font-weight:800;font-size:13px;margin-bottom:12px;">
+        ${statusLabel[b.status]||'🟡 قيد المراجعة'}
+      </div>
+      <!-- Details grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:12px;">
+        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;">
+          <div style="color:#6a7a8a;font-size:10px;margin-bottom:2px;">👤 الضيف · Guest</div>
+          <div style="color:var(--text);font-weight:700;">${b.guest||'—'}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;">
+          <div style="color:#6a7a8a;font-size:10px;margin-bottom:2px;">🏨 الغرفة · Room</div>
+          <div style="color:var(--gold);font-weight:700;">${b.room||'—'}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;">
+          <div style="color:#6a7a8a;font-size:10px;margin-bottom:2px;">📅 التاريخ · Date</div>
+          <div style="color:var(--text);font-weight:700;">${b.date||'—'}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;">
+          <div style="color:#6a7a8a;font-size:10px;margin-bottom:2px;">🕐 الوقت · Time</div>
+          <div style="color:var(--text);font-weight:700;">${b.time||'—'}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;">
+          <div style="color:#6a7a8a;font-size:10px;margin-bottom:2px;">👥 الأشخاص · Persons</div>
+          <div style="color:var(--text);font-weight:700;">${b.persons||1} ${b.persons>1?'أشخاص':'شخص'}</div>
+        </div>
+        ${totalPrice ? `
+        <div style="background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);border-radius:8px;padding:8px 10px;">
+          <div style="color:#6a7a8a;font-size:10px;margin-bottom:2px;">💰 الإجمالي · Total</div>
+          <div style="color:#2ecc71;font-weight:800;font-size:14px;">£${Number(totalPrice).toLocaleString()}</div>
+        </div>` : '<div></div>'}
+      </div>
+      ${b.phone ? `
+      <div style="margin-top:8px;background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;font-size:12px;">
+        <span style="color:#6a7a8a;font-size:10px;">📱 واتساب · WhatsApp: </span>
+        <span style="color:#25d366;font-weight:700;">${b.phone}</span>
+      </div>` : ''}
+      ${b.notes ? `
+      <div style="margin-top:8px;background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;font-size:12px;">
+        <div style="color:#6a7a8a;font-size:10px;margin-bottom:2px;">📝 ملاحظات · Notes</div>
+        <div style="color:#ccc;">${b.notes}</div>
+      </div>` : ''}
+      <div style="margin-top:10px;font-size:10px;color:#4a5a6a;text-align:right;">
+        🕓 تم الحجز · Booked at: ${createdDate}
+      </div>
+      ${b.status === 'pending' ? `
+      <button onclick="requestDA_Cancel('${b.id}')" style="
+        width:100%;margin-top:14px;padding:13px;
+        background:rgba(231,76,60,0.15);color:#e74c3c;
+        border:1.5px solid rgba(231,76,60,0.4);border-radius:12px;
+        font-size:14px;font-weight:800;cursor:pointer;font-family:Arial,sans-serif;
+        transition:all .2s;"
+        onmouseover="this.style.background='rgba(231,76,60,0.28)'"
+        onmouseout="this.style.background='rgba(231,76,60,0.15)'">
+        ❌ إلغاء هذا الحجز &nbsp;·&nbsp; Cancel This Booking
+      </button>` : ''}
+    </div>`;
+  }).join("");
+}
+
+// ── Kiosk Cancel Booking ──────────────────────────────────────────────────
+let da_pendingCancelId = null;
+
+function requestDA_Cancel(bookingId){
+  const bks = DA_getBookings();
+  const bk = bks.find(b => String(b.id) === String(bookingId));
+  if(!bk) return;
+  da_pendingCancelId = bookingId;
+  // Fill confirmation details
+  document.getElementById('da-cancel-confirm-details').innerHTML =
+    `<div style="font-size:28px;">${bk.emoji||'🌅'}</div>
+     <div style="font-weight:800;color:#e74c3c;margin:6px 0;">${bk.actNameAr||''} · ${bk.actNameEn||''}</div>
+     <div>👤 ${bk.guest||'—'} &nbsp;|&nbsp; 🏨 ${bk.room||'—'}</div>
+     <div>📅 ${bk.date||'—'} &nbsp;·&nbsp; 🕐 ${bk.time||'—'}</div>
+     <div>👥 ${bk.persons||1} ${bk.persons>1?'أشخاص · Persons':'شخص · Person'}</div>`;
+  // Wire confirm button safely
+  const btn = document.getElementById('da-cancel-confirm-btn');
+  btn.onclick = function(){ confirmDA_Cancel(); };
+  // Show overlay
+  const overlay = document.getElementById('da-kiosk-cancel-confirm');
+  overlay.style.display = 'flex';
+}
+
+function closeDA_CancelConfirm(){
+  const overlay = document.getElementById('da-kiosk-cancel-confirm');
+  if(overlay) overlay.style.display = 'none';
+  da_pendingCancelId = null;
+}
+
+function confirmDA_Cancel(){
+  if(!da_pendingCancelId) return;
+  const bks = DA_getBookings();
+  const idx = bks.findIndex(b => String(b.id) === String(da_pendingCancelId));
+  if(idx === -1){ closeDA_CancelConfirm(); return; }
+  const bk = bks[idx];
+  bks[idx].status = 'cancelled';
+  bks[idx].cancelledAt = new Date().toISOString();
+  DA_saveBookings(bks);
+  // Hide confirm overlay
+  closeDA_CancelConfirm();
+  // Clear search result
+  const res = document.getElementById('da-kiosk-check-result');
+  if(res) res.innerHTML = '';
+  const inp = document.getElementById('da-kiosk-check-input');
+  if(inp) inp.value = '';
+  // Show cancelled screen
+  const el = document.getElementById('da-kiosk-cancelled');
+  if(!el) return;
+  document.getElementById('da-cancelled-details').innerHTML =
+    `<div style="font-size:28px;">${bk.emoji||'🌅'}</div>
+     <div style="font-weight:800;color:#f0d0d0;margin:6px 0;">${bk.actNameAr||''} · ${bk.actNameEn||''}</div>
+     <div>👤 ${bk.guest||'—'} &nbsp;|&nbsp; 🏨 ${bk.room||'—'}</div>
+     <div>📅 ${bk.date||'—'} &nbsp;·&nbsp; 🕐 ${bk.time||'—'}</div>
+     <div style="margin-top:8px;color:#9a6a6a;font-size:12px;">تم الإلغاء بنجاح · Successfully Cancelled</div>`;
+  el.style.display = 'flex';
+  // Countdown 6 seconds
+  let count = 6;
+  const cd = document.getElementById('da-cancelled-countdown');
+  if(cd) cd.textContent = count;
+  const timer = setInterval(()=>{
+    count--;
+    if(cd) cd.textContent = count;
+    if(count <= 0){
+      clearInterval(timer);
+      el.style.display = 'none';
+    }
+  }, 1000);
+  // Refresh admin bookings list if visible
+  if(typeof renderDA_Bookings === 'function') renderDA_Bookings();
+  if(typeof renderDA_Summary === 'function') renderDA_Summary();
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+/* ── END DAILY ACTIVITY ── */
+
 
 function openTourModal(edit){
   tourEdit = (edit!==undefined) ? edit : null;
@@ -15810,10 +16882,164 @@ function waTourInvoice(){
   window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
 }
 
+// ═══════════════════════════════════════════════════════════
+// ═══════════ ACTIVITIES (نشاطات المكان) ════════════════════
+// ═══════════════════════════════════════════════════════════
 
-// ═══════════════════════════════════════════════════════════
-// ═══════════ EVENTS ════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════
+function switchToursTab(tab){
+  const toursPanel = document.getElementById("tours-panel");
+  const actPanel   = document.getElementById("activities-panel");
+  const toursBtn   = document.getElementById("tours-tab-btn");
+  const actBtn     = document.getElementById("activities-tab-btn");
+  const newTourBtn = document.getElementById("btn-new-tour-main");
+  const newActBtn  = document.getElementById("btn-new-act-main");
+
+  if(tab==="tours"){
+    if(toursPanel)  toursPanel.style.display="block";
+    if(actPanel)    actPanel.style.display="none";
+    if(toursBtn)    { toursBtn.style.background="var(--gold)"; toursBtn.style.color="#1a1a2e"; }
+    if(actBtn)      { actBtn.style.background="transparent"; actBtn.style.color="var(--muted)"; }
+    if(newTourBtn)  newTourBtn.style.display="";
+    if(newActBtn)   newActBtn.style.display="none";
+    renderTours();
+  } else {
+    if(toursPanel)  toursPanel.style.display="none";
+    if(actPanel)    actPanel.style.display="block";
+    if(toursBtn)    { toursBtn.style.background="transparent"; toursBtn.style.color="var(--muted)"; }
+    if(actBtn)      { actBtn.style.background="rgba(26,188,156,0.15)"; actBtn.style.color="#1abc9c"; actBtn.style.borderColor="rgba(26,188,156,0.5)"; }
+    if(newTourBtn)  newTourBtn.style.display="none";
+    if(newActBtn)   newActBtn.style.display="";
+    renderActivities();
+  }
+}
+
+function renderActivities(){
+  activities = LS("dta_activities",[]);
+  const grid = document.getElementById("activities-grid");
+  if(!grid) return;
+  if(!activities.length){
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:40px;">
+      <div style="font-size:40px;margin-bottom:10px;">🎯</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:6px;">لا توجد نشاطات · No Activities Yet</div>
+      <div style="font-size:12px;color:var(--muted);">أضف نشاطات المكان لتظهر في صفحة الضيف QR<br>Add activities to show them on the Guest QR Page</div>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = activities.map((a,i)=>{
+    const avail = a.available !== false;
+    const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
+    const waNum = (a.whatsapp||qrs.waNum||'201099531272').replace(/\D/g,'');
+    const waMsg = `🎯 Activity Request / طلب نشاط\n${a.name||''}${a.nameEn?' / '+a.nameEn:''}\n\n💰 Price / السعر: ${a.price?'£'+Number(a.price).toLocaleString()+' per person / للفرد':'On request / متغير'}\n${a.duration?'⏱️ Duration / المدة: '+a.duration+'\n':''}${a.desc?'📝 '+a.desc+'\n':''}\nI would like to book this · أرجو التواصل للحجز 🙏`;
+    return `<div class="act-card-mgmt ${avail?'':'unavailable'}">
+      <span class="act-avail-badge ${avail?'on':'off'}">${avail?'✅ متاح · Available':'⛔ غير متاح · Unavailable'}</span>
+      <span class="act-card-emoji">${a.emoji||'🎯'}</span>
+      <div class="act-card-name">${a.name||'—'}</div>
+      ${a.nameEn?`<div class="act-card-name-en">${a.nameEn}</div>`:''}
+      <div class="act-card-price">${a.price?'£'+Number(a.price).toLocaleString()+' / person · للفرد':'On request · السعر متغير'}</div>
+      ${a.duration?`<div class="act-card-duration">⏱️ ${a.duration}</div>`:''}
+      ${a.desc?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.5;">${a.desc}</div>`:''}
+      ${a.guide?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px;">🧭 ${a.guide}</div>`:''}
+      <div class="act-card-btns">
+        <button class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.3);font-size:11px;" onclick="editActivity(${i})">✏️ Edit · تعديل</button>
+        <a href="https://wa.me/${waNum}?text=${encodeURIComponent(waMsg)}" target="_blank" class="btn bsm" style="background:#25D366;color:#fff;font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:3px;">📱 WA</a>
+        <button class="btn bsm" style="background:rgba(${avail?'231,76,60':'26,188,156'},0.15);color:${avail?'#e74c3c':'#1abc9c'};border:1px solid rgba(${avail?'231,76,60':'26,188,156'},0.3);font-size:11px;" onclick="toggleActAvail(${i})">${avail?'⛔ Disable · إيقاف':'✅ Enable · تفعيل'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openActivityModal(editIdx){
+  actEdit = (editIdx !== undefined) ? editIdx : null;
+  activities = LS("dta_activities",[]);
+  const titleEl = document.getElementById("act-modal-title");
+  const delBtn  = document.getElementById("act-delete-btn");
+
+  // Reset emoji selection highlight
+  document.querySelectorAll('.act-emoji-btn').forEach(b=>b.classList.remove('sel'));
+
+  if(actEdit !== null){
+    const a = activities[actEdit];
+    if(titleEl) titleEl.textContent = "تعديل النشاط";
+    if(delBtn)  delBtn.style.display="block";
+    document.getElementById("act-emoji").value     = a.emoji||"🎯";
+    document.getElementById("act-emoji-preview").textContent = a.emoji||"🎯";
+    document.getElementById("act-name").value      = a.name||"";
+    document.getElementById("act-name-en").value   = a.nameEn||"";
+    document.getElementById("act-price").value     = a.price||0;
+    document.getElementById("act-duration").value  = a.duration||"";
+    document.getElementById("act-desc").value      = a.desc||"";
+    document.getElementById("act-guide").value     = a.guide||"";
+    document.getElementById("act-whatsapp").value  = a.whatsapp||"";
+    document.getElementById("act-available").checked = a.available!==false;
+  } else {
+    if(titleEl) titleEl.textContent = "إضافة نشاط جديد";
+    if(delBtn)  delBtn.style.display="none";
+    document.getElementById("act-emoji").value     = "";
+    document.getElementById("act-emoji-preview").textContent = "🎯";
+    document.getElementById("act-name").value      = "";
+    document.getElementById("act-name-en").value   = "";
+    document.getElementById("act-price").value     = 0;
+    document.getElementById("act-duration").value  = "";
+    document.getElementById("act-desc").value      = "";
+    document.getElementById("act-guide").value     = "";
+    document.getElementById("act-whatsapp").value  = "";
+    document.getElementById("act-available").checked = true;
+  }
+  document.getElementById("activity-modal").classList.add("on");
+}
+
+function editActivity(idx){ openActivityModal(idx); }
+
+function selectActEmoji(em){
+  document.getElementById("act-emoji").value = em;
+  document.getElementById("act-emoji-preview").textContent = em;
+  document.querySelectorAll('.act-emoji-btn').forEach(b=>{
+    b.classList.toggle('sel', b.textContent===em);
+  });
+}
+
+function saveActivity(){
+  const emoji    = document.getElementById("act-emoji").value.trim() || "🎯";
+  const name     = document.getElementById("act-name").value.trim();
+  const nameEn   = document.getElementById("act-name-en").value.trim();
+  const price    = parseFloat(document.getElementById("act-price").value)||0;
+  const duration = document.getElementById("act-duration").value.trim();
+  const desc     = document.getElementById("act-desc").value.trim();
+  const guide    = document.getElementById("act-guide").value.trim();
+  const whatsapp = document.getElementById("act-whatsapp").value.trim();
+  const available= document.getElementById("act-available").checked;
+
+  if(!name){ alert("⚠️ أدخل اسم النشاط"); return; }
+
+  activities = LS("dta_activities",[]);
+  const act = { id: actEdit!==null?(activities[actEdit].id||("ACT-"+Date.now())):"ACT-"+Date.now(), emoji, name, nameEn, price, duration, desc, guide, whatsapp, available, updatedAt: toDay() };
+
+  if(actEdit!==null) activities[actEdit]=act; else activities.push(act);
+  sv("dta_activities", activities);
+  closeM("activity-modal");
+  renderActivities();
+  sNotify("🎯 Saved · تم الحفظ","Activity saved — shown on Guest QR Page · النشاط سيظهر في صفحة الضيف","success",3000);
+}
+
+function deleteActivity(){
+  if(actEdit===null) return;
+  activities = LS("dta_activities",[]);
+  if(!confirm("هل تريد حذف هذا النشاط؟ · Delete this activity?")) return;
+  activities.splice(actEdit,1);
+  sv("dta_activities",activities);
+  closeM("activity-modal");
+  renderActivities();
+  sNotify("🗑 Deleted · تم الحذف","Activity deleted · تم حذف النشاط","info",2000);
+}
+
+function toggleActAvail(idx){
+  activities = LS("dta_activities",[]);
+  if(!activities[idx]) return;
+  activities[idx].available = !(activities[idx].available !== false);
+  sv("dta_activities",activities);
+  renderActivities();
+  sNotify("🎯", activities[idx].available ? "Available · متاح الآن ✅" : "Disabled · تم إيقاف النشاط ⛔","info",2000);
+}
 
 const _evTypeMap = {
   party:    {icon:"🎉", labelAr:"حفلة",           labelEn:"Party",            color:"#f39c12"},
@@ -27338,6 +28564,7 @@ async function getAllAppData(){
     dta_rest:rtx.length?rtx:restaurantTx,
     dta_pol:policies,
     dta_tours:tr.length?tr:tours,
+    dta_activities:activities||LS('dta_activities',[]),
     dta_wl:wl.length?wl:(typeof waitlist!=='undefined'?waitlist:[]),
     dta_hk:hkData,
     dta_hk_staff:HK_STAFF,
@@ -27438,7 +28665,7 @@ async function loadFromDrive(fileId, fileName){
     if(d.dta_lang)localStorage.setItem('dta_lang',d.dta_lang);
     LSS('dta_bk',bookings);LSS('dta_ex',expenses);LSS('dta_rs',roomSt);
     LSS('dta_rest',restaurantTx);LSS('dta_pr',prices);LSS('dta_du',duPrices);
-    LSS('dta_pol',policies);LSS('dta_tours',tours);LSS('dta_wl',waitlist);
+    LSS('dta_pol',policies);LSS('dta_tours',tours);LSS('dta_activities',activities);LSS('dta_wl',waitlist);
     LSS('dta_hk',hkData);LSS('dta_hk_staff',HK_STAFF);LSS('dta_rest_menu',restMenu);
     renderDashboard();renderBookings();renderRooms();renderExpenses();renderSettings();
     showToast('✅ تم الاستعادة من '+dateStr+'!');
@@ -27987,7 +29214,7 @@ const DTA_IDB = (function(){
     get('settings','_idb_migrated').then(done=>{
       if(done) return;
       const keysToMigrate = [
-        'dta_bk','dta_ex','dta_rs','dta_rest','dta_tours',
+        'dta_bk','dta_ex','dta_rs','dta_rest','dta_tours','dta_activities',
         'dta_blacklist','dta_reviews','dta_wl','dta_hk',
         'dta_pr','dta_du','dta_pol'
       ];
@@ -29355,6 +30582,7 @@ const DTA_DB = (function(){
       expenses:     'dta_ex',
       restaurantTx: 'dta_rest',
       tours:        'dta_tours',
+      activities:   'dta_activities',
       blacklist:    'dta_blacklist',
       reviews:      'dta_reviews',
       waitlist:     'dta_wl'
@@ -29458,7 +30686,7 @@ if(typeof sv === 'function'){
     // حفظ في IDB بشكل parallel
     const storeMap = {
       'dta_bk':'bookings','dta_ex':'expenses','dta_rest':'restaurantTx',
-      'dta_tours':'tours','dta_blacklist':'blacklist',
+      'dta_tours':'tours','dta_activities':'activities','dta_blacklist':'blacklist',
       'dta_wl':'waitlist','dta_rev':'reviews','dta_reviews':'reviews',
       'dta_bl':'blacklist','dta_hk':'housekeeping'
     };
@@ -31360,6 +32588,20 @@ const DTA_QR = (function(){
       try { return btoa(unescape(encodeURIComponent(JSON.stringify(_menuArr)))); } catch(e){ return ''; }
     })();
 
+    // ── قراءة النشاطات من localStorage ──
+    let _activitiesRaw = [];
+    try {
+      const _als = localStorage.getItem('dta_activities');
+      if(_als) { const _ap = JSON.parse(_als); if(Array.isArray(_ap)) _activitiesRaw = _ap; }
+    } catch(e){}
+    const _activitiesAvail = _activitiesRaw.filter(function(a){ return a.available !== false; });
+    const _actB64 = (function(){
+      try {
+        const _slim = _activitiesAvail.map(function(a){ return {e:a.emoji||'🎯',n:a.name||'',ne:a.nameEn||'',p:a.price||0,d:a.duration||'',ds:a.desc||'',w:a.whatsapp||''}; });
+        return btoa(unescape(encodeURIComponent(JSON.stringify(_slim))));
+      } catch(e){ return ''; }
+    })();
+
     return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -31470,6 +32712,21 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 /* ── FOOTER ── */
 .footer{text-align:center;padding:24px 20px 10px;font-size:11px;color:var(--muted);line-height:2;}
 .footer a{color:var(--muted);text-decoration:none;}
+
+/* ── ACTIVITIES ── */
+.act-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.act-card{background:rgba(26,188,156,0.06);border:1.5px solid rgba(26,188,156,0.2);border-radius:14px;padding:16px 10px 14px;text-align:center;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .18s;}
+.act-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#1abc9c,#16a085);}
+.act-card:active{transform:scale(0.97);}
+.act-card:hover{border-color:rgba(26,188,156,0.5);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.3);}
+.act-emoji{font-size:36px;line-height:1;margin-bottom:2px;}
+.act-name{font-size:13px;font-weight:800;color:var(--text);line-height:1.3;}
+.act-name-en{font-size:10px;color:var(--muted);direction:ltr;display:inline-block;}
+.act-price{font-size:14px;font-weight:800;color:#1abc9c;margin:4px 0;}
+.act-dur{font-size:10px;color:var(--muted);}
+.act-desc{font-size:10px;color:var(--muted);line-height:1.5;margin:3px 0 6px;}
+.act-wa{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:10px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700;margin-top:4px;box-shadow:0 3px 10px rgba(37,211,102,0.2);}
+.act-wa:active{opacity:0.85;}
 </style>
 </head>
 <body>
@@ -31541,6 +32798,16 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
       <span class="svc-ico">🆘</span><span class="svc-ar">طوارئ</span><span class="svc-en">Emergency</span>
     </a>
   </div>
+</div>
+
+<!-- النشاطات والجولات -->
+<div class="sec" id="act-sec" style="display:none;">
+  <div class="sec-title">
+    <span class="ico">🎯</span>
+    <span class="ar">نشاطات وجولات</span>
+    <span class="en">ACTIVITIES & TOURS</span>
+  </div>
+  <div class="act-grid" id="act-grid"></div>
 </div>
 
 <!-- المنيو -->
@@ -31617,6 +32884,37 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
   var RM='${room}', WA='${waNum}';
   var MI=[];
   try{ var b='${_menuB64}'; if(b) MI=JSON.parse(decodeURIComponent(escape(atob(b)))); }catch(e){}
+
+  // ── بناء كروت النشاطات ──
+  (function(){
+    var ACT=[];
+    try{ var ba='${_actB64}'; if(ba) ACT=JSON.parse(decodeURIComponent(escape(atob(ba)))); }catch(e){}
+    var grid=document.getElementById('act-grid');
+    var sec=document.getElementById('act-sec');
+    if(!grid||!ACT.length){ if(sec) sec.style.display='none'; return; }
+    if(sec) sec.style.display='block';
+    var defWA='${waNum}';
+    grid.innerHTML=ACT.map(function(a){
+      var waNum2=(a.w||defWA).replace(/\D/g,'');
+      var waMsg='🎯 Activity Request / طلب نشاط — Room / غرفة ${room}\\n\\n'
+        +(a.n||'')+(a.ne?' / '+a.ne:'')+'\\n'
+        +(a.p?'💰 Price / السعر: £'+a.p+' per person / للفرد\\n':'')
+        +(a.d?'⏱️ Duration / المدة: '+a.d+'\\n':'')
+        +(a.ds?'📝 '+a.ds+'\\n':'')
+        +'\\nI would like to book this · أرجو الحجز 🙏';
+      var priceHtml = a.p
+        ? '<div class="act-price">£'+a.p+' <span style="font-size:10px;font-weight:400;color:var(--muted);">/ person · للفرد</span></div>'
+        : '<div class="act-price" style="color:var(--muted);font-size:11px;">On request · السعر عند الطلب</div>';
+      var durHtml = a.d ? '<div class="act-dur">⏱️ '+a.d+'</div>' : '';
+      var descHtml = a.ds ? '<div class="act-desc">'+a.ds+'</div>' : '';
+      return '<div class="act-card">'
+        +'<span class="act-emoji">'+(a.e||'🎯')+'</span>'
+        +'<div class="act-name">'+(a.n||'')+(a.ne?'<br><span class="act-name-en">'+a.ne+'</span>':'')+'</div>'
+        +priceHtml+durHtml+descHtml
+        +'<a class="act-wa" href="https://wa.me/'+waNum2+'?text='+encodeURIComponent(waMsg)+'" target="_blank">💬 Book Now · احجز الآن</a>'
+        +'</div>';
+    }).join('');
+  })();
   var QS=new Array(MI.length).fill(0);
   var activeCat='all';
   var cats=['all'];
