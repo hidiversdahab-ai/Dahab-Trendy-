@@ -4791,7 +4791,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     </div>
     <div class="fld">
       <label>🏨 <span class="t" data-ar="رقم الغرفة" data-en="Room Number">رقم الغرفة · Room Number</span></label>
-      <input id="da-book-room" type="number" placeholder="رقم الغرفة · Room No.">
+      <select id="da-book-room" onchange="onDA_PickRoom(this.value)" style="padding:8px 10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);width:100%;font-family:Arial,sans-serif;font-size:14px;"><option value="">— اختر الغرفة · Select Room —</option></select>
     </div>
     <div class="fld">
       <label>📅 التاريخ · Date</label>
@@ -16173,27 +16173,24 @@ function updateDA_BookStatus(idx, status){
     }
   }
 
-  // ❌ إلغاء — ابعت إشعار للريسبشين (مش للضيف)
+  // ❌ إلغاء — ابعت رسالة مباشرة للضيف
   if(status === "cancelled"){
     const b = bks[idx];
-    const receptionPhone = PROP.phone.replace(/[^0-9]/g,"");
-    const guestInfo = b.phone ? `📱 واتساب الضيف · Guest WA: ${b.phone}` : `📱 الضيف ليس لديه واتساب · No guest WA`;
-    const msg =
-      `❌ *طلب إلغاء نشاط · Activity Cancellation Request*\n` +
-      `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `${b.emoji||'🌅'} *${b.actNameAr||''} · ${b.actNameEn||''}*\n\n` +
-      `👤 *الضيف · Guest:* ${b.guest||'—'}\n` +
-      `🏨 *الغرفة · Room:* ${b.room||'—'}\n` +
-      `📅 *التاريخ · Date:* ${b.date||'—'}\n` +
-      `🕐 *الوقت · Time:* ${b.time||'—'}\n` +
-      `👥 *الأشخاص · Persons:* ${b.persons||1}\n` +
-      (b.price?`💰 *الإجمالي · Total:* £${Number(b.price).toLocaleString()}\n`:'') +
-      `\n${guestInfo}\n\n` +
-      `━━━━━━━━━━━━━━━━━━━━━\n` +
-      `⚠️ يرجى التواصل مع الضيف وإبلاغه بتأكيد الإلغاء\n` +
-      `Please contact the guest and confirm the cancellation.`;
-    window.open("https://wa.me/"+receptionPhone+"?text="+encodeURIComponent(msg),"_blank");
-    sNotify("❌ تم الإلغاء","تم إرسال إشعار للريسبشين · Reception notified","info",3000);
+    if(b.phone){
+      const msg =
+        `❌ *تم إلغاء حجزك · Booking Cancelled*\n\n` +
+        `${b.emoji||'🌅'} *${b.actNameAr||''} · ${b.actNameEn||''}*\n\n` +
+        `👤 ${b.guest||'—'}\n` +
+        `📅 التاريخ · Date: *${b.date||'—'}*\n` +
+        `🕐 الوقت · Time: *${b.time||'—'}*\n` +
+        `👥 الأشخاص · Persons: *${b.persons||1}*\n\n` +
+        `نأسف على الإلغاء، يسعدنا خدمتك في وقت آخر 🙏\n` +
+        `We\'re sorry for the cancellation, we look forward to serving you again.\n\n` +
+        `🏨 *Dahab Trendy Accommodation*\n📞 ${PROP.phone}`;
+      window.open("https://wa.me/"+b.phone.replace(/[^0-9]/g,"")+"?text="+encodeURIComponent(msg),"_blank");
+    } else {
+      sNotify("❌ تم الإلغاء","الضيف ليس لديه رقم واتساب · Guest has no WhatsApp","info",3000);
+    }
   }
 }
 
@@ -16350,6 +16347,7 @@ function renderDA_Suppliers(){
         <div style="display:flex;flex-direction:column;gap:5px;">
           ${hasPhone?`<button onclick="waDA_SupplierSummary('${encName}','${encPhone}')" style="background:#25D366;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-weight:800;font-size:12px;cursor:pointer;font-family:Arial,sans-serif;">📤 ${ar?'واتساب':'WhatsApp'}</button>`:''}
           <button onclick="openDA_CompanyBooking('${encName}','${encPhone}')" style="background:rgba(52,152,219,0.2);color:#7ab8f5;border:1px solid rgba(52,152,219,0.5);border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;">🏢+ ${ar?'حجز':'Book'}</button>
+          <button onclick="printDA_CompanyInvoice('${encName}')" style="background:rgba(201,168,76,0.2);color:var(--gold);border:1px solid rgba(201,168,76,0.5);border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;">🧾 ${ar?'فاتورة':'Invoice'}</button>
         </div>
       </div>
 
@@ -16481,6 +16479,163 @@ function waDA_SupplierSummary(companyName, companyPhone){
   else { navigator.clipboard&&navigator.clipboard.writeText(msg); sNotify("📋 "+(ar?'تم النسخ':'Copied'), ar?'لا يوجد رقم — تم نسخ الرسالة':'No phone — message copied',"info",3000); }
 }
 
+/* ── فاتورة الشركة (Print / PDF) ── */
+function printDA_CompanyInvoice(companyName){
+  const ar = (typeof currentLang !== 'undefined') ? currentLang === 'ar' : true;
+  const bks   = DA_getBookings();
+  const setts = DA_getSettlements();
+  const prop  = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", phone:"", address:"Dahab, South Sinai, Egypt"};
+  const active = bks.filter(b=>(b.supplierName||"").trim()===companyName && b.status!=='cancelled');
+  const compPhone = (active.find(b=>b.supplierPhone)||{}).supplierPhone||"";
+  const totalCost    = active.reduce((s,b)=>s+(Number(b.costPrice)||0),0);
+  const totalSell    = active.reduce((s,b)=>s+(Number(b.price)||0),0);
+  const totalProfit  = active.reduce((s,b)=>s+(Number(b.profit)||0),0);
+  const compSetts    = setts.filter(s=>s.company===companyName);
+  const totalSettled = compSetts.reduce((s,st)=>s+(Number(st.amount)||0),0);
+  const due          = totalCost - totalSettled;
+  const today        = new Date().toLocaleDateString(ar?'ar-EG':'en-GB',{year:'numeric',month:'long',day:'numeric'});
+  const invNo        = 'SUP-' + Date.now().toString().slice(-6);
+
+  const rowsHTML = active.map((b,i)=>`
+    <tr style="border-bottom:1px solid #e8e0d0;">
+      <td style="padding:8px 6px;text-align:center;color:#666;">${i+1}</td>
+      <td style="padding:8px 6px;">${b.emoji||'🌅'} ${ar?b.actNameAr:b.actNameEn||b.actNameAr||'—'}</td>
+      <td style="padding:8px 6px;">${b.guest||'—'}</td>
+      <td style="padding:8px 6px;text-align:center;">${b.room||'—'}</td>
+      <td style="padding:8px 6px;text-align:center;">${b.date||'—'}</td>
+      <td style="padding:8px 6px;text-align:center;">${b.persons||1}</td>
+      <td style="padding:8px 6px;text-align:left;direction:ltr;">£${Number(b.price||0).toLocaleString()}</td>
+      <td style="padding:8px 6px;text-align:left;direction:ltr;color:#c0392b;">£${Number(b.costPrice||0).toLocaleString()}</td>
+      <td style="padding:8px 6px;text-align:left;direction:ltr;color:#27ae60;">£${Number(b.profit||0).toLocaleString()}</td>
+    </tr>`).join('');
+
+  const settRowsHTML = compSetts.length ? compSetts.map(st=>`
+    <tr style="border-bottom:1px solid #e8e0d0;">
+      <td style="padding:6px 8px;">📅 ${st.date}</td>
+      <td style="padding:6px 8px;color:#27ae60;font-weight:700;">£${Number(st.amount).toLocaleString()}</td>
+      <td style="padding:6px 8px;color:#666;">${st.note||'—'}</td>
+    </tr>`).join('') : `<tr><td colspan="3" style="padding:10px;text-align:center;color:#999;">${ar?'لا توجد تسويات':'No settlements'}</td></tr>`;
+
+  const dir = ar ? 'rtl' : 'ltr';
+  const html = `<!DOCTYPE html><html dir="${dir}" lang="${ar?'ar':'en'}">
+<head><meta charset="UTF-8"><title>${ar?'فاتورة شركة':'Company Invoice'} — ${companyName}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Arial,sans-serif;background:#f5f0e8;color:#2c2c2c;padding:20px;}
+  .page{max-width:800px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.15);}
+  .header{background:linear-gradient(135deg,#1a1a2e,#2c3e50);color:#fff;padding:30px 36px;display:flex;justify-content:space-between;align-items:flex-start;}
+  .hotel-name{font-size:22px;font-weight:800;color:#c9a84c;margin-bottom:4px;}
+  .hotel-sub{font-size:12px;color:#a0aab8;}
+  .inv-title{text-align:${ar?'left':'right'};color:#c9a84c;}
+  .inv-title h2{font-size:20px;font-weight:800;}
+  .inv-title p{font-size:12px;color:#a0aab8;margin-top:3px;}
+  .company-box{background:#f0f4ff;border:2px solid #3498db;border-radius:10px;padding:16px 24px;margin:20px 24px;}
+  .company-box h3{color:#2980b9;font-size:15px;margin-bottom:8px;}
+  .company-box p{font-size:13px;color:#444;margin-bottom:3px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:#2c3e50;color:#c9a84c;padding:10px 6px;text-align:${ar?'right':'left'};}
+  tr:nth-child(even){background:#fafaf8;}
+  .section{padding:0 24px 20px;}
+  .section h4{font-size:13px;font-weight:700;color:#2c3e50;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #c9a84c;}
+  .totals{background:#f8f4ec;border:1px solid #ddd;border-radius:8px;padding:14px 20px;margin:0 24px 20px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .tot-row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;}
+  .tot-row.big{font-size:16px;font-weight:800;padding:8px 0;border-top:2px solid #c9a84c;margin-top:4px;}
+  .due-box{background:${due>0?'#fff3cd':'#d4edda'};border:2px solid ${due>0?'#f1c40f':'#27ae60'};border-radius:10px;padding:14px 20px;margin:0 24px 24px;text-align:center;}
+  .due-box .amount{font-size:28px;font-weight:800;color:${due>0?'#e67e22':'#27ae60'};}
+  .footer{background:#f0f0f0;padding:14px 24px;text-align:center;font-size:11px;color:#888;border-top:1px solid #ddd;}
+  @media print{body{background:#fff;padding:0;} .page{box-shadow:none;border-radius:0;} .no-print{display:none!important;}}
+</style></head>
+<body>
+<div class="no-print" style="text-align:center;margin-bottom:16px;">
+  <button onclick="window.print()" style="background:#c9a84c;color:#fff;border:none;padding:12px 32px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">🖨️ ${ar?'طباعة / PDF':'Print / PDF'}</button>
+  <button onclick="window.close()" style="background:#e74c3c;color:#fff;border:none;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;margin-${ar?'right':'left'}:10px;">✖ ${ar?'إغلاق':'Close'}</button>
+</div>
+<div class="page">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="hotel-name">🏨 ${prop.name}</div>
+      <div class="hotel-sub">${prop.address||'Dahab, South Sinai, Egypt'}</div>
+      ${prop.phone?`<div class="hotel-sub">📞 ${prop.phone}</div>`:''}
+    </div>
+    <div class="inv-title">
+      <h2>🧾 ${ar?'فاتورة شركة':'Supplier Invoice'}</h2>
+      <p>${ar?'رقم':'No.'}: ${invNo}</p>
+      <p>${ar?'التاريخ':'Date'}: ${today}</p>
+    </div>
+  </div>
+
+  <!-- Company Info -->
+  <div class="company-box">
+    <h3>🏢 ${ar?'بيانات الشركة':'Company Details'}</h3>
+    <p><strong>${ar?'الاسم':'Name'}:</strong> ${companyName}</p>
+    ${compPhone?`<p><strong>${ar?'الهاتف':'Phone'}:</strong> ${compPhone}</p>`:''}
+    <p><strong>${ar?'عدد الحجوزات':'Bookings'}:</strong> ${active.length}</p>
+  </div>
+
+  <!-- Bookings Table -->
+  <div class="section">
+    <h4>📋 ${ar?'تفاصيل الحجوزات':'Booking Details'}</h4>
+    <table>
+      <thead><tr>
+        <th style="width:30px;">#</th>
+        <th>${ar?'النشاط':'Activity'}</th>
+        <th>${ar?'الضيف':'Guest'}</th>
+        <th style="text-align:center;">${ar?'الغرفة':'Room'}</th>
+        <th style="text-align:center;">${ar?'التاريخ':'Date'}</th>
+        <th style="text-align:center;">${ar?'أشخاص':'Pax'}</th>
+        <th>${ar?'سعر البيع':'Sell'}</th>
+        <th>${ar?'التكلفة':'Cost'}</th>
+        <th>${ar?'الربح':'Profit'}</th>
+      </tr></thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+  </div>
+
+  <!-- Totals -->
+  <div class="totals">
+    <div>
+      <div class="tot-row"><span>${ar?'إجمالي البيع':'Total Sales'}:</span><span style="color:#c9a84c;font-weight:700;">£${totalSell.toLocaleString()}</span></div>
+      <div class="tot-row"><span>${ar?'إجمالي التكلفة':'Total Cost'}:</span><span style="color:#c0392b;font-weight:700;">£${totalCost.toLocaleString()}</span></div>
+      <div class="tot-row big"><span>${ar?'صافي ربحك':'Net Profit'}:</span><span style="color:#27ae60;">£${totalProfit.toLocaleString()}</span></div>
+    </div>
+    <div>
+      <div class="tot-row"><span>${ar?'إجمالي التكلفة':'Total Cost'}:</span><span style="color:#c0392b;font-weight:700;">£${totalCost.toLocaleString()}</span></div>
+      <div class="tot-row"><span>${ar?'مدفوع':'Paid'}:</span><span style="color:#27ae60;font-weight:700;">£${totalSettled.toLocaleString()}</span></div>
+      <div class="tot-row big"><span>${ar?'المستحق':'Balance Due'}:</span><span style="color:${due>0?'#e67e22':'#27ae60'};">£${due.toLocaleString()}</span></div>
+    </div>
+  </div>
+
+  <!-- Due Box -->
+  <div class="due-box">
+    <div style="font-size:12px;color:#666;margin-bottom:6px;">${ar?'الرصيد المستحق للشركة':'Balance Due to Company'}</div>
+    <div class="amount">${due>0?'£'+due.toLocaleString():(ar?'✅ تم السداد بالكامل':'✅ Fully Settled')}</div>
+  </div>
+
+  <!-- Settlements -->
+  <div class="section">
+    <h4>💳 ${ar?'سجل التسويات':'Settlement History'}</h4>
+    <table>
+      <thead><tr>
+        <th>${ar?'التاريخ':'Date'}</th>
+        <th>${ar?'المبلغ':'Amount'}</th>
+        <th>${ar?'ملاحظة':'Note'}</th>
+      </tr></thead>
+      <tbody>${settRowsHTML}</tbody>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    🏨 ${prop.name} · ${ar?'فاتورة شركة مورد':'Supplier Invoice'} · ${today}
+  </div>
+</div>
+</body></html>`;
+
+  const w = window.open('','_blank','width=900,height=700');
+  if(w){ w.document.write(html); w.document.close(); }
+}
+
 function clearDA_SupFilters(){
   const d = document.getElementById("da-sup-filter-date");
   const s = document.getElementById("da-sup-filter-status");
@@ -16514,6 +16669,7 @@ function openDA_BookModalFull(supplierName, supplierPhone){
   }
   // عبّي dropdown الحجوزات الموجودة
   populateDA_BookingPick();
+  populateDA_RoomPick();
   // إخفي معلومات النشاط
   const infoEl = document.getElementById("da-book-activity-info");
   if(infoEl){ infoEl.style.display="none"; infoEl.innerHTML=""; }
@@ -16529,16 +16685,19 @@ function openDA_BookModalFull(supplierName, supplierPhone){
   document.getElementById("da-book-time").innerHTML = `<option value="">— ${ar?'اختر الوقت':'Select Time'} —</option>`;
   const priceEl = document.getElementById("da-book-price-preview");
   if(priceEl) priceEl.style.display="none";
-  populateDA_SupplierPick();
-  const pick = document.getElementById("da-book-supplier-pick");
-  if(pick && supplierName){
-    for(let i=0;i<pick.options.length;i++){
-      if(pick.options[i].value===supplierName){ pick.value=supplierName; break; }
-    }
-  }
   setDA_PayMethod('Cash');
   da_bookActivityIdx = -1;
   document.getElementById("da-book-modal").classList.add("on");
+  // بعد ما الـ modal يظهر نعبي الشركات
+  setTimeout(()=>{
+    populateDA_SupplierPick();
+    const pick = document.getElementById("da-book-supplier-pick");
+    if(pick && supplierName){
+      for(let i=0;i<pick.options.length;i++){
+        if(pick.options[i].value===supplierName){ pick.value=supplierName; break; }
+      }
+    }
+  }, 80);
 }
 
 /* ── لما يغير النشاط من القائمة ── */
@@ -16580,24 +16739,83 @@ function onDA_ActivityChange(val){
   updatePrice();
 }
 
+/* ── تعبئة dropdown الغرف المشغولة الحالية ── */
+function populateDA_RoomPick(){
+  const sel = document.getElementById("da-book-room");
+  if(!sel) return;
+  const today = new Date().toISOString().slice(0,10);
+
+  // اجمع كل الحجوزات النشطة (مع أو بدون ciConfirmed) لكل غرفة
+  // لو في أكتر من حجز لنفس الغرفة خد الأحدث ci
+  const roomMap = {};
+  (bookings||[]).forEach((b, i)=>{
+    if(
+      ["Confirmed","Partial","Paid","Pending"].includes(b.status) &&
+      !b.coConfirmed &&
+      b.ci && b.co && b.ci <= today && b.co > today &&
+      b.room
+    ){
+      const r = String(b.room);
+      // لو الغرفة موجودة بالفعل، خد الحجز الأحدث (ci أكبر)
+      if(!roomMap[r] || b.ci > roomMap[r].b.ci){
+        roomMap[r] = {b, i};
+      }
+    }
+  });
+
+  // value = "ROOM|IDX" عشان نضمن الحجز الصح
+  const occupied = Object.values(roomMap).sort((a,b)=> String(a.b.room).localeCompare(String(b.b.room), undefined, {numeric:true}));
+  sel.innerHTML = `<option value="">— اختر الغرفة · Select Room —</option>` +
+    occupied.map(({b, i})=>{
+      const name = b.name||b.clientName||"—";
+      return `<option value="${b.room}|${i}">${b.room} · ${name}</option>`;
+    }).join("");
+}
+
+function onDA_PickRoom(val){
+  if(!val) return;
+  const parts = val.split("|");
+  const room = parts[0];
+  const idx  = parseInt(parts[1]);
+  // تحقق من الحجز بالـ index وتأكد إن الغرفة صح
+  let b = (bookings||[])[idx];
+  // لو الـ index غلط (مثلاً بعد حذف حجز) ابحث بالغرفة
+  if(!b || String(b.room) !== String(room)){
+    const today = new Date().toISOString().slice(0,10);
+    const matches = (bookings||[]).filter(bk=>
+      String(bk.room)===String(room) &&
+      ["Confirmed","Partial","Paid","Pending"].includes(bk.status) &&
+      !bk.coConfirmed &&
+      bk.ci && bk.co && bk.ci<=today && bk.co>today
+    );
+    // خد الأحدث
+    b = matches.sort((a,c)=>c.ci.localeCompare(a.ci))[0];
+  }
+  if(!b) return;
+  const guestEl = document.getElementById("da-book-guest");
+  const phoneEl = document.getElementById("da-book-phone");
+  if(guestEl) guestEl.value = b.name||b.clientName||"";
+  if(phoneEl && b.phone) phoneEl.value = b.phone;
+}
+
 /* ── تعبئة dropdown الحجوزات الموجودة ── */
 function populateDA_BookingPick(){
   const ar = currentLang==='ar';
   const sel = document.getElementById("da-book-from-booking");
   if(!sel) return;
   const today = new Date().toISOString().slice(0,10);
-  // الحجوزات النشطة (Confirmed / Partial / Paid / Pending)
+  // الحجوزات النشطة فقط — ci/co (مش checkin/checkout)
   const active = (bookings||[]).filter(b=>
     ["Confirmed","Partial","Paid","Pending"].includes(b.status) &&
-    (!b.checkout || b.checkout >= today)
+    !b.coConfirmed &&
+    b.ci && b.co &&
+    b.ci <= today && b.co > today
   );
   sel.innerHTML = `<option value="">— ${ar?'أو أدخل بياناتك يدوياً':'Or enter manually'} —</option>`
     + active.map((b,i)=>{
       const name = b.name||b.clientName||'—';
       const room = b.room ? (ar?'غرفة ':'Room ')+b.room : '';
-      const ci   = b.checkin  ? b.checkin  : '';
-      const co   = b.checkout ? b.checkout : '';
-      const label = `${name}${room?' · '+room:''}${ci?' | '+ci+' → '+co:''}`;
+      const label = `${name}${room?' · '+room:''} | ${b.ci} \u2192 ${b.co}`;
       return `<option value="${i}">${label}</option>`;
     }).join('');
 }
@@ -16608,7 +16826,9 @@ function onDA_PickBooking(val){
   const today = new Date().toISOString().slice(0,10);
   const active = (bookings||[]).filter(b=>
     ["Confirmed","Partial","Paid","Pending"].includes(b.status) &&
-    (!b.checkout || b.checkout >= today)
+    !b.coConfirmed &&
+    b.ci && b.co &&
+    b.ci <= today && b.co > today
   );
   const b = active[parseInt(val)];
   if(!b) return;
@@ -16751,6 +16971,7 @@ function openDA_KioskBook(idx){
   }
   // عبّي dropdown الحجوزات الموجودة
   populateDA_BookingPick();
+  populateDA_RoomPick();
   const fromBk = document.getElementById("da-book-from-booking");
   if(fromBk) fromBk.value="";
   // Fill activity info
@@ -16773,7 +16994,7 @@ function openDA_KioskBook(idx){
   document.getElementById("da-book-date").value = new Date().toISOString().slice(0,10);
   document.getElementById("da-book-guest").value = "";
   document.getElementById("da-book-room").value = "";
-  document.getElementById("da-book-persons").value = "1";
+  document.getElementById("da-book-room").value = "";
   document.getElementById("da-book-phone").value = "";
   document.getElementById("da-book-notes").value = "";
   document.getElementById("da-book-supplier-name").value = "";
@@ -16839,7 +17060,8 @@ function confirmDA_Booking(){
   const a = acts[da_bookActivityIdx];
   if(!a){ alert(ar?"⚠️ النشاط غير موجود":"⚠️ Activity not found"); return; }
   const guest   = document.getElementById("da-book-guest").value.trim();
-  const room    = document.getElementById("da-book-room").value.trim();
+  const roomEl  = document.getElementById("da-book-room");
+  const room    = (roomEl.value||"").split("|")[0] || "";
   const date    = document.getElementById("da-book-date").value;
   const time    = document.getElementById("da-book-time").value;
   const persons = parseInt(document.getElementById("da-book-persons").value)||1;
@@ -16871,9 +17093,19 @@ function confirmDA_Booking(){
   // ── إضافة على حساب الغرفة (Room Charge) ──────────────────
   if(payment === "On Room" && room && totalPrice > 0){
     const ar = currentLang === 'ar';
-    const targetBooking = bookings.find(b =>
+    const _today = new Date().toISOString().slice(0,10);
+    // ابحث عن الضيف النشط اليوم في الغرفة دي (مش أي حجز قديم)
+    let targetBooking = bookings.find(b =>
       String(b.room) === String(room) &&
-      (b.status === "Confirmed" || b.status === "Partial" || b.status === "Pending" || b.status === "Paid")
+      (b.status === "Confirmed" || b.status === "Partial" || b.status === "Pending" || b.status === "Paid") &&
+      !b.coConfirmed &&
+      b.ci && b.co && b.ci <= _today && b.co > _today
+    );
+    // لو مفيش بالتاريخ (نادر) ارجع للبحث القديم كـ fallback
+    if(!targetBooking) targetBooking = bookings.find(b =>
+      String(b.room) === String(room) &&
+      (b.status === "Confirmed" || b.status === "Partial" || b.status === "Pending" || b.status === "Paid") &&
+      !b.coConfirmed
     );
     if(targetBooking){
       if(!targetBooking.roomCharges) targetBooking.roomCharges = [];
