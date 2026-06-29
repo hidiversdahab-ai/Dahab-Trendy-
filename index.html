@@ -4209,7 +4209,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   <div class="card" style="padding:0;overflow:hidden;margin-bottom:80px;">
     <table style="width:100%;border-collapse:collapse;">
       <tbody id="tours-tbody">
-        <tr><td colspan="7"><div class="empty">لا توجد رحلات. أضف رحلة جديدة.</div></td></tr>
+        <tr><td colspan="7"><div class="empty"><span class="t" data-ar="لا توجد رحلات. أضف رحلة جديدة." data-en="No tours yet. Add a new tour.">لا توجد رحلات. أضف رحلة جديدة. · No tours yet.</span></div></td></tr>
       </tbody>
     </table>
   </div>
@@ -4224,7 +4224,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   </div>
   <!-- Activities Grid -->
   <div id="activities-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:80px;">
-    <div class="empty" style="grid-column:1/-1;">لا توجد نشاطات. أضف نشاطاً جديداً.</div>
+    <div class="empty" style="grid-column:1/-1;"><span class="t" data-ar="لا توجد نشاطات. أضف نشاطاً جديداً." data-en="No activities yet. Add a new one.">لا توجد نشاطات. أضف نشاطاً جديداً. · No activities yet.</span></div>
   </div>
 </div>
 
@@ -4233,7 +4233,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 <!-- ═══════ ACTIVITY MODAL ═══════ -->
 <div class="ovl" id="activity-modal">
 <div class="mdl" style="max-width:460px;display:flex;flex-direction:column;">
-  <div class="mtitle">🎯 <span id="act-modal-title">إضافة نشاط جديد</span></div>
+  <div class="mtitle">🎯 <span id="act-modal-title"><span class="t" data-ar="إضافة نشاط جديد" data-en="Add New Activity">إضافة نشاط جديد · Add New Activity</span></span></div>
 
   <div class="g2">
     <!-- Emoji picker row -->
@@ -4306,7 +4306,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 
   <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--bg2);padding:10px 0 4px;border-top:1px solid var(--bdr);">
     <button class="btn bg" style="flex:1;padding:14px 10px;font-size:14px;" onclick="saveActivity()">💾 <span class="t" data-ar="حفظ النشاط" data-en="Save Activity">حفظ النشاط</span></button>
-    <button class="btn bb" style="padding:14px 10px;font-size:14px;" onclick="closeM('activity-modal')">إلغاء</button>
+    <button class="btn bb" style="padding:14px 10px;font-size:14px;" onclick="closeM('activity-modal')"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء · Cancel</span></button>
   </div>
   <button id="act-delete-btn" class="btn" style="display:none;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);width:100%;margin-top:6px;" onclick="deleteActivity()">🗑 <span class="t" data-ar="حذف النشاط" data-en="Delete Activity">حذف النشاط</span></button>
 </div>
@@ -4339,49 +4339,49 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 
   <div class="g2">
     <div class="fld s2">
-      <label>🏔️ اسم الرحلة / Tour Name</label>
-      <input id="tm-name" placeholder="مثال: رحلة سانت كاترين، سفاري، غطس...">
+      <label>🏔️ <span class="t" data-ar="اسم الرحلة" data-en="Tour Name">اسم الرحلة · Tour Name</span></label>
+      <input id="tm-name" placeholder="مثال: سانت كاترين · e.g. St. Catherine Safari">
     </div>
     <div class="fld">
-      <label>📅 تاريخ الرحلة</label>
+      <label>📅 <span class="t" data-ar="تاريخ الرحلة" data-en="Tour Date">تاريخ الرحلة · Tour Date</span></label>
       <input id="tm-date" type="date">
     </div>
     <div class="fld">
-      <label>👥 عدد الأشخاص</label>
+      <label>👥 <span class="t" data-ar="عدد الأشخاص" data-en="No. of Persons">عدد الأشخاص · No. of Persons</span></label>
       <input id="tm-persons" type="number" min="1" value="1" placeholder="1" oninput="calcTourTotal()">
     </div>
     <div class="fld s2">
-      <label>🧭 مرشد السياحة / Tour Guide</label>
-      <input id="tm-guide" placeholder="اسم المرشد السياحي">
+      <label>🧭 <span class="t" data-ar="مرشد السياحة" data-en="Tour Guide">مرشد السياحة · Tour Guide</span></label>
+      <input id="tm-guide" placeholder="اسم المرشد · Guide Name">
     </div>
     <div class="fld">
-      <label>👤 اسم الضيف</label>
-      <input id="tm-guest" placeholder="اسم الضيف" oninput="tourGuestSearch(this.value)">
+      <label>👤 <span class="t" data-ar="اسم الضيف" data-en="Guest Name">اسم الضيف · Guest Name</span></label>
+      <input id="tm-guest" placeholder="اسم الضيف · Guest Name" oninput="tourGuestSearch(this.value)">
       <div id="tm-guest-suggest" style="display:none;position:absolute;z-index:999;background:var(--card);border:1px solid var(--bdr);border-radius:6px;margin-top:2px;max-height:140px;overflow-y:auto;width:100%;box-shadow:0 4px 12px rgba(0,0,0,0.4);"></div>
     </div>
     <div class="fld">
-      <label>🚪 رقم الغرفة</label>
+      <label>🚪 <span class="t" data-ar="رقم الغرفة" data-en="Room No.">رقم الغرفة · Room No.</span></label>
       <select id="tm-room">
-        <option value="">-- اختر الغرفة (اختياري) --</option>
+        <option value=""><span class="t" data-ar="-- اختر الغرفة (اختياري)" data-en="-- Select Room (optional)">-- اختر الغرفة (اختياري) · Select Room</span></option>
       </select>
     </div>
     <div class="fld">
-      <label>💰 سعر الفرد (EGP)</label>
+      <label>💰 <span class="t" data-ar="سعر الفرد (EGP)" data-en="Price per Person (EGP)">سعر الفرد · Price/Person (EGP)</span></label>
       <input id="tm-price-pp" type="number" min="0" step="0.01" value="0" placeholder="0" oninput="calcTourTotal()">
     </div>
     <div class="fld">
-      <label>💵 الإجمالي (EGP)</label>
+      <label>💵 <span class="t" data-ar="الإجمالي (EGP)" data-en="Total (EGP)">الإجمالي · Total (EGP)</span></label>
       <input id="tm-price" type="number" min="0" step="0.01" value="0" placeholder="0" oninput="calcTourPP()" style="font-weight:700;color:var(--gold);">
     </div>
     <div class="fld">
-      <label>💳 طريقة الدفع</label>
+      <label>💳 <span class="t" data-ar="طريقة الدفع" data-en="Payment Method">طريقة الدفع · Payment Method</span></label>
       <select id="tm-pay-method" onchange="onTourPayChange()">
-        <option value="cash">💵 كاش — فاتورة مستقلة</option>
-        <option value="room">🏨 على الغرفة — يضاف لفاتورة الغرفة</option>
+        <option value="cash">💵 كاش · Cash — فاتورة مستقلة · Separate Invoice</option>
+        <option value="room">🏨 على الغرفة · On Room — يضاف لفاتورة الغرفة · Added to Room Bill</option>
       </select>
     </div>
     <div class="fld">
-      <label>📊 حالة الدفع</label>
+      <label>📊 <span class="t" data-ar="حالة الدفع" data-en="Payment Status">حالة الدفع · Payment Status</span></label>
       <select id="tm-pay-status" onchange="calcTourPaidFields()">
         <option value="pending">🔴 Pending — لم يُدفع</option>
         <option value="partial">🟡 Partial — دفع جزئي</option>
@@ -4389,39 +4389,39 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
       </select>
     </div>
     <div class="fld" id="tm-paid-wrap" style="display:none;">
-      <label>✅ المبلغ المدفوع (EGP)</label>
+      <label>✅ <span class="t" data-ar="المبلغ المدفوع (EGP)" data-en="Amount Paid (EGP)">المبلغ المدفوع · Amount Paid (EGP)</span></label>
       <input id="tm-paid-amount" type="number" min="0" step="0.01" value="0" placeholder="0" oninput="calcTourPaidFields()">
     </div>
     <div class="fld" id="tm-remaining-wrap" style="display:none;">
-      <label>⏳ المتبقي (EGP)</label>
+      <label>⏳ <span class="t" data-ar="المتبقي (EGP)" data-en="Remaining (EGP)">المتبقي · Remaining (EGP)</span></label>
       <input id="tm-remaining" type="number" min="0" readonly style="opacity:0.6;background:rgba(231,76,60,0.07);color:#e74c3c;font-weight:700;">
     </div>
     <div class="fld s2" id="tm-room-charge-info" style="display:none;">
       <div style="background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.3);border-radius:8px;padding:8px 12px;font-size:11px;color:#7ab8f5;">
-        ℹ️ سيتم إضافة هذه الرحلة تلقائياً لفاتورة الغرفة المختارة كـ "Room Charge" وستظهر تفاصيلها في الفاتورة النهائية.
+        ℹ️ <span class="t" data-ar='سيتم إضافة هذه الرحلة تلقائياً لفاتورة الغرفة كـ "Room Charge" وستظهر في الفاتورة النهائية.' data-en='This tour will be added automatically to the selected room bill as a "Room Charge" and will appear on the final invoice.'>سيتم إضافة هذه الرحلة تلقائياً لفاتورة الغرفة · This tour will be added to the room bill automatically.</span>
       </div>
     </div>
     <div class="fld s2">
-      <label>📝 ملاحظات</label>
-      <textarea id="tm-notes" rows="2" placeholder="أي تفاصيل إضافية..."></textarea>
+      <label>📝 <span class="t" data-ar="ملاحظات" data-en="Notes">ملاحظات · Notes</span></label>
+      <textarea id="tm-notes" rows="2" placeholder="ملاحظات · Any additional notes..."></textarea>
     </div>
   </div>
 
   <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--bg2);padding:10px 0 4px;border-top:1px solid var(--bdr);z-index:10;">
-    <button class="btn bg" style="flex:1;padding:14px 10px;font-size:14px;" onclick="saveTour()">💾 حفظ الرحلة</button>
-    <button class="btn bb" style="padding:14px 10px;font-size:14px;" onclick="closeTourModal()">إلغاء</button>
+    <button class="btn bg" style="flex:1;padding:14px 10px;font-size:14px;" onclick="saveTour()">💾 <span class="t" data-ar="حفظ الرحلة" data-en="Save Tour">حفظ الرحلة · Save Tour</span></button>
+    <button class="btn bb" style="padding:14px 10px;font-size:14px;" onclick="closeTourModal()"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء · Cancel</span></button>
   </div>
-  <button id="tm-delete-btn" class="btn" style="display:none;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);width:100%;margin-top:6px;" onclick="deleteTour()">🗑 حذف الرحلة</button>
+  <button id="tm-delete-btn" class="btn" style="display:none;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);width:100%;margin-top:6px;" onclick="deleteTour()">🗑 <span class="t" data-ar="حذف الرحلة" data-en="Delete Tour">حذف الرحلة · Delete Tour</span></button>
 </div>
 </div>
 
 <!-- ═══════ TOUR INVOICE MODAL (كاش) ═══════ -->
 <div class="ovl" id="tour-inv-modal">
 <div class="mdl" style="max-width:480px;display:flex;flex-direction:column;">
-  <div class="mtitle">📄 فاتورة رحلة</div>
+  <div class="mtitle">📄 <span class="t" data-ar="فاتورة رحلة" data-en="Tour Invoice">فاتورة رحلة · Tour Invoice</span></div>
   <div id="tour-inv-preview" class="invp" style="margin-bottom:12px;"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;position:sticky;bottom:0;background:var(--bg2);padding:10px 0 4px;border-top:1px solid var(--bdr);z-index:10;">
-    <button class="btn bg" style="padding:13px 10px;font-size:14px;" onclick="printTourInvoice()">🖨️ طباعة / PDF</button>
+    <button class="btn bg" style="padding:13px 10px;font-size:14px;" onclick="printTourInvoice()">🖨️ <span class="t" data-ar="طباعة / PDF" data-en="Print / PDF">طباعة · Print / PDF</span></button>
     <button class="btn" style="background:#25D366;color:#fff;padding:13px 10px;font-size:14px;" onclick="waTourInvoice()">📱 WhatsApp</button>
     <button class="btn bb" style="grid-column:1/-1;padding:13px 10px;font-size:14px;" onclick="closeM('tour-inv-modal')">إغلاق</button>
   </div>
@@ -4598,9 +4598,10 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 <div id="da-summary-strip" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px;"></div>
 
 <!-- BOOKINGS TABS -->
-<div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--bdr);padding-bottom:10px;">
+<div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--bdr);padding-bottom:10px;flex-wrap:wrap;">
   <button id="da-tab-activities" onclick="switchDATab('activities')" style="padding:8px 18px;border-radius:10px;border:none;background:var(--gold);color:#1a1a2e;font-weight:800;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;transition:all .2s;">🌅 <span class="t" data-ar="النشاطات" data-en="Activities">النشاطات · Activities</span></button>
   <button id="da-tab-bookings" onclick="switchDATab('bookings')" style="padding:8px 18px;border-radius:10px;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;border:1.5px solid var(--bdr);transition:all .2s;">📋 <span class="t" data-ar="الحجوزات" data-en="Bookings">الحجوزات · Bookings</span></button>
+  <button id="da-tab-suppliers" onclick="switchDATab('suppliers')" style="padding:8px 18px;border-radius:10px;border:none;background:transparent;color:var(--muted);font-weight:700;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;border:1.5px solid rgba(52,152,219,0.4);transition:all .2s;">🏢 <span class="t" data-ar="الشركات الخارجية" data-en="External Companies">الشركات الخارجية · External</span></button>
 </div>
 
 <!-- ACTIVITIES PANEL -->
@@ -4628,6 +4629,42 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     </div>
   </div>
   <div id="da-bookings-list" style="margin-bottom:80px;"></div>
+</div>
+
+<!-- SUPPLIERS PANEL -->
+<div id="da-panel-suppliers" style="display:none;margin-bottom:80px;">
+  <!-- Suppliers Summary Strip -->
+  <div id="da-suppliers-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px;"></div>
+  <!-- New Company Booking Button -->
+  <div style="margin-bottom:12px;">
+    <button class="btn bg" onclick="openDA_CompanyBooking()" style="width:100%;padding:13px;font-size:14px;background:linear-gradient(135deg,rgba(52,152,219,0.3),rgba(74,144,217,0.2));border:1.5px solid rgba(52,152,219,0.6);color:#7ab8f5;font-weight:800;border-radius:12px;">
+      🏢 + <span class="t" data-ar="حجز جديد مع شركة" data-en="New Company Booking">حجز جديد مع شركة · New Company Booking</span>
+    </button>
+  </div>
+  <!-- Suppliers Filter -->
+  <div class="card" style="padding:8px 12px;margin-bottom:10px;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <select id="da-sup-filter-date" onchange="renderDA_Suppliers()" style="flex:1;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
+        <option value="">📅 كل التواريخ · All Dates</option>
+      </select>
+      <select id="da-sup-filter-status" onchange="renderDA_Suppliers()" style="flex:1;padding:5px 8px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);font-family:Arial,sans-serif;font-size:12px;">
+        <option value="">كل الحالات · All Status</option>
+        <option value="pending">🟡 معلق · Pending</option>
+        <option value="confirmed">✅ مؤكد · Confirmed</option>
+        <option value="cancelled">❌ ملغي · Cancelled</option>
+      </select>
+      <button class="btn bsm" onclick="clearDA_SupFilters()" style="padding:6px 12px;background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.4);font-weight:700;font-size:12px;">✕ مسح</button>
+    </div>
+  </div>
+  <!-- Suppliers Info Banner -->
+  <div style="background:rgba(52,152,219,0.07);border:1px solid rgba(52,152,219,0.25);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:22px;">🏢</span>
+    <div>
+      <div style="font-size:12px;font-weight:700;color:#7ab8f5;">الشركات الخارجية · External Companies</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px;">الحجوزات المرتبطة بشركات خارجية — يمكنك إرسال تفاصيل الضيف مباشرة للشركة عبر واتساب<br>Bookings with external suppliers — send guest details directly via WhatsApp</div>
+    </div>
+  </div>
+  <div id="da-suppliers-list"></div>
 </div>
 
 </div><!-- end page-dailyactivity -->
@@ -4724,15 +4761,29 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 <div class="mdl" style="max-width:500px;display:flex;flex-direction:column;">
   <div class="mtitle" id="da-book-title">🌅 احجز النشاط · Book Activity</div>
   <div class="g2">
+    <!-- اختيار النشاط -->
+    <div class="fld s2">
+      <label>🌅 <span class="t" data-ar="اختر النشاط" data-en="Select Activity">اختر النشاط · Select Activity</span></label>
+      <select id="da-book-activity-select" onchange="onDA_ActivityChange(this.value)" style="padding:10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid rgba(201,168,76,0.5);width:100%;font-family:Arial,sans-serif;font-size:14px;font-weight:700;">
+        <option value="">— <span class="t" data-ar="اختر نشاطاً" data-en="Select an activity">اختر نشاطاً · Select an activity</span> —</option>
+      </select>
+    </div>
     <div class="fld s2" style="text-align:center;">
-      <div id="da-book-activity-info" style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:12px;padding:16px;"></div>
+      <div id="da-book-activity-info" style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:12px;padding:16px;display:none;"></div>
+    </div>
+    <!-- اختيار حجز موجود -->
+    <div class="fld s2" style="background:rgba(46,204,113,0.07);border:1px solid rgba(46,204,113,0.25);border-radius:12px;padding:12px;">
+      <div style="color:#2ecc71;font-size:12px;font-weight:700;margin-bottom:8px;">🏨 <span class="t" data-ar="اختر من الحجوزات الموجودة" data-en="Pick from existing bookings">اختر من الحجوزات الموجودة · Pick from existing bookings</span> <span style="font-size:10px;font-weight:400;opacity:0.7;">(<span class="t" data-ar="اختياري" data-en="Optional">اختياري · Optional</span>)</span></div>
+      <select id="da-book-from-booking" onchange="onDA_PickBooking(this.value)" style="width:100%;padding:8px 10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid rgba(46,204,113,0.4);font-family:Arial,sans-serif;font-size:13px;box-sizing:border-box;">
+        <option value="">— <span class="t" data-ar="أو أدخل بياناتك يدوياً" data-en="Or enter details manually">أو أدخل بياناتك يدوياً · Or enter manually</span> —</option>
+      </select>
     </div>
     <div class="fld">
-      <label>👤 اسم الضيف · Guest Name</label>
+      <label>👤 <span class="t" data-ar="اسم الضيف" data-en="Guest Name">اسم الضيف · Guest Name</span></label>
       <input id="da-book-guest" placeholder="اسمك · Your Name">
     </div>
     <div class="fld">
-      <label>🏨 رقم الغرفة · Room Number</label>
+      <label>🏨 <span class="t" data-ar="رقم الغرفة" data-en="Room Number">رقم الغرفة · Room Number</span></label>
       <input id="da-book-room" type="number" placeholder="رقم الغرفة · Room No.">
     </div>
     <div class="fld">
@@ -4756,6 +4807,27 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     <div class="fld s2">
       <label>📝 ملاحظات · Notes</label>
       <textarea id="da-book-notes" rows="2" placeholder="أي ملاحظات · Any notes" style="resize:vertical;"></textarea>
+    </div>
+    <!-- Supplier Company -->
+    <div class="fld s2" style="background:rgba(52,152,219,0.07);border:1px solid rgba(52,152,219,0.25);border-radius:12px;padding:12px;margin-top:2px;">
+      <div style="color:#7ab8f5;font-size:12px;font-weight:700;margin-bottom:8px;">🏢 شركة المورد · Supplier Company <span style="font-size:10px;font-weight:400;opacity:0.7;">(اختياري · Optional)</span></div>
+      <!-- Quick pick from saved companies -->
+      <div style="margin-bottom:10px;">
+        <label style="font-size:11px;color:var(--muted);margin-bottom:4px;display:block;">⚡ اختر شركة محفوظة · Pick Saved Company</label>
+        <select id="da-book-supplier-pick" onchange="pickDA_Supplier(this.value)" style="width:100%;padding:8px 10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid rgba(52,152,219,0.4);font-family:Arial,sans-serif;font-size:13px;box-sizing:border-box;">
+          <option value="">— اختر أو اكتب يدوياً · Choose or type manually —</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div>
+          <label style="font-size:11px;color:var(--muted);margin-bottom:4px;display:block;">🏢 اسم الشركة · Company Name</label>
+          <input id="da-book-supplier-name" placeholder="مثال: Dahab Divers" style="width:100%;box-sizing:border-box;" oninput="updateDA_SupplierPick()">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--muted);margin-bottom:4px;display:block;">📱 واتساب الشركة · Company WhatsApp</label>
+          <input id="da-book-supplier-phone" type="tel" placeholder="+20..." dir="ltr" style="width:100%;box-sizing:border-box;">
+        </div>
+      </div>
     </div>
     <!-- Payment Method -->
     <div class="fld s2">
@@ -15735,7 +15807,7 @@ function renderTours(){
   if(monthSel){
     const months = [...new Set(tours.map(t=>t.date?t.date.substring(0,7):"").filter(Boolean))].sort().reverse();
     const cur = monthSel.value;
-    monthSel.innerHTML = '<option value="">📅 كل الشهور</option>' +
+    monthSel.innerHTML = `<option value="">${ar?'📅 كل الشهور':'📅 All Months'}</option>` +
       months.map(m=>`<option value="${m}" ${m===cur?"selected":""}>${m}</option>`).join("");
   }
 
@@ -15837,6 +15909,7 @@ function renderDailyActivity(){
   renderDA_Activities();
   renderDA_Bookings();
   renderDA_Summary();
+  renderDA_Suppliers();
 }
 
 function renderDA_Summary(){
@@ -15932,6 +16005,7 @@ function renderDA_Bookings(){
           <div style="font-size:12px;margin-top:3px;">👤 ${b.guest||'—'} &nbsp;·&nbsp; 🏨 غرفة · Room ${b.room||'—'}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px;">📅 ${b.date||'—'} · 🕐 ${b.time||'—'} · 👥 ${b.persons||1} شخص · Person</div>
           ${b.notes?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">📝 ${b.notes}</div>`:''}
+          ${b.supplierName?`<div style="font-size:10px;color:#7ab8f5;margin-top:2px;">🏢 ${b.supplierName}${b.supplierPhone?' · '+b.supplierPhone:''}</div>`:''}
           <div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;">
             <span style="background:rgba(${statusColor==='#2ecc71'?'46,204,113':statusColor==='#f1c40f'?'241,196,15':'231,76,60'},0.15);color:${statusColor};border:1px solid ${statusColor}40;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;">${statusLabel}</span>
             ${b.price?`<span style="font-weight:700;color:#2ecc71;">£${Number(b.price).toLocaleString()}</span>`:''}
@@ -15941,6 +16015,7 @@ function renderDA_Bookings(){
           ${b.status!=='confirmed'?`<button class="btn bsm" onclick="updateDA_BookStatus(${idx},'confirmed')" style="background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);padding:6px 10px;font-size:11px;">✅ تأكيد</button>`:''}
           ${b.status!=='cancelled'?`<button class="btn bsm" onclick="updateDA_BookStatus(${idx},'cancelled')" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);padding:6px 10px;font-size:11px;">❌ إلغاء</button>`:''}
           ${b.phone?`<button class="btn bsm" onclick="window.open('https://wa.me/${b.phone.replace(/[^0-9]/g,'')}','_blank')" style="background:#25D366;color:#fff;padding:6px 10px;font-size:11px;">📱</button>`:''}
+          ${b.supplierPhone||b.supplierName?`<button class="btn bsm" onclick="waDA_Supplier(${idx})" style="background:rgba(52,152,219,0.2);color:#7ab8f5;border:1px solid rgba(52,152,219,0.4);padding:6px 10px;font-size:11px;" title="${b.supplierName||'شركة المورد'}">🏢📱</button>`:''}
           <button class="btn bsm" onclick="deleteDA_Booking(${idx})" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);padding:6px 10px;font-size:11px;">🗑</button>
         </div>
       </div>
@@ -15949,20 +16024,27 @@ function renderDA_Bookings(){
 }
 
 function switchDATab(tab){
-  const apBtn = document.getElementById("da-tab-activities");
-  const bkBtn = document.getElementById("da-tab-bookings");
-  const apPanel = document.getElementById("da-panel-activities");
-  const bkPanel = document.getElementById("da-panel-bookings");
+  const apBtn  = document.getElementById("da-tab-activities");
+  const bkBtn  = document.getElementById("da-tab-bookings");
+  const supBtn = document.getElementById("da-tab-suppliers");
+  const apPanel  = document.getElementById("da-panel-activities");
+  const bkPanel  = document.getElementById("da-panel-bookings");
+  const supPanel = document.getElementById("da-panel-suppliers");
   if(!apBtn) return;
+  // Reset all buttons
+  [apBtn,bkBtn,supBtn].forEach(b=>{ if(b){ b.style.background="transparent"; b.style.color="var(--muted)"; } });
+  [apPanel,bkPanel,supPanel].forEach(p=>{ if(p) p.style.display="none"; });
   if(tab==="activities"){
     apBtn.style.background="var(--gold)"; apBtn.style.color="#1a1a2e";
-    bkBtn.style.background="transparent"; bkBtn.style.color="var(--muted)";
-    apPanel.style.display=""; bkPanel.style.display="none";
-  } else {
+    apPanel.style.display="";
+  } else if(tab==="bookings"){
     bkBtn.style.background="var(--gold)"; bkBtn.style.color="#1a1a2e";
-    apBtn.style.background="transparent"; apBtn.style.color="var(--muted)";
-    bkPanel.style.display=""; apPanel.style.display="none";
+    bkPanel.style.display="";
     renderDA_Bookings();
+  } else if(tab==="suppliers"){
+    supBtn.style.background="rgba(52,152,219,0.8)"; supBtn.style.color="#fff";
+    supPanel.style.display="";
+    renderDA_Suppliers();
   }
 }
 
@@ -16059,6 +16141,26 @@ function updateDA_BookStatus(idx, status){
       sNotify("✅ تم التأكيد","الضيف ليس لديه رقم واتساب · Guest has no WhatsApp","info",3000);
     }
   }
+
+  // لو إلغاء وعنده رقم واتساب — ابعت له إشعار الإلغاء
+  if(status === "cancelled"){
+    const b = bks[idx];
+    if(b.phone){
+      const msg =
+        `❌ *تم إلغاء حجزك · Booking Cancelled*\n\n` +
+        `${b.emoji||'🌅'} *${b.actNameAr||''} · ${b.actNameEn||''}*\n\n` +
+        `👤 ${b.guest}\n` +
+        `📅 التاريخ · Date: *${b.date}*\n` +
+        `🕐 الوقت · Time: *${b.time}*\n` +
+        `👥 الأشخاص · Persons: *${b.persons}*\n\n` +
+        `نأسف على الإلغاء، يسعدنا خدمتك في وقت آخر 🙏\n` +
+        `We're sorry for the cancellation, we look forward to serving you again.\n\n` +
+        `🏨 *Dahab Trendy Accommodation*\n📞 ${PROP.phone}`;
+      window.open("https://wa.me/"+b.phone.replace(/[^0-9]/g,"")+"?text="+encodeURIComponent(msg),"_blank");
+    } else {
+      sNotify("❌ تم الإلغاء","الضيف ليس لديه رقم واتساب · Guest has no WhatsApp","info",3000);
+    }
+  }
 }
 
 function deleteDA_Booking(idx){
@@ -16068,6 +16170,326 @@ function deleteDA_Booking(idx){
   DA_saveBookings(bks);
   renderDA_Bookings();
   renderDA_Summary();
+}
+
+function waDA_Supplier(idx){
+  const bks = DA_getBookings();
+  const b = bks[idx];
+  if(!b) return;
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", phone:"+20 109 953 1272"};
+  const supplierPhone = (b.supplierPhone||"").replace(/[^0-9]/g,"");
+  if(!supplierPhone){
+    sNotify("⚠️ لا يوجد رقم للشركة","أدخل رقم واتساب الشركة أولاً · No supplier WhatsApp","warning",3000);
+    return;
+  }
+  const msg =
+    `🏢 *حجز نشاط — ${prop.name}*\n` +
+    `🏢 *Activity Booking — ${prop.name}*\n` +
+    `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `${b.emoji||'🌅'} *${b.actNameAr||'—'}*\n` +
+    `${b.emoji||'🌅'} *${b.actNameEn||'—'}*\n\n` +
+    `👤 *الضيف · Guest:* ${b.guest||'—'}\n` +
+    `🏨 *الغرفة · Room:* ${b.room||'—'}\n` +
+    `📅 *التاريخ · Date:* ${b.date||'—'}\n` +
+    `🕐 *الوقت · Time:* ${b.time||'—'}\n` +
+    `👥 *عدد الأشخاص · Persons:* ${b.persons||1}\n` +
+    (b.price?`💰 *الإجمالي · Total:* £${Number(b.price).toLocaleString()}\n`:'') +
+    (b.notes?`📝 *ملاحظات · Notes:* ${b.notes}\n`:'') +
+    `\n━━━━━━━━━━━━━━━━━━━━━\n` +
+    `📞 ${prop.phone}\n` +
+    `🏨 ${prop.name}`;
+  window.open("https://wa.me/"+supplierPhone+"?text="+encodeURIComponent(msg),"_blank");
+}
+
+/* ── SUPPLIERS PANEL ── */
+function renderDA_Suppliers(){
+  const bks = DA_getBookings();
+  // Only bookings with a supplier name or phone
+  const allSupBks = bks.filter(b => (b.supplierName||"").trim() || (b.supplierPhone||"").trim());
+
+  const filterDate   = (document.getElementById("da-sup-filter-date")||{value:""}).value;
+  const filterStatus = (document.getElementById("da-sup-filter-status")||{value:""}).value;
+
+  // Populate date filter
+  const dateSel = document.getElementById("da-sup-filter-date");
+  if(dateSel){
+    const dates = [...new Set(allSupBks.map(b=>b.date).filter(Boolean))].sort().reverse();
+    const cur = dateSel.value;
+    dateSel.innerHTML = '<option value="">📅 كل التواريخ · All Dates</option>' +
+      dates.map(d=>`<option value="${d}" ${d===cur?"selected":""}>${d}</option>`).join("");
+  }
+
+  let list = allSupBks;
+  if(filterDate)   list = list.filter(b=>b.date===filterDate);
+  if(filterStatus) list = list.filter(b=>b.status===filterStatus);
+
+  // Summary strip
+  const sumEl = document.getElementById("da-suppliers-summary");
+  if(sumEl){
+    const totalRev = allSupBks.reduce((s,b)=>s+(Number(b.price)||0),0);
+    const uniqueSuppliers = [...new Set(allSupBks.map(b=>(b.supplierName||"").trim()).filter(Boolean))].length;
+    const todayCount = allSupBks.filter(b=>b.date===new Date().toISOString().slice(0,10)).length;
+    sumEl.innerHTML = `
+      <div class="card" style="text-align:center;padding:10px;border:1px solid rgba(52,152,219,0.3);">
+        <div style="font-size:20px;font-weight:700;color:#7ab8f5;">${allSupBks.length}</div>
+        <div style="font-size:9px;color:var(--muted);">🏢 إجمالي حجوزات الشركات</div>
+      </div>
+      <div class="card" style="text-align:center;padding:10px;border:1px solid rgba(52,152,219,0.3);">
+        <div style="font-size:20px;font-weight:700;color:#7ab8f5;">${uniqueSuppliers}</div>
+        <div style="font-size:9px;color:var(--muted);">🏢 شركات مختلفة · Companies</div>
+      </div>
+      <div class="card" style="text-align:center;padding:10px;border:1px solid rgba(52,152,219,0.3);">
+        <div style="font-size:20px;font-weight:700;color:#7ab8f5;">${todayCount}</div>
+        <div style="font-size:9px;color:var(--muted);">📅 حجوزات اليوم · Today</div>
+      </div>
+      ${totalRev?`<div class="card" style="text-align:center;padding:10px;border:1px solid rgba(46,204,113,0.3);">
+        <div style="font-size:20px;font-weight:700;color:#2ecc71;">£${totalRev.toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--muted);">💰 إجمالي الإيرادات · Revenue</div>
+      </div>`:''}`;
+  }
+
+  const container = document.getElementById("da-suppliers-list");
+  if(!container) return;
+  if(!list.length){
+    container.innerHTML = `<div class="empty">
+      <div style="font-size:36px;margin-bottom:10px;">🏢</div>
+      <div style="font-weight:700;margin-bottom:4px;">لا توجد حجوزات مرتبطة بشركات خارجية</div>
+      <div style="font-size:12px;color:var(--muted);">عند حجز نشاط وإضافة اسم الشركة، ستظهر هنا · Add supplier company when booking an activity</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = list.slice().reverse().map(b=>{
+    const idx = bks.indexOf(b);
+    const statusColor = {pending:'#f1c40f',confirmed:'#2ecc71',cancelled:'#e74c3c'}[b.status]||'#f1c40f';
+    const statusLabel = {pending:'🟡 معلق',confirmed:'✅ مؤكد',cancelled:'❌ ملغي'}[b.status]||'🟡 معلق';
+    const hasSupPhone = !!(b.supplierPhone||"").trim();
+    return `<div class="card" style="padding:14px;margin-bottom:10px;border:1.5px solid rgba(52,152,219,0.3);position:relative;">
+      <!-- Company Badge -->
+      <div style="display:flex;align-items:center;gap:8px;background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.3);border-radius:10px;padding:8px 12px;margin-bottom:10px;">
+        <span style="font-size:20px;">🏢</span>
+        <div style="flex:1;">
+          <div style="font-weight:800;color:#7ab8f5;font-size:14px;">${b.supplierName||'— شركة غير مسماة —'}</div>
+          ${hasSupPhone?`<div style="font-size:11px;color:var(--muted);direction:ltr;">📱 ${b.supplierPhone}</div>`:'<div style="font-size:10px;color:#e74c3c;">⚠️ لا يوجد رقم واتساب للشركة</div>'}
+        </div>
+        ${hasSupPhone?`<button onclick="waDA_Supplier(${idx})" style="background:#25D366;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;white-space:nowrap;">📤 إرسال</button>`
+        :`<button onclick="editDA_SupplierPhone(${idx})" style="background:rgba(241,196,15,0.2);color:#f1c40f;border:1px solid rgba(241,196,15,0.4);border-radius:10px;padding:8px 12px;font-weight:700;font-size:11px;cursor:pointer;font-family:Arial,sans-serif;">✏️ أضف رقم</button>`}
+      </div>
+      <!-- Booking Details -->
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <div style="font-size:28px;">${b.emoji||'🌅'}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;color:var(--gold);font-size:13px;">${b.actNameAr||'—'}</div>
+          <div style="font-size:11px;color:var(--muted);">${b.actNameEn||'—'}</div>
+          <div style="font-size:12px;margin-top:4px;">👤 <strong>${b.guest||'—'}</strong> &nbsp;·&nbsp; 🏨 غرفة ${b.room||'—'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">📅 ${b.date||'—'} &nbsp;·&nbsp; 🕐 ${b.time||'—'} &nbsp;·&nbsp; 👥 ${b.persons||1} شخص</div>
+          ${b.notes?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">📝 ${b.notes}</div>`:''}
+          ${b.price?`<div style="font-weight:700;color:#2ecc71;font-size:14px;margin-top:4px;">💰 £${Number(b.price).toLocaleString()}</div>`:''}
+          <div style="margin-top:6px;">
+            <span style="padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;">${statusLabel}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+          <button onclick="openDA_CompanyBooking('${(b.supplierName||'').replace(/'/g,"\\'")}','${(b.supplierPhone||'').replace(/'/g,"\\'")}',${idx})" style="background:rgba(52,152,219,0.2);color:#7ab8f5;border:1px solid rgba(52,152,219,0.5);border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;white-space:nowrap;">🏢+ حجز</button>
+          ${b.status!=='confirmed'?`<button onclick="updateDA_BookStatus(${idx},'confirmed')" style="background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;">✅ تأكيد</button>`:''}
+          ${b.status!=='cancelled'?`<button onclick="updateDA_BookStatus(${idx},'cancelled')" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;">❌ إلغاء</button>`:''}
+          ${b.phone?`<button onclick="window.open('https://wa.me/${(b.phone||'').replace(/[^0-9]/g,'')}','_blank')" style="background:rgba(37,211,102,0.15);color:#25D366;border:1px solid rgba(37,211,102,0.4);border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:Arial,sans-serif;" title="واتساب الضيف">👤📱</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function clearDA_SupFilters(){
+  const d = document.getElementById("da-sup-filter-date");
+  const s = document.getElementById("da-sup-filter-status");
+  if(d) d.value=""; if(s) s.value="";
+  renderDA_Suppliers();
+}
+
+/* ── فتح مودال حجز مع شركة محددة ── */
+function openDA_CompanyBooking(supplierName, supplierPhone, fromIdx){
+  const acts = DA_getActivities ? DA_getActivities() : (LS ? LS("dta_daily_activities",[]) : []);
+  if(!acts.length){
+    alert(currentLang==='ar'
+      ? "⚠️ أضف نشاطاً أولاً من تاب النشاطات ثم احجز مع الشركة"
+      : "⚠️ Please add an activity first, then book with the company");
+    switchDATab('activities');
+    return;
+  }
+  openDA_BookModalFull(supplierName, supplierPhone);
+}
+
+/* ── فتح مودال الحجز مع اختيار النشاط يدوياً ── */
+function openDA_BookModalFull(supplierName, supplierPhone){
+  const ar = currentLang==='ar';
+  // عبّي dropdown النشاطات
+  const acts = DA_getActivities();
+  const actSel = document.getElementById("da-book-activity-select");
+  if(actSel){
+    actSel.innerHTML = `<option value="">— ${ar?'اختر نشاطاً':'Select an activity'} —</option>`
+      + acts.map((a,i)=>`<option value="${i}">${a.emoji||'🌅'} ${ar?a.nameAr:a.nameEn} ${a.status==='unavailable'?'('+( ar?'غير متاح':'Unavailable')+')':''}</option>`).join('');
+    actSel.value = "";
+  }
+  // عبّي dropdown الحجوزات الموجودة
+  populateDA_BookingPick();
+  // إخفي معلومات النشاط
+  const infoEl = document.getElementById("da-book-activity-info");
+  if(infoEl){ infoEl.style.display="none"; infoEl.innerHTML=""; }
+  // مسح الحقول
+  document.getElementById("da-book-guest").value = "";
+  document.getElementById("da-book-room").value = "";
+  document.getElementById("da-book-persons").value = "1";
+  document.getElementById("da-book-phone").value = "";
+  document.getElementById("da-book-notes").value = "";
+  document.getElementById("da-book-supplier-name").value = supplierName||"";
+  document.getElementById("da-book-supplier-phone").value = supplierPhone||"";
+  document.getElementById("da-book-date").value = new Date().toISOString().slice(0,10);
+  document.getElementById("da-book-time").innerHTML = `<option value="">— ${ar?'اختر الوقت':'Select Time'} —</option>`;
+  const priceEl = document.getElementById("da-book-price-preview");
+  if(priceEl) priceEl.style.display="none";
+  populateDA_SupplierPick();
+  const pick = document.getElementById("da-book-supplier-pick");
+  if(pick && supplierName){
+    for(let i=0;i<pick.options.length;i++){
+      if(pick.options[i].value===supplierName){ pick.value=supplierName; break; }
+    }
+  }
+  setDA_PayMethod('Cash');
+  da_bookActivityIdx = -1;
+  document.getElementById("da-book-modal").classList.add("on");
+}
+
+/* ── لما يغير النشاط من القائمة ── */
+function onDA_ActivityChange(val){
+  if(val==="") { da_bookActivityIdx=-1; const inf=document.getElementById("da-book-activity-info"); if(inf){inf.style.display="none";inf.innerHTML="";} return; }
+  const idx = parseInt(val);
+  const acts = DA_getActivities();
+  const a = acts[idx];
+  if(!a) return;
+  da_bookActivityIdx = idx;
+  const infoEl = document.getElementById("da-book-activity-info");
+  if(infoEl){
+    infoEl.style.display="";
+    infoEl.innerHTML = `<div style="font-size:28px;">${a.emoji||'🌅'}</div>
+      <div style="font-size:15px;font-weight:800;color:var(--gold);">${a.nameAr||''}</div>
+      <div style="font-size:12px;color:#7ab8f5;">${a.nameEn||''}</div>
+      ${a.price?`<div style="font-size:16px;font-weight:700;color:#2ecc71;margin-top:4px;">£${Number(a.price).toLocaleString()} / ${currentLang==='ar'?'فرد':'Person'}</div>`:''}
+      ${a.duration?`<div style="font-size:11px;color:#7a8fa6;margin-top:3px;">⏱️ ${a.duration}</div>`:''}`;
+  }
+  // عبّي الأوقات
+  const timeSel = document.getElementById("da-book-time");
+  const times = (a.times||"").split(",").map(t=>t.trim()).filter(Boolean);
+  timeSel.innerHTML = `<option value="">${currentLang==='ar'?'اختر الوقت':'Select Time'}</option>` +
+    times.map(t=>`<option value="${t}">${t}</option>`).join("");
+  // حدّث السعر
+  const priceEl = document.getElementById("da-book-price-preview");
+  const updatePrice = ()=>{
+    const p = Number(a.price)||0;
+    const n = parseInt(document.getElementById("da-book-persons").value)||1;
+    if(p>0){ priceEl.style.display=""; priceEl.textContent=`💰 ${currentLang==='ar'?'الإجمالي':'Total'}: £${(p*n).toLocaleString()}`; }
+    else priceEl.style.display="none";
+  };
+  document.getElementById("da-book-persons").oninput = updatePrice;
+  updatePrice();
+}
+
+/* ── تعبئة dropdown الحجوزات الموجودة ── */
+function populateDA_BookingPick(){
+  const ar = currentLang==='ar';
+  const sel = document.getElementById("da-book-from-booking");
+  if(!sel) return;
+  const today = new Date().toISOString().slice(0,10);
+  // الحجوزات النشطة (Confirmed / Partial / Paid / Pending)
+  const active = (bookings||[]).filter(b=>
+    ["Confirmed","Partial","Paid","Pending"].includes(b.status) &&
+    (!b.checkout || b.checkout >= today)
+  );
+  sel.innerHTML = `<option value="">— ${ar?'أو أدخل بياناتك يدوياً':'Or enter manually'} —</option>`
+    + active.map((b,i)=>{
+      const name = b.name||b.clientName||'—';
+      const room = b.room ? (ar?'غرفة ':'Room ')+b.room : '';
+      const ci   = b.checkin  ? b.checkin  : '';
+      const co   = b.checkout ? b.checkout : '';
+      const label = `${name}${room?' · '+room:''}${ci?' | '+ci+' → '+co:''}`;
+      return `<option value="${i}">${label}</option>`;
+    }).join('');
+}
+
+/* ── لما يختار حجز موجود ── */
+function onDA_PickBooking(val){
+  if(val==="") return;
+  const today = new Date().toISOString().slice(0,10);
+  const active = (bookings||[]).filter(b=>
+    ["Confirmed","Partial","Paid","Pending"].includes(b.status) &&
+    (!b.checkout || b.checkout >= today)
+  );
+  const b = active[parseInt(val)];
+  if(!b) return;
+  const guestEl = document.getElementById("da-book-guest");
+  const roomEl  = document.getElementById("da-book-room");
+  const phoneEl = document.getElementById("da-book-phone");
+  if(guestEl) guestEl.value = b.name||b.clientName||'';
+  if(roomEl)  roomEl.value  = b.room||'';
+  if(phoneEl && b.phone) phoneEl.value = b.phone;
+}
+
+/* ── تعبئة القائمة المنسدلة بالشركات المحفوظة ── */
+function populateDA_SupplierPick(){
+  const sel = document.getElementById("da-book-supplier-pick");
+  if(!sel) return;
+  const bks = DA_getBookings();
+  // اجمع كل الشركات الفريدة مع أرقامها
+  const map = {};
+  bks.forEach(b=>{
+    const n = (b.supplierName||"").trim();
+    if(n && !map[n]) map[n] = (b.supplierPhone||"").trim();
+  });
+  const companies = Object.keys(map).sort();
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— اختر أو اكتب يدوياً · Choose or type manually —</option>'
+    + companies.map(c=>`<option value="${c}" data-phone="${map[c]}">${c}${map[c]?' ('+map[c]+')':''}</option>`).join("");
+  if(cur) sel.value = cur;
+}
+
+/* ── لما يختار شركة من القائمة ── */
+function pickDA_Supplier(val){
+  if(!val) return;
+  const nameEl  = document.getElementById("da-book-supplier-name");
+  const phoneEl = document.getElementById("da-book-supplier-phone");
+  const sel     = document.getElementById("da-book-supplier-pick");
+  if(nameEl) nameEl.value = val;
+  // ابحث عن الرقم
+  if(sel && phoneEl){
+    const opt = Array.from(sel.options).find(o=>o.value===val);
+    if(opt && opt.dataset.phone) phoneEl.value = opt.dataset.phone;
+  }
+}
+
+/* ── لما يكتب اسم شركة جديد يدوياً ← إلغاء تحديد القائمة ── */
+function updateDA_SupplierPick(){
+  const sel = document.getElementById("da-book-supplier-pick");
+  if(sel){
+    const nameEl = document.getElementById("da-book-supplier-name");
+    const cur = (nameEl||{}).value||"";
+    // إذا الاسم مش موجود في القائمة → رجع للفراغ
+    const match = Array.from(sel.options).find(o=>o.value===cur);
+    if(!match) sel.value="";
+  }
+}
+
+function editDA_SupplierPhone(idx){
+  const bks = DA_getBookings();
+  const b = bks[idx];
+  if(!b) return;
+  const phone = prompt(`📱 أدخل رقم واتساب شركة "${b.supplierName||'الشركة'}"\nEnter WhatsApp number for "${b.supplierName||'Supplier'}"`, b.supplierPhone||"+20");
+  if(phone === null) return;
+  b.supplierPhone = phone.trim();
+  DA_saveBookings(bks);
+  renderDA_Suppliers();
+  if(b.supplierPhone){
+    setTimeout(()=>waDA_Supplier(idx), 300);
+  }
 }
 
 /* ── KIOSK MODE ── */
@@ -16133,14 +16555,29 @@ function openDA_KioskBook(idx){
   const acts = DA_getActivities();
   const a = acts[idx];
   if(!a) return;
+  // عبّي dropdown النشاطات وحدد الحالي
+  const actSel = document.getElementById("da-book-activity-select");
+  if(actSel){
+    const ar = currentLang==='ar';
+    actSel.innerHTML = `<option value="">— ${ar?'اختر نشاطاً':'Select an activity'} —</option>`
+      + acts.map((ac,i)=>`<option value="${i}">${ac.emoji||'🌅'} ${ar?ac.nameAr:ac.nameEn}${ac.status==='unavailable'?' ('+( ar?'غير متاح':'Unavailable')+')':''}</option>`).join('');
+    actSel.value = String(idx);
+  }
+  // عبّي dropdown الحجوزات الموجودة
+  populateDA_BookingPick();
+  const fromBk = document.getElementById("da-book-from-booking");
+  if(fromBk) fromBk.value="";
   // Fill activity info
-  document.getElementById("da-book-title").textContent = `${a.emoji||'🌅'} ${a.nameAr||''} · ${a.nameEn||''}`;
-  document.getElementById("da-book-activity-info").innerHTML = `
+  const infoEl = document.getElementById("da-book-activity-info");
+  if(infoEl){
+    infoEl.style.display="";
+    infoEl.innerHTML = `
     <div style="font-size:32px;">${a.emoji||'🌅'}</div>
     <div style="font-size:16px;font-weight:800;color:var(--gold);">${a.nameAr||''}</div>
     <div style="font-size:13px;color:#7ab8f5;">${a.nameEn||''}</div>
     ${a.price?`<div style="font-size:18px;font-weight:700;color:#2ecc71;margin-top:6px;">£${Number(a.price).toLocaleString()} / فرد · Person</div>`:''}
     ${a.duration?`<div style="font-size:12px;color:#7a8fa6;margin-top:4px;">⏱️ ${a.duration}</div>`:''}`;
+  }
   // Fill times
   const timeSel = document.getElementById("da-book-time");
   const times = (a.times||"").split(",").map(t=>t.trim()).filter(Boolean);
@@ -16153,6 +16590,12 @@ function openDA_KioskBook(idx){
   document.getElementById("da-book-persons").value = "1";
   document.getElementById("da-book-phone").value = "";
   document.getElementById("da-book-notes").value = "";
+  document.getElementById("da-book-supplier-name").value = "";
+  document.getElementById("da-book-supplier-phone").value = "";
+  // Populate saved companies dropdown
+  populateDA_SupplierPick();
+  const pickEl = document.getElementById("da-book-supplier-pick");
+  if(pickEl) pickEl.value="";
   // Reset payment method
   setDA_PayMethod('Cash');
   // Price preview update
@@ -16167,6 +16610,9 @@ function openDA_KioskBook(idx){
   updatePrice();
   document.getElementById("da-book-modal").classList.add("on");
 }
+
+// alias — يُستخدم في openDA_CompanyBooking
+const openDA_BookModal = openDA_KioskBook;
 
 function setDA_PayMethod(m){
   document.getElementById('da-book-payment').value = m;
@@ -16191,9 +16637,21 @@ function setDA_PayMethod(m){
 }
 
 function confirmDA_Booking(){
+  const ar = currentLang==='ar';
+  // إذا da_bookActivityIdx = -1 يعني فتح من زر الشركة بدون اختيار نشاط
+  if(da_bookActivityIdx === -1 || da_bookActivityIdx === undefined){
+    // حاول تاخد من الـ dropdown
+    const actSel = document.getElementById("da-book-activity-select");
+    if(actSel && actSel.value !== ""){
+      da_bookActivityIdx = parseInt(actSel.value);
+    } else {
+      alert(ar ? "⚠️ اختر النشاط أولاً · Please select an activity" : "⚠️ Please select an activity first");
+      return;
+    }
+  }
   const acts = DA_getActivities();
   const a = acts[da_bookActivityIdx];
-  if(!a) return;
+  if(!a){ alert(ar?"⚠️ النشاط غير موجود":"⚠️ Activity not found"); return; }
   const guest   = document.getElementById("da-book-guest").value.trim();
   const room    = document.getElementById("da-book-room").value.trim();
   const date    = document.getElementById("da-book-date").value;
@@ -16202,6 +16660,8 @@ function confirmDA_Booking(){
   const phone   = document.getElementById("da-book-phone").value.trim();
   const notes   = document.getElementById("da-book-notes").value.trim();
   const payment = document.getElementById("da-book-payment").value || "Cash";
+  const supplierName  = document.getElementById("da-book-supplier-name").value.trim();
+  const supplierPhone = document.getElementById("da-book-supplier-phone").value.trim();
   if(!guest){ alert("⚠️ أدخل اسمك · Enter your name"); return; }
   if(!date) { alert("⚠️ اختر التاريخ · Select date"); return; }
   if(!time) { alert("⚠️ اختر الوقت · Select time"); return; }
@@ -16210,6 +16670,7 @@ function confirmDA_Booking(){
     id: Date.now(), actId: a.id, emoji: a.emoji, actNameAr: a.nameAr, actNameEn: a.nameEn,
     guest, room, date, time, persons, phone, notes, payment,
     price: totalPrice, pricePerPerson: Number(a.price)||0,
+    supplierName, supplierPhone,
     status: "pending", createdAt: new Date().toISOString()
   };
   const bks = DA_getBookings();
@@ -16394,6 +16855,26 @@ function checkDA_KioskBooking(){
         onmouseover="this.style.background='rgba(231,76,60,0.28)'"
         onmouseout="this.style.background='rgba(231,76,60,0.15)'">
         ❌ إلغاء هذا الحجز &nbsp;·&nbsp; Cancel This Booking
+      </button>` : ''}
+      ${b.status === 'confirmed' ? `
+      <button onclick="(function(){
+        const msg = encodeURIComponent('❌ طلب إلغاء نشاط · Cancel Request\\n\\n' +
+          '${b.emoji||'🌅'} ${b.actNameAr||''} · ${b.actNameEn||''}\\n' +
+          '👤 ${b.guest||''}\\n' +
+          '🏨 Room ${b.room||''}\\n' +
+          '📅 ${b.date||''} · 🕐 ${b.time||''}\\n' +
+          '👥 ${b.persons||1} شخص · Person\\n\\n' +
+          'أرجو إلغاء الحجز · Please cancel my booking');
+        window.open('https://wa.me/' + (PROP&&PROP.phone?PROP.phone.replace(/[^0-9]/g,''):'') + '?text=' + msg, '_blank');
+      })()" style="
+        width:100%;margin-top:14px;padding:13px;
+        background:rgba(37,211,102,0.12);color:#25d366;
+        border:1.5px solid rgba(37,211,102,0.35);border-radius:12px;
+        font-size:14px;font-weight:800;cursor:pointer;font-family:Arial,sans-serif;
+        transition:all .2s;"
+        onmouseover="this.style.background='rgba(37,211,102,0.25)'"
+        onmouseout="this.style.background='rgba(37,211,102,0.12)'">
+        📱 تواصل مع الاستقبال للإلغاء &nbsp;·&nbsp; Contact Reception to Cancel
       </button>` : ''}
     </div>`;
   }).join("");
