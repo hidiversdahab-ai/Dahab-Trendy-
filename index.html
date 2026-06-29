@@ -1580,6 +1580,7 @@ label {
 <!-- More Menu (slides up from bottom nav) -->
 <div id="bn-more-menu">
   <div class="bn-more-grid">
+    <div class="bn-more-item" onclick="openOwnerDailyReport();closeBnMore()" style="position:relative;border-color:rgba(201,168,76,0.7);background:rgba(201,168,76,0.15);"><span class="bm-icon" style="color:var(--gold);">📋</span><span class="t" style="color:var(--gold);font-weight:700;" data-ar="تقرير المالك" data-en="Owner Report">تقرير المالك</span></div>
     <div class="bn-more-item" onclick="openPDFReport();closeBnMore()" style="position:relative;border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);"><span class="bm-icon">📅</span><span class="t" data-ar="تقرير شهري" data-en="Monthly Report">تقرير شهري</span></div>
     <div class="bn-more-item" onclick="bnGo('calendar',null);closeBnMore()"><span class="bm-icon">🗓️</span><span class="t" data-ar="التقويم" data-en="Calendar">التقويم</span></div>
     <div class="bn-more-item" onclick="bnGo('rooms',null);closeBnMore()"><span class="bm-icon">🏨</span><span class="t" data-ar="الغرف" data-en="Rooms">الغرف</span></div>
@@ -1607,6 +1608,7 @@ label {
     <div class="bn-more-item" onclick="DTA_WA.openSettings();closeBnMore()" style="border-color:rgba(37,211,102,0.4);background:rgba(37,211,102,0.07);"><span class="bm-icon" style="color:#4cda7a;">⚙️</span><span style="color:#4cda7a;" class="t" data-ar="واتساب API" data-en="WhatsApp API">واتساب API</span></div>
     <div class="bn-more-item" onclick="openQRRoomPicker();closeBnMore();" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">📱</span><span style="color:#7ab8f5;" class="t" data-ar="QR الغرف" data-en="Rooms QR">QR الغرف</span></div>
     <div class="bn-more-item" onclick="openQRSettings();closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">⚙️</span><span style="color:#7ab8f5;" class="t" data-ar="إعدادات QR" data-en="QR Settings">إعدادات QR</span></div>
+    <div class="bn-more-item" onclick="openGuestProfiles();closeBnMore()"><span class="bm-icon">👤</span><span class="t" data-ar="ملف الضيوف" data-en="Guest Profiles">ملف الضيوف</span></div>
     <div class="bn-more-item" onclick="openBlacklist();closeBnMore()" style="border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.07);"><span class="bm-icon">🚫</span><span style="color:#e74c3c;">Blacklist</span></div>
     <div class="bn-more-item" onclick="bnGo('guesthistory',null);closeBnMore()"><span class="bm-icon">👥</span><span class="t" data-ar="سجل الضيوف" data-en="Guest History">Guest History</span></div>
     <div class="bn-more-item" onclick="bnGo('groupbooking',null);closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon">🏢</span><span class="t" data-ar="حجز جروب" data-en="Group Booking">Group Booking</span></div>
@@ -2368,6 +2370,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <button class="nb" onclick="openAIPricing()" style="background:rgba(155,89,182,0.15);color:#c39bd3;border-color:rgba(155,89,182,0.5);font-weight:700;" title="AI Smart Pricing">💡 <span class="t" data-ar="تسعير ذكي" data-en="Smart Pricing">Smart Pricing</span></button>
 <button class="nb" onclick="openReminders()" style="background:rgba(37,211,102,0.12);color:#4cda7a;border-color:rgba(37,211,102,0.4);font-weight:700;" id="remind-btn">🔔 <span class="t" data-ar="تذكيرات" data-en="Reminders">Reminders</span></button>
 <button class="nb" onclick="openMorningBriefing()" style="background:rgba(245,197,24,0.13);color:#f5c518;border-color:rgba(245,197,24,0.4);font-weight:700;" title="التقرير الصباحي">☀️</button>
+<button class="nb" onclick="openOwnerDailyReport()" style="background:rgba(201,168,76,0.18);color:var(--gold);border-color:rgba(201,168,76,0.6);font-weight:700;" title="تقرير يومي للمالك / Owner Daily Report">📋 <span class="t" data-ar="تقرير المالك" data-en="Owner Report">Owner Report</span></button>
 <button class="nb" id="pwa-nav-btn" onclick="installPWA()" style="background:rgba(201,168,76,0.2);color:var(--gold);border-color:var(--gold);font-weight:700;display:none;" title="تثبيت كتطبيق">📲 تثبيت App</button>
 <button class="nb" onclick="openWATemplates()" style="background:rgba(37,211,102,0.12);color:#4cda7a;border-color:rgba(37,211,102,0.3);font-weight:700;" title="قوالب واتساب">💬 WA</button>
 <button class="nb" onclick="openBlacklist()" style="background:rgba(231,76,60,0.12);color:#e74c3c;border-color:rgba(231,76,60,0.35);font-weight:700;" title="القائمة السوداء">🚫 Blacklist</button>
@@ -3750,10 +3753,10 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <div class="ovl" id="guest-profiles-modal">
 <div class="mdl" style="max-width:600px;">
   <div class="flex" style="justify-content:space-between;margin-bottom:14px;">
-    <div class="mtitle" style="margin-bottom:0;">👥 ملفات الضيوف</div>
+    <div class="mtitle" style="margin-bottom:0;">👥 <span class="t" data-ar="ملفات الضيوف" data-en="Guest Profiles">ملفات الضيوف</span></div>
     <button onclick="closeM('guest-profiles-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
   </div>
-  <input id="gp-search" placeholder="🔍 ابحث عن ضيف..." oninput="renderGuestProfiles()" style="margin-bottom:12px;width:100%;padding:9px 12px;background:var(--inp);border:1px solid var(--bdr);border-radius:8px;color:var(--text);">
+  <input id="gp-search" placeholder="🔍 ابحث عن ضيف... / Search guest..." oninput="renderGuestProfiles()" style="margin-bottom:12px;width:100%;padding:9px 12px;background:var(--inp);border:1px solid var(--bdr);border-radius:8px;color:var(--text);">
   <div id="gp-list" style="max-height:65vh;overflow-y:auto;"></div>
 </div>
 </div>
@@ -7526,8 +7529,8 @@ return "<tr style='"+rowStyle+"'>"+
 "</td>"+
 "<td><span class='bdg "+bc+"'>"+b.status+"</span>"+
 (()=>{const _pre=calcPaid(b);return _pre>0?"<div style='font-size:10px;color:var(--muted);'>Pre: "+(b.cur==="USD"?"$":b.cur==="EUR"?"€":"£")+_pre.toFixed(0)+"</div>":"";})()+
-(b.roomCharges&&b.roomCharges.length?"<div style='margin-top:3px;background:rgba(230,126,34,0.12);border:1px solid rgba(230,126,34,0.35);border-radius:5px;padding:2px 6px;font-size:9px;color:#e67e22;font-weight:700;'>🍽️ £"+(b.roomCharges.reduce((s,r)=>s+(r.amount||0),0)).toFixed(0)+" مطعم"+(b.roomCharges.some(r=>(r.status||"pending")==="pending")?" ⏳":"")+"</div>":"")+
-(b.tourCharges&&b.tourCharges.length?"<div style='margin-top:3px;background:rgba(52,152,219,0.12);border:1px solid rgba(52,152,219,0.35);border-radius:5px;padding:2px 6px;font-size:9px;color:#7ab8f5;font-weight:700;'>🏔️ £"+(b.tourCharges.reduce((s,t)=>s+(t.price||0),0)).toLocaleString()+" رحلات"+(b.tourCharges.some(t=>(t.status||"pending")==="pending")?" ⏳":"")+"</div>":"")+
+(b.roomCharges&&b.roomCharges.length?"<div style='margin-top:3px;background:rgba(230,126,34,0.12);border:1px solid rgba(230,126,34,0.35);border-radius:5px;padding:2px 6px;font-size:9px;color:#e67e22;font-weight:700;'>🍽️ £"+(b.roomCharges.reduce((s,r)=>s+(r.amount||0),0)).toFixed(0)+(isEn()?" Rest.":" مطعم")+(b.roomCharges.some(r=>(r.status||"pending")==="pending")?" ⏳":"")+"</div>":"")+
+(b.tourCharges&&b.tourCharges.length?"<div style='margin-top:3px;background:rgba(52,152,219,0.12);border:1px solid rgba(52,152,219,0.35);border-radius:5px;padding:2px 6px;font-size:9px;color:#7ab8f5;font-weight:700;'>🏔️ £"+(b.tourCharges.reduce((s,t)=>s+(t.price||0),0)).toLocaleString()+(isEn()?" Tours":" رحلات")+(b.tourCharges.some(t=>(t.status||"pending")==="pending")?" ⏳":"")+"</div>":"")+
 "</td>"+
 "<td style='white-space:nowrap;min-width:110px;'>"+
 "<div style='display:flex;flex-wrap:wrap;gap:3px;'>"+
@@ -11550,7 +11553,7 @@ const refundSum=b.payments.filter(p=>p.amount<0).reduce((s,p)=>s+Math.abs(p.amou
 const rcTotal=getRoomChargesPending(b);
 const tcTotal=getTourChargesPending(b);
 const remain=Math.max(0,b.total+rcTotal+tcTotal-paidSum);
-document.getElementById("pay-total").textContent=sym+b.total.toFixed(2)+(rcTotal>0?" + £"+rcTotal.toFixed(0)+" مطعم":"")+(tcTotal>0?" + £"+tcTotal.toFixed(0)+" رحلات":"");
+document.getElementById("pay-total").textContent=sym+b.total.toFixed(2)+(rcTotal>0?" + £"+rcTotal.toFixed(0)+(isEn()?" Rest.":" مطعم"):"")+(tcTotal>0?" + £"+tcTotal.toFixed(0)+(isEn()?" Tours":" رحلات"):"");
 document.getElementById("pay-paid-sum").textContent=sym+paidSum.toFixed(2)+(refundSum>0?" (↩️ -"+sym+refundSum.toFixed(2)+" refunded)":"");
 document.getElementById("pay-remain").textContent=sym+remain.toFixed(2);
 // Render restaurant room charges
@@ -19449,6 +19452,9 @@ function renderAnalyticsCharts(monthData){
 // ═══════════════════════════════════════════════════════════
 // ══ FEATURE 12: GUEST PROFILES ══
 // ═══════════════════════════════════════════════════════════
+// مصفوفة مؤقتة لأسماء الضيوف — بتتملى كل render
+window._gpGuests = [];
+
 function openGuestProfiles(){
   document.getElementById('guest-profiles-modal').classList.add('on');
   renderGuestProfiles();
@@ -19469,15 +19475,18 @@ function renderGuestProfiles(){
   let guests = Object.values(guestMap).filter(g=>!q||g.name.toLowerCase().includes(q)||g.phone.includes(q)||g.nat.toLowerCase().includes(q));
   guests.sort((a,b)=>b.stays.length-a.stays.length);
 
+  // احفظ الأسماء في مصفوفة global نرجع ليها بالـ index
+  window._gpGuests = guests.map(g=>g.name);
+
   const el = document.getElementById('gp-list');
   if(!guests.length){el.innerHTML='<div class="empty">لا يوجد ضيوف مسجلون</div>';return;}
-  el.innerHTML = guests.map(g=>{
+  el.innerHTML = guests.map((g,idx)=>{
     const activeBk = g.stays.filter(b=>b.status!=='Cancelled');
     const initials = g.name.split(' ').slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('');
     const lastStay = activeBk.sort((a,b)=>b.ci.localeCompare(a.ci))[0];
     const nights = activeBk.reduce((s,b)=>s+nts(b.ci,b.co),0);
     const blEntry = checkBlacklist(g.name);
-    return `<div class="guest-profile-card" style="cursor:pointer;${blEntry?'border-color:rgba(231,76,60,0.5);background:rgba(231,76,60,0.05);':''}" onclick="filterBookingsByGuest('${g.name.replace(/'/g,"\\'")}')">
+    return `<div class="guest-profile-card" style="cursor:pointer;${blEntry?'border-color:rgba(231,76,60,0.5);background:rgba(231,76,60,0.05);':''}" onclick="filterBookingsByGuest(window._gpGuests[${idx}])">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
         <div class="guest-avatar" style="${blEntry?'background:#e74c3c;':''}">
           ${blEntry?'🚫':(initials||'?')}
@@ -19491,14 +19500,15 @@ function renderGuestProfiles(){
         </div>
         <div style="text-align:right;">
           <div style="font-size:18px;font-weight:700;color:${blEntry?'#e74c3c':'var(--gold)'};">${activeBk.length}</div>
-          <div style="font-size:9px;color:var(--muted);">إقامات</div>
+          <div style="font-size:9px;color:var(--muted);">${isEn()?'Stays':'إقامات'}</div>
         </div>
       </div>
-      <div style="display:flex;gap:16px;font-size:11px;flex-wrap:wrap;">
-        <span>🌙 ${nights} ليلة</span>
+      <div style="display:flex;gap:16px;font-size:11px;flex-wrap:wrap;align-items:center;">
+        <span>🌙 ${nights} ${isEn()?'Night':'ليلة'}</span>
         <span>💰 £${Math.round(g.totalRev).toLocaleString()}</span>
-        ${lastStay?`<span>📅 آخر إقامة: ${fmtD(lastStay.ci)}</span>`:''}
-        ${(g.whatsapp||g.phone)?`<a href="https://wa.me/${(g.whatsapp||g.phone).replace(/[^0-9]/g,'')}" target="_blank" onclick="event.stopPropagation()" style="color:#25D366;font-weight:700;text-decoration:none;">💬 واتساب</a>`:''}
+        ${lastStay?`<span>📅 ${isEn()?'Last Stay:':'آخر إقامة:'} ${fmtD(lastStay.ci)}</span>`:''}
+        ${(g.whatsapp||g.phone)?`<a href="https://wa.me/${(g.whatsapp||g.phone).replace(/[^0-9]/g,'')}" target="_blank" onclick="event.stopPropagation()" style="color:#25D366;font-weight:700;text-decoration:none;">${isEn()?'💬 WhatsApp':'💬 واتساب'}</a>`:''}
+        <button onclick="event.stopPropagation();window.openGuestJourney(this.dataset.gname);" data-gname="${g.name.replace(/"/g,'&quot;')}" style="margin-right:auto;background:rgba(74,144,217,0.18);color:#7ab8f5;border:1px solid rgba(74,144,217,0.35);border-radius:7px;padding:5px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;display:inline-flex;align-items:center;gap:4px;">🗺️ ${isEn()?'Journey':'رحلة الضيف'}</button>
       </div>
     </div>`;
   }).join('');
@@ -20848,6 +20858,25 @@ function applyScanData(){
 </div>
 
 <!-- ══ MORNING BRIEFING OVERLAY ══ -->
+<!-- ══ OWNER DAILY REPORT MODAL ══ -->
+<div id="owner-report-overlay" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.82);align-items:flex-start;justify-content:center;padding:12px;overflow-y:auto;">
+<div style="background:linear-gradient(160deg,#1a1a2e,#16213e);border:1px solid rgba(201,168,76,0.4);border-radius:18px;max-width:680px;width:100%;margin:auto;padding:0;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.7);">
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,rgba(201,168,76,0.25),rgba(201,168,76,0.08));border-bottom:1px solid rgba(201,168,76,0.3);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:16px;font-weight:800;color:var(--gold);letter-spacing:1px;">📋 <span id="odr-title-ar">تقرير يومي للمالك</span> <span style="color:rgba(201,168,76,0.5);font-size:13px;">/ Owner Daily Report</span></div>
+      <div id="odr-date-str" style="font-size:12px;color:var(--muted);margin-top:3px;"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="printOwnerReport()" style="background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);color:var(--gold);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">🖨️ PDF</button>
+      <button onclick="closeOwnerReport()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">✕</button>
+    </div>
+  </div>
+  <!-- Report Content -->
+  <div id="odr-content" style="padding:18px 20px;"></div>
+</div>
+</div>
+
 <div id="morning-briefing-overlay" class="hidden">
   <div class="mb-box">
     <div class="mb-header">
@@ -21038,6 +21067,426 @@ function applyScanData(){
 </div>
 </div>
 
+<!-- ══ GUEST JOURNEY TIMELINE MODAL ══ -->
+<div class="ovl" id="guest-journey-modal">
+<div class="mdl" style="max-width:600px;padding:0;overflow:hidden;border-radius:14px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a1a2e,#12122a);padding:18px 20px;border-bottom:2px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="color:var(--gold);font-size:15px;font-weight:700;">🗺️ <span class="t" data-ar="رحلة الضيف" data-en="Guest Journey">رحلة الضيف</span></div>
+      <div id="gjt-guest-subtitle" style="font-size:11px;color:var(--muted);margin-top:3px;"></div>
+    </div>
+    <button onclick="closeM('guest-journey-modal')" style="background:rgba(255,255,255,0.06);border:1px solid var(--bdr);color:var(--muted);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+
+  <!-- KPI Strip -->
+  <div id="gjt-kpi" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:rgba(0,0,0,0.25);border-bottom:1px solid var(--bdr);"></div>
+
+  <!-- Scrollable Timeline Body -->
+  <div style="padding:18px 20px;max-height:62vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <div id="gjt-timeline"></div>
+  </div>
+
+  <!-- Footer Actions -->
+  <div style="padding:12px 20px;border-top:1px solid var(--bdr);background:rgba(0,0,0,0.15);display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn bgr bsm" id="gjt-wa-btn" onclick="gjtSendWA()" style="flex:1;justify-content:center;">
+      💬 <span class="t" data-ar="واتساب" data-en="WhatsApp">واتساب</span>
+    </button>
+    <button class="btn bbl bsm" onclick="gjtPrint()" style="flex:1;justify-content:center;">
+      🖨️ <span class="t" data-ar="طباعة" data-en="Print">طباعة</span>
+    </button>
+    <button class="btn bb bsm" onclick="closeM('guest-journey-modal')" style="flex:1;justify-content:center;">
+      <span class="t" data-ar="إغلاق" data-en="Close">إغلاق</span>
+    </button>
+  </div>
+</div>
+</div>
+
+<!-- CSS for Guest Journey Timeline -->
+<style>
+.gjt-item{display:flex;gap:0;margin-bottom:0;position:relative;}
+.gjt-left{width:56px;display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.gjt-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;z-index:1;position:relative;flex-shrink:0;border:2px solid rgba(255,255,255,0.1);}
+.gjt-line{width:2px;flex:1;min-height:20px;background:rgba(255,255,255,0.07);}
+.gjt-line.colored{background:rgba(201,168,76,0.25);}
+.gjt-right{flex:1;padding:0 0 18px 4px;}
+.gjt-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 13px;position:relative;overflow:hidden;}
+.gjt-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0;}
+.gjt-card.type-booking::before{background:#c9a84c;}
+.gjt-card.type-checkin::before{background:#3498db;}
+.gjt-card.type-checkout::before{background:#e67e22;}
+.gjt-card.type-restaurant::before{background:#1abc9c;}
+.gjt-card.type-tour::before{background:#9b59b6;}
+.gjt-card.type-review::before{background:#f1c40f;}
+.gjt-card.type-payment::before{background:#25D366;}
+.gjt-card.type-request::before{background:#e74c3c;}
+.gjt-card.type-wakeup::before{background:#ffc107;}
+.gjt-time{font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;text-transform:uppercase;}
+.gjt-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.gjt-detail{font-size:11px;color:var(--muted);line-height:1.5;}
+.gjt-amount{display:inline-block;background:rgba(37,211,102,0.12);color:#4cda7a;border:1px solid rgba(37,211,102,0.25);border-radius:5px;padding:1px 7px;font-size:10px;font-weight:700;margin-top:4px;}
+.gjt-kpi-cell{padding:10px 6px;text-align:center;border-right:1px solid var(--bdr);}
+.gjt-kpi-cell:last-child{border-right:none;}
+.gjt-kpi-val{font-size:17px;font-weight:700;color:var(--gold);}
+.gjt-kpi-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+.gjt-section-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--bdr);}
+@media(max-width:480px){
+  .gjt-left{width:42px;}
+  .gjt-dot{width:26px;height:26px;font-size:12px;}
+  .gjt-card{padding:8px 10px;}
+  .gjt-kpi-val{font-size:14px;}
+  .gjt-kpi-cell{padding:8px 3px;}
+}
+</style>
+
+<!-- ══ GUEST JOURNEY SCRIPT — standalone block ══ -->
+<script>
+(function(){
+  var _gjtGuest = null;
+
+  function gjtLoyalty(n){
+    return n>=10?'🏆 VIP':n>=5?'🥇 Gold':n>=2?'🥈 Silver':'🆕 New';
+  }
+
+  function buildJourney(name){
+    var tl = document.getElementById('gjt-timeline');
+    var kpi = document.getElementById('gjt-kpi');
+    var sub = document.getElementById('gjt-guest-subtitle');
+    if(!tl) return;
+
+    var bks = (typeof bookings!=='undefined'?bookings:[]);
+    var q = name.trim().toLowerCase();
+    var guestBk = bks.filter(function(b){ return b.name.trim().toLowerCase()===q; });
+
+    if(!guestBk.length){
+      tl.innerHTML='<div class="empty">لا توجد بيانات لهذا الضيف</div>';
+      return;
+    }
+
+    var active = guestBk.filter(function(b){ return b.status!=='Cancelled'; });
+    var totalNights = active.reduce(function(s,b){ return s+(typeof nts==='function'?nts(b.ci,b.co):0); },0);
+    var totalBkRev = active.reduce(function(s,b){
+      return s+(b.cur==='USD'?b.total*(exRate||50):b.cur==='EUR'?b.total*(eurRate||55):b.total);
+    },0);
+    var phone = guestBk[0].whatsapp||guestBk[0].phone||'';
+    var nat = guestBk[0].nat||'—';
+
+    if(sub) sub.textContent = name+' · '+nat+(phone?' · '+phone:'');
+    var en = typeof isEn==='function'?isEn():(typeof currentLang!=='undefined'&&currentLang==='en');
+    // KPI updated after all sections collected
+
+    // ── helpers ──
+    function fmtAmt(n){ return n>0?'£'+Math.round(n).toLocaleString():''; }
+    function itemNames(items){
+      return (items||[]).map(function(i){
+        var arN=i.name||i.item||'';
+        var enN=i.nameEn&&i.nameEn.trim()&&i.nameEn.trim().toLowerCase()!==arN.trim().toLowerCase()?i.nameEn.trim():'';
+        return (en?(enN||arN):(arN+(enN?' / '+enN:'')))+(i.qty?'×'+i.qty:'');
+      }).join(' · ');
+    }
+    function payLabel(method){
+      var m=(method||'').toLowerCase();
+      if(!m) return '';
+      if(m.indexOf('room')>=0||m.indexOf('غرفة')>=0) return en?'⏳ Pending (Room)':'⏳ معلق على الغرفة';
+      if(m.indexOf('cash')>=0||m.indexOf('كاش')>=0) return en?'💵 Cash':'💵 كاش';
+      if(m.indexOf('card')>=0||m.indexOf('بطاقة')>=0) return en?'💳 Card':'💳 بطاقة';
+      if(m.indexOf('transfer')>=0||m.indexOf('تحويل')>=0) return en?'🏦 Transfer':'🏦 تحويل';
+      return method;
+    }
+    function mkCard(ev){
+      var fd=ev.date&&typeof fmtD==='function'?fmtD(ev.date):ev.date||'—';
+      return '<div class="gjt-card type-'+ev.type+'" style="margin-bottom:6px;">'
+        +'<div class="gjt-time">'+fd+'</div>'
+        +'<div class="gjt-title">'+ev.icon+' '+ev.title+'</div>'
+        +(ev.detail?'<div class="gjt-detail" style="margin-top:3px;">'+ev.detail+'</div>':'')
+        +(ev.amount?'<div class="gjt-amount" style="margin-top:5px;">'+ev.amount+'</div>':'')
+        +'</div>';
+    }
+    function mkSection(icon,label,color,cards,total){
+      var hdr='<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px;">'
+        +'<div style="font-size:11px;font-weight:700;color:'+color+';letter-spacing:1px;text-transform:uppercase;">'+icon+' '+label+'</div>'
+        +(total?'<div style="font-size:12px;font-weight:800;color:'+color+';">'+total+'</div>':'')
+        +'</div>';
+      return hdr+cards.join('');
+    }
+
+    // ── collect bookings ──
+    var guestRooms=guestBk.map(function(b){return b.room;}).filter(Boolean);
+    var guestRoomDates={};
+    guestBk.forEach(function(b){if(b.room)guestRoomDates[b.room]={ci:b.ci,co:b.co};});
+
+    var bkCards=[], payCards=[], restCards=[], tourCards=[], otherCards=[];
+    var totalRest=0, totalTours=0, totalPaid=0;
+
+    // حجوزات + مدفوعات
+    guestBk.forEach(function(b){
+      var sym=b.cur==='USD'?'$':b.cur==='EUR'?'€':'£';
+      var nights=typeof nts==='function'?nts(b.ci,b.co):0;
+      var paidSum=typeof calcPaid==='function'?calcPaid(b):0;
+      var remaining=Math.max(0,(b.total||0)-paidSum);
+      var payStatus='';
+      if(b.status==='Cancelled') payStatus='';
+      else if(remaining<=0) payStatus=' · ✅ '+(en?'Fully Paid':'مدفوع بالكامل');
+      else if(paidSum>0) payStatus=' · ⚠️ '+(en?'Partial — Remaining: '+sym+remaining.toFixed(0):'جزئي — متبقي: '+sym+remaining.toFixed(0));
+      else payStatus=' · 🔴 '+(en?'Unpaid':'لم يُدفع');
+      var detail=(en?'Room ':'غرفة ')+b.room
+        +' · '+(en?'Check-in:':'وصول:')+' '+(typeof fmtD==='function'?fmtD(b.ci):b.ci)
+        +' · '+(en?'Check-out:':'مغادرة:')+' '+(typeof fmtD==='function'?fmtD(b.co):b.co)
+        +' · '+nights+(en?' nights':' ليالي')
+        +payStatus;
+      bkCards.push({ts:b.ci+'T00:00:00',date:b.ci,icon:b.status==='Cancelled'?'❌':'📋',
+        title:(en?'Booking':'حجز')+' '+(b.invNo||b.id||''),
+        detail:detail,amount:sym+(b.total||0),type:'booking'});
+      if(b.payments&&b.payments.length){
+        b.payments.forEach(function(p){
+          if(!p.amount||p.amount<=0) return;
+          var sym2=b.cur==='USD'?'$':b.cur==='EUR'?'€':'£';
+          var pAmt=p.amount*(b.cur==='USD'?(exRate||50):b.cur==='EUR'?(eurRate||55):1);
+          totalPaid+=pAmt;
+          var pDetail=payLabel(p.method)+(p.note?' · '+p.note:'')+(p.ref?' · Ref:'+p.ref:'');
+          payCards.push({ts:(p.date||b.ci)+'T06:00:00',date:p.date||b.ci,icon:'💳',
+            title:en?'Payment':'دفعة',detail:pDetail,amount:sym2+p.amount,type:'payment'});
+        });
+      }
+    });
+
+    // مطعم
+    var rtx=typeof restaurantTx!=='undefined'?restaurantTx:[];
+    rtx.forEach(function(tx){
+      var match=false;
+      if(tx.guest&&tx.guest.trim().toLowerCase()===q)match=true;
+      if(!match&&tx.room&&guestRooms.indexOf(String(tx.room))>=0){
+        var rd=guestRoomDates[String(tx.room)];
+        if(rd&&tx.date>=rd.ci&&tx.date<=rd.co)match=true;
+      }
+      if(!match)return;
+      var amt=tx.egp||tx.total||0;
+      totalRest+=amt;
+      var pm=payLabel(tx.method||tx.payMethod||'');
+      var items=tx.items?itemNames(tx.items):(tx.notes||tx.desc||'');
+      var det=items+(pm?' · '+pm:'');
+      restCards.push({ts:tx.date+'T12:00:00',date:tx.date,icon:'🍽️',
+        title:en?'Restaurant Order':'طلب مطعم',detail:det,amount:fmtAmt(amt),type:'restaurant'});
+    });
+
+    // جولات
+    var trs=typeof tours!=='undefined'?tours:[];
+    trs.forEach(function(t){
+      if(!t.guest||t.guest.trim().toLowerCase()!==q)return;
+      var amt=t.price||0; totalTours+=amt;
+      tourCards.push({ts:(t.date||t.ci||'')+'T09:00:00',date:t.date||t.ci||'',icon:'🏔️',
+        title:t.name||(en?'Tour':'جولة'),
+        detail:(t.type||'')+(t.guide?' · '+t.guide:'')+(t.notes?' · '+t.notes:''),
+        amount:fmtAmt(amt),type:'tour'});
+    });
+
+    // تقييمات + طلبات + إيقاظ
+    try{(JSON.parse(localStorage.getItem('dta_reviews')||'[]')).forEach(function(r){
+      if(!r.guest||r.guest.trim().toLowerCase()!==q)return;
+      otherCards.push({ts:(r.date||'')+'T20:00:00',date:r.date||'',icon:'⭐',
+        title:(en?'Review ':'تقييم ')+'⭐'.repeat(Math.min(r.rating||5,5)),
+        detail:r.comment||'',amount:'',type:'review'});
+    });}catch(e){}
+    try{(JSON.parse(localStorage.getItem('dta_greq')||'[]')).forEach(function(r){
+      if(!r.guest||r.guest.trim().toLowerCase()!==q)return;
+      otherCards.push({ts:(r.date||'')+'T10:00:00',date:r.date||'',icon:'🛎️',
+        title:(en?'Request: ':'طلب: ')+(r.typeLabel||r.type||''),
+        detail:(r.notes||'')+(r.status==='closed'?' · ✅ '+(en?'Done':'منجز'):''),
+        amount:'',type:'request'});
+    });}catch(e){}
+    try{(JSON.parse(localStorage.getItem('dta_wakeup')||'[]')).forEach(function(w){
+      if(!w.guest||w.guest.trim().toLowerCase()!==q)return;
+      otherCards.push({ts:(w.date||'')+'T'+(w.time||'06:00')+':00',date:w.date||'',icon:'⏰',
+        title:(en?'Wake-up ':'إيقاظ ')+( w.time||''),
+        detail:(en?'Room ':'غرفة ')+w.room,amount:'',type:'wakeup'});
+    });}catch(e){}
+
+    // ── sort each section ──
+    function sortEvs(arr){arr.sort(function(a,b){return a.ts.localeCompare(b.ts);});}
+    sortEvs(bkCards); sortEvs(payCards); sortEvs(restCards); sortEvs(tourCards); sortEvs(otherCards);
+
+    var allEvents=[].concat(bkCards,payCards,restCards,tourCards,otherCards);
+    if(!allEvents.length){
+      tl.innerHTML='<div class="empty">'+(en?'No events recorded':'لا توجد أحداث مسجلة')+'</div>';
+      return;
+    }
+
+    var html='';
+
+    // section: حجوزات
+    if(bkCards.length)
+      html+=mkSection('📋',en?'Stays':'الإقامات','var(--gold)',bkCards.map(mkCard),'');
+
+    // section: مدفوعات
+    if(payCards.length)
+      html+=mkSection('💳',en?'Payments':'المدفوعات','#4cda7a',payCards.map(mkCard),
+        en?'Total: £'+Math.round(totalPaid).toLocaleString():'إجمالي: £'+Math.round(totalPaid).toLocaleString());
+
+    // section: مطعم
+    if(restCards.length)
+      html+=mkSection('🍽️',en?'Restaurant':'المطعم','#1abc9c',restCards.map(mkCard),
+        en?'Total: '+fmtAmt(totalRest):'إجمالي: '+fmtAmt(totalRest));
+
+    // section: جولات
+    if(tourCards.length)
+      html+=mkSection('🏔️',en?'Tours':'الجولات','#9b59b6',tourCards.map(mkCard),
+        en?'Total: '+fmtAmt(totalTours):'إجمالي: '+fmtAmt(totalTours));
+
+    // section: أخرى
+    if(otherCards.length)
+      html+=mkSection('🛎️',en?'Other Activity':'نشاطات أخرى','#7ab8f5',otherCards.map(mkCard),'');
+
+    // ── Grand Total ──
+    var grandTotal=totalBkRev+totalRest+totalTours;
+
+    // Update KPI now that we have all totals
+    if(kpi) kpi.innerHTML = [
+      {v:active.length,       l:en?'Stays':'إقامات',  c:'var(--gold)'},
+      {v:totalNights,         l:en?'Nights':'ليالي',   c:'#7ab8f5'},
+      {v:'£'+Math.round(grandTotal).toLocaleString(), l:en?'Revenue':'إيرادات', c:'#4cda7a'},
+      {v:gjtLoyalty(active.length), l:en?'Level':'مستوى', c:'#f1c40f'}
+    ].map(function(k){
+      return '<div class="gjt-kpi-cell"><div class="gjt-kpi-val" style="color:'+k.c+';">'+k.v+'</div><div class="gjt-kpi-lbl">'+k.l+'</div></div>';
+    }).join('');
+
+    // Greeting based on loyalty level
+    var loyaltyN=active.length;
+    var greet='';
+    if(loyaltyN>=10) greet=en
+      ?'🏆 An exceptional VIP guest — your loyalty means the world to us. Thank you for making Dahab Trendy your home away from home!'
+      :'🏆 ضيف VIP استثنائي — وفاؤك يعني لنا الكثير. شكراً لجعل دهب تريندي بيتك الثاني!';
+    else if(loyaltyN>=5) greet=en
+      ?'🥇 A valued Gold member — we cherish every moment of your visits. Looking forward to welcoming you again soon!'
+      :'🥇 عضو ذهبي مميز — نقدّر كل لحظة من زياراتك. نتطلع لاستقبالك قريباً!';
+    else if(loyaltyN>=2) greet=en
+      ?'🥈 Welcome back, Silver guest! It\'s always a pleasure to have you with us at Dahab Trendy.'
+      :'🥈 أهلاً بعودتك أيها الضيف الفضي! يسعدنا دائماً وجودك معنا في دهب تريندي.';
+    else greet=en
+      ?'🌟 Welcome to Dahab Trendy! We hope your stay was wonderful and look forward to seeing you again in beautiful Dahab.'
+      :'🌟 أهلاً بك في دهب تريندي! نأمل أن تكون إقامتك رائعة ونتطلع لرؤيتك مجدداً في دهب الجميلة.';
+
+    html+='<div style="margin-top:12px;padding:12px 14px;background:rgba(52,152,219,0.07);border:1px solid rgba(52,152,219,0.2);border-radius:10px;font-size:11px;color:#7ab8f5;line-height:1.6;font-style:italic;">'+greet+'</div>';
+
+    html+='<div style="margin-top:10px;padding:12px 14px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.3);border-radius:10px;display:flex;justify-content:space-between;align-items:center;">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--gold);">🏆 '+(en?'Grand Total':'الإجمالي الكلي')+'</div>'
+      +'<div style="font-size:16px;font-weight:800;color:#4cda7a;">£'+Math.round(grandTotal).toLocaleString()+'</div>'
+      +'</div>';
+
+    tl.innerHTML=html;
+  }
+
+  window.openGuestJourney = function(guestName){
+    if(!guestName) return;
+    _gjtGuest = guestName;
+    var gp = document.getElementById('guest-profiles-modal');
+    if(gp) gp.classList.remove('on');
+    buildJourney(guestName);
+    var m = document.getElementById('guest-journey-modal');
+    if(m) m.classList.add('on');
+  };
+
+  window.gjtSendWA = function(){
+    if(!_gjtGuest) return;
+    var q=_gjtGuest.trim().toLowerCase();
+    var bks=(typeof bookings!=='undefined'?bookings:[]).filter(function(b){return b.name.trim().toLowerCase()===q&&b.status!=='Cancelled';});
+    if(!bks.length) return;
+    var phone=(bks[0].whatsapp||bks[0].phone||'').replace(/[^0-9+]/g,'');
+    var msg='🏨 *Dahab Trendy — Guest Journey*\n\n👤 *'+_gjtGuest+'*\n📊 Stays: '+bks.length+'\n🏅 Level: '+gjtLoyalty(bks.length)+'\n\nThank you! 🙏\n— Dahab Trendy 🌊';
+    window.open(phone?'https://wa.me/'+phone+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+  };
+
+  window.gjtPrint = function(){
+    var tl=document.getElementById('gjt-timeline');
+    var sub=document.getElementById('gjt-guest-subtitle');
+    var kpiEl=document.getElementById('gjt-kpi');
+    var w=window.open('','_blank');
+    if(!w) return;
+
+    // Extract KPI cells
+    var kpiRows='';
+    if(kpiEl){
+      var cells=Array.prototype.slice.call(kpiEl.querySelectorAll('.gjt-kpi-cell'));
+      kpiRows=cells.map(function(c){
+        var v=c.querySelector('.gjt-kpi-val');var l=c.querySelector('.gjt-kpi-lbl');
+        return '<div class="kc"><div class="kv">'+(v?v.textContent:'')+'</div><div class="kl">'+(l?l.textContent:'')+'</div></div>';
+      }).join('');
+    }
+
+    // Convert dark-UI cards to print cards
+    var body=tl?tl.innerHTML:'';
+    // section headers
+    body=body.replace(/<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px;">/g,'<div class="shdr">');
+    body=body.replace(/<div style="font-size:11px;font-weight:700;color:[^;]+;letter-spacing:1px;text-transform:uppercase;">/g,'<div class="stitle">');
+    body=body.replace(/<div style="font-size:12px;font-weight:800;color:[^;]+">/g,'<div class="stot">');
+    // cards
+    body=body.replace(/class="gjt-card type-/g,'class="pc type-');
+    body=body.replace(/style="margin-bottom:6px;"/g,'');
+    body=body.replace(/class="gjt-time"/g,'class="ptime"');
+    body=body.replace(/class="gjt-title"/g,'class="ptitle"');
+    body=body.replace(/class="gjt-detail"[^>]*>/g,'class="pdetail">');
+    body=body.replace(/class="gjt-amount"[^>]*>/g,'class="pamount">');
+    // greeting box
+    body=body.replace(/style="margin-top:12px;padding:12px 14px;background:rgba\(52,152,219[^"]+"/g,'class="greet"');
+    // grand total box
+    body=body.replace(/style="margin-top:10px;padding:12px 14px;background:rgba\(201,168,76[^"]+"/g,'class="gtotal"');
+    body=body.replace(/<div style="font-size:12px;font-weight:700;color:var\(--gold\);">/g,'<div class="gtlbl">');
+    body=body.replace(/<div style="font-size:16px;font-weight:800;color:#4cda7a;">/g,'<div class="gtval">');
+
+    var css=`
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a2e;direction:rtl;font-size:13px;}
+.page{max-width:700px;margin:0 auto;padding:28px;}
+.header{background:linear-gradient(135deg,#1a1a2e,#2c2c4a);color:#fff;padding:20px 24px;border-radius:12px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}
+.hotel-name{font-size:11px;color:#c9a84c;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.guest-name{font-size:22px;font-weight:800;color:#fff;}
+.guest-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:4px;}
+.logo{font-size:40px;}
+.kstrip{display:flex;border:1px solid #e0d0a0;border-radius:10px;overflow:hidden;margin-bottom:20px;}
+.kc{flex:1;text-align:center;padding:12px 6px;border-right:1px solid #e0d0a0;background:#fdfaf2;}
+.kc:last-child{border-right:none;}
+.kv{font-size:18px;font-weight:800;color:#c9a84c;}
+.kl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
+.shdr{display:flex;justify-content:space-between;align-items:center;padding:8px 0 6px;border-bottom:2px solid #f0e6cc;margin:18px 0 10px;}
+.stitle{font-size:11px;font-weight:800;color:#c9a84c;text-transform:uppercase;letter-spacing:1.5px;}
+.stot{font-size:13px;font-weight:800;color:#27ae60;}
+.pc{border:1px solid #e8e0d0;border-radius:8px;padding:10px 13px;margin-bottom:7px;border-right:3px solid #c9a84c;background:#fdfcf8;}
+.pc.type-payment{border-right-color:#27ae60;background:#f6fdf8;}
+.pc.type-restaurant{border-right-color:#1abc9c;background:#f4fdfb;}
+.pc.type-tour{border-right-color:#9b59b6;background:#faf5ff;}
+.pc.type-review{border-right-color:#f1c40f;background:#fefdf0;}
+.pc.type-request{border-right-color:#e74c3c;background:#fef6f5;}
+.pc.type-wakeup{border-right-color:#f39c12;background:#fefdf5;}
+.ptime{font-size:9px;color:#999;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;}
+.ptitle{font-size:12px;font-weight:700;color:#1a1a2e;}
+.pdetail{font-size:11px;color:#555;margin-top:4px;line-height:1.6;}
+.pamount{display:inline-block;background:#e8f8ee;color:#27ae60;border:1px solid #b2dfc4;border-radius:4px;padding:2px 9px;font-size:11px;font-weight:700;margin-top:5px;}
+.greet{margin-top:14px;padding:13px 16px;background:#f0f7ff;border:1px solid #c5dff8;border-radius:10px;font-size:11px;color:#2980b9;line-height:1.7;font-style:italic;text-align:center;}
+.gtotal{margin-top:14px;padding:14px 18px;background:#fdf8ed;border:2px solid #c9a84c;border-radius:10px;display:flex;justify-content:space-between;align-items:center;}
+.gtlbl{font-size:13px;font-weight:700;color:#c9a84c;}
+.gtval{font-size:20px;font-weight:800;color:#27ae60;}
+.footer{margin-top:22px;padding-top:14px;border-top:1px solid #e8e0cc;text-align:center;font-size:10px;color:#aaa;}
+@media print{
+  .page{padding:16px;}
+  .header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .kstrip,.pc,.greet,.gtotal{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}`;
+
+    var date=new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
+    w.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>Guest Journey — '+(_gjtGuest||'')+'</title><style>'+css+'</style></head><body>'
+      +'<div class="page">'
+      +'<div class="header"><div><div class="hotel-name">🌊 Dahab Trendy — Guest Journey</div><div class="guest-name">'+(_gjtGuest||'')+'</div><div class="guest-sub">'+(sub?sub.textContent:'')+'</div></div><div class="logo">🗺️</div></div>'
+      +'<div class="kstrip">'+kpiRows+'</div>'
+      +body
+      +'<div class="footer">Dahab Trendy · دهب تريندي &nbsp;|&nbsp; '+date+' &nbsp;|&nbsp; جميع الحقوق محفوظة ©</div>'
+      +'</div></body></html>');
+    w.document.close();
+    setTimeout(function(){w.print();},600);
+  };
+
+})();
+</script>
+
 <!-- ══ YoY COMPARISON MODAL ══ -->
 <div class="ovl" id="yoy-modal">
 <div class="mdl" style="max-width:580px;">
@@ -21183,6 +21632,395 @@ function openMorningBriefing(){
 function closeMorningBriefing(){
   document.getElementById('morning-briefing-overlay').classList.add('hidden');
 }
+
+// ══════════════════════════════════════════════
+// OWNER DAILY REPORT
+// ══════════════════════════════════════════════
+// OWNER DAILY REPORT — TODAY ONLY, English numbers
+// ══════════════════════════════════════════════
+function openOwnerDailyReport(){
+  const ar = currentLang === 'ar';
+  const td = toDay();
+  const now = new Date();
+
+  // ── Date strings ──
+  const dayNamesAr=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const dayNamesEn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const monthNamesAr=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const monthNamesEn=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dateStrAr = dayNamesAr[now.getDay()] + '، ' + now.getDate() + ' ' + monthNamesAr[now.getMonth()] + ' ' + now.getFullYear();
+  const dateStrEn = dayNamesEn[now.getDay()] + ', ' + monthNamesEn[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const timeStr = hh + ':' + mm;
+
+  // ── English number formatter (always) ──
+  const fmt = v => 'EGP ' + Math.round(Math.abs(v)).toLocaleString('en-US');
+  const fmtSign = v => (v < 0 ? '−' : '') + fmt(v);
+
+  // ── Helpers ──
+  const exR  = exRate  || 50;
+  const eurR = eurRate || 55;
+  const toEGP    = b => b.cur==='USD' ? b.total*exR : b.cur==='EUR' ? b.total*eurR : (b.total||0);
+  const commToEGP= b => b.cur==='USD' ? (b.commissionAmt||0)*exR : b.cur==='EUR' ? (b.commissionAmt||0)*eurR : (b.commissionAmt||0);
+  const paidToEGP= b => { const p=calcPaid(b); return b.cur==='EGP'?p:p*exR; };
+
+  // ── Bookings ──
+  const allBks = bookings || [];
+
+  // In-house NOW (occupancy)
+  const active = allBks.filter(b => b.status!=='Cancelled' && !b.coConfirmed &&
+    (b.dayuse ? b.ci===td : (b.ci<=td && b.co>td)));
+
+  // TODAY arrivals & departures
+  const todayCI = allBks.filter(b => b.ci===td && b.status!=='Cancelled');
+  const todayCO = allBks.filter(b => b.co===td && b.status!=='Cancelled' && !b.coConfirmed && b.ci!==td);
+
+  // Future reservations (info only)
+  const futureRes = allBks.filter(b => b.ci>td && b.status!=='Cancelled' && b.status!=='Standby');
+
+  // TODAY revenue = sum of bookings that CHECK IN today (new money arriving today)
+  const todayRevEGP  = todayCI.reduce((s,b) => s + toEGP(b), 0);
+  const todayCommEGP = todayCI.reduce((s,b) => s + commToEGP(b), 0);
+  const todayNetRevEGP = todayRevEGP - todayCommEGP;
+
+  // TODAY collected = cash/payments received today (prepay on arrivals + any today payments)
+  const todayCollectedEGP = todayCI.reduce((s,b) => s + paidToEGP(b), 0);
+  const todayUnpaidEGP    = Math.max(0, todayRevEGP - todayCollectedEGP);
+
+  // TODAY cancellation fees
+  const todayCancelEGP = allBks.filter(b => b.status==='Cancelled' && (b.cancelledAt||b.ci||'').startsWith?.(td))
+    .reduce((s,b)=>{ const d=calcDeductions(b); return s+(b.cur==='USD'?d*exR:b.cur==='EUR'?d*eurR:d); },0);
+
+  // Pending payments for IN-HOUSE guests
+  const pendingInHouse = active.filter(b => b.payStatus==='Pending'||b.payStatus==='Partial');
+
+  // ── Occupancy ──
+  const occupiedRooms = [...new Set(active.map(b=>b.room).filter(Boolean))];
+  const totalRooms    = ROOMS.length;
+  const occPct   = totalRooms > 0 ? Math.round((occupiedRooms.length/totalRooms)*100) : 0;
+  const occColor = occPct>=70?'#2ecc71':occPct>=40?'#f39c12':'#e74c3c';
+  const totalGuests = active.reduce((s,b)=>s+(parseInt(b.adults)||1)+(parseInt(b.children)||0),0);
+
+  // Nationalities in-house
+  const natMap={};
+  active.forEach(b=>{ const n=b.nat||'—'; natMap[n]=(natMap[n]||0)+1; });
+  const natStr=Object.entries(natMap).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+(v>1?' ×'+v:'')).join(' · ')||'—';
+
+  // ── TODAY expenses ──
+  const allExp = expenses || [];
+  const todayExp = allExp.filter(e => (e.date||'').startsWith(td) || (e.createdAt||'').startsWith(td));
+  const todayExpTotal     = todayExp.reduce((s,e)=>s+e.egp,0);
+  const todayExpCustody   = todayExp.filter(e=>e.source==='custody').reduce((s,e)=>s+e.egp,0);
+  const todayExpNetProfit = todayExp.filter(e=>e.source!=='custody').reduce((s,e)=>s+e.egp,0);
+
+  // ── TODAY restaurant ──
+  const restTx = restaurantTx || [];
+  const todayRestInc = restTx.filter(t=>t.type==='income'&&((t.date||'').startsWith(td)||(t.createdAt||'').startsWith(td))).reduce((s,t)=>s+t.egp,0);
+  const todayRestExp = restTx.filter(t=>t.type==='expense'&&((t.date||'').startsWith(td)||(t.createdAt||'').startsWith(td))).reduce((s,t)=>s+t.egp,0);
+  const todayRestNet = todayRestInc - todayRestExp;
+
+  // ── Custody balance (running, not daily) ──
+  const custList = window._custodyList || [];
+  const custodyAmt   = custList.filter(c=>c.type!=='from_owner'&&c.type!=='to_owner').reduce((s,c)=>s+c.amt,0);
+  const fromOwner    = custList.filter(c=>c.type==='from_owner').reduce((s,c)=>s+c.amt,0);
+  const toOwner      = custList.filter(c=>c.type==='to_owner').reduce((s,c)=>s+c.amt,0);
+  const allExpCustody= allExp.filter(e=>e.source==='custody').reduce((s,e)=>s+e.egp,0);
+  const custodyBal   = custodyAmt - allExpCustody;
+
+  // ── TODAY net cash ──
+  // What the owner actually pockets today:
+  // (collected from arrivals) − (today expenses from net profit) + (today restaurant net)
+  const todayNetCash = todayCollectedEGP - todayExpNetProfit + todayRestNet;
+  const netCol = todayNetCash >= 0 ? '#2ecc71' : '#e74c3c';
+
+  // ── Builders ──
+  const sec = (icon, titleAr, titleEn, content) =>
+    `<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:13px 15px;margin-bottom:11px;">
+      <div style="font-size:11px;font-weight:800;color:#c9a84c;letter-spacing:1px;text-transform:uppercase;margin-bottom:9px;padding-bottom:6px;border-bottom:1px solid rgba(201,168,76,0.2);">
+        ${icon} ${titleAr} <span style="color:rgba(201,168,76,0.45);font-weight:500;font-size:10px;">/ ${titleEn}</span>
+      </div>${content}</div>`;
+
+  const row = (labelAr, labelEn, val, color='#c8d6e5', bold=false) =>
+    `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <span style="font-size:11px;color:#8a9ab0;">${labelAr}<span style="font-size:9px;opacity:0.55;"> / ${labelEn}</span></span>
+      <span style="font-size:${bold?'14':'12'}px;font-weight:${bold?'800':'600'};color:${color};font-family:monospace;direction:ltr;">${val}</span>
+    </div>`;
+
+  const bkCard = (b, type) => {
+    const icon = type==='ci'?'🛬':'🛫';
+    const col  = type==='ci'?'#7ab8f5':'#e67e22';
+    const paid = calcPaid(b);
+    const rem  = Math.max(0, (b.total||0) - paid);
+    const remStr = rem > 0
+      ? `<span style="color:#e74c3c;font-weight:700;"> ⚠️ Due: ${b.cur} ${rem.toLocaleString('en-US')}</span>`
+      : `<span style="color:#4cda7a;font-weight:700;"> ✅ Paid</span>`;
+    return `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:8px 11px;margin-bottom:6px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:17px;">${icon}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;color:${col};font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.name}</div>
+        <div style="font-size:10px;color:#8a9ab0;margin-top:2px;direction:ltr;">Room ${b.room} · ${b.cur} ${(b.total||0).toLocaleString('en-US')}${remStr}</div>
+      </div>
+    </div>`;
+  };
+
+  // ══ Assemble ══
+  let html = '';
+
+  // 1. Occupancy (always today snapshot)
+  html += sec('🏨','الإشغال الآن','Occupancy Now',
+    row('غرف مشغولة','Occupied', `${occupiedRooms.length} / ${totalRooms}`, occColor, true) +
+    row('نسبة الإشغال','Rate', `${occPct}%`, occColor) +
+    row('ضيوف في الفندق','Guests In-House', `${totalGuests}`) +
+    row('الجنسيات','Nationalities', natStr) +
+    row('حجوزات قادمة','Future Reservations', `${futureRes.length}`)
+  );
+
+  // 2. Today revenue (arrivals today only)
+  html += sec('💰','إيرادات اليوم','Today Revenue',
+    row('إيرادات الوصول','Arrivals Revenue', fmt(todayRevEGP), '#c9a84c', true) +
+    (todayCommEGP>0 ? row('عمولات','Commissions', '− '+fmt(todayCommEGP), '#e74c3c') : '') +
+    (todayCommEGP>0 ? row('صافي الإيرادات','Net Revenue', fmt(todayNetRevEGP), '#c9a84c') : '') +
+    row('محصّل اليوم','Collected Today', fmt(todayCollectedEGP), '#4cda7a') +
+    (todayUnpaidEGP>0 ? row('متبقي غير مدفوع','Unpaid', fmt(todayUnpaidEGP), '#e67e22') : '') +
+    (todayCancelEGP>0 ? row('رسوم إلغاء','Cancellation Fees', fmt(todayCancelEGP), '#e74c3c') : '') +
+    (pendingInHouse.length>0 ? row('ضيوف دين عليهم','In-House Pending', `⚠️ ${pendingInHouse.length}`, '#e67e22') : row('مدفوعات','Payments Status', '✅ All clear', '#4cda7a'))
+  );
+
+  // 3. Today expenses
+  html += sec('💸','مصروفات اليوم','Today Expenses',
+    todayExpTotal > 0
+      ? row('إجمالي المصروفات','Total', fmt(todayExpTotal), '#e74c3c', true) +
+        (todayExpNetProfit>0 ? row('من الربح','From Profit', fmt(todayExpNetProfit), '#e74c3c') : '') +
+        (todayExpCustody>0  ? row('من العهدة','From Custody', fmt(todayExpCustody), '#9b59b6') : '')
+      : `<div style="font-size:12px;color:#4cda7a;padding:4px 0;">✅ No expenses today</div>`
+  );
+
+  // 4. Restaurant today (only if data)
+  if(todayRestInc > 0 || todayRestExp > 0){
+    html += sec('🍽️','مطعم / بار اليوم','Restaurant Today',
+      row('إيرادات','Income', fmt(todayRestInc), '#4cda7a') +
+      (todayRestExp>0 ? row('مصروفات','Expenses', fmt(todayRestExp), '#e74c3c') : '') +
+      row('الصافي','Net', fmtSign(todayRestNet), todayRestNet>=0?'#4cda7a':'#e74c3c', true)
+    );
+  }
+
+  // 5. Custody balance (running total — useful daily context)
+  if(custList.length > 0){
+    html += sec('🔒','رصيد العهدة','Custody Balance',
+      (custodyAmt>0   ? row('إجمالي العهدة','Total Custody', fmt(custodyAmt), '#9b59b6') : '') +
+      (allExpCustody>0? row('مصروفات منها','Spent', fmt(allExpCustody), '#e74c3c') : '') +
+      row('الرصيد الحالي','Current Balance', fmt(custodyBal), '#9b59b6', true) +
+      (fromOwner>0    ? row('تحويلات من المالك','From Owner', fmt(fromOwner), '#e67e22') : '') +
+      (toOwner>0      ? row('تحويلات للمالك','To Owner', fmt(toOwner), '#4cda7a') : '')
+    );
+  }
+
+  // 6. TODAY Net Cash — big box
+  html += `<div style="background:linear-gradient(135deg,rgba(${todayNetCash>=0?'46,204,113':'231,76,60'},0.18),rgba(${todayNetCash>=0?'46,204,113':'231,76,60'},0.05));border:2px solid rgba(${todayNetCash>=0?'46,204,113':'231,76,60'},0.45);border-radius:14px;padding:16px 18px;margin-bottom:11px;text-align:center;">
+    <div style="font-size:10px;color:#8a9ab0;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">صافي اليوم / Today's Net Cash</div>
+    <div style="font-size:30px;font-weight:900;color:${netCol};font-family:monospace;letter-spacing:1px;direction:ltr;">${(todayNetCash<0?'−':'') + fmt(todayNetCash)}</div>
+    <div style="font-size:9px;color:#8a9ab0;margin-top:5px;">Collected − Expenses + Restaurant</div>
+  </div>`;
+
+  // 7. Arrivals list
+  if(todayCI.length){
+    html += sec('🛬','وصول اليوم','Check-ins Today', todayCI.map(b=>bkCard(b,'ci')).join(''));
+  }
+  // 8. Departures list
+  if(todayCO.length){
+    html += sec('🛫','مغادرة اليوم','Check-outs Today', todayCO.map(b=>bkCard(b,'co')).join(''));
+  }
+
+  // Footer
+  html += `<div style="text-align:center;padding:6px 0 2px;font-size:9px;color:rgba(255,255,255,0.18);">
+    Dahab Trendy · ${dateStrEn} · ${timeStr}
+  </div>`;
+
+  document.getElementById('odr-date-str').textContent = dateStrAr + '  ·  ' + dateStrEn + '  ·  ' + timeStr;
+  document.getElementById('odr-content').innerHTML = html;
+  const overlay = document.getElementById('owner-report-overlay');
+  overlay.style.display = 'flex';
+  setTimeout(()=>overlay.scrollTop=0, 50);
+}
+
+function closeOwnerReport(){
+  document.getElementById('owner-report-overlay').style.display = 'none';
+}
+
+function printOwnerReport(){
+  const now = new Date();
+  const dayNamesEn=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const monthNamesEn=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dateStrEn = dayNamesEn[now.getDay()] + ', ' + monthNamesEn[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm2 = String(now.getMinutes()).padStart(2,'0');
+  const timeStr = hh + ':' + mm2;
+  const td = toDay();
+  const exR  = exRate  || 50;
+  const eurR = eurRate || 55;
+  const toEGP     = b => b.cur==='USD'?b.total*exR:b.cur==='EUR'?b.total*eurR:(b.total||0);
+  const commToEGP = b => b.cur==='USD'?(b.commissionAmt||0)*exR:b.cur==='EUR'?(b.commissionAmt||0)*eurR:(b.commissionAmt||0);
+  const paidToEGP = b => { const p=calcPaid(b); return b.cur==='EGP'?p:p*exR; };
+  const f = v => 'EGP ' + Math.round(Math.abs(v)).toLocaleString('en-US');
+  const allBks = bookings||[];
+  const active  = allBks.filter(b=>b.status!=='Cancelled'&&!b.coConfirmed&&(b.dayuse?b.ci===td:(b.ci<=td&&b.co>td)));
+  const todayCI = allBks.filter(b=>b.ci===td&&b.status!=='Cancelled');
+  const todayCO = allBks.filter(b=>b.co===td&&b.status!=='Cancelled'&&!b.coConfirmed&&b.ci!==td);
+  const futureRes= allBks.filter(b=>b.ci>td&&b.status!=='Cancelled'&&b.status!=='Standby');
+  const occRooms = [...new Set(active.map(b=>b.room).filter(Boolean))];
+  const totalRooms= ROOMS.length;
+  const occPct = totalRooms>0?Math.round(occRooms.length/totalRooms*100):0;
+  const totalGuests= active.reduce((s,b)=>s+(parseInt(b.adults)||1)+(parseInt(b.children)||0),0);
+  const natMap={};
+  active.forEach(b=>{const n=b.nat||'—';natMap[n]=(natMap[n]||0)+1;});
+  const natStr=Object.entries(natMap).sort((a,b)=>b[1]-a[1]).map(([k,v])=>k+(v>1?' ×'+v:'')).join(', ')||'—';
+  const todayRevEGP   = todayCI.reduce((s,b)=>s+toEGP(b),0);
+  const todayCommEGP  = todayCI.reduce((s,b)=>s+commToEGP(b),0);
+  const todayNetRevEGP= todayRevEGP - todayCommEGP;
+  const todayColl     = todayCI.reduce((s,b)=>s+paidToEGP(b),0);
+  const todayUnpaid   = Math.max(0,todayRevEGP-todayColl);
+  const allExp=expenses||[];
+  const todayExp=allExp.filter(e=>(e.date||'').startsWith(td)||(e.createdAt||'').startsWith(td));
+  const todayExpTotal    =todayExp.reduce((s,e)=>s+e.egp,0);
+  const todayExpProfit   =todayExp.filter(e=>e.source!=='custody').reduce((s,e)=>s+e.egp,0);
+  const todayExpCustody  =todayExp.filter(e=>e.source==='custody').reduce((s,e)=>s+e.egp,0);
+  const restTx=restaurantTx||[];
+  const todayRestInc=restTx.filter(t=>t.type==='income'&&((t.date||'').startsWith(td)||(t.createdAt||'').startsWith(td))).reduce((s,t)=>s+t.egp,0);
+  const todayRestExp=restTx.filter(t=>t.type==='expense'&&((t.date||'').startsWith(td)||(t.createdAt||'').startsWith(td))).reduce((s,t)=>s+t.egp,0);
+  const todayRestNet=todayRestInc-todayRestExp;
+  const custList=window._custodyList||[];
+  const custodyAmt=custList.filter(c=>c.type!=='from_owner'&&c.type!=='to_owner').reduce((s,c)=>s+c.amt,0);
+  const allExpCust=allExp.filter(e=>e.source==='custody').reduce((s,e)=>s+e.egp,0);
+  const custodyBal=custodyAmt-allExpCust;
+  const todayNet=todayColl-todayExpProfit+todayRestNet;
+  const pendingIH=active.filter(b=>b.payStatus==='Pending'||b.payStatus==='Partial');
+
+  const occColor = occPct>=70?'#16a34a':occPct>=40?'#d97706':'#dc2626';
+  const netColor = todayNet>=0?'#16a34a':'#dc2626';
+
+  const row=(labelAr,labelEn,val,bold=false,color='#1a1a2e')=>
+    `<tr style="border-bottom:1px solid #e5e7eb;">
+      <td style="padding:7px 8px;font-size:11px;color:#555;">${labelAr} <span style="color:#999;font-size:9px;">/ ${labelEn}</span></td>
+      <td style="padding:7px 8px;font-size:${bold?'13':'11'}px;font-weight:${bold?'800':'600'};color:${color};font-family:monospace;text-align:right;direction:ltr;">${val}</td>
+    </tr>`;
+
+  const sec=(icon,titleAr,titleEn,rows)=>
+    `<div style="margin-bottom:14px;">
+      <div style="background:#f8f5ec;border-left:3px solid #c9a84c;padding:6px 10px;font-size:11px;font-weight:800;color:#7a5c1e;letter-spacing:0.5px;text-transform:uppercase;">
+        ${icon} ${titleAr} <span style="color:#c9a84c80;font-weight:500;">/ ${titleEn}</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;background:#fff;">${rows}</table>
+    </div>`;
+
+  const bkRow=(b,type)=>{
+    const paid=calcPaid(b);
+    const rem=Math.max(0,(b.total||0)-paid);
+    const remStr=rem>0?`⚠️ Due: ${b.cur} ${rem.toLocaleString('en-US')}`:'✅ Paid';
+    const remCol=rem>0?'#dc2626':'#16a34a';
+    return `<tr style="border-bottom:1px solid #e5e7eb;">
+      <td style="padding:7px 8px;font-size:11px;">
+        <span style="font-weight:700;color:${type==='ci'?'#1d4ed8':'#d97706'};">${type==='ci'?'🛬':'🛫'} ${b.name}</span>
+        <span style="color:#888;font-size:10px;margin-left:8px;">Room ${b.room} · ${b.cur} ${(b.total||0).toLocaleString('en-US')}</span>
+      </td>
+      <td style="padding:7px 8px;font-size:10px;font-weight:700;color:${remCol};text-align:right;white-space:nowrap;">${remStr}</td>
+    </tr>`;
+  };
+
+  let body = '';
+  // Occupancy
+  body += sec('🏨','الإشغال الآن','Occupancy Now',
+    row('غرف مشغولة','Occupied', `${occRooms.length} / ${totalRooms}`, true, occColor) +
+    row('نسبة الإشغال','Rate', `${occPct}%`, false, occColor) +
+    row('ضيوف في الفندق','Guests', `${totalGuests}`) +
+    row('حجوزات قادمة','Future Reservations', `${futureRes.length}`) +
+    row('الجنسيات','Nationalities', natStr)
+  );
+  // Revenue
+  body += sec('💰','إيرادات اليوم','Today Revenue',
+    row('إيرادات الوصول','Arrivals Revenue', f(todayRevEGP), true, '#7a5c1e') +
+    (todayCommEGP>0?row('عمولات','Commissions','− '+f(todayCommEGP),false,'#dc2626'):'') +
+    (todayCommEGP>0?row('صافي الإيرادات','Net Revenue',f(todayNetRevEGP),false,'#7a5c1e'):'') +
+    row('محصّل اليوم','Collected', f(todayColl), true, '#16a34a') +
+    (todayUnpaid>0?row('متبقي غير مدفوع','Unpaid',f(todayUnpaid),false,'#d97706'):'') +
+    (pendingIH.length>0?row('ضيوف دين','Pending In-House',`⚠️ ${pendingIH.length}`,false,'#d97706'):row('مدفوعات','Payments','✅ All clear',false,'#16a34a'))
+  );
+  // Expenses
+  body += sec('💸','مصروفات اليوم','Today Expenses',
+    todayExpTotal>0
+      ? row('إجمالي','Total',f(todayExpTotal),true,'#dc2626') +
+        (todayExpProfit>0?row('من الربح','From Profit',f(todayExpProfit),false,'#dc2626'):'') +
+        (todayExpCustody>0?row('من العهدة','From Custody',f(todayExpCustody),false,'#7c3aed'):'')
+      : `<tr><td colspan="2" style="padding:8px;font-size:11px;color:#16a34a;font-weight:700;">✅ No expenses today</td></tr>`
+  );
+  // Restaurant
+  if(todayRestInc>0||todayRestExp>0){
+    body += sec('🍽️','مطعم / بار اليوم','Restaurant Today',
+      row('إيرادات','Income',f(todayRestInc),false,'#16a34a') +
+      (todayRestExp>0?row('مصروفات','Expenses',f(todayRestExp),false,'#dc2626'):'') +
+      row('صافي','Net',f(todayRestNet),true,todayRestNet>=0?'#16a34a':'#dc2626')
+    );
+  }
+  // Custody
+  if(custList.length>0){
+    body += sec('🔒','رصيد العهدة','Custody Balance',
+      (custodyAmt>0?row('إجمالي العهدة','Total Custody',f(custodyAmt),false,'#7c3aed'):'') +
+      (allExpCust>0?row('مصروفات منها','Spent',f(allExpCust),false,'#dc2626'):'') +
+      row('الرصيد الحالي','Current Balance',f(custodyBal),true,'#7c3aed')
+    );
+  }
+  // Arrivals
+  if(todayCI.length){
+    body += sec('🛬','وصول اليوم','Check-ins Today', todayCI.map(b=>bkRow(b,'ci')).join(''));
+  }
+  // Departures
+  if(todayCO.length){
+    body += sec('🛫','مغادرة اليوم','Check-outs Today', todayCO.map(b=>bkRow(b,'co')).join(''));
+  }
+
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>Owner Daily Report — ${dateStrEn}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,sans-serif;background:#fff;color:#1a1a2e;padding:0;max-width:680px;margin:0 auto;}
+@media print{.no-print{display:none!important;}body{padding:0;}}
+</style></head><body>
+<!-- HEADER -->
+<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;">
+  <div>
+    <div style="font-size:18px;font-weight:900;color:#c9a84c;letter-spacing:1.5px;">DAHAB TRENDY</div>
+    <div style="font-size:10px;color:#8a9ab0;margin-top:2px;letter-spacing:1px;">ACCOMMODATION — DAILY OWNER REPORT</div>
+    <div style="font-size:10px;color:#8a9ab0;margin-top:2px;">تقرير يومي للمالك</div>
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:11px;color:#c9a84c;font-weight:700;">${dateStrEn}</div>
+    <div style="font-size:10px;color:#8a9ab0;margin-top:2px;">Generated: ${timeStr}</div>
+  </div>
+</div>
+<!-- NET BOX -->
+<div style="background:${todayNet>=0?'#f0fdf4':'#fef2f2'};border-top:4px solid ${netColor};padding:14px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+  <div>
+    <div style="font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;">صافي اليوم / Today's Net Cash</div>
+    <div style="font-size:9px;color:#999;margin-top:2px;">Collected − Expenses + Restaurant</div>
+  </div>
+  <div style="font-size:26px;font-weight:900;color:${netColor};font-family:monospace;direction:ltr;">${(todayNet<0?'−':'')+f(todayNet)}</div>
+</div>
+<!-- BODY -->
+<div style="padding:0 16px 16px;">${body}</div>
+<!-- FOOTER -->
+<div style="background:#f8f5ec;border-top:1px solid #e5d9b0;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;">
+  <div style="font-size:9px;color:#999;">Dahab Trendy Accommodation · South Sinai, Egypt</div>
+  <div style="font-size:9px;color:#999;">${dateStrEn} · ${timeStr}</div>
+</div>
+<div class="no-print" style="padding:16px;text-align:center;">
+  <button onclick="window.print()" style="padding:12px 32px;background:#c9a84c;color:#1a1a2e;border:none;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;">🖨️ PRINT / SAVE PDF</button>
+</div>
+</body></html>`);
+  win.document.close();
+  setTimeout(()=>{ try{ win.focus(); win.print(); }catch(e){} }, 600);
+}
+
 
 // ══════════════════════════════════════════════
 // FEATURE N2: WHATSAPP TEMPLATES ENHANCED
@@ -33374,6 +34212,7 @@ window.ownerTxSave            = ownerTxSave;
   if(typeof custodyLoad === 'function') await custodyLoad();
   if(typeof renderDashboard === 'function') renderDashboard();
 })();
+
 
 // ══ Splash Screen — © Hany, Dahab Trendy ══
 (function(){
