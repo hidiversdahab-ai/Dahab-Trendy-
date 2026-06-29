@@ -11666,9 +11666,15 @@ if(curBookingIdx >= 0 && bookings[curBookingIdx] && bookings[curBookingIdx].room
     const st = r.status||"pending";
     const stColor = st==="paid" ? "background:#d4edda;color:#155724;" : "background:#fff3cd;color:#856404;";
     const stLabel = st==="paid" ? "✅ Paid" : "⏳ Pending";
-    return "<tr style='background:#fffbf0;'><td>🍽️ <strong>Restaurant Charge</strong> <span style='"+stColor+"padding:1px 6px;border-radius:10px;font-size:8px;font-weight:700;'>"+stLabel+"</span><br><span style='color:#888;font-size:9px;'>"+r.desc+"</span><br><span style='color:#aaa;font-size:8px;'>"+r.date+"</span></td><td>1</td><td>£"+r.amount.toFixed(0)+"</td><td style='white-space:nowrap;'><strong>£"+r.amount.toFixed(0)+"</strong> <button onclick='deleteRoomCharge("+curBookingIdx+","+ri+")' style='background:#e74c3c;color:#fff;border:none;border-radius:4px;padding:1px 6px;cursor:pointer;font-size:10px;margin-left:4px;'>🗑</button></td></tr>";
+    // تحديد الأيقونة والعنوان حسب المصدر
+    const isActivity = (r.source==="dailyactivity") || (r.id&&String(r.id).startsWith("da_"));
+    const isMinibar  = (r.source==="minibar") || (r.desc&&r.desc.includes("مينيبار"));
+    const chargeIcon  = isActivity ? "🌅" : isMinibar ? "🧃" : "🍽️";
+    const chargeTitle = isActivity ? (isEn()?"Activity Charge":"نشاط") : isMinibar ? (isEn()?"Minibar":"مينيبار") : (isEn()?"Restaurant Charge":"مطعم");
+    const rowBg = isActivity ? "#f0faf5" : isMinibar ? "#f5f0fa" : "#fffbf0";
+    return "<tr style='background:"+rowBg+";'><td>"+chargeIcon+" <strong>"+chargeTitle+"</strong> <span style='"+stColor+"padding:1px 6px;border-radius:10px;font-size:8px;font-weight:700;'>"+stLabel+"</span><br><span style='color:#888;font-size:9px;'>"+r.desc+"</span><br><span style='color:#aaa;font-size:8px;'>"+r.date+"</span></td><td>1</td><td>£"+r.amount.toFixed(0)+"</td><td style='white-space:nowrap;'><strong>£"+r.amount.toFixed(0)+"</strong> <button onclick='deleteRoomCharge("+curBookingIdx+","+ri+")' style='background:#e74c3c;color:#fff;border:none;border-radius:4px;padding:1px 6px;cursor:pointer;font-size:10px;margin-left:4px;'>🗑</button></td></tr>";
   }).join("") +
-  "<tr style='background:#fff8e6;border-top:1px solid #f0c040;'><td colspan='3' style='font-size:9px;color:#856404;font-weight:700;'>🍽️ إجمالي مصروفات المطعم (Pending)</td><td><strong style='color:#856404;'>£"+rcTotal.toFixed(0)+"</strong></td></tr>";
+  "<tr style='background:#fff8e6;border-top:1px solid #f0c040;'><td colspan='3' style='font-size:9px;color:#856404;font-weight:700;'>🧾 "+(isEn()?"Room Charges (Pending)":"إجمالي مصروفات الغرفة (Pending)")+"</td><td><strong style='color:#856404;'>£"+rcTotal.toFixed(0)+"</strong></td></tr>";
 }
 // Build tour charges rows (room-billed tours)
 let tourChargesRows = "";
@@ -11784,7 +11790,7 @@ proformaBanner+
 "<div class='invp-tr'><span>Subtotal (Rooms)</span><span>"+d.sym+subtotal.toFixed(2)+"</span></div>"+
 (ivTransfer.has?"<div class='invp-tr'><span>✈️ Airport Transfer</span><span>"+d.sym+ivTransfer.price.toFixed(2)+"</span></div>":"")+
 "<div class='invp-tr'><span>Tax (0%)</span><span>"+d.sym+"0.00</span></div>"+
-(roomChargesRows&&rcTotal>0?"<div class='invp-tr' style='color:#856404;'><span>🍽️ Restaurant Charges (Pending)</span><span>£"+rcTotal.toFixed(0)+"</span></div>":"")+
+(roomChargesRows&&rcTotal>0?"<div class='invp-tr' style='color:#856404;'><span>🧾 Room Charges (Pending)</span><span>£"+rcTotal.toFixed(0)+"</span></div>":"")+
 (tourChargesRows&&tourChargesTotal>0?"<div class='invp-tr' style='color:#1a6a9a;'><span>🏔️ Tour Charges</span><span>£"+tourChargesTotal.toLocaleString()+"</span></div>":"")+
 (d.prepay>0&&!isProforma?"<div class='invp-tr'><span>Prepayment</span><span>- "+d.sym+d.prepay.toFixed(2)+"</span></div>":"")+
 (isDepositPF
