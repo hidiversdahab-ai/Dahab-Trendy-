@@ -4660,8 +4660,8 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   <div style="background:rgba(52,152,219,0.07);border:1px solid rgba(52,152,219,0.25);border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
     <span style="font-size:22px;">🏢</span>
     <div>
-      <div style="font-size:12px;font-weight:700;color:#7ab8f5;">الشركات الخارجية · External Companies</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px;">الحجوزات المرتبطة بشركات خارجية — يمكنك إرسال تفاصيل الضيف مباشرة للشركة عبر واتساب<br>Bookings with external suppliers — send guest details directly via WhatsApp</div>
+      <div style="font-size:12px;font-weight:700;color:#7ab8f5;"><span class="t" data-ar="الشركات الخارجية" data-en="External Companies">الشركات الخارجية</span></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px;"><span class="t" data-ar="الحجوزات المرتبطة بشركات خارجية — يمكنك إرسال تفاصيل الضيف مباشرة للشركة عبر واتساب" data-en="Bookings with external suppliers — send guest details directly via WhatsApp">الحجوزات المرتبطة بشركات خارجية — يمكنك إرسال تفاصيل الضيف مباشرة للشركة عبر واتساب</span></div>
     </div>
   </div>
   <div id="da-suppliers-list"></div>
@@ -4711,8 +4711,15 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     </div>
     <!-- Price -->
     <div class="fld">
-      <label>💰 السعر للفرد · Price per Person (EGP)</label>
-      <input id="da-price" type="number" min="0" step="1" value="0" placeholder="0">
+      <label>💰 سعر البيع للضيف · Selling Price / Person (EGP)</label>
+      <input id="da-price" type="number" min="0" step="1" value="0" placeholder="0" oninput="calcDA_Profit()">
+    </div>
+    <div class="fld">
+      <label>🏢 تكلفة الشركة · Company Cost / Person (EGP)</label>
+      <input id="da-cost-price" type="number" min="0" step="1" value="0" placeholder="0" oninput="calcDA_Profit()">
+    </div>
+    <div class="fld s2">
+      <div id="da-profit-preview" style="display:none;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:10px;padding:10px;text-align:center;font-size:13px;font-weight:700;color:#2ecc71;"></div>
     </div>
     <!-- Duration -->
     <div class="fld">
@@ -16058,6 +16065,8 @@ function openDA_Modal(idx){
   document.getElementById("da-name-ar").value = a?a.nameAr||"":"";
   document.getElementById("da-name-en").value = a?a.nameEn||"":"";
   document.getElementById("da-price").value = a?a.price||0:0;
+  document.getElementById("da-cost-price").value = a?a.costPrice||0:0;
+  calcDA_Profit();
   document.getElementById("da-duration").value = a?a.duration||"":"";
   document.getElementById("da-desc-ar").value = a?a.descAr||"":"";
   document.getElementById("da-desc-en").value = a?a.descEn||"":"";
@@ -16072,19 +16081,35 @@ function selectDA_Emoji(e){
   document.getElementById("da-emoji-preview").textContent=e;
 }
 
+function calcDA_Profit(){
+  const price = parseFloat(document.getElementById("da-price").value)||0;
+  const cost  = parseFloat(document.getElementById("da-cost-price").value)||0;
+  const el    = document.getElementById("da-profit-preview");
+  if(!el) return;
+  if(price > 0 || cost > 0){
+    const profit = price - cost;
+    const pct = price > 0 ? Math.round((profit/price)*100) : 0;
+    el.style.display = "";
+    el.innerHTML = `💰 سعر البيع: <span style="color:var(--gold);">£${price.toLocaleString()}</span> &nbsp;·&nbsp; 🏢 التكلفة: <span style="color:#e74c3c;">£${cost.toLocaleString()}</span> &nbsp;·&nbsp; ✅ الربح: <span style="color:#2ecc71;">£${profit.toLocaleString()} (${pct}%)</span>`;
+  } else {
+    el.style.display = "none";
+  }
+}
+
 function saveDA_Activity(){
-  const emoji   = document.getElementById("da-emoji").value.trim()||"🌅";
-  const nameAr  = document.getElementById("da-name-ar").value.trim();
-  const nameEn  = document.getElementById("da-name-en").value.trim();
-  const price   = parseFloat(document.getElementById("da-price").value)||0;
-  const duration= document.getElementById("da-duration").value.trim();
-  const descAr  = document.getElementById("da-desc-ar").value.trim();
-  const descEn  = document.getElementById("da-desc-en").value.trim();
-  const times   = document.getElementById("da-times").value.trim();
-  const status  = document.querySelector('input[name="da-avail"]:checked').value;
+  const emoji     = document.getElementById("da-emoji").value.trim()||"🌅";
+  const nameAr    = document.getElementById("da-name-ar").value.trim();
+  const nameEn    = document.getElementById("da-name-en").value.trim();
+  const price     = parseFloat(document.getElementById("da-price").value)||0;
+  const costPrice = parseFloat(document.getElementById("da-cost-price").value)||0;
+  const duration  = document.getElementById("da-duration").value.trim();
+  const descAr    = document.getElementById("da-desc-ar").value.trim();
+  const descEn    = document.getElementById("da-desc-en").value.trim();
+  const times     = document.getElementById("da-times").value.trim();
+  const status    = document.querySelector('input[name="da-avail"]:checked').value;
   if(!nameAr||!nameEn){ alert("⚠️ أدخل اسم النشاط بالعربي والإنجليزي · Enter both Arabic and English names"); return; }
   const acts = DA_getActivities();
-  const obj = {id: da_editIdx!==null?(acts[da_editIdx].id||Date.now()):Date.now(), emoji, nameAr, nameEn, price, duration, descAr, descEn, times, status, updatedAt: new Date().toISOString()};
+  const obj = {id: da_editIdx!==null?(acts[da_editIdx].id||Date.now()):Date.now(), emoji, nameAr, nameEn, price, costPrice, duration, descAr, descEn, times, status, updatedAt: new Date().toISOString()};
   if(da_editIdx!==null) acts[da_editIdx]=obj; else acts.push(obj);
   DA_saveActivities(acts);
   closeM("da-modal");
@@ -16202,102 +16227,249 @@ function waDA_Supplier(idx){
 }
 
 /* ── SUPPLIERS PANEL ── */
+function DA_getSettlements(){ return LS("dta_da_settlements",[]); }
+function DA_saveSettlements(arr){ sv("dta_da_settlements", arr); }
+
 function renderDA_Suppliers(){
-  const bks = DA_getBookings();
-  // Only bookings with a supplier name or phone
-  const allSupBks = bks.filter(b => (b.supplierName||"").trim() || (b.supplierPhone||"").trim());
+  const bks  = DA_getBookings();
+  const setts = DA_getSettlements();
+  const ar = (typeof currentLang !== 'undefined') ? currentLang === 'ar' : true;
+  // Only bookings with a supplier name
+  const allSupBks = bks.filter(b => (b.supplierName||"").trim());
 
-  const filterDate   = (document.getElementById("da-sup-filter-date")||{value:""}).value;
-  const filterStatus = (document.getElementById("da-sup-filter-status")||{value:""}).value;
-
-  // Populate date filter
-  const dateSel = document.getElementById("da-sup-filter-date");
-  if(dateSel){
-    const dates = [...new Set(allSupBks.map(b=>b.date).filter(Boolean))].sort().reverse();
-    const cur = dateSel.value;
-    dateSel.innerHTML = '<option value="">📅 كل التواريخ · All Dates</option>' +
-      dates.map(d=>`<option value="${d}" ${d===cur?"selected":""}>${d}</option>`).join("");
-  }
-
-  let list = allSupBks;
-  if(filterDate)   list = list.filter(b=>b.date===filterDate);
-  if(filterStatus) list = list.filter(b=>b.status===filterStatus);
-
-  // Summary strip
+  // ── إجمالي Summary ──
   const sumEl = document.getElementById("da-suppliers-summary");
   if(sumEl){
-    const totalRev = allSupBks.reduce((s,b)=>s+(Number(b.price)||0),0);
     const uniqueSuppliers = [...new Set(allSupBks.map(b=>(b.supplierName||"").trim()).filter(Boolean))].length;
-    const todayCount = allSupBks.filter(b=>b.date===new Date().toISOString().slice(0,10)).length;
+    const totalCost   = allSupBks.filter(b=>b.status!=='cancelled').reduce((s,b)=>s+(Number(b.costPrice)||0),0);
+    const totalSettled= setts.reduce((s,st)=>s+(Number(st.amount)||0),0);
+    const totalDue    = totalCost - totalSettled;
+    const totalProfit = allSupBks.filter(b=>b.status!=='cancelled').reduce((s,b)=>s+(Number(b.profit)||0),0);
     sumEl.innerHTML = `
       <div class="card" style="text-align:center;padding:10px;border:1px solid rgba(52,152,219,0.3);">
-        <div style="font-size:20px;font-weight:700;color:#7ab8f5;">${allSupBks.length}</div>
-        <div style="font-size:9px;color:var(--muted);">🏢 إجمالي حجوزات الشركات</div>
-      </div>
-      <div class="card" style="text-align:center;padding:10px;border:1px solid rgba(52,152,219,0.3);">
         <div style="font-size:20px;font-weight:700;color:#7ab8f5;">${uniqueSuppliers}</div>
-        <div style="font-size:9px;color:var(--muted);">🏢 شركات مختلفة · Companies</div>
+        <div style="font-size:9px;color:var(--muted);">🏢 ${ar?'عدد الشركات':'Companies'}</div>
       </div>
-      <div class="card" style="text-align:center;padding:10px;border:1px solid rgba(52,152,219,0.3);">
-        <div style="font-size:20px;font-weight:700;color:#7ab8f5;">${todayCount}</div>
-        <div style="font-size:9px;color:var(--muted);">📅 حجوزات اليوم · Today</div>
+      <div class="card" style="text-align:center;padding:10px;border:1px solid rgba(231,76,60,0.3);">
+        <div style="font-size:20px;font-weight:700;color:#e74c3c;">£${totalCost.toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--muted);">🏢 ${ar?'إجمالي التكاليف':'Total Costs'}</div>
       </div>
-      ${totalRev?`<div class="card" style="text-align:center;padding:10px;border:1px solid rgba(46,204,113,0.3);">
-        <div style="font-size:20px;font-weight:700;color:#2ecc71;">£${totalRev.toLocaleString()}</div>
-        <div style="font-size:9px;color:var(--muted);">💰 إجمالي الإيرادات · Revenue</div>
-      </div>`:''}`;
+      <div class="card" style="text-align:center;padding:10px;border:1px solid rgba(241,196,15,0.3);">
+        <div style="font-size:20px;font-weight:700;color:#f1c40f;">£${totalDue.toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--muted);">⏳ ${ar?'مستحق للشركات':'Due to Companies'}</div>
+      </div>
+      <div class="card" style="text-align:center;padding:10px;border:1px solid rgba(46,204,113,0.3);">
+        <div style="font-size:20px;font-weight:700;color:#2ecc71;">£${totalProfit.toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--muted);">✅ ${ar?'صافي ربحك':'Net Profit'}</div>
+      </div>`;
   }
 
   const container = document.getElementById("da-suppliers-list");
   if(!container) return;
-  if(!list.length){
+  if(!allSupBks.length){
     container.innerHTML = `<div class="empty">
       <div style="font-size:36px;margin-bottom:10px;">🏢</div>
-      <div style="font-weight:700;margin-bottom:4px;">لا توجد حجوزات مرتبطة بشركات خارجية</div>
-      <div style="font-size:12px;color:var(--muted);">عند حجز نشاط وإضافة اسم الشركة، ستظهر هنا · Add supplier company when booking an activity</div>
+      <div style="font-weight:700;margin-bottom:4px;">${ar?'لا توجد حجوزات مرتبطة بشركات':'No company-linked bookings yet'}</div>
+      <div style="font-size:12px;color:var(--muted);">${ar?'عند حجز نشاط وإضافة اسم الشركة، ستظهر هنا':'Add a supplier company when booking an activity'}</div>
     </div>`;
     return;
   }
 
-  container.innerHTML = list.slice().reverse().map(b=>{
-    const idx = bks.indexOf(b);
-    const statusColor = {pending:'#f1c40f',confirmed:'#2ecc71',cancelled:'#e74c3c'}[b.status]||'#f1c40f';
-    const statusLabel = {pending:'🟡 معلق',confirmed:'✅ مؤكد',cancelled:'❌ ملغي'}[b.status]||'🟡 معلق';
-    const hasSupPhone = !!(b.supplierPhone||"").trim();
-    return `<div class="card" style="padding:14px;margin-bottom:10px;border:1.5px solid rgba(52,152,219,0.3);position:relative;">
-      <!-- Company Badge -->
-      <div style="display:flex;align-items:center;gap:8px;background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.3);border-radius:10px;padding:8px 12px;margin-bottom:10px;">
-        <span style="font-size:20px;">🏢</span>
-        <div style="flex:1;">
-          <div style="font-weight:800;color:#7ab8f5;font-size:14px;">${b.supplierName||'— شركة غير مسماة —'}</div>
-          ${hasSupPhone?`<div style="font-size:11px;color:var(--muted);direction:ltr;">📱 ${b.supplierPhone}</div>`:'<div style="font-size:10px;color:#e74c3c;">⚠️ لا يوجد رقم واتساب للشركة</div>'}
-        </div>
-        ${hasSupPhone?`<button onclick="waDA_Supplier(${idx})" style="background:#25D366;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-weight:800;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;white-space:nowrap;">📤 إرسال</button>`
-        :`<button onclick="editDA_SupplierPhone(${idx})" style="background:rgba(241,196,15,0.2);color:#f1c40f;border:1px solid rgba(241,196,15,0.4);border-radius:10px;padding:8px 12px;font-weight:700;font-size:11px;cursor:pointer;font-family:Arial,sans-serif;">✏️ أضف رقم</button>`}
-      </div>
-      <!-- Booking Details -->
-      <div style="display:flex;gap:10px;align-items:flex-start;">
-        <div style="font-size:28px;">${b.emoji||'🌅'}</div>
-        <div style="flex:1;">
-          <div style="font-weight:700;color:var(--gold);font-size:13px;">${b.actNameAr||'—'}</div>
-          <div style="font-size:11px;color:var(--muted);">${b.actNameEn||'—'}</div>
-          <div style="font-size:12px;margin-top:4px;">👤 <strong>${b.guest||'—'}</strong> &nbsp;·&nbsp; 🏨 غرفة ${b.room||'—'}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">📅 ${b.date||'—'} &nbsp;·&nbsp; 🕐 ${b.time||'—'} &nbsp;·&nbsp; 👥 ${b.persons||1} شخص</div>
-          ${b.notes?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">📝 ${b.notes}</div>`:''}
-          ${b.price?`<div style="font-weight:700;color:#2ecc71;font-size:14px;margin-top:4px;">💰 £${Number(b.price).toLocaleString()}</div>`:''}
-          <div style="margin-top:6px;">
-            <span style="padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;">${statusLabel}</span>
+  // ── جمّع الشركات ──
+  const companyMap = {};
+  allSupBks.forEach(b=>{
+    const name = (b.supplierName||"").trim();
+    if(!name) return;
+    if(!companyMap[name]) companyMap[name] = { name, phone: b.supplierPhone||"", bookings:[] };
+    companyMap[name].bookings.push(b);
+    if(b.supplierPhone) companyMap[name].phone = b.supplierPhone;
+  });
+
+  container.innerHTML = Object.values(companyMap).map(comp=>{
+    const active = comp.bookings.filter(b=>b.status!=='cancelled');
+    const totalCost    = active.reduce((s,b)=>s+(Number(b.costPrice)||0),0);
+    const totalSell    = active.reduce((s,b)=>s+(Number(b.price)||0),0);
+    const totalProfit  = active.reduce((s,b)=>s+(Number(b.profit)||0),0);
+    const compSetts    = setts.filter(s=>s.company===comp.name);
+    const totalSettled = compSetts.reduce((s,st)=>s+(Number(st.amount)||0),0);
+    const due          = totalCost - totalSettled;
+    const hasPhone     = !!(comp.phone||"").trim();
+    const encName      = comp.name.replace(/'/g,"\\'");
+    const encPhone     = (comp.phone||"").replace(/'/g,"\\'");
+
+    // قائمة الحجوزات
+    const bksHTML = comp.bookings.slice().reverse().map(b=>{
+      const idx = bks.indexOf(b);
+      const sc = {pending:'#f1c40f',confirmed:'#2ecc71',cancelled:'#e74c3c'}[b.status]||'#f1c40f';
+      const sl = ar
+        ? {pending:'🟡 معلق',confirmed:'✅ مؤكد',cancelled:'❌ ملغي'}[b.status]||'🟡'
+        : {pending:'🟡 Pending',confirmed:'✅ Confirmed',cancelled:'❌ Cancelled'}[b.status]||'🟡';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);margin-bottom:5px;">
+        <div style="font-size:20px;">${b.emoji||'🌅'}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ar?b.actNameAr:b.actNameEn||b.actNameAr||'—'}</div>
+          <div style="font-size:10px;color:var(--muted);">👤 ${b.guest||'—'} · 🏨 ${b.room||'—'} · 📅 ${b.date||'—'} · 👥 ${b.persons||1}</div>
+          <div style="font-size:10px;margin-top:2px;">
+            ${b.price?`<span style="color:var(--gold);">${ar?'بيع':'Sell'}: £${Number(b.price).toLocaleString()}</span>`:''}
+            ${b.costPrice?` · <span style="color:#e74c3c;">${ar?'تكلفة':'Cost'}: £${Number(b.costPrice).toLocaleString()}</span>`:''}
+            ${b.profit?` · <span style="color:#2ecc71;">${ar?'ربح':'Profit'}: £${Number(b.profit).toLocaleString()}</span>`:''}
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
-          <button onclick="openDA_CompanyBooking('${(b.supplierName||'').replace(/'/g,"\\'")}','${(b.supplierPhone||'').replace(/'/g,"\\'")}',${idx})" style="background:rgba(52,152,219,0.2);color:#7ab8f5;border:1px solid rgba(52,152,219,0.5);border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;white-space:nowrap;">🏢+ حجز</button>
-          ${b.status!=='confirmed'?`<button onclick="updateDA_BookStatus(${idx},'confirmed')" style="background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;">✅ تأكيد</button>`:''}
-          ${b.status!=='cancelled'?`<button onclick="updateDA_BookStatus(${idx},'cancelled')" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;">❌ إلغاء</button>`:''}
-          ${b.phone?`<button onclick="window.open('https://wa.me/${(b.phone||'').replace(/[^0-9]/g,'')}','_blank')" style="background:rgba(37,211,102,0.15);color:#25D366;border:1px solid rgba(37,211,102,0.4);border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:Arial,sans-serif;" title="واتساب الضيف">👤📱</button>`:''}
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+          <span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;background:${sc}22;color:${sc};border:1px solid ${sc}44;">${sl}</span>
+          ${b.status!=='confirmed'?`<button onclick="updateDA_BookStatus(${idx},'confirmed')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);cursor:pointer;font-family:Arial,sans-serif;">✅</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+
+    // سجل التسويات
+    const settHTML = compSetts.length ? compSetts.slice().reverse().map(st=>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:rgba(46,204,113,0.07);border-radius:6px;margin-bottom:4px;font-size:11px;">
+        <span style="color:var(--muted);">📅 ${st.date} ${st.note?'· '+st.note:''}</span>
+        <span style="color:#2ecc71;font-weight:700;">✅ £${Number(st.amount).toLocaleString()}</span>
+      </div>`
+    ).join('') : `<div style="font-size:11px;color:var(--muted);text-align:center;padding:6px;">${ar?'لا توجد تسويات بعد':'No settlements yet'}</div>`;
+
+    return `<div class="card" style="padding:14px;margin-bottom:14px;border:2px solid rgba(52,152,219,0.35);">
+      <!-- رأس الشركة -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="font-size:32px;">🏢</div>
+        <div style="flex:1;">
+          <div style="font-weight:800;color:#7ab8f5;font-size:15px;">${comp.name}</div>
+          ${hasPhone?`<div style="font-size:11px;color:var(--muted);direction:ltr;">📱 ${comp.phone}</div>`:`<div style="font-size:10px;color:#e74c3c;">⚠️ ${ar?'لا يوجد رقم':'No phone'}</div>`}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          ${hasPhone?`<button onclick="waDA_SupplierSummary('${encName}','${encPhone}')" style="background:#25D366;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-weight:800;font-size:12px;cursor:pointer;font-family:Arial,sans-serif;">📤 ${ar?'واتساب':'WhatsApp'}</button>`:''}
+          <button onclick="openDA_CompanyBooking('${encName}','${encPhone}')" style="background:rgba(52,152,219,0.2);color:#7ab8f5;border:1px solid rgba(52,152,219,0.5);border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:Arial,sans-serif;font-weight:700;">🏢+ ${ar?'حجز':'Book'}</button>
         </div>
       </div>
+
+      <!-- ملخص مالي -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;">
+        <div style="text-align:center;background:rgba(52,152,219,0.08);border-radius:8px;padding:7px;">
+          <div style="font-size:13px;font-weight:700;color:#7ab8f5;">${active.length}</div>
+          <div style="font-size:9px;color:var(--muted);">${ar?'حجوزات':'Bookings'}</div>
+        </div>
+        <div style="text-align:center;background:rgba(201,168,76,0.08);border-radius:8px;padding:7px;">
+          <div style="font-size:13px;font-weight:700;color:var(--gold);">£${totalSell.toLocaleString()}</div>
+          <div style="font-size:9px;color:var(--muted);">${ar?'إيراد':'Revenue'}</div>
+        </div>
+        <div style="text-align:center;background:rgba(231,76,60,0.08);border-radius:8px;padding:7px;">
+          <div style="font-size:13px;font-weight:700;color:#e74c3c;">£${totalCost.toLocaleString()}</div>
+          <div style="font-size:9px;color:var(--muted);">${ar?'تكلفة':'Cost'}</div>
+        </div>
+        <div style="text-align:center;background:rgba(46,204,113,0.08);border-radius:8px;padding:7px;">
+          <div style="font-size:13px;font-weight:700;color:#2ecc71;">£${totalProfit.toLocaleString()}</div>
+          <div style="font-size:9px;color:var(--muted);">${ar?'ربحك':'Profit'}</div>
+        </div>
+      </div>
+
+      <!-- حساب الشركة (مستحق) -->
+      <div style="background:${due>0?'rgba(241,196,15,0.08)':'rgba(46,204,113,0.08)'};border:1px solid ${due>0?'rgba(241,196,15,0.3)':'rgba(46,204,113,0.3)'};border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:11px;color:var(--muted);">💳 ${ar?'مدفوع للشركة':'Paid to company'}: <span style="color:#2ecc71;">£${totalSettled.toLocaleString()}</span></div>
+          <div style="font-size:15px;font-weight:800;color:${due>0?'#f1c40f':'#2ecc71'};">${due>0?(ar?'⏳ مستحق: ':'⏳ Due: ')+'£'+due.toLocaleString():(ar?'✅ الحساب صافي':'✅ Settled')}</div>
+        </div>
+        ${due>0?`<button onclick="openDA_SettleModal('${encName}')" style="background:rgba(46,204,113,0.2);color:#2ecc71;border:1px solid rgba(46,204,113,0.5);border-radius:10px;padding:9px 16px;font-weight:800;font-size:13px;cursor:pointer;font-family:Arial,sans-serif;">💸 ${ar?'سدّد':'Settle'}</button>`:''}
+      </div>
+
+      <!-- تفاصيل الحجوزات (قابل للطي) -->
+      <details style="margin-bottom:8px;">
+        <summary style="cursor:pointer;font-size:12px;color:#7ab8f5;font-weight:700;padding:4px 0;">📋 ${ar?'الحجوزات':'Bookings'} (${comp.bookings.length})</summary>
+        <div style="margin-top:8px;">${bksHTML}</div>
+      </details>
+
+      <!-- سجل التسويات -->
+      <details>
+        <summary style="cursor:pointer;font-size:12px;color:#2ecc71;font-weight:700;padding:4px 0;">💳 ${ar?'سجل التسويات':'Settlement History'} (${compSetts.length})</summary>
+        <div style="margin-top:8px;">${settHTML}</div>
+      </details>
     </div>`;
   }).join("");
+}
+
+/* ── مودال التسوية مع شركة ── */
+function openDA_SettleModal(companyName){
+  const ar = (typeof currentLang !== 'undefined') ? currentLang === 'ar' : true;
+  const bks   = DA_getBookings();
+  const setts = DA_getSettlements();
+  const active = bks.filter(b=>(b.supplierName||"").trim()===companyName && b.status!=='cancelled');
+  const totalCost    = active.reduce((s,b)=>s+(Number(b.costPrice)||0),0);
+  const totalSettled = setts.filter(s=>s.company===companyName).reduce((s,st)=>s+(Number(st.amount)||0),0);
+  const due = totalCost - totalSettled;
+
+  const modal = document.createElement('div');
+  modal.className = 'ovl on';
+  modal.id = 'da-settle-modal';
+  modal.innerHTML = `
+    <div class="mdl" style="max-width:400px;">
+      <div class="mtitle">💸 ${ar?'تسوية مع':'Settle with'} ${companyName}</div>
+      <div style="padding:4px 0 16px;">
+        <div style="background:rgba(241,196,15,0.1);border:1px solid rgba(241,196,15,0.3);border-radius:10px;padding:12px;margin-bottom:14px;text-align:center;">
+          <div style="font-size:12px;color:var(--muted);">${ar?'إجمالي التكلفة':'Total Cost'}: £${totalCost.toLocaleString()} · ${ar?'مدفوع':'Paid'}: £${totalSettled.toLocaleString()}</div>
+          <div style="font-size:20px;font-weight:800;color:#f1c40f;margin-top:4px;">⏳ ${ar?'مستحق':'Due'}: £${due.toLocaleString()}</div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">💰 ${ar?'المبلغ المدفوع':'Amount Paid'} (EGP)</label>
+          <input id="da-settle-amount" type="number" value="${due}" min="1" style="width:100%;padding:10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--gold);font-size:16px;font-weight:700;text-align:center;box-sizing:border-box;font-family:Arial,sans-serif;">
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:5px;">📝 ${ar?'ملاحظة (اختياري)':'Note (optional)'}</label>
+          <input id="da-settle-note" type="text" placeholder="${ar?'مثال: دفعة يناير':'e.g. January payment'}" style="width:100%;padding:8px 10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);box-sizing:border-box;font-family:Arial,sans-serif;">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn bg" style="flex:1;padding:14px;" id="da-settle-confirm-btn">✅ ${ar?'تأكيد التسوية':'Confirm Settlement'}</button>
+        <button class="btn bb" style="padding:14px 20px;" id="da-settle-cancel-btn">${ar?'إلغاء':'Cancel'}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  document.getElementById('da-settle-cancel-btn').addEventListener('click', ()=>{ modal.remove(); });
+  document.getElementById('da-settle-confirm-btn').addEventListener('click', ()=>{
+    const amount = parseFloat(document.getElementById('da-settle-amount').value)||0;
+    const note   = document.getElementById('da-settle-note').value.trim();
+    if(!amount || amount <= 0){ alert("⚠️ أدخل مبلغ صحيح"); return; }
+    const setts = DA_getSettlements();
+    setts.push({
+      id: Date.now(), company: companyName,
+      amount, note, date: new Date().toISOString().slice(0,10),
+      createdAt: new Date().toISOString()
+    });
+    DA_saveSettlements(setts);
+    modal.remove();
+    renderDA_Suppliers();
+    const ar2 = (typeof currentLang !== 'undefined') ? currentLang === 'ar' : true;
+    sNotify("💸 "+(ar2?'تم التسوية':'Settlement Done'), `£${amount.toLocaleString()} → ${companyName}`, "success", 3500);
+  });
+}
+
+/* ── واتساب ملخص الشركة ── */
+function waDA_SupplierSummary(companyName, companyPhone){
+  const ar = (typeof currentLang !== 'undefined') ? currentLang === 'ar' : true;
+  const bks   = DA_getBookings();
+  const setts = DA_getSettlements();
+  const active = bks.filter(b=>(b.supplierName||"").trim()===companyName && b.status!=='cancelled');
+  const totalCost    = active.reduce((s,b)=>s+(Number(b.costPrice)||0),0);
+  const totalSettled = setts.filter(s=>s.company===companyName).reduce((s,st)=>s+(Number(st.amount)||0),0);
+  const due = totalCost - totalSettled;
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation",phone:""};
+  const lines = active.map(b=>
+    `${b.emoji||'🌅'} ${ar?b.actNameAr:b.actNameEn||b.actNameAr||'—'} · 👤 ${b.guest||'—'} · 📅 ${b.date||'—'} · 👥 ${b.persons||1} · 💰 £${Number(b.costPrice||0).toLocaleString()}`
+  ).join('\n');
+  const msg =
+    `🏢 *${ar?'كشف حساب':'Account Statement'} — ${companyName}*\n` +
+    `🏨 ${prop.name}\n` +
+    `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `${lines}\n\n` +
+    `━━━━━━━━━━━━━━━━━━━━━\n` +
+    `📊 ${ar?'إجمالي التكلفة':'Total Cost'}: *£${totalCost.toLocaleString()}*\n` +
+    `✅ ${ar?'مدفوع':'Paid'}: *£${totalSettled.toLocaleString()}*\n` +
+    `${due>0?`⏳ *${ar?'مستحق':'Due'}: £${due.toLocaleString()}*`:`✅ *${ar?'الحساب صافي':'Settled'}*`}\n\n` +
+    `📞 ${prop.phone}`;
+  const phone = (companyPhone||"").replace(/[^0-9]/g,"");
+  if(phone) window.open("https://wa.me/"+phone+"?text="+encodeURIComponent(msg),"_blank");
+  else { navigator.clipboard&&navigator.clipboard.writeText(msg); sNotify("📋 "+(ar?'تم النسخ':'Copied'), ar?'لا يوجد رقم — تم نسخ الرسالة':'No phone — message copied',"info",3000); }
 }
 
 function clearDA_SupFilters(){
@@ -16386,9 +16558,14 @@ function onDA_ActivityChange(val){
   const priceEl = document.getElementById("da-book-price-preview");
   const updatePrice = ()=>{
     const p = Number(a.price)||0;
+    const c = Number(a.costPrice)||0;
     const n = parseInt(document.getElementById("da-book-persons").value)||1;
-    if(p>0){ priceEl.style.display=""; priceEl.textContent=`💰 ${currentLang==='ar'?'الإجمالي':'Total'}: £${(p*n).toLocaleString()}`; }
-    else priceEl.style.display="none";
+    if(p>0){
+      const profit = (p-c)*n;
+      priceEl.style.display="";
+      priceEl.innerHTML = `💰 سعر البيع: <strong>£${(p*n).toLocaleString()}</strong>` +
+        (c>0 ? ` &nbsp;·&nbsp; 🏢 التكلفة: <span style="color:#e74c3c;">£${(c*n).toLocaleString()}</span> &nbsp;·&nbsp; ✅ ربحك: <span style="color:#2ecc71;">£${profit.toLocaleString()}</span>` : '');
+    } else priceEl.style.display="none";
   };
   document.getElementById("da-book-persons").oninput = updatePrice;
   updatePrice();
@@ -16666,12 +16843,16 @@ function confirmDA_Booking(){
   if(!date) { alert("⚠️ اختر التاريخ · Select date"); return; }
   if(!time) { alert("⚠️ اختر الوقت · Select time"); return; }
   const totalPrice = (Number(a.price)||0) * persons;
+  const totalCost  = (Number(a.costPrice)||0) * persons;
+  const totalProfit = totalPrice - totalCost;
   const bk = {
     id: Date.now(), actId: a.id, emoji: a.emoji, actNameAr: a.nameAr, actNameEn: a.nameEn,
     guest, room, date, time, persons, phone, notes, payment,
     price: totalPrice, pricePerPerson: Number(a.price)||0,
+    costPrice: totalCost, costPerPerson: Number(a.costPrice)||0,
+    profit: totalProfit,
     supplierName, supplierPhone,
-    status: "pending", createdAt: new Date().toISOString()
+    status: "pending", settled: false, createdAt: new Date().toISOString()
   };
   const bks = DA_getBookings();
   bks.push(bk);
@@ -16735,6 +16916,7 @@ function confirmDA_Booking(){
   // Show success screen
   showDA_KioskSuccess(a, bk);
   renderDA_Summary();
+  renderDA_Bookings();
 }
 
 function showDA_KioskSuccess(a, bk){
