@@ -1582,6 +1582,7 @@ label {
 <div id="bn-more-menu">
   <div class="bn-more-grid">
     <div class="bn-more-item" onclick="openOwnerDailyReport();closeBnMore()" style="position:relative;border-color:rgba(201,168,76,0.7);background:rgba(201,168,76,0.15);"><span class="bm-icon" style="color:var(--gold);">📋</span><span class="t" style="color:var(--gold);font-weight:700;" data-ar="تقرير المالك" data-en="Owner Report">تقرير المالك</span></div>
+    <div class="bn-more-item" onclick="openMorningBriefing();closeBnMore()" style="border-color:rgba(245,197,24,0.5);background:rgba(245,197,24,0.1);"><span class="bm-icon" style="color:#f5c518;">☀️</span><span style="color:#f5c518;" class="t" data-ar="التقرير الصباحي" data-en="Morning Briefing">التقرير الصباحي</span></div>
     <div class="bn-more-item" onclick="openPDFReport();closeBnMore()" style="position:relative;border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);"><span class="bm-icon">📅</span><span class="t" data-ar="تقرير شهري" data-en="Monthly Report">تقرير شهري</span></div>
     <div class="bn-more-item" onclick="bnGo('calendar',null);closeBnMore()"><span class="bm-icon">🗓️</span><span class="t" data-ar="التقويم" data-en="Calendar">التقويم</span></div>
     <div class="bn-more-item" onclick="bnGo('rooms',null);closeBnMore()"><span class="bm-icon">🏨</span><span class="t" data-ar="الغرف" data-en="Rooms">الغرف</span></div>
@@ -1591,6 +1592,7 @@ label {
     <div class="bn-more-item" onclick="bnGo('housekeeping',null);closeBnMore()"><span class="bm-icon">🧹</span><span class="t" data-ar="تنظيف" data-en="HK">تنظيف</span></div>
     <div class="bn-more-item" onclick="bnGo('minibar',null);closeBnMore()" style="border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.07);"><span class="bm-icon" style="color:#1abc9c;">🌡️</span><span style="color:#1abc9c;" class="t" data-ar="مينيبار" data-en="Minibar">مينيبار</span></div>
     <div class="bn-more-item" onclick="bnGo('wakeup',null);closeBnMore()" style="border-color:rgba(255,193,7,0.4);background:rgba(255,193,7,0.07);"><span class="bm-icon" style="color:#ffc107;">🔔</span><span style="color:#ffc107;" class="t" data-ar="إيقاظ" data-en="Wake-up">إيقاظ</span></div>
+    <div class="bn-more-item" onclick="enableATAlerts();closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">🚐</span><span style="color:#7ab8f5;" class="t" data-ar="تنبيه المطار" data-en="Transfer Alerts">تنبيه المطار</span></div>
     <div class="bn-more-item" onclick="bnGo('lostandfound',null);closeBnMore()" style="border-color:rgba(230,126,34,0.4);background:rgba(230,126,34,0.07);"><span class="bm-icon" style="color:#e67e22;">📦</span><span style="color:#e67e22;" class="t" data-ar="مفقودات" data-en="Lost & Found">مفقودات</span></div>
     <div class="bn-more-item" onclick="bnGo('guestreq',null);closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">🛎️</span><span style="color:#7ab8f5;" class="t" data-ar="طلبات ضيوف" data-en="Requests">طلبات</span></div>
     <div class="bn-more-item" onclick="bnGo('staffshift',null);closeBnMore()" style="border-color:rgba(155,89,182,0.4);background:rgba(155,89,182,0.07);"><span class="bm-icon" style="color:#c39bd3;">📊</span><span style="color:#c39bd3;" class="t" data-ar="شيفت" data-en="Staff Shift">شيفت</span></div>
@@ -1944,6 +1946,134 @@ function checkWakeUpAlerts(){
 }
 setInterval(checkWakeUpAlerts, 20000);
 setTimeout(checkWakeUpAlerts, 4000);
+
+// ── AIRPORT TRANSFER ALERT ENGINE — تنبيه نقل المطار (صوت + فايبريشن + إشعار) ──
+let _atAudioCtx=null, _atActiveAlerts=[], _atRingTimer=null;
+const AT_LEAD_MINUTES = 2*24*60; // تنبيه قبل موعد النقل بيومين (2880 دقيقة)
+
+function _atUnlockAudio(){
+  if(_atAudioCtx) return;
+  try{ _atAudioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+}
+document.addEventListener('click', _atUnlockAudio, {once:true});
+document.addEventListener('touchstart', _atUnlockAudio, {once:true});
+
+function _atBeep(){
+  if(!_atAudioCtx) _atUnlockAudio();
+  if(!_atAudioCtx) return;
+  try{
+    if(_atAudioCtx.state==='suspended') _atAudioCtx.resume();
+    [0,0.28,0.56].forEach(delay=>{
+      const osc=_atAudioCtx.createOscillator(), gain=_atAudioCtx.createGain();
+      osc.connect(gain); gain.connect(_atAudioCtx.destination);
+      osc.type='sawtooth'; osc.frequency.setValueAtTime(700,_atAudioCtx.currentTime+delay);
+      gain.gain.setValueAtTime(0.5,_atAudioCtx.currentTime+delay);
+      gain.gain.exponentialRampToValueAtTime(0.001,_atAudioCtx.currentTime+delay+0.24);
+      osc.start(_atAudioCtx.currentTime+delay);
+      osc.stop(_atAudioCtx.currentTime+delay+0.24);
+    });
+  }catch(e){}
+}
+
+window.enableATAlerts = function(){
+  _atUnlockAudio();
+  if(_atAudioCtx && _atAudioCtx.state==='suspended') _atAudioCtx.resume();
+  if(navigator.vibrate) navigator.vibrate(60);
+  if('Notification' in window){
+    if(Notification.permission==='default'){
+      Notification.requestPermission().then(p=>{
+        notify(p==='granted'?(isEn()?'Transfer alerts enabled ✓':'تم تفعيل تنبيهات نقل المطار ✓'):(isEn()?'Notifications blocked':'تم رفض الإشعارات'));
+      });
+    } else if(Notification.permission==='granted'){
+      notify(isEn()?'Already enabled ✓':'مفعّل بالفعل ✓');
+    } else {
+      notify(isEn()?'Notifications are blocked in browser settings':'الإشعارات محظورة من إعدادات المتصفح','info');
+    }
+  } else {
+    notify(isEn()?'Sound & vibration enabled (no notification support)':'تم تفعيل الصوت والفايبريشن (الإشعارات غير مدعومة)','info');
+  }
+};
+
+function _atStopRing(){ if(_atRingTimer){ clearInterval(_atRingTimer); _atRingTimer=null; } if(navigator.vibrate) navigator.vibrate(0); }
+function _atStartRing(){
+  _atStopRing();
+  let cycles=0;
+  const ring=()=>{ _atBeep(); if(navigator.vibrate) navigator.vibrate([400,200,400,200,400]); cycles++; if(cycles>=10) _atStopRing(); };
+  ring();
+  _atRingTimer=setInterval(ring,2200);
+}
+
+function _renderATBanner(){
+  let bnr=document.getElementById('at-alarm-banner');
+  if(!bnr){
+    bnr=document.createElement('div');
+    bnr.id='at-alarm-banner';
+    bnr.style.cssText='display:none;position:fixed;top:0;left:0;right:0;z-index:999999;background:linear-gradient(135deg,#0a2540,#06182b);border-bottom:3px solid #3498db;padding:10px 12px;box-shadow:0 6px 28px rgba(0,0,0,0.6);';
+    document.body.appendChild(bnr);
+  }
+  if(!_atActiveAlerts.length || typeof bookings==='undefined'){ bnr.style.display='none'; bnr.innerHTML=''; return; }
+  const rows=_atActiveAlerts.map(a=>{
+    const bk=bookings.find(x=>x.id===a.id);
+    if(!bk) return '';
+    const typeLabel = bk.transferType==='departure' ? (isEn()?'DEPARTURE — Drop to Airport':'سفر — توصيل للمطار') : bk.transferType==='both' ? (isEn()?'ARRIVAL/DEPARTURE':'وصول / سفر') : (isEn()?'ARRIVAL — Pickup from Airport':'وصول — استقبال من المطار');
+    const t = bk.pickupDatetime ? new Date(bk.pickupDatetime) : null;
+    const timeStr = (t && !isNaN(t.getTime())) ? (String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')) : '';
+    return `
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;animation:pulse-res 1s ease-in-out infinite;">
+      <div style="font-size:26px;">🚐</div>
+      <div style="flex:1;min-width:160px;color:#7ab8f5;font-weight:800;font-size:14px;">✈️ ${typeLabel} — ${isEn()?'Room':'غرفة'} ${bk.room}${bk.name?' — '+bk.name:''} · ⏰ ${timeStr}${bk.flightNo?' · ✈️ '+bk.flightNo:''}</div>
+      <button class="btn bsm" style="background:rgba(46,204,113,0.2);color:#2ecc71;border:1px solid;" onclick="atAcknowledge('${a.id}',true)">✅ ${isEn()?'Done':'تم'}</button>
+      <button class="btn bsm br" onclick="atAcknowledge('${a.id}',false)">${isEn()?'Dismiss':'إغلاق'}</button>
+    </div>`;
+  }).join('');
+  if(!rows.trim()){ bnr.style.display='none'; bnr.innerHTML=''; return; }
+  bnr.style.display='block';
+  bnr.innerHTML=rows;
+}
+
+window.atAcknowledge = function(id, markDone){
+  const i=bookings.findIndex(x=>x.id===id);
+  if(i>-1){
+    if(markDone) bookings[i].transferDone=true;
+    sv("dta_bk",bookings);
+  }
+  _atActiveAlerts=_atActiveAlerts.filter(a=>a.id!==id);
+  _renderATBanner();
+  if(!_atActiveAlerts.length) _atStopRing();
+};
+
+function checkAirportTransferAlerts(){
+  if(typeof bookings==='undefined' || !bookings || !bookings.length) return;
+  const now=new Date();
+  let fired=false;
+  bookings.forEach(bk=>{
+    if(bk.hasTransfer && bk.pickupDatetime && !bk.transferDone && !bk.transferAlerted && !bk.cancelReason){
+      const pickup=new Date(bk.pickupDatetime);
+      if(isNaN(pickup.getTime())) return;
+      const diffMin=(pickup.getTime()-now.getTime())/60000;
+      if(diffMin<=AT_LEAD_MINUTES){
+        bk.transferAlerted=true; fired=true;
+        _atActiveAlerts.push({id:bk.id});
+        if('Notification' in window && Notification.permission==='granted'){
+          try{
+            const n=new Notification('🚐 '+(isEn()?'Airport Transfer':'نقل المطار'),{
+              body:(isEn()?'Room':'غرفة')+' '+bk.room+(bk.name?' — '+bk.name:'')+' · '+pickup.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),
+              tag:'airport-transfer-'+bk.id, requireInteraction:true
+            });
+            n.onclick=()=>{ window.focus(); if(typeof goPage==='function') goPage('bookings',null); };
+          }catch(e){}
+        }
+      }
+    }
+  });
+  if(fired){ sv("dta_bk",bookings); _atStartRing(); }
+  // تنظيف التنبيهات المغلقة/المنتهية وإعادة رسم البانر
+  _atActiveAlerts=_atActiveAlerts.filter(a=>{ const cur=bookings.find(x=>x.id===a.id); return cur && !cur.transferDone; });
+  _renderATBanner();
+  if(!_atActiveAlerts.length) _atStopRing();
+}
+setInterval(checkAirportTransferAlerts, 30000);
+setTimeout(checkAirportTransferAlerts, 6000);
 
 // ── LOST & FOUND ──
 let lfData = ld('dta_lf');
@@ -2372,6 +2502,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <button class="nb" onclick="openAIChat()" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border-color:#4A90D9;font-weight:700;">🤖 AI</button>
 <button class="nb" onclick="openAIPricing()" style="background:rgba(155,89,182,0.15);color:#c39bd3;border-color:rgba(155,89,182,0.5);font-weight:700;" title="AI Smart Pricing">💡 <span class="t" data-ar="تسعير ذكي" data-en="Smart Pricing">Smart Pricing</span></button>
 <button class="nb" onclick="openReminders()" style="background:rgba(37,211,102,0.12);color:#4cda7a;border-color:rgba(37,211,102,0.4);font-weight:700;" id="remind-btn">🔔 <span class="t" data-ar="تذكيرات" data-en="Reminders">Reminders</span></button>
+<button class="nb" onclick="enableATAlerts()" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;" id="at-enable-btn" title="تنبيه نقل المطار / Airport Transfer Alerts">🚐 <span class="t" data-ar="تنبيه المطار" data-en="Transfer Alerts">Transfer Alerts</span></button>
 <button class="nb" onclick="openMorningBriefing()" style="background:rgba(245,197,24,0.13);color:#f5c518;border-color:rgba(245,197,24,0.4);font-weight:700;" title="التقرير الصباحي">☀️</button>
 <button class="nb" onclick="openOwnerDailyReport()" style="background:rgba(201,168,76,0.18);color:var(--gold);border-color:rgba(201,168,76,0.6);font-weight:700;" title="تقرير يومي للمالك / Owner Daily Report">📋 <span class="t" data-ar="تقرير المالك" data-en="Owner Report">Owner Report</span></button>
 <button class="nb" id="pwa-nav-btn" onclick="installPWA()" style="background:rgba(201,168,76,0.2);color:var(--gold);border-color:var(--gold);font-weight:700;display:none;" title="تثبيت كتطبيق">📲 تثبيت App</button>
@@ -23122,6 +23253,10 @@ function applyScanData(){
       <div id="mb-co-list"></div>
     </div>
     <div class="mb-section">
+      <div class="mb-section-title">🚐 <span class="t" data-ar="نقل المطار القادم" data-en="Upcoming Airport Transfers">نقل المطار القادم</span></div>
+      <div id="mb-transfers-list"></div>
+    </div>
+    <div class="mb-section">
       <div class="mb-section-title">🎂 <span class="t" data-ar="أعياد ميلاد هذا الأسبوع" data-en="Birthdays This Week">أعياد ميلاد هذا الأسبوع</span></div>
       <div id="mb-bday-list"></div>
     </div>
@@ -23817,6 +23952,18 @@ function openMorningBriefing(){
   document.getElementById('mb-co-list').innerHTML=todayCO.length
     ?todayCO.map(b=>`<div class="mb-item co">🛫 <div><div style="font-weight:700;color:#e67e22;">${b.name}</div><div style="font-size:10px;color:var(--muted);">${roomWord} ${b.room} · ${b.cur} ${b.total}</div></div></div>`).join('')
     :`<div class="mb-item info" style="color:var(--muted);">${currentLang==='ar'?'لا يوجد مغادرة اليوم':'No departures today'}</div>`;
+  const upcomingTransfers=(bookings||[]).filter(b=>b.hasTransfer&&b.pickupDatetime&&!b.transferDone&&!b.cancelReason).map(b=>{
+    const t=new Date(b.pickupDatetime);
+    return {...b,_t:t};
+  }).filter(b=>!isNaN(b._t.getTime())&&b._t.getTime()>=new Date(td).getTime()&&(b._t-now)/86400000<=2).sort((a,b)=>a._t-b._t);
+  document.getElementById('mb-transfers-list').innerHTML=upcomingTransfers.length
+    ?upcomingTransfers.map(b=>{
+      const typeLabel=b.transferType==='departure'?(currentLang==='ar'?'سفر — توصيل للمطار':'Departure — Drop to Airport'):b.transferType==='both'?(currentLang==='ar'?'وصول/سفر':'Arrival/Departure'):(currentLang==='ar'?'وصول — استقبال من المطار':'Arrival — Pickup from Airport');
+      const dStr=b._t.toLocaleDateString(currentLang==='ar'?'ar-EG':'en-GB',{day:'2-digit',month:'2-digit'});
+      const tStr=String(b._t.getHours()).padStart(2,'0')+':'+String(b._t.getMinutes()).padStart(2,'0');
+      return `<div class="mb-item" style="border-color:rgba(52,152,219,0.3);">🚐 <div><div style="font-weight:700;color:#7ab8f5;">${b.name} — ${roomWord} ${b.room}</div><div style="font-size:10px;color:var(--muted);">${typeLabel} · 📅 ${dStr} · ⏰ ${tStr}${b.flightNo?' · ✈️ '+b.flightNo:''}</div></div></div>`;
+    }).join('')
+    :`<div class="mb-item info" style="color:var(--muted);">${currentLang==='ar'?'لا يوجد نقل مطار خلال يومين':'No airport transfers in the next 2 days'}</div>`;
   const bdays=[];
   (bookings||[]).forEach(b=>{
     if(!b.dob||b.status==='Cancelled')return;
