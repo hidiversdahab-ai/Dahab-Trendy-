@@ -14995,10 +14995,19 @@ btn.textContent="🔄 تحديث تلقائي Online";
 btn.disabled=false;
 }
 // ═══════════ EXPORT / IMPORT (HTML FORMAT) ═══════════
+function _collectFullBackup(){
+// نسخ كل localStorage بالكامل (كل مفتاح وكل قيمة) — يضمن استرجاع كل شيء بالظبط مهما أضفنا مزايا جديدة مستقبلاً
+const _ls={};
+for(let i=0;i<localStorage.length;i++){
+  const k=localStorage.key(i);
+  _ls[k]=localStorage.getItem(k);
+}
+return {__full_backup:true,__version:2,__ls:_ls,savedAt:new Date().toISOString(),
+  bookings,prices,duPrices,roomSt,roomTypes,policies,expenses,exRate,restaurantTx,tours,events,restMenu,roomPhotos,waitlist};
+}
 function exportAll(){
 localStorage.setItem("dta_last_export",String(Date.now()));
-const qrSettings=JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
-const data={bookings,prices,duPrices,roomSt,roomTypes,policies,expenses,exRate,restaurantTx,tours,events,restMenu,roomPhotos,waitlist,qrSettings,savedAt:new Date().toISOString()};
+const data=_collectFullBackup();
 const dataStr=JSON.stringify(data,null,2);
 const html=`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -15118,8 +15127,7 @@ a.click();
 showToast("✓ Exported as HTML!");
 }
 async function shareBackupWA(){
-const qrSettings2=JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
-const data={bookings,prices,duPrices,roomSt,roomTypes,policies,expenses,exRate,restaurantTx,tours,events,restMenu,roomPhotos,waitlist,qrSettings:qrSettings2,savedAt:new Date().toISOString()};
+const data=_collectFullBackup();
 const dataStr=JSON.stringify(data,null,2);
 const html=`<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -15276,6 +15284,26 @@ if(si !== -1){
 if(!data){ try{ data = JSON.parse(content); }catch(ex){} }
 if(!data || !data.bookings) throw new Error("لم يتم العثور على بيانات صحيحة في الملف");
 if(!confirm("سيتم استبدال كل البيانات الحالية. هل أنت متأكد؟\nThis will overwrite all data. Are you sure?")) return;
+
+if(data.__full_backup && data.__ls){
+  // ✅ نسخة احتياطية كاملة — استرجاع كل مفتاح بالظبط كما كان وقت التصدير، ثم إعادة تحميل الصفحة بالكامل
+  // امسح أولاً كل المفاتيح الحالية المرتبطة بالنظام عشان أي حاجة اتمسحت بعد التصدير متفضلش موجودة
+  const prefixes=["dta_","dahab_","hk_","_sys_lic","_grp_net","_indiv_net"];
+  const toRemove=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(prefixes.some(p=>k.startsWith(p))) toRemove.push(k);
+  }
+  toRemove.forEach(k=>localStorage.removeItem(k));
+  Object.keys(data.__ls).forEach(k=>{
+    try{ localStorage.setItem(k, data.__ls[k]); }catch(e){}
+  });
+  showToast("✓ تم الاستيراد الكامل — جاري إعادة التحميل...");
+  setTimeout(()=>location.reload(), 800);
+  return;
+}
+
+// fallback: نسخة احتياطية قديمة — استرجاع حقل بحقل
 if(data.bookings){bookings=data.bookings;LSS("dta_bk",bookings);}
 if(data.prices){prices=data.prices;LSS("dta_pr",prices);}
 if(data.duPrices){duPrices=data.duPrices;LSS("dta_du",duPrices);}
@@ -30818,7 +30846,11 @@ async function exportData(){
     // جلب تحويلات المالك والعهدات من IDB
     const ownerTxData  = await DTA_DB.getSetting('dta_owner_transfers', window._ownerTxList||[]).catch(()=>window._ownerTxList||[]);
     const custodyData  = await DTA_DB.getSetting(CUST_KEY, window._custodyList||[]).catch(()=>window._custodyList||[]);
+    // ✅ نسخة كاملة من localStorage كمان — يضمن استرجاع كل شيء بالظبط (الأنشطة، الموردين، أي حاجة جديدة)
+    const _ls={};
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); _ls[k]=localStorage.getItem(k); }
     const data = {
+      __full_backup:true, __version:2, __ls:_ls,
       ts: new Date().toISOString(),
       version: 'DahabTrendy-v11-IDB',
       bookings:       bk,
@@ -30893,6 +30925,23 @@ async function importData(file){
 
     if(!confirm('سيتم استبدال كل البيانات الحالية بالبيانات المستوردة. هل أنت متأكد؟')) return;
     pushUndo('قبل استيراد IDB', getUndoSnapshot());
+
+    if(data.__full_backup && data.__ls){
+      // ✅ نسخة كاملة — استرجاع كل مفتاح بالظبط زي وقت التصدير، ثم إعادة تحميل الصفحة
+      const prefixes=["dta_","dahab_","hk_","_sys_lic","_grp_net","_indiv_net"];
+      const toRemove=[];
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(prefixes.some(p=>k.startsWith(p))) toRemove.push(k);
+      }
+      toRemove.forEach(k=>localStorage.removeItem(k));
+      Object.keys(data.__ls).forEach(k=>{
+        try{ localStorage.setItem(k, data.__ls[k]); }catch(e){}
+      });
+      sNotify('✅ استيراد كامل','تم استرجاع كل البيانات بالظبط — جاري إعادة التحميل','success',3000);
+      setTimeout(()=>location.reload(), 900);
+      return;
+    }
 
     // ✅ FIX: احفظ حالة CO/CI الحالية قبل الاستيراد عشان متتضيعش
     const existingBK = Array.isArray(bookings) ? bookings : [];
