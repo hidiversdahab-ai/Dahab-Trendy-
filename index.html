@@ -1604,6 +1604,7 @@ label {
     <div class="bn-more-item" onclick="bnGo('statusboard',null);closeBnMore()" style="border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);"><span class="bm-icon">🗒️</span><span class="t" data-ar="لوحة الحالة" data-en="Status Board">لوحة الحالة</span></div>
     <div class="bn-more-item" onclick="openRoomUpgradeAssistant();closeBnMore()" style="border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);"><span class="bm-icon">🤖🏨</span><span class="t" data-ar="ترقية الغرف AI" data-en="AI Upgrade">ترقية الغرف AI</span></div>
     <div class="bn-more-item" id="bn-branch-item" onclick="DTA_BRANCH.openManager();closeBnMore()" style="border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);position:relative;"><span class="bm-icon">🏢</span><span class="t" data-ar="الفروع" data-en="Branches">الفروع</span><span id="bn-branch-active-lbl" style="font-size:9px;color:var(--gold);display:block;margin-top:2px;"></span></div>
+    <div class="bn-more-item" onclick="btManagePrinters();closeBnMore()" style="border-color:rgba(155,89,182,0.4);background:rgba(155,89,182,0.07);"><span class="bm-icon" style="color:#9b59b6;">🖨️</span><span style="color:#9b59b6;" class="t" data-ar="طابعات الغرف" data-en="Room Printers">طابعات الغرف</span></div>
     <div class="bn-more-item" onclick="bnGo('settings',null);closeBnMore()"><span class="bm-icon">⚙️</span><span class="t" data-ar="إعدادات" data-en="Settings">إعدادات</span></div>
     <div class="bn-more-item" onclick="openAIChat();closeBnMore()"><span class="bm-icon">🤖</span><span>AI Chat</span></div>
     <div class="bn-more-item" onclick="openWATemplates();closeBnMore()"><span class="bm-icon">💬</span><span>WA Templates</span></div>
@@ -3109,6 +3110,7 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <button class="btn" style="background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;font-weight:700;" onclick="downloadInvoicePDF()">📥 تحميل PDF</button>
 <button class="btn" style="background:#6c3483;color:#fff;" onclick="openQRCode()">📱 QR Code</button>
 <button class="btn bb" onclick="copyMsgText()" id="copy-btn">📋 <span class="t" data-ar="نسخ نص الرسالة" data-en="Copy Message Text">نسخ نص الرسالة</span></button>
+<button class="btn" style="background:rgba(155,89,182,0.2);color:#9b59b6;border:1px solid rgba(155,89,182,0.5);font-weight:700;" onclick="btPrintInvoiceToRoom()">🖨️ <span class="t" data-ar="طباعة بلوتوث للغرفة" data-en="Bluetooth Print to Room">طباعة بلوتوث للغرفة</span></button>
 </div>
 </div>
 <div>
@@ -35977,8 +35979,331 @@ window.renderMinibar = window.renderMinibar;
   </div>
 </div>
 
+<!-- Room Bluetooth Printers Modal -->
+<div id="bt-printers-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--card);border:1px solid rgba(155,89,182,0.4);border-radius:18px;padding:22px;width:100%;max-width:420px;box-shadow:0 10px 50px rgba(0,0,0,0.6);max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div style="font-size:16px;font-weight:700;color:#9b59b6;">🖨️ <span class="t" data-ar="طابعات الغرف (بلوتوث)" data-en="Room Printers (Bluetooth)">طابعات الغرف (بلوتوث)</span></div>
+      <button onclick="closeBtPrintersModal()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6;" class="t"
+      data-ar="اضغط «ربط» بجانب كل غرفة وانت واقف جنب طابعتها (شغّلها وفعّل البلوتوث)، اختار اسمها من القائمة اللي هتظهر. هتتحفظ تلقائياً للمرات الجاية — مش محتاج تربطها تاني."
+      data-en="Tap 'Pair' next to each room while standing near its printer (power it on, enable Bluetooth), pick it from the list that appears. It will be remembered automatically — no need to pair again.">
+      اضغط «ربط» بجانب كل غرفة وانت واقف جنب طابعتها (شغّلها وفعّل البلوتوث)، اختار اسمها من القائمة اللي هتظهر. هتتحفظ تلقائياً للمرات الجاية — مش محتاج تربطها تاني.
+    </div>
+    <div id="bt-printers-list"></div>
+  </div>
+</div>
+
 <script>
-// ── Custody System ──
+// ══════════════════════════════════════════════════════════
+//  ROOM BLUETOOTH PRINTERS — طباعة الفاتورة مباشرة لطابعة كل غرفة
+//  (Web Bluetooth — Chrome/Edge على أندرويد فقط، يحتاج HTTPS)
+// ══════════════════════════════════════════════════════════
+window._roomPrinters = {};
+try{ window._roomPrinters = JSON.parse(localStorage.getItem('dta_room_printers')||'{}'); }catch(e){ window._roomPrinters={}; }
+function saveRoomPrinters(){ try{ localStorage.setItem('dta_room_printers', JSON.stringify(window._roomPrinters)); }catch(e){} }
+
+// UUIDs شائعة في الطابعات الحرارية الرخيصة (BLE) — لو طابعتك مش شغالة، ممكن تحتاج UUID مختلف حسب الموديل
+const BT_PRINTER_SERVICES = [
+  '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+  '000018f0-0000-1000-8000-00805f9b34fb',
+  '0000ff00-0000-1000-8000-00805f9b34fb'
+];
+
+function openBtPrintersModal(){
+  renderBtPrintersList();
+  document.getElementById('bt-printers-modal').style.display='flex';
+}
+function closeBtPrintersModal(){
+  document.getElementById('bt-printers-modal').style.display='none';
+}
+function btManagePrinters(){
+  if(!navigator.bluetooth){
+    alert(currentLang==='ar'
+      ?'المتصفح ده مش بيدعم Web Bluetooth. لازم تستخدم Chrome على أندرويد (مش متاح على آيفون/Safari).'
+      :'This browser does not support Web Bluetooth. Use Chrome on Android (not available on iPhone/Safari).');
+    return;
+  }
+  openBtPrintersModal();
+}
+function renderBtPrintersList(){
+  const el = document.getElementById('bt-printers-list');
+  if(!el) return;
+  const ar = currentLang==='ar';
+  const rooms = (typeof dbRooms!=='undefined' && dbRooms.length) ? dbRooms : ROOMS;
+  el.innerHTML = rooms.map(r=>{
+    const p = window._roomPrinters[r];
+    const isWifi = p && p.type==='wifi';
+    const isBt   = p && p.type==='bluetooth';
+    const statusTxt = isBt ? ('🔵 '+(ar?'بلوتوث: ':'Bluetooth: ')+p.name)
+      : isWifi ? ('📶 '+(ar?'واي فاي: ':'WiFi: ')+p.ip)
+      : (ar?'لا توجد طابعة مربوطة':'No printer linked');
+    return `<div style="padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:700;font-size:13px;">${ar?'غرفة':'Room'} ${r}</div>
+          <div style="font-size:11px;color:${p?'#4cda7a':'var(--muted)'};">${statusTxt}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="btPairPrinterForRoom('${r}')" style="background:rgba(52,152,219,0.15);color:#3498db;border:1px solid rgba(52,152,219,0.4);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">🔵 ${ar?'بلوتوث':'BT'}</button>
+          <button onclick="toggleWifiInput('${r}')" style="background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.4);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;">📶 ${ar?'واي فاي':'WiFi'}</button>
+          ${p?`<button onclick="btUnpairRoom('${r}')" style="background:none;border:1px solid rgba(231,76,60,0.3);color:#e74c3c;border-radius:8px;padding:6px 8px;font-size:11px;cursor:pointer;">✕</button>`:''}
+        </div>
+      </div>
+      <div id="wifi-input-${r}" style="display:none;margin-top:8px;display:flex;gap:6px;">
+        <input id="wifi-ip-${r}" type="text" placeholder="${ar?'مثال: 192.168.1.50':'e.g. 192.168.1.50'}" value="${isWifi?p.ip:''}"
+          style="flex:1;padding:8px 10px;background:var(--inp);border:1px solid var(--bdr);border-radius:8px;color:var(--text);font-size:12px;direction:ltr;box-sizing:border-box;">
+        <button onclick="saveWifiPrinter('${r}')" style="background:rgba(46,204,113,0.2);color:#2ecc71;border:1px solid rgba(46,204,113,0.5);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">${ar?'حفظ':'Save'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleWifiInput(room){
+  const row = document.getElementById('wifi-input-'+room);
+  if(!row) return;
+  row.style.display = (row.style.display==='none' || !row.style.display) ? 'flex' : 'none';
+}
+function saveWifiPrinter(room){
+  const ar = currentLang==='ar';
+  const ipInput = document.getElementById('wifi-ip-'+room);
+  const ip = (ipInput.value||'').trim();
+  if(!ip){ alert(ar?'اكتب IP الطابعة الأول.':'Enter the printer IP first.'); return; }
+  window._roomPrinters[room] = {type:'wifi', ip};
+  saveRoomPrinters();
+  renderBtPrintersList();
+  if(typeof sNotify==='function') sNotify('✅', (ar?'تم ربط طابعة واي فاي بغرفة ':'WiFi printer linked to room ')+room, 'success', 3000);
+}
+window.toggleWifiInput = toggleWifiInput;
+window.saveWifiPrinter = saveWifiPrinter;
+async function btPairPrinterForRoom(room){
+  try{
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices:true,
+      optionalServices: BT_PRINTER_SERVICES
+    });
+    window._roomPrinters[room] = {type:'bluetooth', id:device.id, name:device.name||('Printer '+device.id.slice(0,6))};
+    saveRoomPrinters();
+    renderBtPrintersList();
+    if(typeof sNotify==='function') sNotify('✅', (currentLang==='ar'?'تم ربط طابعة بغرفة ':'Printer linked to room ')+room, 'success', 3000);
+  }catch(e){
+    if(e.name!=='NotFoundError') alert('Pairing failed: '+e.message);
+  }
+}
+function btUnpairRoom(room){
+  delete window._roomPrinters[room];
+  saveRoomPrinters();
+  renderBtPrintersList();
+}
+window.btManagePrinters = btManagePrinters;
+window.closeBtPrintersModal = closeBtPrintersModal;
+window.btPairPrinterForRoom = btPairPrinterForRoom;
+window.btUnpairRoom = btUnpairRoom;
+
+// ── إعادة اتصال بطابعة محفوظة بدون ما تفتح نافذة اختيار تاني (لو المتصفح بيدعمها) ──
+async function btReconnectSaved(deviceId){
+  if(!navigator.bluetooth.getDevices) return null;
+  try{
+    const devices = await navigator.bluetooth.getDevices();
+    const found = devices.find(d=>d.id===deviceId);
+    if(found){
+      const server = await found.gatt.connect();
+      return server;
+    }
+  }catch(e){}
+  return null;
+}
+async function btFindWritableCharacteristic(server){
+  const services = await server.getPrimaryServices();
+  for(const svc of services){
+    const chars = await svc.getCharacteristics();
+    for(const ch of chars){
+      if(ch.properties.write || ch.properties.writeWithoutResponse) return ch;
+    }
+  }
+  throw new Error(currentLang==='ar'?'محصلتش خاصية كتابة في الطابعة دي.':'No writable characteristic found on this printer.');
+}
+// تحويل Canvas لصورة ESC/POS (GS v 0) أبيض/أسود — أنسب حل عشان يدعم العربي والشعار بدون مشاكل ترميز
+function escposRasterFromCanvas(canvas){
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const img = ctx.getImageData(0,0,w,h).data;
+  const bytesPerRow = Math.ceil(w/8);
+  const data = new Uint8Array(bytesPerRow*h);
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const i=(y*w+x)*4;
+      const lum = 0.299*img[i]+0.587*img[i+1]+0.114*img[i+2];
+      if(lum < 160){
+        const byteIdx = y*bytesPerRow + (x>>3);
+        data[byteIdx] |= (0x80 >> (x % 8));
+      }
+    }
+  }
+  const xL = bytesPerRow & 0xFF, xH=(bytesPerRow>>8)&0xFF;
+  const yL = h & 0xFF, yH=(h>>8)&0xFF;
+  const header = new Uint8Array([0x1D,0x76,0x30,0x00,xL,xH,yL,yH]);
+  const out = new Uint8Array(header.length + data.length);
+  out.set(header,0); out.set(data, header.length);
+  return out;
+}
+function renderInvoiceToCanvas(d){
+  const ar = currentLang==='ar';
+  const W = 384; // 58mm @ 203dpi
+  const lineH = 28;
+  const lines = [];
+  lines.push({t:(typeof PROP!=='undefined'&&PROP.name)||'Hotel', size:20, bold:true, align:'center'});
+  lines.push({t:'────────────────────', size:13, align:'center'});
+  lines.push({t:(ar?'فاتورة رقم: ':'Invoice: ')+(typeof curInvNo!=='undefined'?curInvNo:''), size:15, bold:true, align:'center'});
+  lines.push({t:(ar?'الضيف: ':'Guest: ')+d.name, size:15, align:ar?'right':'left'});
+  lines.push({t:(ar?'الغرفة: ':'Room: ')+d.room+' ('+d.type+')', size:15, align:ar?'right':'left'});
+  lines.push({t:(ar?'الوصول: ':'Check-in: ')+(d.ci||''), size:13, align:ar?'right':'left'});
+  lines.push({t:(ar?'المغادرة: ':'Check-out: ')+(d.co||''), size:13, align:ar?'right':'left'});
+  lines.push({t:(ar?'الليالي: ':'Nights: ')+d.n, size:13, align:ar?'right':'left'});
+  lines.push({t:'────────────────────', size:13, align:'center'});
+  lines.push({t:(ar?'الإجمالي: ':'Total: ')+d.sym+d.total.toFixed(2), size:18, bold:true, align:ar?'right':'left'});
+  if(d.prepay>0){
+    lines.push({t:(ar?'مدفوع مسبقاً: ':'Prepaid: ')+d.sym+d.prepay.toFixed(2), size:13, align:ar?'right':'left'});
+    lines.push({t:(ar?'المتبقي: ':'Balance Due: ')+d.sym+d.balance.toFixed(2), size:16, bold:true, align:ar?'right':'left'});
+  }
+  lines.push({t:'────────────────────', size:13, align:'center'});
+  lines.push({t:(typeof PROP!=='undefined'&&PROP.phone)||'', size:12, align:'center'});
+
+  const totalH = lines.reduce((s,l)=>s+lineH,30);
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = totalH;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,totalH);
+  ctx.fillStyle='#000';
+  ctx.direction = ar ? 'rtl':'ltr';
+  let y = 18;
+  lines.forEach(l=>{
+    ctx.font = (l.bold?'bold ':'')+l.size+'px Arial';
+    ctx.textAlign = l.align==='center'?'center':(ar?'right':'left');
+    const x = l.align==='center'? W/2 : (ar? W-10 : 10);
+    ctx.fillText(l.t, x, y+l.size);
+    y += lineH;
+  });
+  return canvas;
+}
+async function btPrintInvoiceToRoom(){
+  const ar = currentLang==='ar';
+  if(typeof getIV!=='function'){ return; }
+  const d = getIV();
+  if(!d.name || d.name==='—'){
+    alert(ar?'الرجاء ملء بيانات الفاتورة أولاً.':'Please fill in invoice details first.');
+    return;
+  }
+  const room = d.room;
+  const saved = window._roomPrinters[room];
+
+  if(saved && saved.type==='wifi'){
+    return wifiPrintInvoiceToRoom(room, saved.ip, d);
+  }
+
+  // افتراضي: بلوتوث (أو لو فيه طابعة بلوتوث محفوظة بصيغة قديمة بدون type)
+  if(!navigator.bluetooth){
+    alert(ar?'المتصفح ده مش بيدعم Web Bluetooth (استخدم Chrome على أندرويد) — أو اربط طابعة واي فاي بدل البلوتوث.':'This browser does not support Web Bluetooth (use Chrome on Android) — or link a WiFi printer instead.');
+    return;
+  }
+  let server;
+  try{
+    if(saved && saved.id){ server = await btReconnectSaved(saved.id); }
+    if(!server){
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices:true,
+        optionalServices: BT_PRINTER_SERVICES
+      });
+      window._roomPrinters[room] = {type:'bluetooth', id:device.id, name:device.name||'Printer'};
+      saveRoomPrinters();
+      server = await device.gatt.connect();
+    }
+    const ch = await btFindWritableCharacteristic(server);
+    const canvas = renderInvoiceToCanvas(d);
+    const bytes = escposRasterFromCanvas(canvas);
+    try{ await ch.writeValue(new Uint8Array([0x1B,0x40])); }catch(e){} // ESC @ reset
+    const CHUNK = 180;
+    for(let i=0;i<bytes.length;i+=CHUNK){
+      const slice = bytes.slice(i,i+CHUNK);
+      try{ await ch.writeValueWithoutResponse(slice); }
+      catch(e){ await ch.writeValue(slice); }
+      await new Promise(r=>setTimeout(r,15));
+    }
+    try{ await ch.writeValue(new Uint8Array([0x0A,0x0A,0x0A,0x1D,0x56,0x01])); }catch(e){} // feed + cut (يتجاهلها لو مش مدعومة)
+    if(typeof sNotify==='function') sNotify('🖨️', (ar?'تم إرسال الفاتورة لطابعة غرفة ':'Invoice sent to printer for room ')+room, 'success', 3000);
+  }catch(e){
+    if(e.name==='NotFoundError') return; // المستخدم لغى الاختيار
+    alert((ar?'فشلت الطباعة: ':'Print failed: ')+e.message+
+      (ar?'\n\nلو دي أول مرة: اتأكد إن الطابعة شغالة، البلوتوث مفعّل، وهي قريبة من الموبايل. بعض الموديلات بتحتاج ضبط UUID مختلف.'
+          :'\n\nFirst time tip: make sure the printer is powered on, Bluetooth is enabled, and it is near the phone. Some models need a different service UUID.'));
+  }
+}
+// ── تحويل Uint8Array لـ base64 (مستخدم في إرسال الصورة لطابعة الواي فاي) ──
+function uint8ToBase64(bytes){
+  let binary='';
+  for(let i=0;i<bytes.length;i++){ binary+=String.fromCharCode(bytes[i]); }
+  return btoa(binary);
+}
+// ── طباعة عبر واي فاي باستخدام بروتوكول ePOS-Print (شغال مع طابعات Epson وأي طابعة بتدعم نفس البروتوكول) ──
+async function wifiPrintInvoiceToRoom(room, ip, d){
+  const ar = currentLang==='ar';
+  try{
+    const canvas = renderInvoiceToCanvas(d);
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const img = ctx.getImageData(0,0,w,h).data;
+    const bytesPerRow = Math.ceil(w/8);
+    const data = new Uint8Array(bytesPerRow*h);
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        const i=(y*w+x)*4;
+        const lum=0.299*img[i]+0.587*img[i+1]+0.114*img[i+2];
+        if(lum<160){
+          const byteIdx=y*bytesPerRow+(x>>3);
+          data[byteIdx]|=(0x80>>(x%8));
+        }
+      }
+    }
+    const b64 = uint8ToBase64(data);
+    const xml = `<?xml version="1.0" encoding="utf-8"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+<s:Body>
+<epos-print xmlns="http://www.epson-pos.com/schemas/2011/03/epos-print">
+<image width="${w}" height="${h}" color="color_1" mode="mono">${b64}</image>
+<feed line="3"/>
+<cut type="feed"/>
+</epos-print>
+</s:Body>
+</s:Envelope>`;
+    const url = `http://${ip}/cgi-bin/epos/service.cgi?devid=local_printer&timeout=10000`;
+    try{
+      await fetch(url, {
+        method:'POST',
+        mode:'cors',
+        headers:{'Content-Type':'text/xml; charset=utf-8','SOAPAction':'""'},
+        body: xml
+      });
+    }catch(corsErr){
+      // غالباً الطابعة بترفض CORS — نبعت "أعمى" (الطلب بيوصل لكن مينفعش نقرأ الرد)
+      await fetch(url, {
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'text/xml; charset=utf-8'},
+        body: xml
+      });
+    }
+    if(typeof sNotify==='function') sNotify('🖨️', (ar?'تم إرسال الفاتورة لطابعة غرفة ':'Invoice sent to printer for room ')+room, 'success', 3000);
+  }catch(e){
+    alert((ar?'فشلت الطباعة عبر الواي فاي: ':'WiFi print failed: ')+e.message+
+      (ar?'\n\nملحوظة: البروتوكول ده (ePOS-Print) شغال مع طابعات Epson غالبًا. لو طابعتك ماركة تانية، ابعتلي الموديل عشان أظبط الكود على البروتوكول بتاعها. كمان اتأكد إن الموبايل على نفس شبكة الواي فاي.'
+          :'\n\nNote: this protocol (ePOS-Print) generally works with Epson printers. If yours is a different brand, send me the model so I can adjust to its protocol. Also make sure the phone is on the same WiFi network.'));
+  }
+}
+window.wifiPrintInvoiceToRoom = wifiPrintInvoiceToRoom;
+
+window.btPrintInvoiceToRoom = btPrintInvoiceToRoom;
+
+
 window._custodyList = [];
 window._custodyEditId = null;
 window._custodyType = 'from_profit';
