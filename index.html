@@ -15284,6 +15284,13 @@ if(data.roomTypes){roomTypes=data.roomTypes;LSS("dta_room_types",roomTypes);}
 if(data.policies){policies=data.policies;LSS("dta_pol",policies);}
 if(data.expenses){expenses=data.expenses;LSS("dta_ex",expenses);}
 if(data.exRate){exRate=parseFloat(data.exRate);localStorage.setItem("dta_rate",exRate);}
+if(data.restaurantTx){restaurantTx=data.restaurantTx;LSS("dta_rest",restaurantTx);}
+if(data.tours){tours=data.tours;LSS("dta_tours",tours);}
+if(data.events){events=data.events;LSS("dta_events",events);}
+if(data.restMenu){restMenu=data.restMenu;LSS("dta_rest_menu",restMenu);window.restMenu=restMenu;}
+if(data.roomPhotos){roomPhotos=data.roomPhotos;LSS("dta_room_photos",roomPhotos);}
+if(data.waitlist){waitlist=data.waitlist;LSS("dta_wl",waitlist);}
+if(data.qrSettings){localStorage.setItem("dta_qr_settings",JSON.stringify(data.qrSettings));}
 const bn=document.getElementById("banner");
 bn.style.display="block";setTimeout(()=>bn.style.display="none",4000);
 renderDashboard();renderBookings();renderRooms();renderExpenses();renderSettings();
@@ -30799,10 +30806,9 @@ const DTA_BACKUP = (function(){
 async function exportData(){
   try{
     sNotify('🗄️ جاري التصدير...','يتم قراءة البيانات من IDB','info',2000);
-    const [bk, ex, rs, rtx, tr, bl, rv, wl] = await Promise.all([
+    const [bk, ex, rtx, tr, bl, rv, wl] = await Promise.all([
       DTA_DB.getAll('bookings').catch(()=>bookings||[]),
       DTA_DB.getAll('expenses').catch(()=>expenses||[]),
-      DTA_DB.getAll('rooms').catch(()=>roomSt||[]),
       DTA_DB.getAll('restaurantTx').catch(()=>restaurantTx||[]),
       DTA_DB.getAll('tours').catch(()=>tours||[]),
       DTA_DB.getAll('blacklist').catch(()=>blacklist||[]),
@@ -30817,7 +30823,7 @@ async function exportData(){
       version: 'DahabTrendy-v11-IDB',
       bookings:       bk,
       expenses:       ex,
-      roomSt:         rs,
+      roomSt:         (typeof roomSt!=='undefined'?roomSt:{}),
       restaurantTx:   rtx,
       tours:          tr,
       blacklist:      bl,
