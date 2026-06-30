@@ -1592,7 +1592,7 @@ label {
     <div class="bn-more-item" onclick="bnGo('housekeeping',null);closeBnMore()"><span class="bm-icon">🧹</span><span class="t" data-ar="تنظيف" data-en="HK">تنظيف</span></div>
     <div class="bn-more-item" onclick="bnGo('minibar',null);closeBnMore()" style="border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.07);"><span class="bm-icon" style="color:#1abc9c;">🌡️</span><span style="color:#1abc9c;" class="t" data-ar="مينيبار" data-en="Minibar">مينيبار</span></div>
     <div class="bn-more-item" onclick="bnGo('wakeup',null);closeBnMore()" style="border-color:rgba(255,193,7,0.4);background:rgba(255,193,7,0.07);"><span class="bm-icon" style="color:#ffc107;">🔔</span><span style="color:#ffc107;" class="t" data-ar="إيقاظ" data-en="Wake-up">إيقاظ</span></div>
-    <div class="bn-more-item" onclick="enableATAlerts();closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">🚐</span><span style="color:#7ab8f5;" class="t" data-ar="تنبيه المطار" data-en="Transfer Alerts">تنبيه المطار</span></div>
+    <div class="bn-more-item" onclick="bnGo('airporttransfers',null);closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">🚐</span><span style="color:#7ab8f5;" class="t" data-ar="تنبيه المطار" data-en="Transfer Alerts">تنبيه المطار</span></div>
     <div class="bn-more-item" onclick="bnGo('lostandfound',null);closeBnMore()" style="border-color:rgba(230,126,34,0.4);background:rgba(230,126,34,0.07);"><span class="bm-icon" style="color:#e67e22;">📦</span><span style="color:#e67e22;" class="t" data-ar="مفقودات" data-en="Lost & Found">مفقودات</span></div>
     <div class="bn-more-item" onclick="bnGo('guestreq',null);closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">🛎️</span><span style="color:#7ab8f5;" class="t" data-ar="طلبات ضيوف" data-en="Requests">طلبات</span></div>
     <div class="bn-more-item" onclick="bnGo('staffshift',null);closeBnMore()" style="border-color:rgba(155,89,182,0.4);background:rgba(155,89,182,0.07);"><span class="bm-icon" style="color:#c39bd3;">📊</span><span style="color:#c39bd3;" class="t" data-ar="شيفت" data-en="Staff Shift">شيفت</span></div>
@@ -1647,6 +1647,15 @@ label {
     <button class="btn" id="wu-enable-btn" style="background:rgba(255,193,7,0.15);color:#ffc107;border:1px solid rgba(255,193,7,0.4);" onclick="enableWUAlerts()">🔔 تفعيل التنبيه الحقيقي</button>
   </div>
   <div id="wakeup-list"><div style="text-align:center;padding:40px;color:var(--muted);">🔔 <span class="t" data-ar="لا توجد طلبات إيقاظ" data-en="No wake-up calls">لا توجد طلبات إيقاظ</span></div></div>
+</div>
+
+<!-- ══ AIRPORT TRANSFERS PAGE ══ -->
+<div id="page-airporttransfers" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <h2 style="color:#7ab8f5;font-size:18px;">🚐 <span class="t" data-ar="نقل المطار" data-en="Airport Transfers">نقل المطار</span></h2>
+    <button class="btn" id="at-enable-btn-page" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border:1px solid rgba(52,152,219,0.4);" onclick="enableATAlerts()">🔔 <span class="t" data-ar="تفعيل التنبيه الحقيقي" data-en="Enable Real Alerts">تفعيل التنبيه الحقيقي</span></button>
+  </div>
+  <div id="airport-transfers-list"><div style="text-align:center;padding:40px;color:var(--muted);">🚐 <span class="t" data-ar="لا توجد نقلات مطار" data-en="No airport transfers">لا توجد نقلات مطار</span></div></div>
 </div>
 
 <!-- Wake-up Modal -->
@@ -2060,7 +2069,7 @@ function checkAirportTransferAlerts(){
               body:(isEn()?'Room':'غرفة')+' '+bk.room+(bk.name?' — '+bk.name:'')+' · '+pickup.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),
               tag:'airport-transfer-'+bk.id, requireInteraction:true
             });
-            n.onclick=()=>{ window.focus(); if(typeof goPage==='function') goPage('bookings',null); };
+            n.onclick=()=>{ window.focus(); if(typeof goPage==='function') goPage('airporttransfers',null); };
           }catch(e){}
         }
       }
@@ -2074,6 +2083,63 @@ function checkAirportTransferAlerts(){
 }
 setInterval(checkAirportTransferAlerts, 30000);
 setTimeout(checkAirportTransferAlerts, 6000);
+
+// ── AIRPORT TRANSFERS PAGE — قائمة كل نقلات المطار ──
+function renderAirportTransfers(){
+  const el=document.getElementById('airport-transfers-list');
+  if(!el) return;
+  if(typeof bookings==='undefined' || !bookings){ return; }
+  const list=bookings.filter(b=>b.hasTransfer && !b.cancelReason);
+  list.sort((a,b)=>{
+    const ta=a.pickupDatetime?new Date(a.pickupDatetime).getTime():Infinity;
+    const tb=b.pickupDatetime?new Date(b.pickupDatetime).getTime():Infinity;
+    if(isNaN(ta)) return 1; if(isNaN(tb)) return -1;
+    return ta-tb;
+  });
+  if(!list.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">🚐 '+(isEn()?'No airport transfers':'لا توجد نقلات مطار')+'</div>';
+    return;
+  }
+  const now=new Date();
+  el.innerHTML=list.map(b=>{
+    const idx=bookings.findIndex(x=>x.id===b.id);
+    const t=b.pickupDatetime?new Date(b.pickupDatetime):null;
+    const valid=t && !isNaN(t.getTime());
+    const dStr=valid?t.toLocaleDateString(isEn()?'en-GB':'ar-EG',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+    const tStr=valid?String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'):'—';
+    const typeLabel = b.transferType==='departure' ? (isEn()?'🛫 Departure':'🛫 سفر — توصيل للمطار') : b.transferType==='both' ? (isEn()?'🔄 Both Ways':'🔄 وصول وسفر') : (isEn()?'🛬 Arrival':'🛬 وصول — استقبال من المطار');
+    const isPast = valid && t.getTime() < now.getTime();
+    const isSoon = valid && !isPast && (t.getTime()-now.getTime())/60000 <= 60;
+    const statusColor = b.transferDone ? '#4cda7a' : isPast ? '#e74c3c' : isSoon ? '#f5c518' : '#7ab8f5';
+    return `<div class="card" style="border-color:${statusColor}66;${b.transferDone?'opacity:0.55;':''}margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="font-size:26px;">🚐</div>
+        <div style="flex:1;min-width:160px;">
+          <div style="font-weight:800;color:${statusColor};font-size:14px;">${typeLabel}</div>
+          <div style="font-size:12px;color:var(--text);margin-top:3px;">${isEn()?'Room':'غرفة'} ${b.room} — ${b.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 ${dStr} · ⏰ ${tStr}${b.flightNo?' · ✈️ '+b.flightNo:''}${b.airline?' ('+b.airline+')':''}</div>
+          ${b.pickupSign?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">🏷️ ${isEn()?'Sign':'لافتة'}: ${b.pickupSign}</div>`:''}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn bsm" style="background:rgba(52,152,219,0.2);color:#3498db;border:1px solid;" onclick="printAirportSign(${idx})">✈️ ${isEn()?'Sign':'لافتة'}</button>
+          ${b.transferDone
+            ? `<button class="btn bsm bb" onclick="toggleTransferDone('${b.id}',false)">↩️ ${isEn()?'Undo':'تراجع'}</button>`
+            : `<button class="btn bsm" style="background:rgba(46,204,113,0.2);color:#2ecc71;border:1px solid;" onclick="toggleTransferDone('${b.id}',true)">✅ ${isEn()?'Done':'تم'}</button>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+window.toggleTransferDone = function(id, done){
+  const i=bookings.findIndex(x=>x.id===id);
+  if(i>-1){
+    bookings[i].transferDone=done;
+    if(!done) bookings[i].transferAlerted=false; // لو رجّعناه، نسمح بإعادة التنبيه لو لسه في الميعاد
+    sv("dta_bk",bookings);
+  }
+  renderAirportTransfers();
+  if(typeof checkAirportTransferAlerts==='function') checkAirportTransferAlerts();
+};
 
 // ── LOST & FOUND ──
 let lfData = ld('dta_lf');
@@ -2218,6 +2284,7 @@ document.addEventListener('DOMContentLoaded', function(){
     window.goPage = function(id, btn){
       _origGoPage4(id, btn);
       if(id==='wakeup') setTimeout(renderWakeUp, 50);
+      if(id==='airporttransfers') setTimeout(renderAirportTransfers, 50);
       if(id==='lostandfound') setTimeout(renderLF, 50);
       if(id==='guestreq') setTimeout(renderGReq, 50);
       if(id==='staffshift') setTimeout(renderShifts, 50);
@@ -2502,7 +2569,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <button class="nb" onclick="openAIChat()" style="background:rgba(52,152,219,0.15);color:#7ab8f5;border-color:#4A90D9;font-weight:700;">🤖 AI</button>
 <button class="nb" onclick="openAIPricing()" style="background:rgba(155,89,182,0.15);color:#c39bd3;border-color:rgba(155,89,182,0.5);font-weight:700;" title="AI Smart Pricing">💡 <span class="t" data-ar="تسعير ذكي" data-en="Smart Pricing">Smart Pricing</span></button>
 <button class="nb" onclick="openReminders()" style="background:rgba(37,211,102,0.12);color:#4cda7a;border-color:rgba(37,211,102,0.4);font-weight:700;" id="remind-btn">🔔 <span class="t" data-ar="تذكيرات" data-en="Reminders">Reminders</span></button>
-<button class="nb" onclick="enableATAlerts()" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;" id="at-enable-btn" title="تنبيه نقل المطار / Airport Transfer Alerts">🚐 <span class="t" data-ar="تنبيه المطار" data-en="Transfer Alerts">Transfer Alerts</span></button>
+<button class="nb" onclick="goPage('airporttransfers',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;" id="at-enable-btn" title="نقل المطار / Airport Transfers">🚐 <span class="t" data-ar="نقل المطار" data-en="Airport Transfers">Airport Transfers</span></button>
 <button class="nb" onclick="openMorningBriefing()" style="background:rgba(245,197,24,0.13);color:#f5c518;border-color:rgba(245,197,24,0.4);font-weight:700;" title="التقرير الصباحي">☀️</button>
 <button class="nb" onclick="openOwnerDailyReport()" style="background:rgba(201,168,76,0.18);color:var(--gold);border-color:rgba(201,168,76,0.6);font-weight:700;" title="تقرير يومي للمالك / Owner Daily Report">📋 <span class="t" data-ar="تقرير المالك" data-en="Owner Report">Owner Report</span></button>
 <button class="nb" id="pwa-nav-btn" onclick="installPWA()" style="background:rgba(201,168,76,0.2);color:var(--gold);border-color:var(--gold);font-weight:700;display:none;" title="تثبيت كتطبيق">📲 تثبيت App</button>
