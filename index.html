@@ -6671,8 +6671,30 @@ function getBookingTotalOwed(b){
   if(!b) return 0;
   return (b.total||0) + getRoomChargesPending(b) + getTourChargesPending(b);
 }
-function showToast(m="✓ Saved!"){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2000);}
+function showToast(m="✓ Saved!"){const t=document.getElementById("toast");if(!t)return;t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2000);}
 function closeM(id){document.getElementById(id).classList.remove("on");}
+// ─── خاص بمودال الرحلات: عرض الغرف المشغولة فعلياً (بضيف نشط) فقط + الغرفة الحالية لو في تعديل ───
+function fillTourRoomSel(extraRoom){
+  const s = document.getElementById("tm-room");
+  if(!s) return;
+  const td = toDay();
+  // الغرف اللي فيها ضيف نشط النهارده
+  const occ = bookings.filter(b=>
+    b.room && b.status!=="Cancelled" && b.status!=="Standby" &&
+    b.ci && b.co && b.ci<=td && b.co>=td
+  );
+  const map = {};
+  occ.forEach(b=>{ map[String(b.room)] = b.name||b.clientName||""; });
+  let roomNums = Object.keys(map).sort((a,b)=>Number(a)-Number(b));
+  // لو في غرفة محفوظة مسبقاً (تعديل) ومش موجودة في القائمة (مثلاً الضيف خرج) ضيفها برضه
+  if(extraRoom!==undefined && extraRoom!==null && extraRoom!=="" && !roomNums.includes(String(extraRoom))){
+    roomNums.push(String(extraRoom));
+    if(!map[String(extraRoom)]) map[String(extraRoom)] = "—";
+  }
+  s.innerHTML = '<option value="">-- اختر الغرفة (اختياري) · Select Room (optional) --</option>'
+    + roomNums.map(r=>`<option value="${r}">${r} — ${map[r]||"—"}</option>`).join("");
+}
+
 function fillRoomSel(id, extraRoom){
 const s=document.getElementById(id);
 if(!s) return;
@@ -15812,6 +15834,7 @@ window.open(url,"_blank");
 // ═══════════ TOURS ═══════════
 function renderTours(){
   tours = LS("dta_tours",[]);
+  const ar = currentLang === 'ar';
   const filterMonth = (document.getElementById("tour-filter-month")||{value:""}).value;
   const filterPay   = (document.getElementById("tour-filter-pay")||{value:""}).value;
 
@@ -15833,7 +15856,6 @@ function renderTours(){
   const cashRevenue  = tours.filter(t=>t.payMethod==="cash").reduce((s,t)=>s+(t.price||0),0);
   const roomRevenue  = tours.filter(t=>t.payMethod==="room").reduce((s,t)=>s+(t.price||0),0);
   const strip = document.getElementById("tours-summary-strip");
-  const ar = currentLang === 'ar';
   if(strip) strip.innerHTML = `
     <div class="card" style="text-align:center;padding:10px;">
       <div style="font-size:20px;font-weight:700;color:var(--gold);">${tours.length}</div>
@@ -17381,10 +17403,7 @@ function confirmDA_Cancel(){
 
 function openTourModal(edit){
   tourEdit = (edit!==undefined) ? edit : null;
-  fillRoomSel("tm-room", tourEdit!==null?tours[tourEdit].room:null);
-  // Add empty option at top
-  const rs = document.getElementById("tm-room");
-  if(rs) rs.innerHTML = '<option value="">-- اختر الغرفة (اختياري) --</option>' + rs.innerHTML;
+  fillTourRoomSel(tourEdit!==null?tours[tourEdit].room:null);
 
   const titleEl = document.getElementById("tour-modal-title");
   const delBtn  = document.getElementById("tm-delete-btn");
@@ -17488,6 +17507,7 @@ function selectTourGuest(name,room){
 }
 
 function saveTour(){
+ try{
   const name   = document.getElementById("tm-name").value.trim();
   const date   = document.getElementById("tm-date").value;
   const persons= parseInt(document.getElementById("tm-persons").value)||1;
@@ -17558,6 +17578,10 @@ function saveTour(){
   if(tour.payMethod==="cash"){
     setTimeout(()=>openTourInvoice(savedIdx), 400);
   }
+ }catch(err){
+   console.error("[saveTour] ERROR:", err);
+   alert("❌ حصل خطأ أثناء حفظ الرحلة:\n" + (err && err.message ? err.message : err) + "\n\nلو المشكلة استمرت، ابعت لقطة شاشة من رسالة الخطأ دي.");
+ }
 }
 
 function _attachTourToBooking(bkIdx, tour){
@@ -17633,61 +17657,61 @@ function openTourInvoice(idx){
       <span class="invp-badge" style="background:#1a5276;color:#fff;">🏔️ TOUR INVOICE</span>
     </div>
     <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:7px;margin-bottom:11px;">
-      <div><div style="font-size:9px;color:#888;">Invoice No.</div><div style="font-weight:700;font-size:10px;">${invNo}</div></div>
-      <div><div style="font-size:9px;color:#888;">Issue Date</div><div style="font-weight:700;font-size:10px;">${fmtD(today)}</div></div>
-      <div><div style="font-size:9px;color:#888;">Tour Date</div><div style="font-weight:700;font-size:10px;color:#c9a84c;">${fmtD(t.date)}</div></div>
-      <div><div style="font-size:9px;color:#888;">Status</div>
+      <div><div style="font-size:9px;color:#888;">Invoice No. · رقم الفاتورة</div><div style="font-weight:700;font-size:10px;">${invNo}</div></div>
+      <div><div style="font-size:9px;color:#888;">Issue Date · تاريخ الإصدار</div><div style="font-weight:700;font-size:10px;">${fmtD(today)}</div></div>
+      <div><div style="font-size:9px;color:#888;">Tour Date · تاريخ الرحلة</div><div style="font-weight:700;font-size:10px;color:#c9a84c;">${fmtD(t.date)}</div></div>
+      <div><div style="font-size:9px;color:#888;">Status · الحالة</div>
         <span style="padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;background:${psBg};color:${psColor};">${psLabel}</span>
       </div>
     </div>
-    <div class="invp-sec">Bill To / بيانات العميل</div>
+    <div class="invp-sec">Bill To · بيانات العميل</div>
     <div class="invp-gbox" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <div>
         <div style="font-weight:700;font-size:13px;">${t.guest||"—"}</div>
-        ${t.room?`<div style="font-size:10px;color:#888;margin-top:2px;">🏨 غرفة ${t.room}</div>`:""}
+        ${t.room?`<div style="font-size:10px;color:#888;margin-top:2px;">🏨 Room · غرفة ${t.room}</div>`:""}
       </div>
     </div>
-    <div class="invp-sec">Tour Details / تفاصيل الرحلة</div>
+    <div class="invp-sec">Tour Details · تفاصيل الرحلة</div>
     <table class="invp-tbl">
       <thead>
         <tr>
-          <th style="text-align:right;">الوصف / Description</th>
-          <th style="text-align:center;">الأشخاص</th>
-          <th style="text-align:right;">سعر الفرد</th>
-          <th style="text-align:right;">الإجمالي</th>
+          <th style="text-align:right;">Description<br>الوصف</th>
+          <th style="text-align:center;">Persons<br>الأشخاص</th>
+          <th style="text-align:right;">Price/Person<br>سعر الفرد</th>
+          <th style="text-align:right;">Total<br>الإجمالي</th>
         </tr>
       </thead>
       <tbody>
         <tr>
           <td>
             🏔️ <strong>${t.name}</strong><br>
-            ${t.guide?`<span style="font-size:9px;color:#888;">🧭 مرشد: ${t.guide}</span><br>`:""}
-            <span style="font-size:9px;color:#888;">📅 تاريخ الرحلة: ${fmtD(t.date)}</span>
+            ${t.guide?`<span style="font-size:9px;color:#888;">🧭 Guide · مرشد: ${t.guide}</span><br>`:""}
+            <span style="font-size:9px;color:#888;">📅 Tour Date · تاريخ الرحلة: ${fmtD(t.date)}</span>
             ${t.notes?`<br><span style="font-size:9px;color:#888;">📝 ${t.notes}</span>`:""}
           </td>
           <td style="text-align:center;font-weight:700;">${t.persons||1}</td>
-          <td style="text-align:right;">£${pricePerPerson.toLocaleString()}<span style="color:#888;font-size:8px;">/فرد</span></td>
+          <td style="text-align:right;">£${pricePerPerson.toLocaleString()}<span style="color:#888;font-size:8px;">/person · فرد</span></td>
           <td style="text-align:right;"><strong>£${total.toLocaleString()}</strong></td>
         </tr>
         <tr style="background:#f9f9f9;">
-          <td colspan="2" style="color:#888;font-size:9px;">💵 طريقة الدفع: كاش</td>
+          <td colspan="2" style="color:#888;font-size:9px;">💵 Payment Method · طريقة الدفع: Cash · كاش</td>
           <td colspan="2"></td>
         </tr>
       </tbody>
     </table>
     <div style="display:flex;justify-content:flex-end;margin-bottom:11px;">
       <div class="invp-totbox">
-        <div class="invp-tr"><span>Subtotal</span><span>£${total.toLocaleString()}</span></div>
-        <div class="invp-tr"><span>Tax (0%)</span><span>£0.00</span></div>
-        ${paid>0?`<div class="invp-tr"><span>✅ مدفوع / Paid</span><span style="color:#27ae60;">- £${paid.toLocaleString()}</span></div>`:""}
+        <div class="invp-tr"><span>Subtotal · الإجمالي الفرعي</span><span>£${total.toLocaleString()}</span></div>
+        <div class="invp-tr"><span>Tax (0%) · الضريبة</span><span>£0.00</span></div>
+        ${paid>0?`<div class="invp-tr"><span>✅ Paid · مدفوع</span><span style="color:#27ae60;">- £${paid.toLocaleString()}</span></div>`:""}
         <div class="invp-tr grd" style="font-size:13px;font-weight:700;border-top:2px solid #c9a84c;padding-top:6px;margin-top:4px;">
-          <span>${t.payStatus==="paid"?"✅ تم الدفع":"⏳ المتبقي / Balance Due"}</span>
+          <span>${t.payStatus==="paid"?"✅ Paid in Full · تم الدفع":"⏳ Balance Due · المتبقي"}</span>
           <span style="color:${t.payStatus==="paid"?"#27ae60":"#e74c3c"};">£${t.payStatus==="paid"?"0":remaining.toLocaleString()}</span>
         </div>
       </div>
     </div>
     <div style="font-size:9px;color:#888;text-align:center;border-top:1px solid #eee;padding-top:8px;">
-      شكراً لاختياركم خدماتنا 🙏 · Thank you for choosing us<br>
+      Thank you for choosing us 🙏<br>شكراً لاختياركم خدماتنا<br>
       <strong style="color:#c9a84c;">${prop.name}</strong> · ${prop.phone}
     </div>`;
   document.getElementById("tour-inv-modal").classList.add("on");
