@@ -30678,6 +30678,7 @@ const DTA_BACKUP = (function(){
       version: 'DahabTrendy-v10',
       bookings, expenses, roomSt, restaurantTx, tours,
       blacklist, prices, duPrices, policies,
+      roomTypes: typeof roomTypes!=='undefined'?roomTypes:{},
       reviews: typeof reviews!=='undefined'?reviews:[],
       waitlist: typeof waitlist!=='undefined'?waitlist:[],
       restMenu: typeof restMenu!=='undefined'?restMenu:[],
@@ -30776,12 +30777,14 @@ const DTA_BACKUP = (function(){
       if(data.events)      { events=data.events;               sv('dta_events',events); }
       if(data.prices)      { prices=data.prices;               sv('dta_pr',prices); }
       if(data.duPrices)    { duPrices=data.duPrices;           sv('dta_du',duPrices); }
+      if(data.roomTypes)   { roomTypes=data.roomTypes;         sv('dta_room_types',roomTypes); }
       if(data.policies)    { policies=data.policies;           sv('dta_pol',policies); }
       if(data.exRate)      { exRate=parseFloat(data.exRate);   localStorage.setItem('dta_rate',exRate); }
       if(data.restMenu)    { restMenu=data.restMenu;           sv('dta_rest_menu',restMenu); window.restMenu=restMenu; }
       if(data.roomPhotos)  { roomPhotos=data.roomPhotos;       sv('dta_room_photos',roomPhotos); }
       if(data.waitlist)    { waitlist=data.waitlist;           sv('dta_wl',waitlist); }
       if(data.qrSettings)  { localStorage.setItem('dta_qr_settings', JSON.stringify(data.qrSettings)); }
+      if(typeof renderRoomTypesGrid==='function') try{ renderRoomTypesGrid(); }catch(e){}
       renderDashboard(); renderBookings();
       sNotify('\u2705 استيراد ناجح','تم استيراد '+bookings.length+' حجز بنجاح','success',4000);
     }catch(e){
@@ -30822,6 +30825,7 @@ async function exportData(){
       waitlist:       wl,
       prices:         typeof prices!=='undefined'?prices:{},
       duPrices:       typeof duPrices!=='undefined'?duPrices:{},
+      roomTypes:      typeof roomTypes!=='undefined'?roomTypes:{},
       policies:       typeof policies!=='undefined'?policies:{},
       restMenu:       typeof restMenu!=='undefined'?restMenu:[],
       roomPhotos:     typeof roomPhotos!=='undefined'?roomPhotos:{},
@@ -30984,6 +30988,7 @@ async function importData(file){
     if(data.roomPhotos) { roomPhotos=data.roomPhotos; LSS('dta_room_photos',roomPhotos); await DTA_DB.setSetting('dta_room_photos',roomPhotos).catch(()=>{}); }
     if(data.prices)     { prices=data.prices;       LSS('dta_pr',prices);   await DTA_DB.setSetting('dta_pr',prices).catch(()=>{}); }
     if(data.duPrices)   { duPrices=data.duPrices;   LSS('dta_du',duPrices); await DTA_DB.setSetting('dta_du',duPrices).catch(()=>{}); }
+    if(data.roomTypes)  { roomTypes=data.roomTypes; LSS('dta_room_types',roomTypes); await DTA_DB.setSetting('dta_room_types',roomTypes).catch(()=>{}); }
     if(data.policies)   { policies=data.policies;   LSS('dta_pol',policies); await DTA_DB.setSetting('dta_pol',policies).catch(()=>{}); }
     if(data.qrSettings) { localStorage.setItem('dta_qr_settings', JSON.stringify(data.qrSettings)); await DTA_DB.setSetting('dta_qr_settings',data.qrSettings).catch(()=>{}); }
     // استيراد تحويلات المالك
@@ -30999,6 +31004,7 @@ async function importData(file){
       await DTA_DB.setSetting(CUST_KEY, window._custodyList).catch(()=>{});
     }
 
+    if(typeof renderRoomTypesGrid==='function') try{ renderRoomTypesGrid(); }catch(e){}
     renderDashboard(); renderBookings();
     sNotify('✅ استيراد IDB ناجح','تم استيراد '+bookings.length+' حجز ('+totalImported+' سجل إجمالي)','success',5000);
   }catch(e){
