@@ -7431,8 +7431,11 @@ mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid
 mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
 (()=>{
   const custList = window._custodyList || [];
-  // إجمالي العهدة = المبلغ الأصلي + التحويلات الإضافية
+  // إجمالي العهدة = الدين الفعلي المتبقي (من المالك + من الربح)
+  // to_owner مش بالضرورة سداد للعهدة — ممكن يكون سحب ربح عادي، فمبيتطرحش هنا
+  // (هو بيتخصم من "الربح المتاح" لوحده تحت)
   const totalCustAmt = custList.reduce((s,c)=>{
+    if(c.type==='to_owner') return s;
     const extra = (c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s + c.amt + extra;
   }, 0);
@@ -7448,7 +7451,10 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   }, 0);
   // from_owner و to_owner اتحسبوا بالفعل في netEGP الأساسي
   const totalOwnerTx  = (window._ownerTxList||[]).reduce(function(s,t){ return s+t.amount; },0);
-  const displayNetEGP = netEGP - totalTransferred - totalOwnerTx;
+  // لو اتصرف من العهدة أكتر من المبلغ المتاح فيها فعلياً، الفرق ده خرج من الربح الحقيقي
+  // ولازم يتخصم من صافي الربح (وإلا هيفضل ظاهر كأنه ربح متاح وهو مش موجود)
+  const custDeficit = Math.max(0, expFromCustody - totalCustAmt);
+  const displayNetEGP = netEGP - totalTransferred - totalOwnerTx - custDeficit;
 
   let html = mkFin("£"+displayNetEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
     "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.1)",
@@ -7475,10 +7481,11 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
     const icon  = isFromOwner?'🏦':isToOwner?'👤':'🔒';
     const typeLabel = isFromOwner?(ar?'من المالك':'From Owner'):isToOwner?(ar?'للمالك':'To Owner'):(ar?'من الربح':'From Profit');
     const noteTxt = c.note||(isToOwner?(ar?'تحويل للمالك':'Owner Transfer'):isFromOwner?(ar?'عهدة من المالك':'Owner Custody'):(ar?'عهدة':'Custody'));
+    const dateTxt = c.createdAt ? new Date(c.createdAt).toLocaleDateString(ar?'ar-EG':'en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
     return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
       <div>
         <div style="font-size:12px;color:var(--text);">${icon} ${noteTxt}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:1px;">${typeLabel}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:1px;">${typeLabel}${dateTxt?' · '+dateTxt:''}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;font-weight:700;color:${color};">£${c.amt.toLocaleString()}</span>
@@ -7510,6 +7517,12 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
       <span style="font-size:11px;color:var(--muted);">${ar?'الربح المتاح':'Available Profit'}</span>
       <span style="font-size:14px;font-weight:800;color:${availNet>0?'#27ae60':availNet<0?'#e74c3c':'var(--muted)'};">£${availNet.toLocaleString()}</span>
     </div>
+    ${_fromOwnerTotal>0?`<div style="margin-top:8px;background:rgba(230,126,34,0.12);border:1px solid rgba(230,126,34,0.4);border-radius:8px;padding:8px 10px;font-size:11px;color:#e67e22;line-height:1.5;">
+      ⚠️ ${ar
+        ?`فيه سلفة من المالك لسه قايمة <strong>£${_fromOwnerTotal.toLocaleString()}</strong> — مخصومة من الربح هنا لحد ما يتسجل سداد فعلي ليها.`
+        :`There's an outstanding advance of <strong>£${_fromOwnerTotal.toLocaleString()}</strong> from the owner — it's deducted from profit here until an actual repayment is logged.`}
+      <div style="margin-top:6px;"><button onclick="repayOwnerAdvance()" style="background:rgba(230,126,34,0.25);border:1px solid rgba(230,126,34,0.6);border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;color:#e67e22;cursor:pointer;">💵 ${ar?'سداد السلفة':'Repay Advance'}</button></div>
+    </div>`:''}
     <div style="display:flex;gap:6px;margin-top:10px;">
       ${availNet>0?`<button onclick="openTransferToCustomdy(${availNet},${availNet})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${ar?'تحويل للعهدة':'Transfer'}</button>`:''}
       <button onclick="openCustodyModal()" style="flex:1;padding:9px;background:none;border:1px dashed rgba(155,89,182,0.3);border-radius:8px;color:var(--muted);font-size:11px;cursor:pointer;">+ ${ar?'عهدة جديدة':'Add Custody'}</button>
@@ -19184,8 +19197,13 @@ if(calFinEl){
     const extra=(c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s+c.amt+extra;
   },0);
-  const calDisplayNet=calNetEGP-calTotalTransferred-calOwnerTx;
+  const calDisplayNet=calNetEGP-calTotalTransferred-calOwnerTx-Math.max(0,calExpFromCustody-calCustList.reduce((s,c)=>{
+    if(c.type==='to_owner') return s;
+    const extra=(c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
+    return s+c.amt+extra;
+  },0));
   const calTotalCustAmt=calCustList.reduce((s,c)=>{
+    if(c.type==='to_owner') return s;
     const extra=(c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
     return s+c.amt+extra;
   },0);
@@ -19215,10 +19233,11 @@ if(calFinEl){
         const icon=isFromOwner?'🏦':isToOwner?'👤':'🔒';
         const typeLabel=isFromOwner?(_ar?'من المالك':'From Owner'):isToOwner?(_ar?'للمالك':'To Owner'):(_ar?'من الربح':'From Profit');
         const noteTxt=c.note||(isToOwner?(_ar?'تحويل للمالك':'Owner Transfer'):isFromOwner?(_ar?'عهدة من المالك':'Owner Custody'):(_ar?'عهدة':'Custody'));
+        const dateTxt=c.createdAt?new Date(c.createdAt).toLocaleDateString(_ar?'ar-EG':'en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
           <div>
             <div style="font-size:12px;color:var(--text);">${icon} ${noteTxt}</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:1px;">${typeLabel}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px;">${typeLabel}${dateTxt?' · '+dateTxt:''}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:13px;font-weight:700;color:${color};">£${c.amt.toLocaleString()}</span>
@@ -19247,6 +19266,12 @@ if(calFinEl){
           <span style="font-size:11px;color:var(--muted);">${_ar?'الربح المتاح':'Available Profit'}</span>
           <span style="font-size:14px;font-weight:800;color:${calAvailNet>0?'#27ae60':calAvailNet<0?'#e74c3c':'var(--muted)'};">£${calAvailNet.toLocaleString()}</span>
         </div>
+        ${calFromOwnerTotal>0?`<div style="margin-top:8px;background:rgba(230,126,34,0.12);border:1px solid rgba(230,126,34,0.4);border-radius:8px;padding:8px 10px;font-size:11px;color:#e67e22;line-height:1.5;">
+          ⚠️ ${_ar
+            ?`فيه سلفة من المالك لسه قايمة <strong>£${calFromOwnerTotal.toLocaleString()}</strong> — مخصومة من الربح هنا لحد ما يتسجل سداد فعلي ليها.`
+            :`There's an outstanding advance of <strong>£${calFromOwnerTotal.toLocaleString()}</strong> from the owner — it's deducted from profit here until an actual repayment is logged.`}
+          <div style="margin-top:6px;"><button onclick="repayOwnerAdvance()" style="background:rgba(230,126,34,0.25);border:1px solid rgba(230,126,34,0.6);border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;color:#e67e22;cursor:pointer;">💵 ${_ar?'سداد السلفة':'Repay Advance'}</button></div>
+        </div>`:''}
         <div style="display:flex;gap:6px;margin-top:10px;">
           ${calAvailNet>0?`<button onclick="openTransferToCustomdy(${calAvailNet},${calAvailNet})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${_ar?'تحويل للعهدة':'Transfer'}</button>`:''}
           <button onclick="openCustodyModal()" style="flex:1;padding:9px;background:none;border:1px dashed rgba(155,89,182,0.3);border-radius:8px;color:var(--muted);font-size:11px;cursor:pointer;">+ ${_ar?'عهدة جديدة':'Add Custody'}</button>
@@ -35997,6 +36022,37 @@ async function custodySave(){
   // ── بعد الحفظ، حدّث الـ Calendar لو مفتوح ──
   if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){}
 }
+
+// ── سداد سلفة المالك: بيقلل مبلغ الدين (from_owner) فعليًا، مش سحب أرباح ──
+async function repayOwnerAdvance(){
+  const ar = typeof currentLang!=='undefined' && currentLang==='ar';
+  const list = window._custodyList || [];
+  const owed = list.filter(c=>c.type==='from_owner').reduce((s,c)=>s+c.amt,0);
+  if(owed<=0){ alert(ar?'مفيش سلفة قايمة لسدادها':'No outstanding advance to repay'); return; }
+  const input = prompt(
+    ar?('المبلغ اللي رجّعته فعليًا للمالك (من أصل £'+owed.toLocaleString()+'):'):
+       ('Amount actually repaid to owner (out of £'+owed.toLocaleString()+'):'),
+    owed
+  );
+  if(input===null) return;
+  let amt = parseFloat(input);
+  if(!amt || amt<=0) return;
+  if(amt>owed) amt = owed;
+  let remaining = amt;
+  window._custodyList = list.map(c=>{
+    if(c.type==='from_owner' && remaining>0){
+      const deduct = Math.min(c.amt, remaining);
+      remaining -= deduct;
+      return {...c, amt: c.amt - deduct};
+    }
+    return c;
+  }).filter(c => !(c.type==='from_owner' && c.amt<=0));
+  await custodySave();
+  if(typeof renderDashboard==='function') try{ renderDashboard(); }catch(e){}
+  if(typeof renderCalendar==='function') try{ renderCalendar(); }catch(e){}
+  if(typeof sNotify==='function') sNotify('✅ '+(ar?'تم تسجيل سداد السلفة':'Advance repayment recorded'),'£'+amt.toLocaleString(),'success',3000);
+}
+window.repayOwnerAdvance = repayOwnerAdvance;
 
 function setCustType(type){
   window._custodyType = type;
