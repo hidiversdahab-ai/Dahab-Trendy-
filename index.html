@@ -2543,6 +2543,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <button class="nb" onclick="goPage('analytics',this)" style="background:rgba(155,89,182,0.12);color:#c39bd3;border-color:rgba(155,89,182,0.4);">📊 Analytics</button>
 <button class="nb" onclick="goPage('guestsreg',this)" style="background:rgba(22,160,133,0.12);color:#1abc9c;border-color:rgba(22,160,133,0.4);font-weight:700;">📋 <span class="t" data-ar="سجل الضيوف" data-en="Guests Register">Guests Register</span></button>
 <button class="nb" onclick="goPage('housekeeping',this)" style="background:rgba(26,188,156,0.12);color:#1abc9c;border-color:rgba(26,188,156,0.4);font-weight:700;">🧹 <span class="t" data-ar="Housekeeping" data-en="Housekeeping">Housekeeping</span></button>
+<button class="nb" onclick="goPage('opsboard',this)" style="background:rgba(201,168,76,0.16);color:var(--gold);border-color:var(--gold);font-weight:700;">📋 <span class="t" data-ar="لوحة يوم العمل" data-en="Ops Board">لوحة يوم العمل · Ops Board</span></button>
 <button class="nb" onclick="goPage('minibar',this)" style="background:rgba(26,188,156,0.08);color:#1abc9c;border-color:rgba(26,188,156,0.3);">🌡️ <span class="t" data-ar="مينيبار" data-en="Minibar">مينيبار</span></button>
 <button class="nb" onclick="goPage('reviews',this)" style="background:rgba(241,196,15,0.12);color:#f1c40f;border-color:rgba(241,196,15,0.4);font-weight:700;">⭐ <span class="t" data-ar="التقييمات" data-en="Reviews">Reviews</span></button>
 <button class="nb" onclick="goPage('waitlist',this)" style="background:rgba(230,126,34,0.12);color:#e67e22;border-color:rgba(230,126,34,0.5);font-weight:700;">⏳ <span class="t" data-ar="قائمة الانتظار" data-en="Waiting List">Waiting List</span><span id="wl-nav-badge" style="display:none;background:#e74c3c;color:#fff;border-radius:50%;font-size:9px;font-weight:700;min-width:14px;height:14px;margin-left:4px;padding:0 3px;vertical-align:middle;"></span></button>
@@ -2597,7 +2598,128 @@ document.addEventListener('DOMContentLoaded', function(){
   <button id="undo-toast-btn" style="background:#fff;color:#e67e22;border:none;padding:5px 11px;border-radius:5px;font-weight:700;font-size:12px;cursor:pointer;">↩️ تراجع</button>
   <span id="undo-toast-timer" style="font-size:11px;opacity:0.8;min-width:14px;text-align:center;"></span>
 </div>
+<!-- ══════════════════════════════════════════════
+  ══ TODAY'S OPERATIONS BOARD (internal staff) ══
+══════════════════════════════════════════════ -->
+<div id="page-opsboard" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+    <h2 style="color:var(--gold);font-size:18px;margin:0;">📋 <span class="t" data-ar="لوحة يوم العمل" data-en="Today's Operations Board">لوحة يوم العمل · Operations Board</span></h2>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span id="ops-updated" style="font-size:10px;color:var(--muted);"></span>
+      <button class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid var(--gold);" onclick="renderOpsBoard()">🔄 <span class="t" data-ar="تحديث" data-en="Refresh">تحديث</span></button>
+    </div>
+  </div>
+
+  <!-- Summary Strip -->
+  <div id="ops-summary-strip" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:16px;"></div>
+
+  <!-- ═══ الإقامة والغرف ═══ -->
+  <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1.5px;margin:6px 0 8px;text-transform:uppercase;">🏨 <span class="t" data-ar="الإقامة والغرف" data-en="Stay &amp; Rooms">الإقامة والغرف</span></div>
+
+  <!-- Check-ins Today -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#3498db;font-size:14px;margin:0 0 8px;">🛬 <span class="t" data-ar="وصول اليوم" data-en="Check-ins Today">وصول اليوم · Check-ins Today</span></h3>
+    <div id="ops-checkins" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- Check-outs Today -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#e67e22;font-size:14px;margin:0 0 8px;">🛫 <span class="t" data-ar="مغادرة اليوم" data-en="Check-outs Today">مغادرة اليوم · Check-outs Today</span></h3>
+    <div id="ops-checkouts" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- Stayover -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:var(--gold);font-size:14px;margin:0 0 8px;">🛏️ <span class="t" data-ar="ضيوف مقيمون حالياً" data-en="In-House Guests">ضيوف مقيمون حالياً · In-House</span></h3>
+    <div id="ops-stayover" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- Maintenance -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#95a5a6;font-size:14px;margin:0 0 8px;">🔧 <span class="t" data-ar="غرف تحت الصيانة" data-en="Rooms Under Maintenance">غرف تحت الصيانة · Under Maintenance</span></h3>
+    <div id="ops-maintenance" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- Housekeeping Summary -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#1abc9c;font-size:14px;margin:0 0 8px;">🧹 <span class="t" data-ar="حالة التنظيف" data-en="Housekeeping Status">حالة التنظيف · Housekeeping</span></h3>
+    <div id="ops-hk-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;"></div>
+  </div>
+
+  <!-- ═══ خدمات الضيوف ═══ -->
+  <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1.5px;margin:14px 0 8px;text-transform:uppercase;">🛎️ <span class="t" data-ar="خدمات الضيوف" data-en="Guest Services">خدمات الضيوف</span></div>
+
+  <!-- Guest Requests -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#7ab8f5;font-size:14px;margin:0 0 8px;">🛎️ <span class="t" data-ar="طلبات ضيوف مفتوحة" data-en="Open Guest Requests">طلبات ضيوف مفتوحة · Open Requests</span></h3>
+    <div id="ops-guestreq" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- Wake-up Calls -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#f5c518;font-size:14px;margin:0 0 8px;">⏰ <span class="t" data-ar="مكالمات إيقاظ اليوم" data-en="Today's Wake-up Calls">مكالمات إيقاظ اليوم · Wake-up Calls</span></h3>
+    <div id="ops-wakeup" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- Lost & Found -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#e67e22;font-size:14px;margin:0 0 8px;">📦 <span class="t" data-ar="مفقودات معلقة" data-en="Pending Lost &amp; Found">مفقودات معلقة · Lost &amp; Found</span></h3>
+    <div id="ops-lf" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- ═══ النقل والنشاطات ═══ -->
+  <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1.5px;margin:14px 0 8px;text-transform:uppercase;">🚐 <span class="t" data-ar="النقل والنشاطات" data-en="Transport &amp; Activities">النقل والنشاطات</span></div>
+
+  <!-- Airport Transfers -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#7ab8f5;font-size:14px;margin:0 0 8px;">🚐 <span class="t" data-ar="نقل المطار اليوم" data-en="Airport Transfers Today">نقل المطار اليوم · Airport Transfers</span></h3>
+    <div id="ops-transfers" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- Daily Activities -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#1abc9c;font-size:14px;margin:0 0 8px;">🌅 <span class="t" data-ar="نشاطات اليوم" data-en="Today's Activities">نشاطات اليوم · Today's Activities</span></h3>
+    <div id="ops-activities" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- ═══ المالية ═══ -->
+  <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1.5px;margin:14px 0 8px;text-transform:uppercase;">💰 <span class="t" data-ar="المالية" data-en="Finance">المالية</span></div>
+
+  <!-- Quick Finance -->
+  <div id="ops-finance" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px;"></div>
+
+  <!-- Debts -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#e74c3c;font-size:14px;margin:0 0 8px;">💳 <span class="t" data-ar="مديونيات قائمة" data-en="Outstanding Debts">مديونيات قائمة · Outstanding Debts</span></h3>
+    <div id="ops-debts" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- ═══ الموظفين وقائمة الانتظار ═══ -->
+  <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1.5px;margin:14px 0 8px;text-transform:uppercase;">👷 <span class="t" data-ar="الموظفون والانتظار" data-en="Staff &amp; Waiting List">الموظفون والانتظار</span></div>
+
+  <!-- Staff Shifts Today -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#c39bd3;font-size:14px;margin:0 0 8px;">👷 <span class="t" data-ar="شيفتات اليوم" data-en="Today's Staff Shifts">شيفتات اليوم · Staff Shifts</span></h3>
+    <div id="ops-shifts" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- Waiting List -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#e67e22;font-size:14px;margin:0 0 8px;">⏳ <span class="t" data-ar="قائمة الانتظار" data-en="Waiting List">قائمة الانتظار · Waiting List</span></h3>
+    <div id="ops-waitlist" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- Birthdays Today -->
+  <div style="margin-bottom:80px;">
+    <h3 style="color:#f5c518;font-size:14px;margin:0 0 8px;">🎂 <span class="t" data-ar="أعياد ميلاد اليوم" data-en="Birthdays Today">أعياد ميلاد اليوم · Birthdays Today</span></h3>
+    <div id="ops-birthdays" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;"></div>
+  </div>
+</div>
+
 <div id="page-dashboard" class="page on">
+<button class="btn bg" onclick="goPage('opsboard')" style="width:100%;padding:14px;font-size:15px;font-weight:800;margin-bottom:12px;border-radius:12px;background:linear-gradient(135deg,rgba(201,168,76,0.28),rgba(201,168,76,0.12));border:1.5px solid var(--gold);color:var(--gold);">
+  📋 <span class="t" data-ar="لوحة يوم العمل — كل شيء اليوم" data-en="Today's Ops Board — everything today">لوحة يوم العمل — كل حاجة النهاردة · Today's Ops Board</span>
+</button>
 <h2 style="color:var(--gold);margin-bottom:14px;font-size:18px;">📊 <span class="t" data-ar="الرئيسية" data-en="Dashboard">Dashboard</span></h2>
 
 <!-- ساعة الـ Dashboard -->
@@ -4989,7 +5111,16 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
       <label>👤 <span class="t" data-ar="اسم الضيف" data-en="Guest Name">اسم الضيف · Guest Name</span></label>
       <input id="da-book-guest" placeholder="اسمك · Your Name">
     </div>
-    <div class="fld">
+    <!-- Guest Type Toggle -->
+    <div class="fld s2">
+      <label>🏨 <span class="t" data-ar="نوع الضيف" data-en="Guest Type">نوع الضيف · Guest Type</span></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+        <button id="da-guesttype-hotel" onclick="setDA_GuestType('hotel')" type="button" style="padding:10px 6px;border-radius:10px;border:2px solid rgba(52,152,219,0.5);background:rgba(52,152,219,0.14);color:#7ab8f5;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:.2s;">🏨 <span class="t" data-ar="نزيل الفندق" data-en="Hotel Guest">نزيل الفندق</span></button>
+        <button id="da-guesttype-walkin" onclick="setDA_GuestType('walkin')" type="button" style="padding:10px 6px;border-radius:10px;border:2px solid rgba(230,126,34,0.4);background:rgba(230,126,34,0.08);color:#e67e22;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;transition:.2s;">🚶 <span class="t" data-ar="زائر خارجي" data-en="Walk-in">زائر خارجي · Walk-in</span></button>
+      </div>
+      <input type="hidden" id="da-book-guesttype" value="hotel">
+    </div>
+    <div class="fld" id="da-book-room-wrap">
       <label>🏨 <span class="t" data-ar="رقم الغرفة" data-en="Room Number">رقم الغرفة · Room Number</span></label>
       <select id="da-book-room" onchange="onDA_PickRoom(this.value)" style="padding:8px 10px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);width:100%;font-family:Arial,sans-serif;font-size:14px;"><option value="">— اختر الغرفة · Select Room —</option></select>
     </div>
@@ -5008,7 +5139,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
       <input id="da-book-persons" type="number" min="1" value="1" placeholder="1">
     </div>
     <div class="fld s2">
-      <label>📱 واتساب · WhatsApp (اختياري · Optional)</label>
+      <label>📱 واتساب · WhatsApp <span style="color:#e74c3c;">*</span></label>
       <input id="da-book-phone" type="tel" placeholder="+20..." dir="ltr">
     </div>
     <div class="fld s2">
@@ -6911,9 +7042,12 @@ document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
 document.querySelectorAll(".nb").forEach(b=>b.classList.remove("act"));
 document.getElementById("page-"+id).classList.add("on");
 if(btn) btn.classList.add("act");
-const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,events:renderEvents,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage,statusboard:renderStatusBoard,chatbot:cb_renderPage,dailyactivity:renderDailyActivity};
+const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,events:renderEvents,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage,statusboard:renderStatusBoard,chatbot:cb_renderPage,dailyactivity:renderDailyActivity,opsboard:renderOpsBoard};
 if(map[id]) map[id]();
 if(id==="invoice"){renderInvRooms();buildPreview();}
+// ── Auto-refresh لوحة يوم العمل كل 20 ثانية طول ما هي مفتوحة ──
+if(typeof window._opsBoardInterval!=="undefined" && window._opsBoardInterval){ clearInterval(window._opsBoardInterval); window._opsBoardInterval=null; }
+if(id==="opsboard"){ window._opsBoardInterval = setInterval(renderOpsBoard, 20000); }
 }
 // ═══════════ BIRTHDAY ALERTS ═══════════
 function renderBirthdayAlerts(){
@@ -16294,7 +16428,7 @@ function renderDA_Bookings(){
         <div style="font-size:28px;">${b.emoji||'🌅'}</div>
         <div style="flex:1;">
           <div style="font-weight:700;color:var(--gold);">${b.actNameAr||'—'} · ${b.actNameEn||'—'}</div>
-          <div style="font-size:12px;margin-top:3px;">👤 ${b.guest||'—'} &nbsp;·&nbsp; 🏨 غرفة · Room ${b.room||'—'}</div>
+          <div style="font-size:12px;margin-top:3px;">👤 ${b.guest||'—'} &nbsp;·&nbsp; ${b.guestType==="walkin" ? `<span style="color:#e67e22;font-weight:700;">🚶 زائر خارجي · Walk-in</span>` : `🏨 غرفة · Room ${b.room||'—'}`}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px;">📅 ${b.date||'—'} · 🕐 ${b.time||'—'} · 👥 ${b.persons||1} شخص · Person</div>
           ${b.notes?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">📝 ${b.notes}</div>`:''}
           ${b.supplierName?`<div style="font-size:10px;color:#7ab8f5;margin-top:2px;">🏢 ${b.supplierName}${b.supplierPhone?' · '+b.supplierPhone:''}</div>`:''}
@@ -16965,6 +17099,7 @@ function openDA_BookModalFull(supplierName, supplierPhone){
   const priceEl = document.getElementById("da-book-price-preview");
   if(priceEl) priceEl.style.display="none";
   setDA_PayMethod('Cash');
+  setDA_GuestType('hotel');
   da_bookActivityIdx = -1;
   document.getElementById("da-book-modal").classList.add("on");
   // بعد ما الـ modal يظهر نعبي الشركات
@@ -17284,6 +17419,7 @@ function openDA_KioskBook(idx){
   if(pickEl) pickEl.value="";
   // Reset payment method
   setDA_PayMethod('Cash');
+  setDA_GuestType('hotel');
   // Price preview update
   const priceEl = document.getElementById("da-book-price-preview");
   const updatePrice = ()=>{
@@ -17322,6 +17458,30 @@ function setDA_PayMethod(m){
   });
 }
 
+function setDA_GuestType(type){
+  document.getElementById('da-book-guesttype').value = type;
+  const roomWrap = document.getElementById('da-book-room-wrap');
+  const hotelBtn = document.getElementById('da-guesttype-hotel');
+  const walkinBtn = document.getElementById('da-guesttype-walkin');
+  if(type==='walkin'){
+    if(roomWrap) roomWrap.style.display = 'none';
+    const roomEl = document.getElementById('da-book-room');
+    if(roomEl) roomEl.value = '';
+    // امنع الدفع "على الغرفة" للزائر الخارجي
+    const roomPayBtn = document.getElementById('da-pay-room');
+    if(roomPayBtn){ roomPayBtn.style.display='none'; }
+    if(document.getElementById('da-book-payment').value === 'On Room') setDA_PayMethod('Cash');
+    hotelBtn.style.borderColor='rgba(52,152,219,0.4)'; hotelBtn.style.background='rgba(52,152,219,0.08)'; hotelBtn.style.transform='scale(1)';
+    walkinBtn.style.borderColor='rgba(230,126,34,0.8)'; walkinBtn.style.background='rgba(230,126,34,0.25)'; walkinBtn.style.transform='scale(1.04)';
+  } else {
+    if(roomWrap) roomWrap.style.display = '';
+    const roomPayBtn = document.getElementById('da-pay-room');
+    if(roomPayBtn){ roomPayBtn.style.display=''; }
+    hotelBtn.style.borderColor='rgba(52,152,219,0.8)'; hotelBtn.style.background='rgba(52,152,219,0.25)'; hotelBtn.style.transform='scale(1.04)';
+    walkinBtn.style.borderColor='rgba(230,126,34,0.4)'; walkinBtn.style.background='rgba(230,126,34,0.08)'; walkinBtn.style.transform='scale(1)';
+  }
+}
+
 function confirmDA_Booking(){
   const ar = currentLang==='ar';
   // إذا da_bookActivityIdx = -1 يعني فتح من زر الشركة بدون اختيار نشاط
@@ -17339,8 +17499,9 @@ function confirmDA_Booking(){
   const a = acts[da_bookActivityIdx];
   if(!a){ alert(ar?"⚠️ النشاط غير موجود":"⚠️ Activity not found"); return; }
   const guest   = document.getElementById("da-book-guest").value.trim();
+  const guestType = (document.getElementById("da-book-guesttype")||{}).value || "hotel";
   const roomEl  = document.getElementById("da-book-room");
-  const room    = (roomEl.value||"").split("|")[0] || "";
+  const room    = guestType==="walkin" ? "" : ((roomEl.value||"").split("|")[0] || "");
   const date    = document.getElementById("da-book-date").value;
   const time    = document.getElementById("da-book-time").value;
   const persons = parseInt(document.getElementById("da-book-persons").value)||1;
@@ -17352,12 +17513,13 @@ function confirmDA_Booking(){
   if(!guest){ alert("⚠️ أدخل اسمك · Enter your name"); return; }
   if(!date) { alert("⚠️ اختر التاريخ · Select date"); return; }
   if(!time) { alert("⚠️ اختر الوقت · Select time"); return; }
+  if(!phone){ alert(ar?"⚠️ أدخل رقم الواتساب":"⚠️ Enter WhatsApp number"); return; }
   const totalPrice = (Number(a.price)||0) * persons;
   const totalCost  = (Number(a.costPrice)||0) * persons;
   const totalProfit = totalPrice - totalCost;
   const bk = {
     id: Date.now(), actId: a.id, emoji: a.emoji, actNameAr: a.nameAr, actNameEn: a.nameEn,
-    guest, room, date, time, persons, phone, notes, payment,
+    guest, guestType, room, date, time, persons, phone, notes, payment,
     price: totalPrice, pricePerPerson: Number(a.price)||0,
     costPrice: totalCost, costPerPerson: Number(a.costPrice)||0,
     profit: totalProfit,
@@ -25231,6 +25393,316 @@ function renderHousekeeping() {
     </div>`;
   }).join("");
 }
+
+// ══════════════════════════════════════════════
+// TODAY'S OPERATIONS BOARD — لوحة يوم العمل
+// ══════════════════════════════════════════════
+function renderOpsBoard(){
+  const ar = currentLang === "ar";
+  const td = toDay();
+  const now = new Date();
+
+  // ── Data collection ──
+  const checkins  = (bookings||[]).filter(b => b.status!=="Cancelled" && b.ci===td);
+  const checkouts = (bookings||[]).filter(b => b.status!=="Cancelled" && b.co===td && b.ci!==td);
+  const stayover  = (bookings||[]).filter(b => b.status!=="Cancelled" && b.ci<td && b.co>td);
+  const maintRooms = Object.keys(typeof roomSt==="object"?roomSt:{}).filter(k => !k.endsWith("_n") && roomSt[k]==="maintenance");
+  const transfersToday = (bookings||[]).filter(b => b.hasTransfer && !b.cancelReason && b.pickupDatetime && new Date(b.pickupDatetime).toISOString().slice(0,10)===td);
+  const daBks = (typeof DA_getBookings==="function"?DA_getBookings():[]).filter(b => b.date===td && b.status!=="cancelled");
+  const debts = (typeof getDebtData==="function"?getDebtData():[]);
+  const openReqs = (function(){ try{ return JSON.parse(localStorage.getItem('dta_greq')||'[]'); }catch(e){ return []; } })().filter(r => r.status==="open");
+  const wakeupsToday = (function(){ try{ return JSON.parse(localStorage.getItem('dta_wakeup')||'[]'); }catch(e){ return []; } })().filter(w => w.date===td && !w.done);
+  const lfPending = (function(){ try{ return JSON.parse(localStorage.getItem('dta_lf')||'[]'); }catch(e){ return []; } })().filter(l => l.status==="pending");
+  const waitingList = (typeof waitlist!=="undefined"?waitlist:[]).filter(w => w.status==="waiting");
+  const shiftsToday = (function(){ try{ return JSON.parse(localStorage.getItem('dta_shifts')||'[]'); }catch(e){ return []; } })().filter(s => s.date===td);
+  const birthdaysToday = [];
+  (bookings||[]).forEach(b=>{
+    if(!b.dob || b.status==="Cancelled" || !b.name) return;
+    const dob = new Date(b.dob);
+    if(isNaN(dob.getTime())) return;
+    const todD = new Date(td);
+    if(dob.getMonth()===todD.getMonth() && dob.getDate()===todD.getDate()) birthdaysToday.push(b);
+  });
+  // Housekeeping summary
+  const hkRoomNums = [...new Set([...ROOMS, ...(bookings||[]).filter(b=>b.status!=="Cancelled"&&b.room&&(b.ci===td||b.co===td||(b.ci<td&&b.co>td))).map(b=>Number(b.room))])].filter(r=>r&&!isNaN(r));
+  const hkRooms = typeof hkGetRoomStatus==="function" ? hkRoomNums.map(r=>hkGetRoomStatus(r)) : [];
+  const hkCounts = {dirty:0,cleaning:0,inspect:0,clean:0};
+  hkRooms.forEach(r=>{ if(hkCounts[r.status]!==undefined) hkCounts[r.status]++; });
+  // Finance
+  const todayRevEGP = checkins.reduce((s,b)=>s+(b.cur==="USD"?b.total*(exRate||50):b.cur==="EUR"?b.total*(eurRate||55):b.total),0);
+  let custodyTotal = 0;
+  try{
+    const custList = window._custodyList||[];
+    custodyTotal = custList.reduce((s,c)=>{
+      if(c.type==="to_owner") return s;
+      const extra = (c.transfers||[]).reduce((ss,t)=>ss+t.amount,0);
+      return s + (c.amt||0) + extra;
+    },0);
+  }catch(e){}
+
+  // ── Updated time ──
+  const updEl = document.getElementById("ops-updated");
+  if(updEl) updEl.textContent = (ar?"آخر تحديث: ":"Updated: ")+now.toLocaleTimeString(ar?"ar-EG":"en-US",{hour:"2-digit",minute:"2-digit"});
+
+  // ── Summary strip ──
+  const strip = document.getElementById("ops-summary-strip");
+  if(strip){
+    const stats = [
+      {icon:"🛬",val:checkins.length,color:"#3498db",lblAr:"وصول",lblEn:"Check-ins"},
+      {icon:"🛫",val:checkouts.length,color:"#e67e22",lblAr:"مغادرة",lblEn:"Check-outs"},
+      {icon:"🛏️",val:stayover.length,color:"var(--gold)",lblAr:"مقيمون",lblEn:"In-House"},
+      {icon:"🔧",val:maintRooms.length,color:"#95a5a6",lblAr:"صيانة",lblEn:"Maintenance"},
+      {icon:"🛎️",val:openReqs.length,color:"#7ab8f5",lblAr:"طلبات",lblEn:"Requests"},
+      {icon:"⏰",val:wakeupsToday.length,color:"#f5c518",lblAr:"إيقاظ",lblEn:"Wake-up"},
+      {icon:"📦",val:lfPending.length,color:"#e67e22",lblAr:"مفقودات",lblEn:"Lost&Found"},
+      {icon:"🚐",val:transfersToday.length,color:"#7ab8f5",lblAr:"نقل مطار",lblEn:"Transfers"},
+      {icon:"🌅",val:daBks.length,color:"#1abc9c",lblAr:"نشاطات",lblEn:"Activities"},
+      {icon:"💳",val:debts.length,color:"#e74c3c",lblAr:"مديونيات",lblEn:"Debts"},
+      {icon:"⏳",val:waitingList.length,color:"#e67e22",lblAr:"انتظار",lblEn:"Waitlist"},
+      {icon:"👷",val:shiftsToday.length,color:"#c39bd3",lblAr:"شيفتات",lblEn:"Shifts"},
+    ];
+    strip.innerHTML = stats.map(s=>`
+      <div class="card" style="text-align:center;padding:8px;border-color:${s.color}44;">
+        <div style="font-size:18px;font-weight:800;color:${s.color};">${s.icon} ${s.val}</div>
+        <div style="font-size:8px;color:var(--muted);">${ar?s.lblAr:s.lblEn}</div>
+      </div>`).join("");
+  }
+
+  // ── Check-ins ──
+  const ciEl = document.getElementById("ops-checkins");
+  if(ciEl){
+    ciEl.innerHTML = checkins.length ? checkins.map(b=>{
+      const idx = bookings.indexOf(b);
+      const done = !!b.ciConfirmed;
+      return `<div class="card" style="border-color:${done?'rgba(46,204,113,0.4)':'rgba(52,152,219,0.4)'};">
+        <div style="font-weight:800;color:#7ab8f5;font-size:14px;">🏨 ${ar?"غرفة":"Room"} ${b.room} — ${b.name||""}</div>
+        ${b.phone?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">📞 ${b.phone}</div>`:""}
+        ${b.flightNo?`<div style="font-size:11px;color:var(--muted);">✈️ ${b.flightNo}</div>`:""}
+        <div style="margin-top:8px;">
+          ${done?`<span style="font-size:11px;color:#2ecc71;font-weight:700;">✅ ${ar?"تم الوصول":"Arrived"}</span>`
+            :`<button class="btn bsm" style="background:rgba(46,204,113,0.18);color:#2ecc71;border:1px solid rgba(46,204,113,0.4);" onclick="confirmCI(${idx})">✅ ${ar?"تأكيد وصول":"Confirm Arrival"}</button>`}
+        </div>
+      </div>`;
+    }).join("") : `<div class="empty" style="grid-column:1/-1;">📭 ${ar?"لا يوجد وصول اليوم":"No check-ins today"}</div>`;
+  }
+
+  // ── Check-outs ──
+  const coEl = document.getElementById("ops-checkouts");
+  if(coEl){
+    coEl.innerHTML = checkouts.length ? checkouts.map(b=>{
+      const idx = bookings.indexOf(b);
+      const done = !!b.coConfirmed;
+      const paidSum = typeof calcPaid==="function"?calcPaid(b):0;
+      const owed = typeof getBookingTotalOwed==="function"?getBookingTotalOwed(b):0;
+      const remaining = Math.max(0, owed-paidSum);
+      return `<div class="card" style="border-color:${done?'rgba(46,204,113,0.4)':'rgba(230,126,34,0.4)'};">
+        <div style="font-weight:800;color:#e67e22;font-size:14px;">🏨 ${ar?"غرفة":"Room"} ${b.room} — ${b.name||""}</div>
+        ${b.phone?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">📞 ${b.phone}</div>`:""}
+        ${remaining>0?`<div style="font-size:11px;color:#e74c3c;font-weight:700;margin-top:3px;">💳 ${ar?"متبقي":"Owed"}: ${b.cur||"EGP"} ${remaining.toFixed(0)}</div>`:""}
+        <div style="margin-top:8px;">
+          ${done?`<span style="font-size:11px;color:#2ecc71;font-weight:700;">✅ ${ar?"تم المغادرة":"Departed"}</span>`
+            :`<button class="btn bsm" style="background:rgba(230,126,34,0.18);color:#e67e22;border:1px solid rgba(230,126,34,0.4);" onclick="confirmCO(${idx})">🛫 ${ar?"تأكيد مغادرة":"Confirm Departure"}</button>`}
+        </div>
+      </div>`;
+    }).join("") : `<div class="empty" style="grid-column:1/-1;">📭 ${ar?"لا يوجد مغادرة اليوم":"No check-outs today"}</div>`;
+  }
+
+  // ── Stayover (In-House) ──
+  const svEl = document.getElementById("ops-stayover");
+  if(svEl){
+    svEl.innerHTML = stayover.length ? stayover.map(b=>{
+      const nights = Math.round((new Date(b.co)-new Date(td))/86400000);
+      return `<div class="card" style="border-color:rgba(201,168,76,0.35);">
+        <div style="font-weight:800;color:var(--gold);font-size:14px;">🏨 ${ar?"غرفة":"Room"} ${b.room} — ${b.name||""}</div>
+        ${b.phone?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">📞 ${b.phone}</div>`:""}
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">📅 ${ar?"يغادر بعد":"Leaves in"} ${nights} ${ar?"ليلة":"night(s)"} (${b.co})</div>
+      </div>`;
+    }).join("") : `<div class="empty" style="grid-column:1/-1;">📭 ${ar?"لا يوجد ضيوف مقيمون":"No in-house guests"}</div>`;
+  }
+
+  // ── Maintenance ──
+  const mEl = document.getElementById("ops-maintenance");
+  if(mEl){
+    mEl.innerHTML = maintRooms.length ? maintRooms.map(r=>{
+      const note = roomSt[r+"_n"] || "";
+      return `<div class="card" style="border-color:rgba(149,165,166,0.45);">
+        <div style="font-weight:800;color:#95a5a6;font-size:14px;">🔧 ${ar?"غرفة":"Room"} ${r}</div>
+        ${note?`<div style="font-size:11px;color:var(--text);margin-top:4px;">📝 ${note}</div>`:""}
+        <button class="btn bsm" style="margin-top:8px;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.35);" onclick="opsResolveMaintenance('${r}')">✅ ${ar?"إنهاء الصيانة":"Mark Resolved"}</button>
+      </div>`;
+    }).join("") : `<div class="empty" style="grid-column:1/-1;">✅ ${ar?"لا توجد غرف تحت الصيانة":"No rooms under maintenance"}</div>`;
+  }
+
+  // ── Housekeeping Summary ──
+  const hkEl = document.getElementById("ops-hk-summary");
+  if(hkEl){
+    const hkStats = [
+      {icon:"🔴",val:hkCounts.dirty,color:"#e74c3c",lblAr:"تحتاج تنظيف",lblEn:"Dirty"},
+      {icon:"🧹",val:hkCounts.cleaning,color:"#f0b429",lblAr:"جاري التنظيف",lblEn:"Cleaning"},
+      {icon:"🔍",val:hkCounts.inspect,color:"#c39bd3",lblAr:"بانتظار فحص",lblEn:"Inspect"},
+      {icon:"✅",val:hkCounts.clean,color:"#4cda7a",lblAr:"جاهزة",lblEn:"Clean"},
+    ];
+    hkEl.innerHTML = hkStats.map(s=>`
+      <div class="card" style="text-align:center;padding:8px;border-color:${s.color}44;cursor:pointer;" onclick="goPage('housekeeping')">
+        <div style="font-size:18px;font-weight:800;color:${s.color};">${s.icon} ${s.val}</div>
+        <div style="font-size:9px;color:var(--muted);">${ar?s.lblAr:s.lblEn}</div>
+      </div>`).join("");
+  }
+
+  // ── Guest Requests ──
+  const grEl = document.getElementById("ops-guestreq");
+  if(grEl){
+    grEl.innerHTML = openReqs.length ? openReqs.map(r=>`
+      <div class="card" style="border-color:${r.priority==='urgent'?'rgba(231,76,60,0.5)':'rgba(52,152,219,0.3)'};">
+        <div style="font-weight:800;color:#7ab8f5;font-size:14px;">${r.priority==='urgent'?'🔴':'🟡'} ${ar?"غرفة":"Room"} ${r.room} — ${r.typeLabel||r.type}</div>
+        ${r.guest?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">👤 ${r.guest}</div>`:""}
+        ${r.notes?`<div style="font-size:11px;color:var(--text);margin-top:2px;">${r.notes}</div>`:""}
+        <button class="btn bsm" style="margin-top:8px;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.35);" onclick="closeGR('${r.id}');renderOpsBoard();">✅ ${ar?"تم":"Done"}</button>
+      </div>`).join("") : `<div class="empty" style="grid-column:1/-1;">✅ ${ar?"لا توجد طلبات مفتوحة":"No open requests"}</div>`;
+  }
+
+  // ── Wake-up Calls ──
+  const wuEl = document.getElementById("ops-wakeup");
+  if(wuEl){
+    wakeupsToday.sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+    wuEl.innerHTML = wakeupsToday.length ? wakeupsToday.map(w=>`
+      <div class="card" style="border-color:rgba(245,197,24,0.4);">
+        <div style="font-weight:800;color:#f5c518;font-size:14px;">⏰ ${w.time} — ${ar?"غرفة":"Room"} ${w.room}</div>
+        ${w.guest?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">👤 ${w.guest}</div>`:""}
+        <button class="btn bsm" style="margin-top:8px;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.35);" onclick="toggleWU('${w.id}');renderOpsBoard();">✅ ${ar?"تم":"Done"}</button>
+      </div>`).join("") : `<div class="empty" style="grid-column:1/-1;">📭 ${ar?"لا توجد مكالمات إيقاظ اليوم":"No wake-up calls today"}</div>`;
+  }
+
+  // ── Lost & Found ──
+  const lfEl = document.getElementById("ops-lf");
+  if(lfEl){
+    lfEl.innerHTML = lfPending.length ? lfPending.map(it=>`
+      <div class="card" style="border-color:${it.type==='found'?'rgba(46,204,113,0.3)':'rgba(231,76,60,0.3)'};">
+        <div style="font-weight:800;color:#e67e22;font-size:14px;">${it.type==='found'?'📦':'❓'} ${it.desc}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${it.location?'📍 '+it.location+' · ':''}📅 ${it.date}</div>
+        ${it.guest?`<div style="font-size:11px;color:var(--muted);">👤 ${it.guest}</div>`:""}
+      </div>`).join("") : `<div class="empty" style="grid-column:1/-1;">✅ ${ar?"لا توجد مفقودات معلقة":"No pending items"}</div>`;
+  }
+
+  // ── Airport Transfers ──
+  const tEl = document.getElementById("ops-transfers");
+  if(tEl){
+    transfersToday.sort((a,b)=> new Date(a.pickupDatetime)-new Date(b.pickupDatetime));
+    tEl.innerHTML = transfersToday.length ? transfersToday.map(b=>{
+      const idx = bookings.indexOf(b);
+      const t = new Date(b.pickupDatetime);
+      const tStr = String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0");
+      const typeLabel = b.transferType==="departure" ? (ar?"🛫 سفر":"🛫 Departure") : b.transferType==="both" ? (ar?"🔄 وصول وسفر":"🔄 Both Ways") : (ar?"🛬 وصول":"🛬 Arrival");
+      const done = !!b.transferDone;
+      return `<div class="card" style="border-color:${done?'rgba(46,204,113,0.4)':'rgba(122,184,245,0.4)'};">
+        <div style="font-weight:800;color:#7ab8f5;font-size:14px;">${typeLabel} — ${ar?"غرفة":"Room"} ${b.room}</div>
+        <div style="font-size:12px;color:var(--text);margin-top:2px;">${b.name||""}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">⏰ ${tStr}${b.flightNo?" · ✈️ "+b.flightNo:""}</div>
+        <div style="margin-top:8px;">
+          ${done?`<span style="font-size:11px;color:#2ecc71;font-weight:700;">✅ ${ar?"تم":"Done"}</span>`
+            :`<button class="btn bsm" style="background:rgba(46,204,113,0.18);color:#2ecc71;border:1px solid rgba(46,204,113,0.4);" onclick="toggleTransferDone('${b.id}',true);renderOpsBoard();">✅ ${ar?"تم":"Mark Done"}</button>`}
+        </div>
+      </div>`;
+    }).join("") : `<div class="empty" style="grid-column:1/-1;">📭 ${ar?"لا يوجد نقل مطار اليوم":"No airport transfers today"}</div>`;
+  }
+
+  // ── Daily Activities ──
+  const aEl = document.getElementById("ops-activities");
+  if(aEl){
+    daBks.sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+    aEl.innerHTML = daBks.length ? daBks.map(b=>{
+      const stColor = b.status==="confirmed" ? "#2ecc71" : b.status==="pending" ? "#f5c518" : "#e74c3c";
+      const stLabel = b.status==="confirmed" ? (ar?"مؤكد":"Confirmed") : b.status==="pending" ? (ar?"معلق":"Pending") : (ar?"ملغي":"Cancelled");
+      return `<div class="card" style="border-color:${stColor}44;">
+        <div style="font-weight:800;color:#1abc9c;font-size:14px;">${b.emoji||"🌅"} ${ar?b.actNameAr:b.actNameEn}</div>
+        <div style="font-size:12px;color:var(--text);margin-top:2px;">${b.guest||""}${b.room?" · "+(ar?"غرفة":"Room")+" "+b.room:""}${b.guestType==="walkin"?` · <span style="color:#e67e22;font-weight:700;">🚶 ${ar?"زائر خارجي":"Walk-in"}</span>`:""}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">⏰ ${b.time||"—"} · 👥 ${b.persons||1}</div>
+        ${b.supplierName?`<div style="font-size:10px;color:#7ab8f5;margin-top:2px;">🏢 ${b.supplierName}</div>`:""}
+        <div style="margin-top:6px;font-size:10px;font-weight:700;color:${stColor};">● ${stLabel}</div>
+      </div>`;
+    }).join("") : `<div class="empty" style="grid-column:1/-1;">📭 ${ar?"لا توجد نشاطات اليوم":"No activities today"}</div>`;
+  }
+
+  // ── Quick Finance ──
+  const fEl = document.getElementById("ops-finance");
+  if(fEl){
+    fEl.innerHTML = `
+      <div class="card" style="text-align:center;padding:12px;border-color:rgba(46,204,113,0.35);">
+        <div style="font-size:18px;font-weight:800;color:#2ecc71;">£${Math.round(todayRevEGP).toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px;">${ar?"إيرادات وصول اليوم":"Today's Arrivals Revenue"}</div>
+      </div>
+      <div class="card" style="text-align:center;padding:12px;border-color:rgba(155,89,182,0.35);cursor:pointer;" onclick="goPage('dashboard')">
+        <div style="font-size:18px;font-weight:800;color:#9b59b6;">£${Math.round(custodyTotal).toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px;">${ar?"إجمالي العهدة":"Total Custody"}</div>
+      </div>`;
+  }
+
+  // ── Debts ──
+  const dEl = document.getElementById("ops-debts");
+  if(dEl){
+    const debtsSorted = debts.map(b=>{
+      const paidSum = calcPaid(b);
+      const owed = getBookingTotalOwed(b);
+      const remaining = Math.max(0, owed-paidSum);
+      const isOverdue = remaining>0 && b.co<td;
+      return {...b, _remaining:remaining, _isOverdue:isOverdue};
+    }).sort((a,b)=>(b._isOverdue?1:0)-(a._isOverdue?1:0) || b._remaining-a._remaining);
+    dEl.innerHTML = debtsSorted.length ? debtsSorted.slice(0,30).map(b=>{
+      const sym = b.cur==="USD"?"$":b.cur==="EUR"?"€":"EGP ";
+      return `<div class="card" style="border-color:${b._isOverdue?'rgba(231,76,60,0.5)':'rgba(231,76,60,0.25)'};">
+        <div style="font-weight:800;color:#e74c3c;font-size:14px;">${b.name||""} — ${ar?"غرفة":"Room"} ${b.room}</div>
+        <div style="font-size:13px;font-weight:700;color:#e74c3c;margin-top:3px;">💳 ${sym}${b._remaining.toFixed(0)}</div>
+        ${b._isOverdue?`<div style="font-size:10px;color:#e74c3c;font-weight:700;margin-top:2px;">⚠️ ${ar?"متأخر — بعد المغادرة":"Overdue — past checkout"}</div>`:""}
+      </div>`;
+    }).join("") + (debtsSorted.length>30?`<div style="grid-column:1/-1;text-align:center;"><button class="btn bsm" onclick="goPage('debt')">${ar?"عرض الكل":"View All"} →</button></div>`:"")
+      : `<div class="empty" style="grid-column:1/-1;">✅ ${ar?"لا توجد مديونيات!":"No outstanding debts!"}</div>`;
+  }
+
+  // ── Staff Shifts Today ──
+  const shEl = document.getElementById("ops-shifts");
+  if(shEl){
+    const roleIcon={reception:'🏨',housekeeping:'🧹',restaurant:'🍽️',security:'🔒',maintenance:'🔧'};
+    shEl.innerHTML = shiftsToday.length ? shiftsToday.map(s=>`
+      <div class="card" style="border-color:rgba(155,89,182,0.3);">
+        <div style="font-weight:800;color:#c39bd3;font-size:14px;">${roleIcon[s.role]||'👤'} ${s.name} — ${s.roleLabel||s.role}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${s.start?'▶ '+s.start.replace('T',' '):''} ${s.end?'⏹ '+s.end.replace('T',' '):''}</div>
+      </div>`).join("") : `<div class="empty" style="grid-column:1/-1;">📭 ${ar?"لا توجد شيفتات مسجلة اليوم":"No shifts logged today"}</div>`;
+  }
+
+  // ── Waiting List ──
+  const wlEl = document.getElementById("ops-waitlist");
+  if(wlEl){
+    wlEl.innerHTML = waitingList.length ? waitingList.map(w=>`
+      <div class="card" style="border-color:${w.priority==='high'?'rgba(231,76,60,0.4)':'rgba(230,126,34,0.3)'};">
+        <div style="font-weight:800;color:#e67e22;font-size:14px;">${w.name}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">📅 ${w.ci} → ${w.co} · 👥 ${w.guests||1}</div>
+        ${w.phone?`<div style="font-size:11px;color:var(--muted);">📞 ${w.phone}</div>`:""}
+      </div>`).join("") : `<div class="empty" style="grid-column:1/-1;">📭 ${ar?"لا توجد طلبات انتظار":"No waiting requests"}</div>`;
+  }
+
+  // ── Birthdays Today ──
+  const bdEl = document.getElementById("ops-birthdays");
+  if(bdEl){
+    bdEl.innerHTML = birthdaysToday.length ? birthdaysToday.map(b=>`
+      <div class="card" style="border-color:rgba(245,197,24,0.5);">
+        <div style="font-weight:800;color:#f5c518;font-size:14px;">🎂 ${b.name}</div>
+        ${b.room?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">🏨 ${ar?"غرفة":"Room"} ${b.room}</div>`:""}
+        ${b.phone?`<div style="font-size:11px;color:var(--muted);">📞 ${b.phone}</div>`:""}
+      </div>`).join("") : `<div class="empty" style="grid-column:1/-1;">📭 ${ar?"لا توجد أعياد ميلاد اليوم":"No birthdays today"}</div>`;
+  }
+}
+
+function opsResolveMaintenance(r){
+  const ar = currentLang==="ar";
+  if(!confirm(ar?"هل تم الانتهاء من صيانة الغرفة "+r+"؟":"Mark room "+r+" maintenance as resolved?")) return;
+  roomSt[r] = "available";
+  delete roomSt[r+"_n"];
+  sv("dta_rs", roomSt);
+  renderOpsBoard();
+  if(typeof renderRooms==="function") renderRooms();
+  showToast("✅ "+(ar?"تم إنهاء الصيانة":"Maintenance resolved")+" — "+r);
+}
+
 
 function hkOpenRoom(room) {
   hkEditRoom = String(room);
