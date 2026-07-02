@@ -3260,17 +3260,17 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 <div class="card" style="margin-bottom:12px;">
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-    <input id="gh-search" placeholder="🔍 ابحث باسم الضيف أو رقم الهاتف..." oninput="renderGuestHistory()" style="flex:1;min-width:180px;padding:7px 10px;font-size:13px;">
+    <input id="gh-search" placeholder="🔍 ابحث باسم الضيف أو رقم الهاتف · Search by name or phone..." oninput="renderGuestHistory()" style="flex:1;min-width:180px;padding:7px 10px;font-size:13px;">
     <select id="gh-sort" onchange="renderGuestHistory()" style="padding:7px 10px;font-size:12px;">
-      <option value="recent">الأحدث أولاً</option>
-      <option value="name">الاسم أبجدياً</option>
-      <option value="visits">الأكثر زيارة</option>
+      <option value="recent">الأحدث أولاً · Most Recent</option>
+      <option value="name">الاسم أبجدياً · Name (A-Z)</option>
+      <option value="visits">الأكثر زيارة · Most Visits</option>
     </select>
   </div>
 </div>
 <div id="gh-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:12px;"></div>
 <div id="gh-list"></div>
-<div id="gh-empty" class="empty" style="display:none;">👥 لا يوجد ضيوف في السجل</div>
+<div id="gh-empty" class="empty" style="display:none;">👥 <span class="t" data-ar="لا يوجد ضيوف في السجل" data-en="No guests in history">لا يوجد ضيوف في السجل · No guests in history</span></div>
 
 <!-- Guest Detail Modal -->
 <div id="gh-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;overflow-y:auto;">
@@ -14812,6 +14812,7 @@ function buildGuestMap(){
 }
 
 function renderGuestHistory(){
+  const ar = currentLang === "ar";
   const search = ((document.getElementById('gh-search')||{}).value||'').toLowerCase();
   const sort   = (document.getElementById('gh-sort')||{}).value || 'recent';
   let guests   = buildGuestMap();
@@ -14833,9 +14834,9 @@ function renderGuestHistory(){
   const returning = allGuests.filter(g => g.visits.length > 1).length;
   if(statsEl){
     statsEl.innerHTML = `
-      <div class="live-stat-card"><div class="live-stat-num">${allGuests.length}</div><div class="live-stat-lbl">إجمالي الضيوف</div></div>
-      <div class="live-stat-card blue"><div class="live-stat-num">${returning}</div><div class="live-stat-lbl">ضيوف متكررون</div></div>
-      <div class="live-stat-card"><div class="live-stat-num">${bookings.filter(b=>b.status!=='Cancelled').length}</div><div class="live-stat-lbl">إجمالي الحجوزات</div></div>
+      <div class="live-stat-card"><div class="live-stat-num">${allGuests.length}</div><div class="live-stat-lbl">${ar?"إجمالي الضيوف":"Total Guests"}</div></div>
+      <div class="live-stat-card blue"><div class="live-stat-num">${returning}</div><div class="live-stat-lbl">${ar?"ضيوف متكررون":"Returning Guests"}</div></div>
+      <div class="live-stat-card"><div class="live-stat-num">${bookings.filter(b=>b.status!=='Cancelled').length}</div><div class="live-stat-lbl">${ar?"إجمالي الحجوزات":"Total Bookings"}</div></div>
     `;
   }
 
@@ -14861,20 +14862,21 @@ function renderGuestHistory(){
         <div>
           <div style="font-weight:700;font-size:14px;color:#f0e6cc;">👤 ${g.name}</div>
           ${g.phone?`<div style="font-size:11px;color:var(--muted);">📞 ${g.phone}</div>`:''}
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;">🏨 الغرف: ${rooms}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">🏨 ${ar?"الغرف":"Rooms"}: ${rooms}</div>
         </div>
         <div style="text-align:left;">
-          <div style="font-size:12px;color:var(--gold);font-weight:700;">${g.visits.length} ${g.visits.length===1?'زيارة':'زيارات'}</div>
-          <div style="font-size:11px;color:var(--muted);">آخر زيارة: ${fmtD(g.lastDate)}</div>
-          <div style="font-size:11px;color:#2ecc71;">إجمالي: ${sym}${totalSpent.toFixed(0)}</div>
+          <div style="font-size:12px;color:var(--gold);font-weight:700;">${g.visits.length} ${ar?(g.visits.length===1?'زيارة':'زيارات'):(g.visits.length===1?'visit':'visits')}</div>
+          <div style="font-size:11px;color:var(--muted);">${ar?"آخر زيارة":"Last visit"}: ${fmtD(g.lastDate)}</div>
+          <div style="font-size:11px;color:#2ecc71;">${ar?"إجمالي":"Total"}: ${sym}${totalSpent.toFixed(0)}</div>
         </div>
       </div>
-      ${g.visits.length > 1 ? `<div style="margin-top:6px;font-size:10px;background:rgba(52,152,219,0.12);color:#7ab8f5;border-radius:4px;padding:3px 8px;display:inline-block;">🔄 ضيف متكرر</div>` : ''}
+      ${g.visits.length > 1 ? `<div style="margin-top:6px;font-size:10px;background:rgba(52,152,219,0.12);color:#7ab8f5;border-radius:4px;padding:3px 8px;display:inline-block;">🔄 ${ar?"ضيف متكرر":"Returning Guest"}</div>` : ''}
     </div>`;
   }).join('');
 }
 
 function openGuestHistory(name){
+  const ar = currentLang === "ar";
   const key = name.trim().toLowerCase();
   const gVisits = bookings.filter(b => b.name && b.name.trim().toLowerCase() === key && b.status !== 'Cancelled')
     .sort((a,b) => b.ci.localeCompare(a.ci));
@@ -14892,12 +14894,12 @@ function openGuestHistory(name){
     return `<div style="padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:6px;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <span style="font-weight:700;color:var(--gold);">🏨 غرفة ${v.room}</span>
+          <span style="font-weight:700;color:var(--gold);">🏨 ${ar?"غرفة":"Room"} ${v.room}</span>
           <span style="font-size:11px;color:var(--muted);margin-right:8px;">${v.type||''}</span>
         </div>
-        <span style="font-size:11px;color:${rem>0?'#e74c3c':'#2ecc71'}">${rem>0?'⚠️ متبقي '+vs+rem.toFixed(0):'✅ مسدد'}</span>
+        <span style="font-size:11px;color:${rem>0?'#e74c3c':'#2ecc71'}">${rem>0?'⚠️ '+(ar?'متبقي ':'Owed ')+vs+rem.toFixed(0):'✅ '+(ar?'مسدد':'Paid')}</span>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 ${fmtD(v.ci)} ← ${fmtD(v.co)} · ${nts(v.ci,v.co)} ليلة · ${vs}${v.total||0}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">📅 ${fmtD(v.ci)} ← ${fmtD(v.co)} · ${nts(v.ci,v.co)} ${ar?"ليلة":"night(s)"} · ${vs}${v.total||0}</div>
       ${v.notes?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">📝 ${v.notes}</div>`:''}
     </div>`;
   }).join('');
@@ -14910,20 +14912,20 @@ function openGuestHistory(name){
       <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
         <div style="background:rgba(201,168,76,0.1);border-radius:8px;padding:8px 12px;text-align:center;">
           <div style="font-size:18px;font-weight:700;color:var(--gold);">${gVisits.length}</div>
-          <div style="font-size:10px;color:var(--muted);">زيارة</div>
+          <div style="font-size:10px;color:var(--muted);">${ar?"زيارة":"Visits"}</div>
         </div>
         <div style="background:rgba(46,204,113,0.1);border-radius:8px;padding:8px 12px;text-align:center;">
           <div style="font-size:18px;font-weight:700;color:#2ecc71;">${sym}${totalSpent.toFixed(0)}</div>
-          <div style="font-size:10px;color:var(--muted);">إجمالي</div>
+          <div style="font-size:10px;color:var(--muted);">${ar?"إجمالي":"Total"}</div>
         </div>
         <div style="background:rgba(52,152,219,0.1);border-radius:8px;padding:8px 12px;text-align:center;">
           <div style="font-size:18px;font-weight:700;color:#7ab8f5;">${totalNights}</div>
-          <div style="font-size:10px;color:var(--muted);">ليلة</div>
+          <div style="font-size:10px;color:var(--muted);">${ar?"ليلة":"Nights"}</div>
         </div>
       </div>
-      <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px;">📋 سجل الزيارات:</div>
+      <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px;">📋 ${ar?"سجل الزيارات":"Visit History"}:</div>
       ${visitsHtml}
-      <button class="btn bg" style="width:100%;margin-top:8px;" onclick="document.getElementById('gh-modal').style.display='none';bnGo('bookings',null);setTimeout(()=>{document.getElementById('bm-name').value='${name}';},300);">➕ حجز جديد لهذا الضيف</button>
+      <button class="btn bg" style="width:100%;margin-top:8px;" onclick="document.getElementById('gh-modal').style.display='none';bnGo('bookings',null);setTimeout(()=>{document.getElementById('bm-name').value='${name}';},300);">➕ ${ar?"حجز جديد لهذا الضيف":"New Booking for this Guest"}</button>
     </div>
   `;
   document.getElementById('gh-modal').style.display = 'block';
