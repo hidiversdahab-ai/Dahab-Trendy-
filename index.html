@@ -177,6 +177,7 @@ select option{background:#1a1a2e;color:var(--text)}
 .btn:hover{filter:brightness(1.1)}
 .act-season{background:rgba(201,168,76,0.25)!important;color:#c9a84c!important;border-color:#c9a84c!important;font-weight:800!important;}
 .act-bf{background:rgba(201,168,76,0.25)!important;color:#c9a84c!important;border-color:#c9a84c!important;font-weight:800!important;}
+.act-scl{background:rgba(52,152,219,0.25)!important;color:#7ab8f5!important;border-color:#7ab8f5!important;font-weight:800!important;}
 .bg{background:var(--gold);color:#1a1a2e}
 :root.light-mode .bg{color:#fff}
 .bb{background:rgba(255,255,255,0.07);color:var(--muted);border:1px solid var(--bdr)}
@@ -2544,6 +2545,9 @@ document.addEventListener('DOMContentLoaded', function(){
 <button class="nb" onclick="goPage('guestsreg',this)" style="background:rgba(22,160,133,0.12);color:#1abc9c;border-color:rgba(22,160,133,0.4);font-weight:700;">📋 <span class="t" data-ar="سجل الضيوف" data-en="Guests Register">Guests Register</span></button>
 <button class="nb" onclick="goPage('housekeeping',this)" style="background:rgba(26,188,156,0.12);color:#1abc9c;border-color:rgba(26,188,156,0.4);font-weight:700;">🧹 <span class="t" data-ar="Housekeeping" data-en="Housekeeping">Housekeeping</span></button>
 <button class="nb" onclick="goPage('opsboard',this)" style="background:rgba(201,168,76,0.16);color:var(--gold);border-color:var(--gold);font-weight:700;">📋 <span class="t" data-ar="لوحة يوم العمل" data-en="Ops Board">لوحة يوم العمل · Ops Board</span></button>
+<button class="nb" onclick="goPage('eodclose',this)" style="background:rgba(46,204,113,0.12);color:#2ecc71;border-color:rgba(46,204,113,0.4);font-weight:700;">🧮 <span class="t" data-ar="تسوية آخر اليوم" data-en="EOD Close">تسوية آخر اليوم · EOD Close</span></button>
+<button class="nb" onclick="goPage('shiftchecklist',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;">✅ <span class="t" data-ar="قائمة الشيفت" data-en="Shift Checklist">قائمة الشيفت · Checklist</span></button>
+<button class="nb" onclick="goPage('amanat',this)" style="background:rgba(155,89,182,0.12);color:#c39bd3;border-color:rgba(155,89,182,0.4);font-weight:700;">🔐 <span class="t" data-ar="الأمانات" data-en="Valuables">الأمانات · Valuables</span></button>
 <button class="nb" onclick="goPage('minibar',this)" style="background:rgba(26,188,156,0.08);color:#1abc9c;border-color:rgba(26,188,156,0.3);">🌡️ <span class="t" data-ar="مينيبار" data-en="Minibar">مينيبار</span></button>
 <button class="nb" onclick="goPage('reviews',this)" style="background:rgba(241,196,15,0.12);color:#f1c40f;border-color:rgba(241,196,15,0.4);font-weight:700;">⭐ <span class="t" data-ar="التقييمات" data-en="Reviews">Reviews</span></button>
 <button class="nb" onclick="goPage('waitlist',this)" style="background:rgba(230,126,34,0.12);color:#e67e22;border-color:rgba(230,126,34,0.5);font-weight:700;">⏳ <span class="t" data-ar="قائمة الانتظار" data-en="Waiting List">Waiting List</span><span id="wl-nav-badge" style="display:none;background:#e74c3c;color:#fff;border-radius:50%;font-size:9px;font-weight:700;min-width:14px;height:14px;margin-left:4px;padding:0 3px;vertical-align:middle;"></span></button>
@@ -2716,10 +2720,189 @@ document.addEventListener('DOMContentLoaded', function(){
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════
+  ══ END OF DAY CLOSE — تسوية آخر اليوم ══
+══════════════════════════════════════════════ -->
+<div id="page-eodclose" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+    <h2 style="color:var(--gold);font-size:18px;margin:0;">🧮 <span class="t" data-ar="تسوية آخر اليوم" data-en="End of Day Close">تسوية آخر اليوم · End of Day Close</span></h2>
+    <input id="eod-date" type="date" onchange="renderEODClose()" style="padding:6px 10px;font-size:12px;border-radius:8px;background:var(--card);color:var(--fg);border:1px solid var(--bdr);">
+  </div>
+
+  <!-- Expected Totals -->
+  <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1.5px;margin:6px 0 8px;text-transform:uppercase;">📊 <span class="t" data-ar="المتوقع من النظام" data-en="Expected From System">المتوقع من النظام</span></div>
+  <div id="eod-expected" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
+
+  <!-- Breakdown by source -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:#7ab8f5;font-size:14px;margin:0 0 8px;">📋 <span class="t" data-ar="تفاصيل المصادر" data-en="Breakdown by Source">تفاصيل المصادر · Breakdown</span></h3>
+    <div id="eod-breakdown"></div>
+  </div>
+
+  <!-- Actual Count Input -->
+  <div class="card" style="margin-bottom:18px;border-color:rgba(201,168,76,0.4);">
+    <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;margin-bottom:10px;">💵 <span class="t" data-ar="العدّ الفعلي في الدرج" data-en="Actual Drawer Count">العدّ الفعلي في الدرج · Actual Count</span></div>
+    <div class="g2">
+      <div class="fld"><label>💵 <span class="t" data-ar="كاش فعلي (EGP)" data-en="Actual Cash (EGP)">كاش فعلي · Actual Cash</span></label><input id="eod-actual-cash" type="number" step="0.01" placeholder="0.00" oninput="updateEODVariance()"></div>
+      <div class="fld"><label>💳 <span class="t" data-ar="بطاقة فعلي (EGP)" data-en="Actual Card (EGP)">بطاقة فعلي · Actual Card</span></label><input id="eod-actual-card" type="number" step="0.01" placeholder="0.00" oninput="updateEODVariance()"></div>
+      <div class="fld"><label>🏦 <span class="t" data-ar="تحويل فعلي (EGP)" data-en="Actual Transfer (EGP)">تحويل فعلي · Actual Transfer</span></label><input id="eod-actual-transfer" type="number" step="0.01" placeholder="0.00" oninput="updateEODVariance()"></div>
+      <div class="fld"><label>👤 <span class="t" data-ar="أُقفلت بواسطة" data-en="Closed By">أُقفلت بواسطة · Closed By</span></label><input id="eod-closedby" placeholder="اسم الموظف · Staff name"></div>
+    </div>
+    <div class="fld s2"><label>📝 <span class="t" data-ar="ملاحظات" data-en="Notes">ملاحظات · Notes</span></label><textarea id="eod-notes" rows="2"></textarea></div>
+    <div id="eod-variance-box" style="margin-top:10px;"></div>
+    <button class="btn bg" style="width:100%;margin-top:10px;" onclick="saveEODClose()">💾 <span class="t" data-ar="حفظ التسوية" data-en="Save Close">حفظ التسوية · Save Close</span></button>
+  </div>
+
+  <!-- History -->
+  <div style="margin-bottom:80px;">
+    <h3 style="color:#95a5a6;font-size:14px;margin:0 0 8px;">🕓 <span class="t" data-ar="سجل التسويات السابقة" data-en="Previous Closes">سجل التسويات السابقة · History</span></h3>
+    <div id="eod-history"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  ══ SHIFT CHECKLIST — قائمة فتح/قفل الشيفت ══
+══════════════════════════════════════════════ -->
+<div id="page-shiftchecklist" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+    <h2 style="color:var(--gold);font-size:18px;margin:0;">✅ <span class="t" data-ar="قائمة فتح/قفل الشيفت" data-en="Shift Checklist">قائمة فتح/قفل الشيفت · Shift Checklist</span></h2>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+    <button id="scl-tab-open" class="btn bsm scl-tab-btn act-scl" onclick="setSCLType('open')" style="padding:12px 6px;font-size:13px;">🌅 <span class="t" data-ar="فتح الشيفت" data-en="Opening Shift">فتح الشيفت · Opening</span></button>
+    <button id="scl-tab-close" class="btn bsm scl-tab-btn" onclick="setSCLType('close')" style="padding:12px 6px;font-size:13px;">🌙 <span class="t" data-ar="قفل الشيفت" data-en="Closing Shift">قفل الشيفت · Closing</span></button>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:12px;font-weight:700;color:var(--gold);">📋 <span id="scl-items-title"></span></div>
+      <button class="btn bsm" style="font-size:10px;background:rgba(52,152,219,0.14);color:#7ab8f5;border:1px solid rgba(52,152,219,0.3);" onclick="openSCLManageItems()">⚙️ <span class="t" data-ar="تعديل القائمة" data-en="Edit List">تعديل القائمة · Edit</span></button>
+    </div>
+    <div id="scl-items-list"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:18px;border-color:rgba(201,168,76,0.4);">
+    <div class="fld"><label>👤 <span class="t" data-ar="اسم الموظف" data-en="Staff Name">اسم الموظف · Staff Name</span></label><input id="scl-staff" placeholder="الاسم · Name"></div>
+    <div class="fld s2"><label>📝 <span class="t" data-ar="ملاحظات" data-en="Notes">ملاحظات · Notes</span></label><textarea id="scl-notes" rows="2"></textarea></div>
+    <button class="btn bg" style="width:100%;margin-top:8px;" onclick="submitSCL()">✅ <span class="t" data-ar="تأكيد وحفظ" data-en="Submit &amp; Save">تأكيد وحفظ · Submit</span></button>
+  </div>
+
+  <div style="margin-bottom:80px;">
+    <h3 style="color:#95a5a6;font-size:14px;margin:0 0 8px;">🕓 <span class="t" data-ar="سجل سابق" data-en="Recent History">سجل سابق · History</span></h3>
+    <div id="scl-history"></div>
+  </div>
+</div>
+
+<!-- Manage Checklist Items Modal -->
+<div class="ovl" id="scl-manage-modal" style="z-index:9600;">
+  <div class="mdl" style="max-width:480px;">
+    <div class="flex" style="justify-content:space-between;margin-bottom:14px;">
+      <div class="mtitle" style="margin-bottom:0;">⚙️ <span class="t" data-ar="تعديل عناصر القائمة" data-en="Edit Checklist Items">تعديل عناصر القائمة</span></div>
+      <button onclick="closeM('scl-manage-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <div id="scl-manage-list" style="max-height:340px;overflow-y:auto;margin-bottom:12px;"></div>
+    <div class="g2" style="margin-bottom:10px;">
+      <input id="scl-new-ar" placeholder="نص عربي · Arabic text">
+      <input id="scl-new-en" placeholder="English text">
+    </div>
+    <button class="btn bb" style="width:100%;" onclick="addSCLItem()">➕ <span class="t" data-ar="إضافة عنصر" data-en="Add Item">إضافة عنصر · Add</span></button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  ══ AMANAT — الأمانات (خزنة الاستقبال) ══
+══════════════════════════════════════════════ -->
+<div id="page-amanat" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+    <h2 style="color:var(--gold);font-size:18px;margin:0;">🔐 <span class="t" data-ar="الأمانات" data-en="Valuables Safekeeping">الأمانات · Valuables Safekeeping</span></h2>
+    <button class="btn bsm" style="background:rgba(46,204,113,0.16);color:#2ecc71;border:1px solid rgba(46,204,113,0.4);" onclick="openAmanatAdd()">➕ <span class="t" data-ar="إضافة أمانة" data-en="New Item">إضافة أمانة · New</span></button>
+  </div>
+
+  <!-- Summary -->
+  <div id="amanat-summary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:16px;"></div>
+
+  <!-- Currently in Safe -->
+  <div style="margin-bottom:18px;">
+    <h3 style="color:var(--gold);font-size:14px;margin:0 0 8px;">🔒 <span class="t" data-ar="موجود حالياً في الخزنة" data-en="Currently in the Safe">موجود حالياً في الخزنة · In Safe</span></h3>
+    <div id="amanat-active" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- Returned History -->
+  <div style="margin-bottom:80px;">
+    <h3 style="color:#95a5a6;font-size:14px;margin:0 0 8px;">📜 <span class="t" data-ar="سجل الأمانات المُستلَمة" data-en="Returned Items History">سجل الأمانات المُستلَمة · Returned History</span></h3>
+    <div id="amanat-history"></div>
+  </div>
+</div>
+
+<!-- Add / Return Amanat Modal -->
+<div class="ovl" id="amanat-modal" style="z-index:9600;">
+  <div class="mdl" style="max-width:480px;">
+    <div class="flex" style="justify-content:space-between;margin-bottom:14px;">
+      <div class="mtitle" style="margin-bottom:0;" id="amanat-modal-title">🔐 <span class="t" data-ar="إضافة أمانة جديدة" data-en="New Safekeeping Item">إضافة أمانة جديدة</span></div>
+      <button onclick="closeM('amanat-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <div class="fld"><label>👤 <span class="t" data-ar="اسم الضيف" data-en="Guest Name">اسم الضيف · Guest Name</span></label><input id="am-guest" placeholder="الاسم · Name"></div>
+    <div class="fld"><label>🏨 <span class="t" data-ar="رقم الغرفة (اختياري)" data-en="Room Number (optional)">رقم الغرفة (اختياري) · Room (optional)</span></label><input id="am-room" placeholder="101"></div>
+    <div class="fld s2">
+      <label>📦 <span class="t" data-ar="العناصر (كل حاجة سطر لوحدها)" data-en="Items (each item its own line)">العناصر · Items</span></label>
+      <div id="am-items-list"></div>
+      <button type="button" class="btn bsm" style="margin-top:6px;background:rgba(52,152,219,0.12);color:#7ab8f5;border:1px solid rgba(52,152,219,0.35);" onclick="addAmanatItemRow()">➕ <span class="t" data-ar="إضافة عنصر تاني" data-en="Add another item">إضافة عنصر تاني</span></button>
+    </div>
+    <div class="g2">
+      <div class="fld"><label>💰 <span class="t" data-ar="المبلغ (إن وجد)" data-en="Amount (if cash)">المبلغ (إن وجد) · Amount</span></label><input id="am-amount" type="number" step="0.01" placeholder="0.00"></div>
+      <div class="fld"><label>💱 <span class="t" data-ar="العملة" data-en="Currency">العملة · Currency</span></label>
+        <select id="am-currency"><option value="EGP">EGP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select>
+      </div>
+    </div>
+    <div class="fld"><label>👤 <span class="t" data-ar="استلمها" data-en="Received By">استلمها (الموظف) · Received By</span></label><input id="am-receivedby" placeholder="اسم الموظف · Staff name"></div>
+    <div class="fld s2"><label>📝 <span class="t" data-ar="ملاحظات" data-en="Notes">ملاحظات · Notes</span></label><textarea id="am-notes" rows="2"></textarea></div>
+    <button class="btn bg" style="width:100%;margin-top:8px;" onclick="saveAmanat()">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ · Save</span></button>
+  </div>
+</div>
+
+<!-- Return Amanat Modal -->
+<div class="ovl" id="amanat-return-modal" style="z-index:9600;">
+  <div class="mdl" style="max-width:420px;">
+    <div class="flex" style="justify-content:space-between;margin-bottom:14px;">
+      <div class="mtitle" style="margin-bottom:0;">✅ <span class="t" data-ar="تسليم الأمانة بالكامل" data-en="Return Full Item">تسليم الأمانة بالكامل</span></div>
+      <button onclick="closeM('amanat-return-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <div id="amanat-return-info" style="font-size:13px;color:var(--text);margin-bottom:14px;"></div>
+    <div class="fld"><label>👤 <span class="t" data-ar="سلّمها (الموظف)" data-en="Returned By">سلّمها (الموظف) · Returned By</span></label><input id="am-returnedby" placeholder="اسم الموظف · Staff name"></div>
+    <button class="btn bg" style="width:100%;margin-top:8px;" onclick="confirmAmanatReturn()">✅ <span class="t" data-ar="تأكيد التسليم" data-en="Confirm Return">تأكيد التسليم · Confirm</span></button>
+  </div>
+</div>
+
+<!-- Partial Withdrawal Modal -->
+<div class="ovl" id="amanat-withdraw-modal" style="z-index:9600;">
+  <div class="mdl" style="max-width:420px;">
+    <div class="flex" style="justify-content:space-between;margin-bottom:14px;">
+      <div class="mtitle" style="margin-bottom:0;">🔽 <span class="t" data-ar="سحب جزئي" data-en="Partial Withdrawal">سحب جزئي · Partial Withdrawal</span></div>
+      <button onclick="closeM('amanat-withdraw-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <div id="amanat-withdraw-info" style="font-size:13px;color:var(--text);margin-bottom:14px;"></div>
+    <div class="fld"><label>💰 <span class="t" data-ar="المبلغ المسحوب" data-en="Withdrawal Amount">المبلغ المسحوب · Amount</span></label><input id="am-withdraw-amount" type="number" step="0.01" placeholder="0.00"></div>
+    <div class="fld"><label>👤 <span class="t" data-ar="سلّمها (الموظف)" data-en="Given By">سلّمها (الموظف) · Given By</span></label><input id="am-withdraw-by" placeholder="اسم الموظف · Staff name"></div>
+    <div class="fld s2"><label>📝 <span class="t" data-ar="ملاحظات" data-en="Notes">ملاحظات · Notes</span></label><textarea id="am-withdraw-notes" rows="2"></textarea></div>
+    <button class="btn bg" style="width:100%;margin-top:8px;" onclick="confirmAmanatWithdraw()">✅ <span class="t" data-ar="تأكيد السحب" data-en="Confirm Withdrawal">تأكيد السحب · Confirm</span></button>
+  </div>
+</div>
+
 <div id="page-dashboard" class="page on">
-<button class="btn bg" onclick="goPage('opsboard')" style="width:100%;padding:14px;font-size:15px;font-weight:800;margin-bottom:12px;border-radius:12px;background:linear-gradient(135deg,rgba(201,168,76,0.28),rgba(201,168,76,0.12));border:1.5px solid var(--gold);color:var(--gold);">
-  📋 <span class="t" data-ar="لوحة يوم العمل — كل شيء اليوم" data-en="Today's Ops Board — everything today">لوحة يوم العمل — كل حاجة النهاردة · Today's Ops Board</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+<button class="btn bg" onclick="goPage('opsboard')" style="padding:14px 8px;font-size:13px;font-weight:800;border-radius:12px;background:linear-gradient(135deg,rgba(201,168,76,0.28),rgba(201,168,76,0.12));border:1.5px solid var(--gold);color:var(--gold);">
+  📋 <span class="t" data-ar="لوحة يوم العمل" data-en="Ops Board">لوحة يوم العمل · Ops Board</span>
 </button>
+<button class="btn bg" onclick="goPage('eodclose')" style="padding:14px 8px;font-size:13px;font-weight:800;border-radius:12px;background:linear-gradient(135deg,rgba(46,204,113,0.28),rgba(46,204,113,0.12));border:1.5px solid #2ecc71;color:#2ecc71;">
+  🧮 <span class="t" data-ar="تسوية آخر اليوم" data-en="EOD Close">تسوية آخر اليوم · EOD Close</span>
+</button>
+<button class="btn bg" onclick="goPage('shiftchecklist')" style="padding:14px 8px;font-size:13px;font-weight:800;border-radius:12px;background:linear-gradient(135deg,rgba(52,152,219,0.28),rgba(52,152,219,0.12));border:1.5px solid #7ab8f5;color:#7ab8f5;">
+  ✅ <span class="t" data-ar="قائمة الشيفت" data-en="Shift Checklist">قائمة الشيفت · Checklist</span>
+</button>
+<button class="btn bg" onclick="goPage('amanat')" style="padding:14px 8px;font-size:13px;font-weight:800;border-radius:12px;background:linear-gradient(135deg,rgba(155,89,182,0.28),rgba(155,89,182,0.12));border:1.5px solid #c39bd3;color:#c39bd3;">
+  🔐 <span class="t" data-ar="الأمانات" data-en="Valuables">الأمانات · Valuables</span>
+</button>
+</div>
 <h2 style="color:var(--gold);margin-bottom:14px;font-size:18px;">📊 <span class="t" data-ar="الرئيسية" data-en="Dashboard">Dashboard</span></h2>
 
 <!-- ساعة الـ Dashboard -->
@@ -3020,15 +3203,15 @@ document.addEventListener('DOMContentLoaded', function(){
         <div style="color:#a0b4c8;font-size:12px;margin-top:4px;" id="pl-prop-addr">—</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn" style="background:#25D366;color:#fff;font-size:12px;" onclick="sendPriceListWA()">📲 واتساب</button>
-        <button class="btn" style="background:#c9a84c;color:#1a1a2e;font-size:12px;" onclick="printPriceList()">🖨️ PDF / طباعة</button>
-        <button class="btn" style="background:#3498db;color:#fff;font-size:12px;" onclick="resetPriceListToDefaults()">🔄 إعادة تعيين</button>
+        <button class="btn" style="background:#25D366;color:#fff;font-size:12px;" onclick="sendPriceListWA()">📲 <span class="t" data-ar="واتساب" data-en="WhatsApp">واتساب</span></button>
+        <button class="btn" style="background:#c9a84c;color:#1a1a2e;font-size:12px;" onclick="printPriceList()">🖨️ PDF / <span class="t" data-ar="طباعة" data-en="Print">طباعة</span></button>
+        <button class="btn" style="background:#3498db;color:#fff;font-size:12px;" onclick="resetPriceListToDefaults()">🔄 <span class="t" data-ar="إعادة تعيين" data-en="Reset">إعادة تعيين · Reset</span></button>
       </div>
     </div>
 
     <!-- Season Selector -->
     <div style="background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
-      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:10px;">🌊 الموسم</div>
+      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:10px;">🌊 <span class="t" data-ar="الموسم" data-en="Season">الموسم · Season</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button id="pl-season-low"   class="btn bsm pl-season-btn act-season" onclick="setPLSeason('low')"   style="font-size:12px;">🌥️ Low Season</button>
         <button id="pl-season-mid"   class="btn bsm pl-season-btn"            onclick="setPLSeason('mid')"   style="font-size:12px;">⛅ Mid Season</button>
@@ -3039,37 +3222,48 @@ document.addEventListener('DOMContentLoaded', function(){
 
     <!-- Breakfast Option -->
     <div style="background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
-      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:12px;">🍳 خيار الإفطار</div>
+      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:12px;">🍳 <span class="t" data-ar="خيار الإفطار" data-en="Breakfast Option">خيار الإفطار · Breakfast Option</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-        <button id="pl-bf-no"  class="btn bsm pl-bf-btn act-bf" onclick="setPLBreakfast('none')"  style="font-size:12px;">🚫 بدون إفطار</button>
-        <button id="pl-bf-inc" class="btn bsm pl-bf-btn"        onclick="setPLBreakfast('included')" style="font-size:12px;">✅ إفطار مشمول</button>
-        <button id="pl-bf-opt" class="btn bsm pl-bf-btn"        onclick="setPLBreakfast('optional')" style="font-size:12px;">➕ إفطار اختياري</button>
+        <button id="pl-bf-no"  class="btn bsm pl-bf-btn act-bf" onclick="setPLBreakfast('none')"  style="font-size:12px;">🚫 <span class="t" data-ar="بدون إفطار" data-en="No Breakfast">بدون إفطار · No Breakfast</span></button>
+        <button id="pl-bf-inc" class="btn bsm pl-bf-btn"        onclick="setPLBreakfast('included')" style="font-size:12px;">✅ <span class="t" data-ar="إفطار مشمول" data-en="Breakfast Included">إفطار مشمول · Included</span></button>
+        <button id="pl-bf-opt" class="btn bsm pl-bf-btn"        onclick="setPLBreakfast('optional')" style="font-size:12px;">➕ <span class="t" data-ar="إفطار اختياري" data-en="Breakfast Optional">إفطار اختياري · Optional</span></button>
       </div>
       <div id="pl-bf-price-wrap" style="display:none;">
-        <label style="font-size:12px;color:#888;margin-bottom:4px;display:block;">سعر الإفطار للفرد / Breakfast price per person</label>
+        <label style="font-size:12px;color:#888;margin-bottom:4px;display:block;"><span class="t" data-ar="سعر الإفطار للفرد" data-en="Breakfast price per person">سعر الإفطار للفرد / Breakfast price per person</span></label>
         <div style="display:flex;align-items:center;gap:8px;">
           <input id="pl-bf-price" type="number" placeholder="0" style="width:100px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;">
-          <span style="font-size:12px;color:#888;">£ لليلة / per person</span>
+          <span style="font-size:12px;color:#888;"><span class="t" data-ar="لليلة" data-en="per person">£ لليلة / per person</span></span>
         </div>
       </div>
     </div>
 
     <!-- Notes -->
     <div style="background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
-      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:8px;">📝 ملاحظات (تظهر في القائمة)</div>
-      <textarea id="pl-notes" rows="2" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;resize:vertical;" placeholder="مثال: الأسعار قابلة للتفاوض للجروب — يشمل مناشف ومستلزمات استحمام"></textarea>
+      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:8px;">📝 <span class="t" data-ar="ملاحظات (تظهر في القائمة)" data-en="Notes (shown in the list)">ملاحظات (تظهر في القائمة) · Notes</span></div>
+      <textarea id="pl-notes" rows="2" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;resize:vertical;" placeholder="مثال: الأسعار قابلة للتفاوض للجروب — يشمل مناشف ومستلزمات استحمام / Example: Prices negotiable for groups — includes towels & bath amenities"></textarea>
     </div>
 
     <!-- Price Table -->
     <div style="background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
-      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:14px;">🛏️ الأسعار (قابلة للتعديل)</div>
+      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:14px;">🛏️ <span class="t" data-ar="الأسعار (قابلة للتعديل)" data-en="Prices (Editable)">الأسعار (قابلة للتعديل) · Editable Prices</span></div>
       <div id="pl-table"></div>
-      <button class="btn" style="margin-top:12px;background:#27ae60;color:#fff;font-size:13px;width:100%;" onclick="savePriceListData()">💾 حفظ الأسعار</button>
+      <button class="btn" style="margin-top:12px;background:#27ae60;color:#fff;font-size:13px;width:100%;" onclick="savePriceListData()">💾 <span class="t" data-ar="حفظ الأسعار" data-en="Save Prices">حفظ الأسعار · Save Prices</span></button>
+    </div>
+
+    <!-- Promo Message Template -->
+    <div style="background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:16px;">
+      <div style="font-size:12px;color:#c9a84c;font-weight:700;margin-bottom:8px;">📣 <span class="t" data-ar="رسالة ترويجية جاهزة" data-en="Ready Promo Message">رسالة ترويجية جاهزة · Promo Message</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;"><span class="t" data-ar="عدّل النص وهيتحفظ تلقائياً — ابعته بزرار واحد" data-en="Edit the text, it saves automatically — send with one tap">عدّل النص وهيتحفظ تلقائياً — ابعته بزرار واحد · Edit and it auto-saves</span></div>
+      <textarea id="pl-promo-msg" rows="10" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;resize:vertical;line-height:1.6;" oninput="savePLPromoMsg()"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn" style="flex:1;background:#25D366;color:#fff;font-size:13px;" onclick="sendPLPromoMsg()">📲 <span class="t" data-ar="إرسال واتساب" data-en="Send WhatsApp">إرسال واتساب</span></button>
+        <button class="btn bb" style="flex:1;font-size:13px;" onclick="resetPLPromoMsg()">🔄 <span class="t" data-ar="استعادة الأصلي" data-en="Restore Default">استعادة الأصلي · Restore</span></button>
+      </div>
     </div>
 
     <!-- Currency Note -->
     <div style="background:var(--card);border-radius:12px;padding:14px 20px;font-size:12px;color:#888;">
-      💡 الأسعار بالجنيه الإسترليني (£) — عدّلها حسب الموسم وبعتها للعميل مباشرةً
+      💡 <span class="t" data-ar="الأسعار بالجنيه الإسترليني (£) — عدّلها حسب الموسم وبعتها للعميل مباشرةً" data-en="Prices in GBP (£) — adjust by season and send directly to the guest">الأسعار بالجنيه الإسترليني (£) — عدّلها حسب الموسم وبعتها للعميل مباشرةً / Prices in GBP (£) — adjust by season and send directly to the guest</span>
     </div>
 
   </div>
@@ -7042,7 +7236,7 @@ document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
 document.querySelectorAll(".nb").forEach(b=>b.classList.remove("act"));
 document.getElementById("page-"+id).classList.add("on");
 if(btn) btn.classList.add("act");
-const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,events:renderEvents,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage,statusboard:renderStatusBoard,chatbot:cb_renderPage,dailyactivity:renderDailyActivity,opsboard:renderOpsBoard};
+const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,events:renderEvents,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage,statusboard:renderStatusBoard,chatbot:cb_renderPage,dailyactivity:renderDailyActivity,opsboard:renderOpsBoard,eodclose:renderEODClose,shiftchecklist:renderSCL,amanat:renderAmanat};
 if(map[id]) map[id]();
 if(id==="invoice"){renderInvRooms();buildPreview();}
 // ── Auto-refresh لوحة يوم العمل كل 20 ثانية طول ما هي مفتوحة ──
@@ -12675,6 +12869,58 @@ function setPLBreakfast(val){
   if(wrap) wrap.style.display = (val==='included'||val==='optional') ? 'block' : 'none';
 }
 
+const PL_PROMO_DEFAULT = `🏨 *Dahab Trendy Accommodation* – قائمة أسعار الغرف 🇪🇬
+🏨 *Dahab Trendy Accommodation* – Room Price List 🇪🇬
+
+✨ استمتع بإقامة مريحة في مكان جديد بالكامل مع تكييف هواء، حمام خاص، سمارت TV، ميني بار، حمام سباحة، وإنترنت مجاني.
+✨ Enjoy a comfortable stay in a brand-new place with air conditioning, private bathroom, Smart TV, mini bar, swimming pool, and free WiFi.
+
+💰 *الأسعار (لليلة الواحدة) / Prices (per night):*
+
+🛏️ غرفة سنجل / Single Room: *1000 جنيه · EGP 1000*
+🛏️🛏️ غرفة دبل / Double Room: *1200 جنيه · EGP 1200*
+🛏️🛏️🛏️ غرفة تريبل / Triple Room: *1500 جنيه · EGP 1500*
+👨‍👩‍👧‍👦 غرفة رباعي / Quad Room: *1800 جنيه · EGP 1800*
+⭐ سويت / Suite: *2000 جنيه · EGP 2000*
+
+📍 Dahab Trendy Accommodation
+
+🏊 حمام سباحة · Swimming Pool
+❄️ تكييف هواء · Air Conditioning
+📺 سمارت TV · Smart TV
+🧊 ميني بار · Mini Bar
+📶 إنترنت مجاني · Free WiFi
+🛁 حمام خاص لكل غرفة · Private Bathroom in Every Room
+✨ جميع الأثاث والتجهيزات جديدة · All Furniture & Fittings Brand New
+
+📞 للحجز والاستفسار عبر واتساب / For booking & inquiries via WhatsApp:
+00201099531272
+
+📝 ملاحظة: المكان ليس على البحر، ويوفر إقامة هادئة ومريحة بالقرب من خدمات مدينة دهب.
+📝 Note: The property is not beachfront, and offers a quiet, comfortable stay close to Dahab's services.`;
+
+function getPLPromoMsg(){
+  const saved = localStorage.getItem('dta_pl_promo_msg');
+  return saved !== null ? saved : PL_PROMO_DEFAULT;
+}
+function savePLPromoMsg(){
+  const el = document.getElementById('pl-promo-msg');
+  if(el) localStorage.setItem('dta_pl_promo_msg', el.value);
+}
+function resetPLPromoMsg(){
+  const ar = currentLang === 'ar';
+  if(!confirm(ar?'هل تريد استعادة الرسالة الأصلية؟ سيتم فقدان أي تعديلات.':'Restore the default message? Any edits will be lost.')) return;
+  localStorage.removeItem('dta_pl_promo_msg');
+  const el = document.getElementById('pl-promo-msg');
+  if(el) el.value = PL_PROMO_DEFAULT;
+  showToast('✅ '+(ar?'تم الاستعادة':'Restored'));
+}
+function sendPLPromoMsg(){
+  savePLPromoMsg();
+  const msg = getPLPromoMsg();
+  window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
+}
+
 function renderPLPage(){
   const prop = (typeof PROP!=='undefined')?PROP:{name:'',address:''};
   const el = document.getElementById('pl-prop-name');
@@ -12692,6 +12938,8 @@ function renderPLPage(){
   setPLBreakfast(bf);
   const bfInp = document.getElementById('pl-bf-price');
   if(bfInp) bfInp.value = bfPrice||'';
+  const promoEl = document.getElementById('pl-promo-msg');
+  if(promoEl) promoEl.value = getPLPromoMsg();
 }
 
 function renderPLTable(){
@@ -12709,7 +12957,7 @@ function renderPLTable(){
 
   html += `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">
     <thead><tr style="background:linear-gradient(135deg,#1a1a2e,#16213e);">
-      <th style="color:#c9a84c;padding:10px 12px;text-align:right;font-size:11px;">نوع الغرفة</th>
+      <th style="color:#c9a84c;padding:10px 12px;text-align:right;font-size:11px;">${currentLang==='ar'?'نوع الغرفة':'Room Type'}</th>
       <th style="color:${plSeason==='low'?'#f1c40f':'#a0b4c8'};padding:10px 8px;text-align:center;font-size:10px;">🌥️ Low</th>
       <th style="color:${plSeason==='mid'?'#f1c40f':'#a0b4c8'};padding:10px 8px;text-align:center;font-size:10px;">⛅ Mid</th>
       <th style="color:${plSeason==='high'?'#f1c40f':'#a0b4c8'};padding:10px 8px;text-align:center;font-size:10px;">☀️ High</th>
@@ -12719,7 +12967,7 @@ function renderPLTable(){
   PL_ROOM_TYPES.forEach((t,i)=>{
     const row = d[t]||{};
     html += `<tr style="border-bottom:1px solid var(--border);${i%2===0?'background:rgba(255,255,255,0.02)':''}">
-      <td style="padding:9px 12px;font-weight:700;color:var(--text);font-size:12px;">${t}</td>
+      <td style="padding:9px 12px;font-weight:700;color:var(--text);font-size:12px;">${plRoomLabel(t)}</td>
       ${['low','mid','high','peak'].map(s=>{
         const key = s+'_'+curTab;
         const val = row[key]!==undefined ? row[key] : (s==='low'?row[s]||0:0);
@@ -12774,27 +13022,34 @@ function resetPriceListToDefaults(){
   sNotify('🔄','تم إعادة تعيين الأسعار من الإعدادات','info',2000);
 }
 
+function plRoomLabel(t){
+  // نفس مفتاح التخزين الأصلي بيفضل زي ما هو، بس شكل العرض بيبقى ثنائي اللغة
+  if(t==='Suite (غرفتين)') return 'Suite · جناح (غرفتين / 2 Rooms)';
+  if(t==='Quad (رباعي)') return 'Quad · رباعي (4 Guests)';
+  return t;
+}
 function buildPLContent(forWA=false){
   const prop = (typeof PROP!=='undefined')?PROP:{name:'',phone:'',email:''};
   const d = getPLData();
   const curTab = window._plCur||'gbp';
-  const CURRENCIES = {gbp:{sym:'£',label:'GBP £'},egp:{sym:'E£',label:'EGP جنيه'},usd:{sym:'$',label:'USD $'},eur:{sym:'€',label:'EUR €'}};
+  const CURRENCIES = {gbp:{sym:'£',label:'GBP £'},egp:{sym:'E£',label:'EGP · جنيه'},usd:{sym:'$',label:'USD $'},eur:{sym:'€',label:'EUR €'}};
   const sym = CURRENCIES[curTab].sym;
   const curLabel = CURRENCIES[curTab].label;
   const seasonLabel = PL_SEASONS[plSeason]||plSeason;
   const notes = LS('dta_pl_notes','');
-  const today = new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
+  const now = new Date();
+  const today = String(now.getDate()).padStart(2,'0')+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+now.getFullYear();
   const bfMode = LS('dta_pl_breakfast','none');
   const bfPrice = LS('dta_pl_bf_price',0);
-  const bfLabel = bfMode==='included' ? `✅ إفطار مشمول / Breakfast Included${bfPrice?` (${sym}${bfPrice}/فرد)`:''}` :
-                  bfMode==='optional' ? `➕ إفطار اختياري / Breakfast Optional (${sym}${bfPrice}/فرد)` : '';
+  const bfLabel = bfMode==='included' ? `✅ إفطار مشمول / Breakfast Included${bfPrice?` (${sym}${bfPrice}/فرد · per person)`:''}` :
+                  bfMode==='optional' ? `➕ إفطار اختياري / Breakfast Optional (${sym}${bfPrice}/فرد · per person)` : '';
   if(forWA){
-    let msg = `🏨 *${prop.name}*\n💰 *قائمة الأسعار — ${seasonLabel}*\n💱 العملة: ${curLabel}\n📅 ${today}\n\n`;
+    let msg = `🏨 *${prop.name}*\n💰 *قائمة الأسعار / Price List — ${seasonLabel}*\n💱 العملة / Currency: ${curLabel}\n📅 ${today}\n\n`;
     PL_ROOM_TYPES.forEach(t=>{
       const row = d[t]||{};
       const key = plSeason+'_'+curTab;
       const price = row[key]!==undefined ? row[key] : (row[plSeason]||0);
-      if(price>0) msg += `🛏️ *${t}*: ${sym}${price.toLocaleString()}/ليلة\n`;
+      if(price>0) msg += `🛏️ *${plRoomLabel(t)}*: ${sym}${price.toLocaleString()}/ليلة · per night\n`;
     });
     if(bfLabel) msg += `\n🍳 ${bfLabel}`;
     if(notes) msg += `\n📝 ${notes}`;
@@ -25705,6 +25960,675 @@ function opsResolveMaintenance(r){
   showToast("✅ "+(ar?"تم إنهاء الصيانة":"Maintenance resolved")+" — "+r);
 }
 
+// ══════════════════════════════════════════════
+// END OF DAY CLOSE — تسوية آخر اليوم
+// ══════════════════════════════════════════════
+function normPayMethod(m){
+  if(!m) return "other";
+  const s = String(m).toLowerCase();
+  if(s.includes("owner")) return "owner";
+  if(s.includes("cash") || s.includes("كاش")) return "cash";
+  if(s.includes("visa") || s.includes("card") || s.includes("بطاقة")) return "card";
+  if(s.includes("transfer") || s.includes("تحويل") || s.includes("online") || s.includes("أونلاين")) return "transfer";
+  return "other";
+}
+function eodToEGP(amount, cur){
+  if(cur==="USD") return amount*(exRate||50);
+  if(cur==="EUR") return amount*(eurRate||55);
+  return amount;
+}
+function getEODData(dateStr){
+  const td = dateStr;
+  const src = { bookingsCash:0, bookingsCard:0, bookingsTransfer:0,
+                restCash:0, restCard:0, restTransfer:0, restExpenseCash:0,
+                actCash:0, actCard:0,
+                expenseCash:0, expenseCard:0, expenseTransfer:0 };
+
+  // Booking payments made today
+  (bookings||[]).forEach(b=>{
+    (b.payments||[]).forEach(p=>{
+      if(!p.date) return;
+      const pd = String(p.date).slice(0,10);
+      if(pd !== td) return;
+      if(p.method === "Revenue" || p.isDeduction) return; // internal accounting adjustment, not real cash movement
+      const cat = normPayMethod(p.method);
+      const egp = eodToEGP(p.amount||0, b.cur);
+      if(cat==="cash") src.bookingsCash += egp;
+      else if(cat==="card") src.bookingsCard += egp;
+      else if(cat==="transfer") src.bookingsTransfer += egp;
+    });
+  });
+
+  // Restaurant transactions today
+  (restaurantTx||[]).forEach(t=>{
+    if(!t.date || String(t.date).slice(0,10) !== td) return;
+    const cat = normPayMethod(t.method);
+    const egp = t.egp || 0;
+    if(t.type === "income"){
+      if(cat==="cash") src.restCash += egp;
+      else if(cat==="card") src.restCard += egp;
+      else if(cat==="transfer") src.restTransfer += egp;
+    } else if(t.type === "expense"){
+      if(cat==="cash") src.restExpenseCash += egp;
+    }
+  });
+
+  // Daily activities booked & paid today (exclude "On Room" — collected at checkout, not today's cash)
+  (typeof DA_getBookings==="function"?DA_getBookings():[]).forEach(b=>{
+    if(!b.date || b.date !== td || b.status==="cancelled") return;
+    if(b.payment==="On Room") return;
+    const a = (typeof DA_getActivities==="function"?DA_getActivities():[]).find(x=>x.id===b.actId);
+    const amt = a ? (Number(a.price)||0)*(b.persons||1) : 0;
+    const cat = normPayMethod(b.payment);
+    if(cat==="cash") src.actCash += amt;
+    else if(cat==="card") src.actCard += amt;
+  });
+
+  // Expenses today (exclude Owner-paid — doesn't come out of drawer)
+  (expenses||[]).forEach(e=>{
+    if(!e.date || e.date !== td) return;
+    const cat = normPayMethod(e.paid);
+    const egp = e.egp || 0;
+    if(cat==="cash") src.expenseCash += egp;
+    else if(cat==="card") src.expenseCard += egp;
+    else if(cat==="transfer") src.expenseTransfer += egp;
+  });
+
+  const expectedCash = src.bookingsCash + src.restCash + src.actCash - src.expenseCash - src.restExpenseCash;
+  const expectedCard  = src.bookingsCard + src.restCard + src.actCard - src.expenseCard;
+  const expectedTransfer = src.bookingsTransfer + src.restTransfer - src.expenseTransfer;
+
+  return { src, expectedCash, expectedCard, expectedTransfer };
+}
+function getEODCloses(){ try{ return JSON.parse(localStorage.getItem("dta_eod_closes")||"[]"); }catch(e){ return []; } }
+function saveEODCloses(list){ try{ localStorage.setItem("dta_eod_closes", JSON.stringify(list)); }catch(e){} }
+
+function renderEODClose(){
+  const ar = currentLang === "ar";
+  const dateEl = document.getElementById("eod-date");
+  if(dateEl && !dateEl.value) dateEl.value = toDay();
+  const td = dateEl ? dateEl.value : toDay();
+  const d = getEODData(td);
+
+  // Pre-fill actual fields from saved close if exists for this date
+  const closes = getEODCloses();
+  const existing = closes.find(c => c.date === td);
+
+  const expEl = document.getElementById("eod-expected");
+  if(expEl){
+    const cards = [
+      {icon:"💵",val:d.expectedCash,color:"#2ecc71",lblAr:"كاش متوقع",lblEn:"Expected Cash"},
+      {icon:"💳",val:d.expectedCard,color:"#7ab8f5",lblAr:"بطاقة متوقع",lblEn:"Expected Card"},
+      {icon:"🏦",val:d.expectedTransfer,color:"#c39bd3",lblAr:"تحويل متوقع",lblEn:"Expected Transfer"},
+      {icon:"💰",val:d.expectedCash+d.expectedCard+d.expectedTransfer,color:"var(--gold)",lblAr:"إجمالي متوقع",lblEn:"Total Expected"},
+    ];
+    expEl.innerHTML = cards.map(c=>`
+      <div class="card" style="text-align:center;padding:12px;border-color:${c.color}44;">
+        <div style="font-size:17px;font-weight:800;color:${c.color};">${c.icon} £${Math.round(c.val).toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px;">${ar?c.lblAr:c.lblEn}</div>
+      </div>`).join("");
+  }
+
+  const bdEl = document.getElementById("eod-breakdown");
+  if(bdEl){
+    const rows = [
+      {lblAr:"مدفوعات حجوزات (كاش)",lblEn:"Booking Payments (Cash)",val:d.src.bookingsCash,color:"#2ecc71"},
+      {lblAr:"مدفوعات حجوزات (بطاقة)",lblEn:"Booking Payments (Card)",val:d.src.bookingsCard,color:"#7ab8f5"},
+      {lblAr:"مدفوعات حجوزات (تحويل)",lblEn:"Booking Payments (Transfer)",val:d.src.bookingsTransfer,color:"#c39bd3"},
+      {lblAr:"مبيعات مطعم (كاش)",lblEn:"Restaurant Sales (Cash)",val:d.src.restCash,color:"#2ecc71"},
+      {lblAr:"مبيعات مطعم (بطاقة)",lblEn:"Restaurant Sales (Card)",val:d.src.restCard,color:"#7ab8f5"},
+      {lblAr:"مبيعات مطعم (تحويل)",lblEn:"Restaurant Sales (Transfer)",val:d.src.restTransfer,color:"#c39bd3"},
+      {lblAr:"نشاطات مدفوعة (كاش)",lblEn:"Activities Paid (Cash)",val:d.src.actCash,color:"#2ecc71"},
+      {lblAr:"نشاطات مدفوعة (بطاقة)",lblEn:"Activities Paid (Card)",val:d.src.actCard,color:"#7ab8f5"},
+      {lblAr:"مصروفات كاش (خصم)",lblEn:"Cash Expenses (Deducted)",val:-(d.src.expenseCash+d.src.restExpenseCash),color:"#e74c3c"},
+      {lblAr:"مصروفات بطاقة (خصم)",lblEn:"Card Expenses (Deducted)",val:-d.src.expenseCard,color:"#e74c3c"},
+      {lblAr:"مصروفات تحويل (خصم)",lblEn:"Transfer Expenses (Deducted)",val:-d.src.expenseTransfer,color:"#e74c3c"},
+    ].filter(r=>r.val!==0);
+    bdEl.innerHTML = rows.length ? `<div class="card">` + rows.map(r=>`
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:12px;">
+        <span style="color:var(--text);">${ar?r.lblAr:r.lblEn}</span>
+        <span style="font-weight:700;color:${r.color};">£${Math.round(r.val).toLocaleString()}</span>
+      </div>`).join("") + `</div>`
+      : `<div class="empty">📭 ${ar?"لا توجد حركة مالية مسجلة لهذا اليوم":"No financial activity recorded for this day"}</div>`;
+  }
+
+  // Pre-fill actuals + variance
+  if(existing){
+    document.getElementById("eod-actual-cash").value = existing.actualCash ?? "";
+    document.getElementById("eod-actual-card").value = existing.actualCard ?? "";
+    document.getElementById("eod-actual-transfer").value = existing.actualTransfer ?? "";
+    document.getElementById("eod-closedby").value = existing.closedBy || "";
+    document.getElementById("eod-notes").value = existing.notes || "";
+  } else {
+    ["eod-actual-cash","eod-actual-card","eod-actual-transfer","eod-closedby","eod-notes"].forEach(id=>{
+      const el = document.getElementById(id); if(el) el.value = "";
+    });
+  }
+  updateEODVariance();
+  renderEODHistory();
+}
+
+function updateEODVariance(){
+  const ar = currentLang === "ar";
+  const dateEl = document.getElementById("eod-date");
+  const td = dateEl ? dateEl.value : toDay();
+  const d = getEODData(td);
+  const actualCash = parseFloat(document.getElementById("eod-actual-cash").value) || 0;
+  const actualCard = parseFloat(document.getElementById("eod-actual-card").value) || 0;
+  const actualTransfer = parseFloat(document.getElementById("eod-actual-transfer").value) || 0;
+  const varCash = actualCash - d.expectedCash;
+  const varCard = actualCard - d.expectedCard;
+  const varTransfer = actualTransfer - d.expectedTransfer;
+  const totalVar = varCash + varCard + varTransfer;
+  const hasInput = document.getElementById("eod-actual-cash").value || document.getElementById("eod-actual-card").value || document.getElementById("eod-actual-transfer").value;
+  const box = document.getElementById("eod-variance-box");
+  if(!box) return;
+  if(!hasInput){ box.innerHTML = ""; return; }
+  const color = Math.abs(totalVar) < 1 ? "#2ecc71" : (totalVar > 0 ? "#f5c518" : "#e74c3c");
+  const label = Math.abs(totalVar) < 1 ? (ar?"✅ مطابق تماماً":"✅ Perfectly Balanced")
+    : totalVar > 0 ? (ar?"⬆️ زيادة":"⬆️ Over") : (ar?"⬇️ عجز":"⬇️ Short");
+  box.innerHTML = `<div class="card" style="border-color:${color}66;background:${color}14;text-align:center;padding:10px;">
+    <div style="font-size:16px;font-weight:800;color:${color};">${label} £${Math.abs(totalVar).toFixed(2)}</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:4px;">💵 ${varCash>=0?'+':''}£${varCash.toFixed(2)} &nbsp; 💳 ${varCard>=0?'+':''}£${varCard.toFixed(2)} &nbsp; 🏦 ${varTransfer>=0?'+':''}£${varTransfer.toFixed(2)}</div>
+  </div>`;
+}
+
+function saveEODClose(){
+  const ar = currentLang === "ar";
+  const dateEl = document.getElementById("eod-date");
+  const td = dateEl ? dateEl.value : toDay();
+  const d = getEODData(td);
+  const actualCash = parseFloat(document.getElementById("eod-actual-cash").value) || 0;
+  const actualCard = parseFloat(document.getElementById("eod-actual-card").value) || 0;
+  const actualTransfer = parseFloat(document.getElementById("eod-actual-transfer").value) || 0;
+  const closedBy = document.getElementById("eod-closedby").value.trim();
+  const notes = document.getElementById("eod-notes").value.trim();
+  if(!closedBy){ alert(ar?"⚠️ أدخل اسم الموظف":"⚠️ Enter staff name"); return; }
+  const variance = (actualCash+actualCard+actualTransfer) - (d.expectedCash+d.expectedCard+d.expectedTransfer);
+
+  let closes = getEODCloses();
+  closes = closes.filter(c => c.date !== td); // overwrite if re-closing same date
+  closes.push({
+    date: td, expectedCash: d.expectedCash, expectedCard: d.expectedCard, expectedTransfer: d.expectedTransfer,
+    actualCash, actualCard, actualTransfer, variance, closedBy, notes, timestamp: new Date().toISOString()
+  });
+  closes.sort((a,b) => b.date.localeCompare(a.date));
+  saveEODCloses(closes);
+  renderEODHistory();
+  showToast("✅ "+(ar?"تم حفظ التسوية":"Close saved")+" — "+td);
+}
+
+function renderEODHistory(){
+  const ar = currentLang === "ar";
+  const el = document.getElementById("eod-history");
+  if(!el) return;
+  const closes = getEODCloses().slice(0, 14);
+  el.innerHTML = closes.length ? closes.map(c=>{
+    const color = Math.abs(c.variance) < 1 ? "#2ecc71" : (c.variance > 0 ? "#f5c518" : "#e74c3c");
+    return `<div class="card" style="border-color:${color}44;margin-bottom:8px;cursor:pointer;" onclick="document.getElementById('eod-date').value='${c.date}';renderEODClose();">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:700;color:var(--gold);font-size:13px;">📅 ${fmtD(c.date)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">👤 ${c.closedBy||"—"}</div>
+        </div>
+        <div style="text-align:left;">
+          <div style="font-size:13px;font-weight:800;color:${color};">${Math.abs(c.variance)<1?(ar?"✅ مطابق":"✅ Balanced"):(c.variance>0?"⬆️":"⬇️")+" £"+Math.abs(c.variance).toFixed(2)}</div>
+        </div>
+      </div>
+      ${c.notes?`<div style="font-size:10px;color:var(--muted);margin-top:6px;">📝 ${c.notes}</div>`:""}
+    </div>`;
+  }).join("") : `<div class="empty">📭 ${ar?"لا يوجد تسويات سابقة":"No previous closes"}</div>`;
+}
+
+// ══════════════════════════════════════════════
+// SHIFT CHECKLIST — قائمة فتح/قفل الشيفت
+// ══════════════════════════════════════════════
+const SCL_DEFAULT_OPEN = [
+  {ar:"مراجعة حجوزات اليوم (وصول/مغادرة)", en:"Review today's bookings (arrivals/departures)"},
+  {ar:"التأكد من نظافة الاستقبال", en:"Ensure reception area is clean"},
+  {ar:"فحص رصيد الكاش في الدرج", en:"Check cash drawer balance"},
+  {ar:"مراجعة طلبات الضيوف المعلقة", en:"Review pending guest requests"},
+  {ar:"التأكد من تشغيل الإنترنت والأنظمة", en:"Confirm WiFi & systems are working"},
+  {ar:"مراجعة نشاطات اليوم المجدولة", en:"Review today's scheduled activities"},
+];
+const SCL_DEFAULT_CLOSE = [
+  {ar:"تسوية الكاش (End of Day Close)", en:"Reconcile cash drawer (End of Day Close)"},
+  {ar:"تسليم المفاتيح للشيفت التالي", en:"Hand over keys to next shift"},
+  {ar:"تسجيل أي ملاحظات أو مشاكل", en:"Log any notes or issues"},
+  {ar:"التأكد من قفل الأبواب والنوافذ", en:"Ensure doors & windows are locked"},
+  {ar:"مراجعة الحجوزات ليوم الغد", en:"Review tomorrow's bookings"},
+  {ar:"إطفاء الأنوار غير الضرورية", en:"Turn off unnecessary lights"},
+];
+let sclType = "open";
+function getSCLItems(type){
+  try{
+    const saved = JSON.parse(localStorage.getItem("dta_scl_items_"+type)||"null");
+    if(saved && saved.length) return saved;
+  }catch(e){}
+  return type==="open" ? SCL_DEFAULT_OPEN.slice() : SCL_DEFAULT_CLOSE.slice();
+}
+function saveSCLItems(type, items){
+  try{ localStorage.setItem("dta_scl_items_"+type, JSON.stringify(items)); }catch(e){}
+}
+function getSCLLog(){ try{ return JSON.parse(localStorage.getItem("dta_scl_log")||"[]"); }catch(e){ return []; } }
+function saveSCLLog(list){ try{ localStorage.setItem("dta_scl_log", JSON.stringify(list)); }catch(e){} }
+
+function setSCLType(type){
+  sclType = type;
+  document.getElementById("scl-tab-open").classList.toggle("act-scl", type==="open");
+  document.getElementById("scl-tab-close").classList.toggle("act-scl", type==="close");
+  renderSCLItems();
+}
+function renderSCL(){
+  const ar = currentLang === "ar";
+  document.getElementById("scl-staff").value = "";
+  document.getElementById("scl-notes").value = "";
+  setSCLType(sclType||"open");
+  renderSCLHistory();
+}
+function renderSCLItems(){
+  const ar = currentLang === "ar";
+  const items = getSCLItems(sclType);
+  const titleEl = document.getElementById("scl-items-title");
+  if(titleEl) titleEl.textContent = ar
+    ? (sclType==="open"?"عناصر فتح الشيفت":"عناصر قفل الشيفت")
+    : (sclType==="open"?"Opening Shift Items":"Closing Shift Items");
+  const listEl = document.getElementById("scl-items-list");
+  if(!listEl) return;
+  listEl.innerHTML = items.length ? items.map((it,i)=>`
+    <label style="display:flex;align-items:flex-start;gap:10px;padding:9px 4px;border-bottom:1px solid rgba(255,255,255,0.06);cursor:pointer;">
+      <input type="checkbox" class="scl-check" data-idx="${i}" style="margin-top:3px;width:18px;height:18px;flex-shrink:0;">
+      <span style="font-size:13px;color:var(--text);">${ar?it.ar:it.en}${ar&&it.en?` <span style="color:var(--muted);font-size:11px;">· ${it.en}</span>`:(!ar&&it.ar?` <span style="color:var(--muted);font-size:11px;">· ${it.ar}</span>`:'')}</span>
+    </label>`).join("")
+    : `<div class="empty">📭 ${ar?"لا توجد عناصر — أضف من ⚙️ تعديل القائمة":"No items — add via ⚙️ Edit List"}</div>`;
+}
+function submitSCL(){
+  const ar = currentLang === "ar";
+  const staff = document.getElementById("scl-staff").value.trim();
+  if(!staff){ alert(ar?"⚠️ أدخل اسم الموظف":"⚠️ Enter staff name"); return; }
+  const items = getSCLItems(sclType);
+  const checks = Array.from(document.querySelectorAll(".scl-check"));
+  const results = items.map((it,i)=>({ ar:it.ar, en:it.en, done: !!(checks[i]&&checks[i].checked) }));
+  const doneCount = results.filter(r=>r.done).length;
+  if(doneCount < results.length){
+    if(!confirm(ar?`⚠️ لسه فيه ${results.length-doneCount} عنصر مش متعلّم عليه. تأكيد الحفظ برضه؟`:`⚠️ ${results.length-doneCount} item(s) not checked yet. Save anyway?`)) return;
+  }
+  const notes = document.getElementById("scl-notes").value.trim();
+  const log = getSCLLog();
+  log.unshift({
+    id: Date.now(), type: sclType, date: toDay(), time: new Date().toTimeString().slice(0,5),
+    staff, items: results, notes, timestamp: new Date().toISOString()
+  });
+  saveSCLLog(log);
+  document.getElementById("scl-staff").value = "";
+  document.getElementById("scl-notes").value = "";
+  document.querySelectorAll(".scl-check").forEach(c=>c.checked=false);
+  renderSCLHistory();
+  showToast("✅ "+(ar?"تم الحفظ":"Saved"));
+}
+function renderSCLHistory(){
+  const ar = currentLang === "ar";
+  const el = document.getElementById("scl-history");
+  if(!el) return;
+  const log = getSCLLog().slice(0, 15);
+  el.innerHTML = log.length ? log.map(l=>{
+    const total = l.items.length;
+    const done = l.items.filter(i=>i.done).length;
+    const color = done===total ? "#2ecc71" : "#f5c518";
+    const icon = l.type==="open" ? "🌅" : "🌙";
+    return `<div class="card" style="border-color:${color}44;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:700;color:var(--gold);font-size:13px;">${icon} ${l.type==="open"?(ar?"فتح شيفت":"Opening"):(ar?"قفل شيفت":"Closing")} — ${fmtD(l.date)} ${l.time||""}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">👤 ${l.staff}</div>
+        </div>
+        <div style="font-size:12px;font-weight:800;color:${color};">${done}/${total} ✅</div>
+      </div>
+      ${l.notes?`<div style="font-size:10px;color:var(--muted);margin-top:6px;">📝 ${l.notes}</div>`:""}
+    </div>`;
+  }).join("") : `<div class="empty">📭 ${ar?"لا يوجد سجل بعد":"No history yet"}</div>`;
+}
+function openSCLManageItems(){
+  document.getElementById("scl-manage-modal").classList.add("on");
+  renderSCLManageList();
+}
+function renderSCLManageList(){
+  const ar = currentLang === "ar";
+  const items = getSCLItems(sclType);
+  const el = document.getElementById("scl-manage-list");
+  el.innerHTML = items.length ? items.map((it,i)=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,0.06);">
+      <div style="font-size:12px;color:var(--text);flex:1;">
+        <div>${it.ar}</div>
+        <div style="color:var(--muted);font-size:11px;">${it.en}</div>
+      </div>
+      <button onclick="removeSCLItem(${i})" style="background:none;border:none;color:#e74c3c;font-size:16px;cursor:pointer;padding:4px 8px;">🗑️</button>
+    </div>`).join("") : `<div class="empty">📭 ${ar?"لا توجد عناصر":"No items"}</div>`;
+}
+function addSCLItem(){
+  const ar = currentLang === "ar";
+  const arText = document.getElementById("scl-new-ar").value.trim();
+  const enText = document.getElementById("scl-new-en").value.trim();
+  if(!arText && !enText){ alert(ar?"⚠️ أدخل نص العنصر":"⚠️ Enter item text"); return; }
+  const items = getSCLItems(sclType);
+  items.push({ar: arText||enText, en: enText||arText});
+  saveSCLItems(sclType, items);
+  document.getElementById("scl-new-ar").value = "";
+  document.getElementById("scl-new-en").value = "";
+  renderSCLManageList();
+  renderSCLItems();
+}
+function removeSCLItem(idx){
+  const items = getSCLItems(sclType);
+  items.splice(idx,1);
+  saveSCLItems(sclType, items);
+  renderSCLManageList();
+  renderSCLItems();
+}
+
+// ══════════════════════════════════════════════
+// AMANAT — الأمانات (خزنة الاستقبال)
+// ══════════════════════════════════════════════
+function getAmanatList(){
+  try{
+    let list = JSON.parse(localStorage.getItem("dta_amanat")||"[]");
+    let migrated = false;
+    list = list.map(x=>{
+      if(!x.items){
+        migrated = true;
+        const legacyDesc = (x.desc||"").trim();
+        x.items = legacyDesc ? [{
+          id: (x.id||Date.now())+1,
+          desc: legacyDesc,
+          status: x.status==="returned" ? "returned" : "kept",
+          dateOut: x.dateOut||null, timeOut: x.timeOut||null, returnedBy: x.returnedBy||null
+        }] : [];
+      }
+      return x;
+    });
+    if(migrated) saveAmanatList(list);
+    return list;
+  }catch(e){ return []; }
+}
+function saveAmanatList(list){ try{ localStorage.setItem("dta_amanat", JSON.stringify(list)); }catch(e){} }
+function getAmanatWithdrawn(item){ return (item.withdrawals||[]).reduce((s,w)=>s+(w.amount||0),0); }
+function getAmanatRemaining(item){ return Math.max(0, (item.amount||0) - getAmanatWithdrawn(item)); }
+// دفعة (إيداع) بتتقفل لما كل عناصرها اتسلمت وكل الكاش اتسحب
+function isAmanatDepositClosed(dep){
+  const items = dep.items||[];
+  const allItemsReturned = items.every(it=>it.status==="returned");
+  const cashDone = getAmanatRemaining(dep) <= 0.001;
+  return allItemsReturned && cashDone;
+}
+let amanatReturnId = null;
+let amanatReturnItemId = null; // null = تسليم كل الإيداع، وإلا رقم عنصر واحد بس
+let amanatWithdrawId = null;
+
+function addAmanatItemRow(value){
+  const wrap = document.getElementById("am-items-list");
+  const row = document.createElement("div");
+  row.className = "am-item-row";
+  row.style.cssText = "display:flex;gap:6px;margin-bottom:6px;";
+  row.innerHTML = `
+    <input class="am-item-desc" style="flex:1;" placeholder="مثال: شنطة / جواز سفر · e.g. Bag / Passport" value="${value?value.replace(/"/g,'&quot;'):""}">
+    <button type="button" onclick="this.parentElement.remove()" style="background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.35);border-radius:8px;width:34px;cursor:pointer;">✕</button>
+  `;
+  wrap.appendChild(row);
+}
+function openAmanatAdd(){
+  ["am-guest","am-room","am-amount","am-receivedby","am-notes"].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value = "";
+  });
+  document.getElementById("am-currency").value = "EGP";
+  document.getElementById("am-items-list").innerHTML = "";
+  addAmanatItemRow();
+  document.getElementById("amanat-modal").classList.add("on");
+}
+function saveAmanat(){
+  const ar = currentLang === "ar";
+  const guest = document.getElementById("am-guest").value.trim();
+  const room = document.getElementById("am-room").value.trim();
+  const itemDescs = Array.from(document.querySelectorAll("#am-items-list .am-item-desc")).map(el=>el.value.trim()).filter(Boolean);
+  const amount = parseFloat(document.getElementById("am-amount").value) || 0;
+  const currency = document.getElementById("am-currency").value;
+  const receivedBy = document.getElementById("am-receivedby").value.trim();
+  const notes = document.getElementById("am-notes").value.trim();
+  if(!guest){ alert(ar?"⚠️ أدخل اسم الضيف":"⚠️ Enter guest name"); return; }
+  if(itemDescs.length===0 && amount<=0){ alert(ar?"⚠️ أدخل عنصر واحد على الأقل أو مبلغ نقدي":"⚠️ Enter at least one item or a cash amount"); return; }
+  if(!receivedBy){ alert(ar?"⚠️ أدخل اسم الموظف المستلم":"⚠️ Enter staff name who received it"); return; }
+  const baseId = Date.now();
+  const items = itemDescs.map((desc,i)=>({
+    id: baseId+i+1, desc, status: "kept", dateOut: null, timeOut: null, returnedBy: null
+  }));
+  const list = getAmanatList();
+  list.unshift({
+    id: baseId, guest, room, amount, currency, receivedBy, notes,
+    dateIn: toDay(), timeIn: new Date().toTimeString().slice(0,5),
+    items, withdrawals: []
+  });
+  saveAmanatList(list);
+  closeM("amanat-modal");
+  renderAmanat();
+  showToast("✅ "+(ar?"تم تسجيل الأمانة":"Item recorded"));
+}
+
+// ── Partial Withdrawal ──
+function openAmanatWithdraw(id){
+  const ar = currentLang === "ar";
+  const list = getAmanatList();
+  const item = list.find(x=>x.id===id);
+  if(!item) return;
+  amanatWithdrawId = id;
+  const sym = item.currency==="USD"?"$":item.currency==="EUR"?"€":item.currency==="GBP"?"£":"E£";
+  const remaining = getAmanatRemaining(item);
+  document.getElementById("amanat-withdraw-info").innerHTML = `
+    <div style="font-weight:700;color:var(--gold);">👤 ${item.guest}${item.room?" — "+(ar?"غرفة":"Room")+" "+item.room:""}</div>
+    <div style="margin-top:4px;">📦 ${item.desc}</div>
+    <div style="margin-top:6px;font-size:13px;">
+      <span style="color:var(--muted);">${ar?"الأصل":"Original"}: ${sym}${item.amount.toFixed(2)}</span>
+      &nbsp;·&nbsp;
+      <span style="color:#2ecc71;font-weight:700;">${ar?"المتبقي":"Remaining"}: ${sym}${remaining.toFixed(2)}</span>
+    </div>
+  `;
+  document.getElementById("am-withdraw-amount").value = "";
+  document.getElementById("am-withdraw-amount").max = remaining;
+  document.getElementById("am-withdraw-by").value = "";
+  document.getElementById("am-withdraw-notes").value = "";
+  document.getElementById("amanat-withdraw-modal").classList.add("on");
+}
+function confirmAmanatWithdraw(){
+  const ar = currentLang === "ar";
+  const amount = parseFloat(document.getElementById("am-withdraw-amount").value) || 0;
+  const withdrawnBy = document.getElementById("am-withdraw-by").value.trim();
+  const notes = document.getElementById("am-withdraw-notes").value.trim();
+  if(amount<=0){ alert(ar?"⚠️ أدخل مبلغ صحيح":"⚠️ Enter a valid amount"); return; }
+  if(!withdrawnBy){ alert(ar?"⚠️ أدخل اسم الموظف":"⚠️ Enter staff name"); return; }
+  const list = getAmanatList();
+  const item = list.find(x=>x.id===amanatWithdrawId);
+  if(!item) return;
+  const remaining = getAmanatRemaining(item);
+  if(amount > remaining + 0.001){
+    alert(ar?`⚠️ المبلغ أكبر من المتبقي (${remaining.toFixed(2)})`:`⚠️ Amount exceeds remaining balance (${remaining.toFixed(2)})`);
+    return;
+  }
+  if(!item.withdrawals) item.withdrawals = [];
+  item.withdrawals.push({
+    amount, withdrawnBy, notes, date: toDay(), time: new Date().toTimeString().slice(0,5)
+  });
+  // لو خلص المبلغ بالكامل، اقفل الأمانة تلقائياً
+  if(getAmanatRemaining(item) <= 0.001){
+    item.status = "returned";
+    item.dateOut = toDay();
+    item.timeOut = new Date().toTimeString().slice(0,5);
+    item.returnedBy = withdrawnBy;
+  }
+  saveAmanatList(list);
+  closeM("amanat-withdraw-modal");
+  renderAmanat();
+  showToast("✅ "+(ar?"تم السحب":"Withdrawn")+" — "+amount.toFixed(2));
+}
+
+// ── Full Return (كل عناصر الإيداع + الكاش المتبقي) ──
+function openAmanatReturn(id){
+  const ar = currentLang === "ar";
+  const list = getAmanatList();
+  const dep = list.find(x=>x.id===id);
+  if(!dep) return;
+  amanatReturnId = id;
+  amanatReturnItemId = null;
+  const sym = dep.currency==="USD"?"$":dep.currency==="EUR"?"€":dep.currency==="GBP"?"£":"E£";
+  const remaining = getAmanatRemaining(dep);
+  const kept = (dep.items||[]).filter(it=>it.status!=="returned");
+  document.getElementById("amanat-return-info").innerHTML = `
+    <div style="font-weight:700;color:var(--gold);">👤 ${dep.guest}${dep.room?" — "+(ar?"غرفة":"Room")+" "+dep.room:""}</div>
+    ${kept.length?`<div style="margin-top:4px;">📦 ${kept.map(it=>it.desc).join(" · ")}</div>`:""}
+    ${dep.amount>0?`<div style="margin-top:4px;color:#2ecc71;">💰 ${ar?"المتبقي المُسلَّم":"Remaining to return"}: ${sym}${remaining.toFixed(2)}</div>`:""}
+    <div style="font-size:11px;color:var(--muted);margin-top:6px;">📅 ${ar?"استُلمت":"Received"}: ${fmtD(dep.dateIn)} ${dep.timeIn||""} — 👤 ${dep.receivedBy}</div>
+  `;
+  document.getElementById("am-returnedby").value = "";
+  document.getElementById("amanat-return-modal").classList.add("on");
+}
+// ── تسليم عنصر واحد بس ──
+function openAmanatItemReturn(depId, itemId){
+  const ar = currentLang === "ar";
+  const list = getAmanatList();
+  const dep = list.find(x=>x.id===depId);
+  if(!dep) return;
+  const it = (dep.items||[]).find(i=>i.id===itemId);
+  if(!it) return;
+  amanatReturnId = depId;
+  amanatReturnItemId = itemId;
+  document.getElementById("amanat-return-info").innerHTML = `
+    <div style="font-weight:700;color:var(--gold);">👤 ${dep.guest}${dep.room?" — "+(ar?"غرفة":"Room")+" "+dep.room:""}</div>
+    <div style="margin-top:4px;">📦 ${it.desc}</div>
+  `;
+  document.getElementById("am-returnedby").value = "";
+  document.getElementById("amanat-return-modal").classList.add("on");
+}
+function confirmAmanatReturn(){
+  const ar = currentLang === "ar";
+  const returnedBy = document.getElementById("am-returnedby").value.trim();
+  if(!returnedBy){ alert(ar?"⚠️ أدخل اسم الموظف المُسلِّم":"⚠️ Enter staff name who returned it"); return; }
+  const list = getAmanatList();
+  const dep = list.find(x=>x.id===amanatReturnId);
+  if(!dep) return;
+  const date = toDay(), time = new Date().toTimeString().slice(0,5);
+  if(amanatReturnItemId){
+    // تسليم عنصر واحد بس
+    const it = (dep.items||[]).find(i=>i.id===amanatReturnItemId);
+    if(it){ it.status = "returned"; it.dateOut = date; it.timeOut = time; it.returnedBy = returnedBy; }
+  } else {
+    // تسليم كل العناصر + تسوية أي كاش متبقي
+    (dep.items||[]).forEach(it=>{
+      if(it.status!=="returned"){ it.status="returned"; it.dateOut=date; it.timeOut=time; it.returnedBy=returnedBy; }
+    });
+    const remaining = getAmanatRemaining(dep);
+    if(remaining > 0.001){
+      if(!dep.withdrawals) dep.withdrawals = [];
+      dep.withdrawals.push({
+        amount: remaining, withdrawnBy: returnedBy, notes: (ar?"تسليم كامل المتبقي":"Final full return"),
+        date, time
+      });
+    }
+  }
+  amanatReturnItemId = null;
+  saveAmanatList(list);
+  closeM("amanat-return-modal");
+  renderAmanat();
+  showToast("✅ "+(ar?"تم التسليم":"Returned"));
+}
+function renderAmanat(){
+  const ar = currentLang === "ar";
+  const list = getAmanatList();
+  const active = list.filter(x=>!isAmanatDepositClosed(x));
+  const returned = list.filter(x=>isAmanatDepositClosed(x));
+
+  const sumEl = document.getElementById("amanat-summary");
+  if(sumEl){
+    const cashTotal = active.reduce((s,x)=>s + (x.currency==="EGP"?getAmanatRemaining(x):0), 0);
+    sumEl.innerHTML = `
+      <div class="card" style="text-align:center;padding:10px;border-color:rgba(201,168,76,0.4);">
+        <div style="font-size:18px;font-weight:800;color:var(--gold);">🔒 ${active.length}</div>
+        <div style="font-size:9px;color:var(--muted);">${ar?"في الخزنة":"In Safe"}</div>
+      </div>
+      <div class="card" style="text-align:center;padding:10px;border-color:rgba(46,204,113,0.3);">
+        <div style="font-size:18px;font-weight:800;color:#2ecc71;">✅ ${returned.length}</div>
+        <div style="font-size:9px;color:var(--muted);">${ar?"تم التسليم":"Returned"}</div>
+      </div>
+      <div class="card" style="text-align:center;padding:10px;border-color:rgba(52,152,219,0.3);">
+        <div style="font-size:15px;font-weight:800;color:#7ab8f5;">£${Math.round(cashTotal).toLocaleString()}</div>
+        <div style="font-size:9px;color:var(--muted);">${ar?"كاش مصري متبقي":"EGP Cash Remaining"}</div>
+      </div>`;
+  }
+
+  const actEl = document.getElementById("amanat-active");
+  if(actEl){
+    actEl.innerHTML = active.length ? active.map(x=>{
+      const sym = x.currency==="USD"?"$":x.currency==="EUR"?"€":x.currency==="GBP"?"£":"E£";
+      const withdrawn = getAmanatWithdrawn(x);
+      const remaining = getAmanatRemaining(x);
+      const wLog = (x.withdrawals||[]).map(w=>`
+        <div style="font-size:10px;color:var(--muted);padding:3px 0;border-top:1px dashed rgba(255,255,255,0.08);">
+          🔽 ${sym}${w.amount.toFixed(2)} — ${fmtD(w.date)} ${w.time||""} · 👤 ${w.withdrawnBy}${w.notes?` · ${w.notes}`:""}
+        </div>`).join("");
+      const itemsList = (x.items||[]).map(it=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 0;border-top:1px dashed rgba(255,255,255,0.08);">
+          <div style="font-size:12px;${it.status==='returned'?'color:var(--muted);text-decoration:line-through;':'color:var(--text);'}">📦 ${it.desc}</div>
+          ${it.status==='kept'
+            ? `<button class="btn bsm" style="padding:3px 8px;font-size:10px;flex-shrink:0;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.35);" onclick="openAmanatItemReturn(${x.id},${it.id})">✅ ${ar?"تسليم":"Deliver"}</button>`
+            : `<span style="font-size:10px;color:#2ecc71;flex-shrink:0;">✅ ${ar?"اتسلمت":"Delivered"}</span>`}
+        </div>`).join("");
+      return `<div class="card" style="border-color:rgba(201,168,76,0.35);">
+        <div style="font-weight:800;color:var(--gold);font-size:14px;">👤 ${x.guest}${x.room?` — ${ar?"غرفة":"Room"} ${x.room}`:""}</div>
+        ${itemsList?`<div style="margin-top:4px;">${itemsList}</div>`:""}
+        ${x.amount>0?`<div style="font-size:13px;font-weight:700;margin-top:6px;">
+            <span style="color:var(--muted);">${ar?"الأصل":"Original"}: ${sym}${x.amount.toFixed(2)}</span>
+            ${withdrawn>0?` · <span style="color:#e67e22;">${ar?"مسحوب":"Withdrawn"}: ${sym}${withdrawn.toFixed(2)}</span>`:""}
+          </div>
+          <div style="font-size:15px;font-weight:800;color:#2ecc71;margin-top:2px;">💰 ${ar?"المتبقي":"Remaining"}: ${sym}${remaining.toFixed(2)}</div>`:""}
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">📅 ${fmtD(x.dateIn)} ${x.timeIn||""} · 👤 ${x.receivedBy}</div>
+        ${x.notes?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">📝 ${x.notes}</div>`:""}
+        ${wLog?`<div style="margin-top:6px;">${wLog}</div>`:""}
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          ${x.amount>0?`<button class="btn bsm" style="flex:1;background:rgba(230,126,34,0.15);color:#e67e22;border:1px solid rgba(230,126,34,0.35);" onclick="openAmanatWithdraw(${x.id})">🔽 ${ar?"سحب جزئي":"Partial"}</button>`:""}
+          <button class="btn bsm" style="flex:1;background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.35);" onclick="openAmanatReturn(${x.id})">✅ ${ar?"تسليم الكل":"Return All"}</button>
+        </div>
+      </div>`;
+    }).join("") : `<div class="empty" style="grid-column:1/-1;">📭 ${ar?"لا توجد أمانات في الخزنة":"No items in the safe"}</div>`;
+  }
+
+  const histEl = document.getElementById("amanat-history");
+  if(histEl){
+    histEl.innerHTML = returned.length ? returned.slice(0,30).map(x=>{
+      const sym = x.currency==="USD"?"$":x.currency==="EUR"?"€":x.currency==="GBP"?"£":"E£";
+      const items = x.items||[];
+      const lastDateOut = items.reduce((max,it)=> (it.dateOut && (!max || it.dateOut>max)) ? it.dateOut : max, null);
+      const itemsLog = items.map(it=>`
+        <div style="font-size:10px;color:var(--muted);padding:2px 0;">
+          📦 ${it.desc} — ${fmtD(it.dateOut)} ${it.timeOut||""} · 👤 ${it.returnedBy||""}
+        </div>`).join("");
+      const wLog = (x.withdrawals||[]).map(w=>`
+        <div style="font-size:10px;color:var(--muted);padding:2px 0;">
+          🔽 ${sym}${w.amount.toFixed(2)} — ${fmtD(w.date)} ${w.time||""} · 👤 ${w.withdrawnBy}${w.notes?` · ${w.notes}`:""}
+        </div>`).join("");
+      return `<div class="card" style="border-color:rgba(46,204,113,0.25);margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-weight:700;color:var(--text);font-size:13px;">👤 ${x.guest}${x.room?` — ${ar?"غرفة":"Room"} ${x.room}`:""}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">📦 ${items.map(it=>it.desc).join(" · ")}${x.amount>0?` · ${sym}${x.amount.toFixed(2)}`:""}</div>
+          </div>
+          <div style="text-align:left;font-size:10px;color:var(--muted);">
+            <div>📥 ${fmtD(x.dateIn)}</div>
+            <div>📤 ${fmtD(lastDateOut)}</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;">👤 ${ar?"استُلمت من":"Received by"}: ${x.receivedBy}</div>
+        ${itemsLog?`<div style="margin-top:6px;border-top:1px dashed rgba(255,255,255,0.08);padding-top:4px;">${itemsLog}</div>`:""}
+        ${wLog?`<div style="margin-top:6px;border-top:1px dashed rgba(255,255,255,0.08);padding-top:4px;">${wLog}</div>`:""}
+      </div>`;
+    }).join("") : `<div class="empty">📭 ${ar?"لا يوجد سجل تسليم بعد":"No return history yet"}</div>`;
+  }
+}
 
 function hkOpenRoom(room) {
   hkEditRoom = String(room);
