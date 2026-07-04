@@ -2856,7 +2856,11 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
     <div class="fld"><label>👤 <span class="t" data-ar="استلمها" data-en="Received By">استلمها (الموظف) · Received By</span></label><input id="am-receivedby" placeholder="اسم الموظف · Staff name"></div>
     <div class="fld s2"><label>📝 <span class="t" data-ar="ملاحظات" data-en="Notes">ملاحظات · Notes</span></label><textarea id="am-notes" rows="2"></textarea></div>
-    <button class="btn bg" style="width:100%;margin-top:8px;" onclick="saveAmanat()">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ · Save</span></button>
+    <div class="fld s2"><label>📱 <span class="t" data-ar="رقم واتساب الضيف (اختياري)" data-en="Guest WhatsApp (optional)">رقم واتساب الضيف (اختياري) · Guest WhatsApp</span></label><input id="am-add-whatsapp" placeholder="مثال: 201012345678" oninput="toggleAmanatAddWhatsappBtn()"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button class="btn bg" style="flex:1;padding:10px;font-weight:700;border-radius:8px;" onclick="saveAmanat()">💾 <span class="t" data-ar="حفظ فقط" data-en="Save Only">حفظ فقط</span></button>
+      <button id="amanat-add-whatsapp-btn" style="flex:1;padding:10px;font-weight:700;border-radius:8px;background:#2ecc71;color:#fff;border:1px solid #27ae60;cursor:pointer;font-size:13px;display:none;" onclick="saveAmanat(true)">💾📱 <span class="t" data-ar="حفظ + إرسال" data-en="Save & Send">حفظ + إرسال</span></button>
+    </div>
   </div>
 </div>
 
@@ -2869,7 +2873,11 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
     <div id="amanat-return-info" style="font-size:13px;color:var(--text);margin-bottom:14px;"></div>
     <div class="fld"><label>👤 <span class="t" data-ar="سلّمها (الموظف)" data-en="Returned By">سلّمها (الموظف) · Returned By</span></label><input id="am-returnedby" placeholder="اسم الموظف · Staff name"></div>
-    <button class="btn bg" style="width:100%;margin-top:8px;" onclick="confirmAmanatReturn()">✅ <span class="t" data-ar="تأكيد التسليم" data-en="Confirm Return">تأكيد التسليم · Confirm</span></button>
+    <div class="fld"><label>📱 <span class="t" data-ar="رقم الواتساب (اختياري)" data-en="WhatsApp (optional)">رقم الواتساب · WhatsApp</span></label><input id="am-whatsapp" placeholder="مثال: 201012345678" oninput="toggleAmanatWhatsappBtn()"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button class="btn bg" style="flex:1;padding:10px;font-weight:700;border-radius:8px;" onclick="confirmAmanatReturn()">✅ <span class="t" data-ar="تسليم فقط" data-en="Deliver Only">تسليم فقط</span></button>
+      <button id="amanat-whatsapp-btn" style="flex:1;padding:10px;font-weight:700;border-radius:8px;background:#2ecc71;color:#fff;border:1px solid #27ae60;cursor:pointer;font-size:13px;display:none;" onclick="confirmAndSendAmanatWhatsapp()">✅📱 <span class="t" data-ar="تسليم + إرسال" data-en="Deliver & Send">تسليم + إرسال</span></button>
+    </div>
   </div>
 </div>
 
@@ -2884,7 +2892,11 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="fld"><label>💰 <span class="t" data-ar="المبلغ المسحوب" data-en="Withdrawal Amount">المبلغ المسحوب · Amount</span></label><input id="am-withdraw-amount" type="number" step="0.01" placeholder="0.00"></div>
     <div class="fld"><label>👤 <span class="t" data-ar="سلّمها (الموظف)" data-en="Given By">سلّمها (الموظف) · Given By</span></label><input id="am-withdraw-by" placeholder="اسم الموظف · Staff name"></div>
     <div class="fld s2"><label>📝 <span class="t" data-ar="ملاحظات" data-en="Notes">ملاحظات · Notes</span></label><textarea id="am-withdraw-notes" rows="2"></textarea></div>
-    <button class="btn bg" style="width:100%;margin-top:8px;" onclick="confirmAmanatWithdraw()">✅ <span class="t" data-ar="تأكيد السحب" data-en="Confirm Withdrawal">تأكيد السحب · Confirm</span></button>
+    <div class="fld s2"><label>📱 <span class="t" data-ar="رقم واتساب الضيف (اختياري)" data-en="Guest WhatsApp (optional)">رقم واتساب الضيف (اختياري) · Guest WhatsApp</span></label><input id="am-withdraw-whatsapp" placeholder="مثال: 201012345678" oninput="toggleAmanatWithdrawWhatsappBtn()"></div>
+    <div style="display:flex;gap:6px;margin-top:8px;">
+      <button class="btn bg" style="flex:1;padding:10px;font-weight:700;border-radius:8px;" onclick="confirmAmanatWithdraw()">✅ <span class="t" data-ar="تأكيد فقط" data-en="Confirm Only">تأكيد فقط</span></button>
+      <button id="amanat-withdraw-whatsapp-btn" style="flex:1;padding:10px;font-weight:700;border-radius:8px;background:#2ecc71;color:#fff;border:1px solid #27ae60;cursor:pointer;font-size:13px;display:none;" onclick="confirmAmanatWithdraw(true)">✅📱 <span class="t" data-ar="تأكيد + إرسال" data-en="Confirm & Send">تأكيد + إرسال</span></button>
+    </div>
   </div>
 </div>
 
@@ -26376,15 +26388,45 @@ function addAmanatItemRow(value){
   wrap.appendChild(row);
 }
 function openAmanatAdd(){
-  ["am-guest","am-room","am-amount","am-receivedby","am-notes"].forEach(id=>{
+  ["am-guest","am-room","am-amount","am-receivedby","am-notes","am-add-whatsapp"].forEach(id=>{
     const el = document.getElementById(id); if(el) el.value = "";
   });
   document.getElementById("am-currency").value = "EGP";
   document.getElementById("am-items-list").innerHTML = "";
   addAmanatItemRow();
+  const awBtn = document.getElementById("amanat-add-whatsapp-btn");
+  if(awBtn) awBtn.style.display = "none";
   document.getElementById("amanat-modal").classList.add("on");
 }
-function saveAmanat(){
+function toggleAmanatAddWhatsappBtn(){
+  const val = document.getElementById("am-add-whatsapp").value.trim();
+  document.getElementById("amanat-add-whatsapp-btn").style.display = val ? "block" : "none";
+}
+// ── إنشاء رسالة إثبات استلام الأمانات من الضيف (عند الإيداع) ──
+function generateAmanatDepositText(dep){
+  const sym = dep.currency==="USD"?"$":dep.currency==="EUR"?"€":dep.currency==="GBP"?"£":"E£";
+  const today = new Date();
+  const dateFmt = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()}`;
+  const timeFmt = today.toTimeString().slice(0,5);
+
+  let text = `🔐 *إقرار استلام أمانات*\n🔐 *Valuables Deposit Confirmation*\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n👤 *الضيف:* ${dep.guest}${dep.room ? ` — غرفة ${dep.room}` : ""}\n👤 *Guest:* ${dep.guest}${dep.room ? ` — Room ${dep.room}` : ""}\n\n📅 *التاريخ:* ${dateFmt} — *الوقت:* ${timeFmt}\n📅 *Date:* ${dateFmt} — *Time:* ${timeFmt}\n\n━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+  if((dep.items||[]).length > 0){
+    text += `\n*📦 العناصر المُستلَمة للحفظ في الخزنة:*\n*📦 Items Received for Safekeeping:*\n`;
+    (dep.items||[]).forEach(it=>{
+      text += `🔒 ${it.desc}\n`;
+    });
+  }
+
+  if(dep.amount > 0){
+    text += `\n💰 *الرصيد المحفوظ في الخزنة:* ${sym}${dep.amount.toFixed(2)}\n💰 *Balance Kept in Safe:* ${sym}${dep.amount.toFixed(2)}\n_(يمكن سحبه كلياً أو جزئياً بعد الطلب)_\n_(Can be withdrawn fully or partially upon request)_`;
+  }
+
+  text += `\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n👤 *استلمها:* ${dep.receivedBy}\n👤 *Received by:* ${dep.receivedBy}\n\n📌 هذه الرسالة إثبات أمانة بين الضيف والمكان. العناصر تُسلم عند المغادرة، والفلوس تُسحب بطلب الضيف.\n📌 This message serves as proof of trust between the guest and the property. Items are delivered at checkout; cash is withdrawn upon guest request.\n\n🏨 Dahab Trendy Accommodation`;
+
+  return text;
+}
+function saveAmanat(sendWhatsapp){
   const ar = currentLang === "ar";
   const guest = document.getElementById("am-guest").value.trim();
   const room = document.getElementById("am-room").value.trim();
@@ -26393,23 +26435,32 @@ function saveAmanat(){
   const currency = document.getElementById("am-currency").value;
   const receivedBy = document.getElementById("am-receivedby").value.trim();
   const notes = document.getElementById("am-notes").value.trim();
+  const whatsapp = document.getElementById("am-add-whatsapp").value.trim();
   if(!guest){ alert(ar?"⚠️ أدخل اسم الضيف":"⚠️ Enter guest name"); return; }
   if(itemDescs.length===0 && amount<=0){ alert(ar?"⚠️ أدخل عنصر واحد على الأقل أو مبلغ نقدي":"⚠️ Enter at least one item or a cash amount"); return; }
   if(!receivedBy){ alert(ar?"⚠️ أدخل اسم الموظف المستلم":"⚠️ Enter staff name who received it"); return; }
+  if(sendWhatsapp && !whatsapp){ alert(ar?"⚠️ أدخل رقم الواتساب":"⚠️ Enter WhatsApp number"); return; }
   const baseId = Date.now();
   const items = itemDescs.map((desc,i)=>({
     id: baseId+i+1, desc, status: "kept", dateOut: null, timeOut: null, returnedBy: null
   }));
-  const list = getAmanatList();
-  list.unshift({
-    id: baseId, guest, room, amount, currency, receivedBy, notes,
+  const dep = {
+    id: baseId, guest, room, amount, currency, receivedBy, notes, whatsapp,
     dateIn: toDay(), timeIn: new Date().toTimeString().slice(0,5),
     items, withdrawals: []
-  });
+  };
+  const list = getAmanatList();
+  list.unshift(dep);
   saveAmanatList(list);
   closeM("amanat-modal");
   renderAmanat();
   showToast("✅ "+(ar?"تم تسجيل الأمانة":"Item recorded"));
+  if(sendWhatsapp && whatsapp){
+    const text = generateAmanatDepositText(dep);
+    const encoded = encodeURIComponent(text);
+    const url = `https://wa.me/${whatsapp}?text=${encoded}`;
+    setTimeout(()=>{ window.open(url, '_blank'); }, 500);
+  }
 }
 
 // ── Partial Withdrawal ──
@@ -26434,15 +26485,50 @@ function openAmanatWithdraw(id){
   document.getElementById("am-withdraw-amount").max = remaining;
   document.getElementById("am-withdraw-by").value = "";
   document.getElementById("am-withdraw-notes").value = "";
+  const wwsInput = document.getElementById("am-withdraw-whatsapp");
+  const wwsBtn = document.getElementById("amanat-withdraw-whatsapp-btn");
+  if(wwsInput) wwsInput.value = item.whatsapp || "";
+  if(wwsBtn) wwsBtn.style.display = item.whatsapp ? "block" : "none";
   document.getElementById("amanat-withdraw-modal").classList.add("on");
 }
-function confirmAmanatWithdraw(){
+function toggleAmanatWithdrawWhatsappBtn(){
+  const val = document.getElementById("am-withdraw-whatsapp").value.trim();
+  document.getElementById("amanat-withdraw-whatsapp-btn").style.display = val ? "block" : "none";
+}
+// ── إنشاء رسالة إثبات سحب مبلغ من الأمانة ──
+function generateAmanatWithdrawText(item, amount, withdrawnBy){
+  const sym = item.currency==="USD"?"$":item.currency==="EUR"?"€":item.currency==="GBP"?"£":"E£";
+  const today = new Date();
+  const dateFmt = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()}`;
+  const timeFmt = today.toTimeString().slice(0,5);
+  const remaining = getAmanatRemaining(item);
+  const stillKept = (item.items||[]).filter(it=>it.status!=="returned");
+
+  let text = `🔐 *إقرار سحب من الأمانة*\n🔐 *Valuables Withdrawal Confirmation*\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n👤 *الضيف:* ${item.guest}${item.room ? ` — غرفة ${item.room}` : ""}\n👤 *Guest:* ${item.guest}${item.room ? ` — Room ${item.room}` : ""}\n\n📅 *التاريخ:* ${dateFmt} — *الوقت:* ${timeFmt}\n📅 *Date:* ${dateFmt} — *Time:* ${timeFmt}\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n💰 *المبلغ المسحوب:* ${sym}${amount.toFixed(2)}\n💰 *Amount Withdrawn:* ${sym}${amount.toFixed(2)}\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n*🔒 المتبقي في الخزنة:*\n*🔒 Still Remaining in Safe:*\n`;
+
+  stillKept.forEach(it=>{
+    text += `📦 ${it.desc}\n`;
+  });
+  if(remaining > 0.001){
+    text += `💰 ${sym}${remaining.toFixed(2)}\n`;
+  }
+  if(stillKept.length===0 && remaining<=0.001){
+    text += `✅ لا شيء متبقي — تم تسليم كل شيء\n✅ Nothing remaining — everything delivered\n`;
+  }
+
+  text += `\n━━━━━━━━━━━━━━━━━━━━━━\n\n👤 *سلّمها:* ${withdrawnBy}\n👤 *Given by:* ${withdrawnBy}\n\n📌 هذه الرسالة إثبات سحب بين الضيف والمكان.\n📌 This message serves as proof of withdrawal between the guest and the property.\n\n🏨 Dahab Trendy Accommodation`;
+
+  return text;
+}
+function confirmAmanatWithdraw(sendWhatsapp){
   const ar = currentLang === "ar";
   const amount = parseFloat(document.getElementById("am-withdraw-amount").value) || 0;
   const withdrawnBy = document.getElementById("am-withdraw-by").value.trim();
   const notes = document.getElementById("am-withdraw-notes").value.trim();
+  const whatsapp = document.getElementById("am-withdraw-whatsapp").value.trim();
   if(amount<=0){ alert(ar?"⚠️ أدخل مبلغ صحيح":"⚠️ Enter a valid amount"); return; }
   if(!withdrawnBy){ alert(ar?"⚠️ أدخل اسم الموظف":"⚠️ Enter staff name"); return; }
+  if(sendWhatsapp && !whatsapp){ alert(ar?"⚠️ أدخل رقم الواتساب":"⚠️ Enter WhatsApp number"); return; }
   const list = getAmanatList();
   const item = list.find(x=>x.id===amanatWithdrawId);
   if(!item) return;
@@ -26466,6 +26552,12 @@ function confirmAmanatWithdraw(){
   closeM("amanat-withdraw-modal");
   renderAmanat();
   showToast("✅ "+(ar?"تم السحب":"Withdrawn")+" — "+amount.toFixed(2));
+  if(sendWhatsapp && whatsapp){
+    const text = generateAmanatWithdrawText(item, amount, withdrawnBy);
+    const encoded = encodeURIComponent(text);
+    const url = `https://wa.me/${whatsapp}?text=${encoded}`;
+    setTimeout(()=>{ window.open(url, '_blank'); }, 500);
+  }
 }
 
 // ── Full Return (كل عناصر الإيداع + الكاش المتبقي) ──
@@ -26486,6 +26578,18 @@ function openAmanatReturn(id){
     <div style="font-size:11px;color:var(--muted);margin-top:6px;">📅 ${ar?"استُلمت":"Received"}: ${fmtD(dep.dateIn)} ${dep.timeIn||""} — 👤 ${dep.receivedBy}</div>
   `;
   document.getElementById("am-returnedby").value = "";
+  const wsInput = document.getElementById("am-whatsapp");
+  const wsBtn = document.getElementById("amanat-whatsapp-btn");
+  if(wsInput) wsInput.value = dep.whatsapp || "";
+  if(wsBtn) wsBtn.style.display = dep.whatsapp ? "block" : "none";
+  
+  // أضيف listener برمجي لتغيير الـ button عند الكتابة
+  if(wsInput){
+    wsInput.oninput = function(){
+      toggleAmanatWhatsappBtn();
+    };
+  }
+  
   document.getElementById("amanat-return-modal").classList.add("on");
 }
 // ── تسليم عنصر واحد بس ──
@@ -26503,6 +26607,19 @@ function openAmanatItemReturn(depId, itemId){
     <div style="margin-top:4px;">📦 ${it.desc}</div>
   `;
   document.getElementById("am-returnedby").value = "";
+  document.getElementById("am-whatsapp").value = dep.whatsapp || "";
+  
+  const wsBtn = document.getElementById("amanat-whatsapp-btn");
+  if(wsBtn) wsBtn.style.display = dep.whatsapp ? "block" : "none";
+  
+  // أضيف listener برمجي لتغيير الـ button عند الكتابة
+  const wsInput = document.getElementById("am-whatsapp");
+  if(wsInput){
+    wsInput.oninput = function(){
+      toggleAmanatWhatsappBtn();
+    };
+  }
+  
   document.getElementById("amanat-return-modal").classList.add("on");
 }
 function confirmAmanatReturn(){
@@ -26535,7 +26652,184 @@ function confirmAmanatReturn(){
   saveAmanatList(list);
   closeM("amanat-return-modal");
   renderAmanat();
-  showToast("✅ "+(ar?"تم التسليم":"Returned"));
+  showToast("✅ "+(ar?"تم التسليم":"Delivered"));
+}
+
+// ── إنشاء رسالة الإقرار بالتسليم (واتساب / طباعة) ──
+function generateAmanatReceiptText(dep, itemId){
+  const sym = dep.currency==="USD"?"$":dep.currency==="EUR"?"€":dep.currency==="GBP"?"£":"E£";
+  const returnedBy = document.getElementById("am-returnedby").value.trim();
+  const today = new Date();
+  const dateFmt = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()}`;
+  const timeFmt = today.toTimeString().slice(0,5);
+  
+  // ── رسالة ثنائية اللغة ──
+  let text = `🔐 *إقرار استلام الأمانات*
+🔐 *Valuables Receipt Confirmation*
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+👤 *الضيف:* ${dep.guest}${dep.room ? ` — غرفة ${dep.room}` : ""}
+👤 *Guest:* ${dep.guest}${dep.room ? ` — Room ${dep.room}` : ""}
+
+📅 *التاريخ:* ${dateFmt} — *الوقت:* ${timeFmt}
+📅 *Date:* ${dateFmt} — *Time:* ${timeFmt}
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+*📦 العناصر المُسلّمة:*
+*📦 Items Delivered:*
+`;
+  
+  if(itemId){
+    const it = (dep.items||[]).find(i=>i.id===itemId);
+    if(it) text += `✅ ${it.desc}\n`;
+  } else {
+    (dep.items||[]).forEach(it=>{
+      text += `✅ ${it.desc}\n`;
+    });
+  }
+  
+  if(!itemId && dep.amount > 0){
+    const remaining = getAmanatRemaining(dep);
+    if(remaining > 0.001){
+      text += `\n💰 *المبلغ المُسلّم:* ${sym}${remaining.toFixed(2)}
+💰 *Amount Returned:* ${sym}${remaining.toFixed(2)}`;
+    }
+  }
+
+  // ── ما زال متبقياً في الخزنة (لو تسليم جزئي) ──
+  const stillKept = (dep.items||[]).filter(it=>it.status!=="returned");
+  const stillCash = getAmanatRemaining(dep);
+  if(stillKept.length > 0 || stillCash > 0.001){
+    text += `\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n*🔒 المتبقي في الخزنة:*\n*🔒 Still Remaining in Safe:*\n`;
+    stillKept.forEach(it=>{
+      text += `📦 ${it.desc}\n`;
+    });
+    if(stillCash > 0.001){
+      text += `💰 ${sym}${stillCash.toFixed(2)}\n`;
+    }
+  }
+  
+  text += `
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+👤 *سلّمها:* ${returnedBy}
+👤 *Delivered by:* ${returnedBy}
+
+🏨 Dahab Trendy Accommodation
+
+✨ شكراً لاختيارك! — Thank you!`;
+  
+  return text;
+}
+
+// ── تبديل ظهور زرار الواتساب ──
+function toggleAmanatWhatsappBtn(){
+  const val = document.getElementById("am-whatsapp").value.trim();
+  document.getElementById("amanat-whatsapp-btn").style.display = val ? "block" : "none";
+}
+
+// ── تسليم + إرسال واتساب معاً (بضغطة زرار واحدة) ──
+function confirmAndSendAmanatWhatsapp(){
+  const ar = currentLang === "ar";
+  const returnedBy = document.getElementById("am-returnedby").value.trim();
+  const whatsapp = document.getElementById("am-whatsapp").value.trim();
+  
+  if(!returnedBy){
+    alert(ar?"⚠️ أدخل اسم الموظف المُسلِّم":"⚠️ Enter staff name");
+    return;
+  }
+  
+  if(!whatsapp){
+    alert(ar?"⚠️ أدخل رقم الواتساب":"⚠️ Enter WhatsApp number");
+    return;
+  }
+  
+  // ── خطوة 1: تسجيل التسليم ──
+  const list = getAmanatList();
+  const dep = list.find(x=>x.id===amanatReturnId);
+  if(!dep) return;
+  
+  const date = toDay();
+  const time = new Date().toTimeString().slice(0,5);
+  
+  if(amanatReturnItemId){
+    // تسليم عنصر واحد بس
+    const it = (dep.items||[]).find(i=>i.id===amanatReturnItemId);
+    if(it){
+      it.status = "returned";
+      it.dateOut = date;
+      it.timeOut = time;
+      it.returnedBy = returnedBy;
+    }
+  } else {
+    // تسليم كل العناصر + تسوية كاش
+    (dep.items||[]).forEach(it=>{
+      if(it.status!=="returned"){
+        it.status = "returned";
+        it.dateOut = date;
+        it.timeOut = time;
+        it.returnedBy = returnedBy;
+      }
+    });
+    const remaining = getAmanatRemaining(dep);
+    if(remaining > 0.001){
+      if(!dep.withdrawals) dep.withdrawals = [];
+      dep.withdrawals.push({
+        amount: remaining,
+        withdrawnBy: returnedBy,
+        notes: ar?"تسليم كامل المتبقي":"Final full return",
+        date, time
+      });
+    }
+  }
+  
+  const itemIdForMessage = amanatReturnItemId;  // احفظ القيمة الأصلية قبل ما تحط null
+  amanatReturnItemId = null;
+  saveAmanatList(list);
+  
+  // ── خطوة 2: إرسال الواتساب ──
+  const text = generateAmanatReceiptText(dep, itemIdForMessage);  // استخدم القيمة المحفوظة
+  const encoded = encodeURIComponent(text);
+  const url = `https://wa.me/${whatsapp}?text=${encoded}`;
+  
+  closeM("amanat-return-modal");
+  renderAmanat();
+  showToast("✅ "+(ar?"تم التسليم + إرسال الواتساب":"Delivered & WhatsApp sent"));
+  
+  // فتح الواتساب في تبويب جديد
+  setTimeout(() => {
+    window.open(url, '_blank');
+  }, 500);
+}
+
+// ── إرسال الواتساب بدون تسليم (للاستخدام المستقل) ──
+function sendAmanatReceiptWhatsapp(){
+  const ar = currentLang === "ar";
+  const whatsapp = document.getElementById("am-whatsapp").value.trim();
+  
+  if(!whatsapp){
+    alert(ar?"⚠️ أدخل رقم الواتساب":"⚠️ Enter WhatsApp number");
+    return;
+  }
+  
+  const list = getAmanatList();
+  const dep = list.find(x=>x.id===amanatReturnId);
+  if(!dep) return;
+  
+  const returnedBy = document.getElementById("am-returnedby").value.trim();
+  if(!returnedBy){
+    alert(ar?"⚠️ أدخل اسم الموظف":"⚠️ Enter staff name first");
+    return;
+  }
+  
+  const text = generateAmanatReceiptText(dep, amanatReturnItemId);
+  const encoded = encodeURIComponent(text);
+  const url = `https://wa.me/${whatsapp}?text=${encoded}`;
+  
+  window.open(url, '_blank');
 }
 function renderAmanat(){
   const ar = currentLang === "ar";
