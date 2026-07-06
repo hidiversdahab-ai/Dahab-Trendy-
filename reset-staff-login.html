@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إعادة ضبط تسجيل دخول الموظفين</title>
+<style>
+  body{font-family:'Segoe UI',Tahoma,sans-serif;background:#0d1117;color:#f0e6cc;margin:0;padding:24px;min-height:100vh;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .box{max-width:400px;width:100%;background:#161b22;border:1px solid rgba(201,168,76,0.3);border-radius:14px;padding:24px;text-align:center;}
+  h1{color:#c9a84c;font-size:18px;margin:0 0 8px;}
+  p{color:#9aa5b1;font-size:13px;line-height:1.8;margin:0 0 18px;}
+  button{width:100%;padding:14px;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;}
+  .danger{background:#c9a84c;color:#1a1a1a;}
+  .safe{background:rgba(255,255,255,0.08);color:#f0e6cc;border:1px solid rgba(255,255,255,0.15);}
+  #status{margin-top:14px;font-size:13px;min-height:20px;}
+  .ok{color:#2ecc71;}
+  .err{color:#e74c3c;}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>🔓 إعادة ضبط تسجيل دخول الموظفين</h1>
+  <p>
+    الأداة دي بتمسح <b>حسابات الموظفين (اليوزر/الباسورد)</b> بس، وبترجّع النظام لوضع الدخول المباشر من غير تسجيل دخول — <b>من غير ما تلمس أي بيانات تانية</b> (حجوزات، مصاريف، ضيوف، إلخ).
+    <br><br>
+    استخدمها لو نسيت بيانات دخول الموظف وعايز ترجع تدخل على النظام.
+  </p>
+  <button class="danger" onclick="resetLogin()">🗑️ امسح حسابات الموظفين وارجعلي الدخول المباشر</button>
+  <button class="safe" onclick="location.href='./index.html'">↩️ رجوع للنظام من غير مسح</button>
+  <div id="status"></div>
+</div>
+
+<script>
+async function resetLogin(){
+  const st = document.getElementById('status');
+  st.textContent = 'جاري المسح...';
+  st.className = '';
+  try{
+    // 1) مسح من localStorage
+    localStorage.removeItem('dta_staff_users');
+    localStorage.removeItem('dta_current_user_id');
+    localStorage.removeItem('dta_current_user_session');
+
+    // 2) مسح من IndexedDB (نفس قاعدة البيانات اللي النظام بيستخدمها)
+    await new Promise((resolve)=>{
+      const req = indexedDB.open('DahabTrendyV11');
+      req.onsuccess = (e)=>{
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains('settings')){ db.close(); resolve(); return; }
+        const tx = db.transaction('settings','readwrite');
+        tx.objectStore('settings').delete('dta_staff_users');
+        tx.oncomplete = ()=>{ db.close(); resolve(); };
+        tx.onerror = ()=>{ db.close(); resolve(); };
+      };
+      req.onerror = ()=> resolve();
+      req.onupgradeneeded = (e)=>{ /* لو مفيش قاعدة بيانات أصلاً، متعملش حاجة */ };
+    });
+
+    st.textContent = '✅ تم المسح بنجاح! دلوقتي هترجع تدخل مباشرة من غير تسجيل دخول.';
+    st.className = 'ok';
+    setTimeout(()=>{ location.href = './index.html'; }, 2000);
+  }catch(e){
+    st.textContent = '❌ حصل خطأ: ' + e.message;
+    st.className = 'err';
+  }
+}
+</script>
+</body>
+</html>
