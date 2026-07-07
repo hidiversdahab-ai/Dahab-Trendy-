@@ -560,6 +560,9 @@ select option{background:#1a1a2e;color:var(--text)}
 
 /* ══ FEATURE 10: PIN Lock ══ */
 #pin-overlay{position:fixed;inset:0;background:rgba(10,10,20,0.97);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+#staff-login-overlay{position:fixed;inset:0;background:rgba(10,10,20,0.97);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+/* قاعدة عامة لأي عنصر بياخد class="hidden" ومفيهوش قاعدة خاصة بيه — كانت ناقصة وبتسبب ظهور عناصر مفروض تكون مخفية */
+.hidden{display:none !important;}
 #pin-overlay.hidden{display:none;}
 .pin-box{background:#1e2a3a;border:1px solid var(--bdr);border-radius:16px;padding:30px 28px;text-align:center;min-width:300px;}
 .pin-dots{display:flex;gap:12px;justify-content:center;margin:18px 0;}
@@ -1543,6 +1546,24 @@ label {
     </div>
 
     <div id="pin-default-hint" style="margin-top:14px;font-size:10px;color:var(--muted);">الرمز الافتراضي: 1234</div>
+  </div>
+</div>
+
+<!-- Staff Login Overlay (يوزر/باسورد للموظفين) -->
+<div id="staff-login-overlay" class="hidden">
+  <div class="pin-box" style="width:280px;">
+    <div style="font-size:28px;margin-bottom:8px;">👤</div>
+    <div style="color:var(--gold);font-size:16px;font-weight:700;letter-spacing:1px;">Dahab Trendy</div>
+    <div class="t" data-ar="تسجيل الدخول" data-en="Login" style="color:var(--muted);font-size:11px;margin-top:4px;">تسجيل الدخول</div>
+    <div style="margin-top:16px;text-align:right;">
+      <input id="sl-username" type="text" data-ph-ar="اسم المستخدم" data-ph-en="Username" placeholder="اسم المستخدم" autocomplete="username" style="width:100%;padding:11px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(201,168,76,0.3);color:#f0e6cc;margin-bottom:8px;box-sizing:border-box;direction:ltr;text-align:center;">
+      <input id="sl-password" type="password" data-ph-ar="كلمة المرور" data-ph-en="Password" placeholder="كلمة المرور" autocomplete="current-password" style="width:100%;padding:11px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(201,168,76,0.3);color:#f0e6cc;box-sizing:border-box;text-align:center;" onkeydown="if(event.key==='Enter')staffLoginAttempt()">
+      <div id="sl-error" style="color:#e74c3c;font-size:11px;margin-top:6px;min-height:14px;text-align:center;"></div>
+      <button class="pin-key" style="width:100%;margin-top:8px;border-radius:8px;" onclick="staffLoginAttempt()"><span class="t" data-ar="🔓 دخول" data-en="🔓 Login">🔓 دخول</span></button>
+      <div style="text-align:center;margin-top:14px;">
+        <a href="javascript:void(0)" onclick="staffLoginEmergencyReset()" style="color:var(--muted);font-size:10px;text-decoration:underline;"><span class="t" data-ar="ناسي البيانات؟ إعادة ضبط الدخول" data-en="Forgot credentials? Reset login">ناسي البيانات؟ إعادة ضبط الدخول</span></a>
+      </div>
+    </div>
   </div>
 </div>
 <!-- Smart Notifications Container -->
@@ -2963,11 +2984,11 @@ document.addEventListener('DOMContentLoaded', function(){
 <div id="db-alerts" style="margin-bottom:12px;"></div>
 <div id="db-wl-alert" style="margin-bottom:12px;"></div>
 <div class="g4" id="db-stats" style="margin-bottom:12px;"></div>
-<div class="card" style="margin-bottom:12px;">
+<div class="card" style="margin-bottom:12px;" data-role-financial>
 <div class="ctitle">💰 <span class="t" data-ar="ملخص مالي" data-en="Financial Summary">Financial Summary</span></div>
 <div id="db-finance" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;"></div>
 </div>
-<div id="db-commission-section" style="display:none;margin-bottom:12px;"></div>
+<div id="db-commission-section" style="display:none;margin-bottom:12px;" data-role-financial></div>
 <!-- ══ OWNER TRANSFER SECTION ══ -->
 
 <!-- ══ RESTAURANT REVENUE SECTION ══ -->
@@ -3098,7 +3119,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <span style="background:rgba(155,89,182,0.15);padding:2px 8px;border-radius:4px;color:#c39bd3;margin-left:auto;">✋ اسحب الحجز لنقله</span>
 </div>
 <div id="cal-stats-bar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
-<div class="card" style="margin-bottom:12px;">
+<div class="card" style="margin-bottom:12px;" data-role-financial>
 <div class="ctitle">💰 ملخص مالي كلي</div>
 <div id="cal-finance" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;"></div>
 <div id="cal-custody-block" style="margin-top:10px;"></div>
@@ -3180,6 +3201,8 @@ document.addEventListener('DOMContentLoaded', function(){
 <button class="btn bgr" onclick="sendExpensesWA()" title="إرسال ملخص المصروفات عبر واتساب">📱 واتساب</button>
 <button class="btn" style="background:#e74c3c;color:#fff;" onclick="printExpensesPDF()" title="طباعة / تصدير PDF">🖨️ PDF</button>
 </div>
+<div id="ex-reception-lock-msg" class="hidden" style="text-align:center;padding:24px;color:var(--muted);font-size:12px;">🔒 التقارير والمصروفات التفصيلية متاحة للمدير/المالك فقط. تقدر تضيف مصروف من الزرار فوق.</div>
+<div id="ex-financial-view">
 <div id="ex-stats" class="g4" style="margin-bottom:12px;"></div>
 <div class="card" style="padding:10px 14px;margin-bottom:10px;">
 <div class="flex">
@@ -3220,6 +3243,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <div class="card" style="margin-top:12px;">
 <div class="ctitle">📊 Expenses by Category</div>
 <div id="ex-chart"></div>
+</div>
 </div>
 </div>
 <!-- ═══════════════════════════════════════════ -->
@@ -4318,6 +4342,14 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 
 <div id="page-settings" class="page">
 <h2 style="color:var(--gold);margin-bottom:12px;font-size:18px;">⚙️ Settings</h2>
+<div id="current-user-banner" style="display:none;align-items:center;gap:10px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+  <div style="font-size:20px;">👤</div>
+  <div style="flex:1;min-width:0;">
+    <div id="current-user-name" style="font-weight:700;font-size:13px;"></div>
+    <div id="current-user-role" style="font-size:11px;color:var(--muted);"></div>
+  </div>
+  <button class="btn br bsm" onclick="staffLogout()">🚪 خروج</button>
+</div>
 <div class="g2">
 <div>
 <div class="card">
@@ -4438,6 +4470,18 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
   </div>
 </div>
 <div id="pin-status" style="font-size:11px;margin-top:8px;"></div>
+</div>
+
+<!-- Staff Users & Roles (نظام تسجيل الدخول والصلاحيات) -->
+<div class="card" id="staff-users-card" style="border:1px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.04);">
+<div class="ctitle">👥 <span class="t" data-ar="حسابات الموظفين والصلاحيات" data-en="Staff Accounts & Permissions">حسابات الموظفين والصلاحيات</span></div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">
+<span class="t" data-ar="كل موظف بيدخل بيوزر واسم مستخدم وباسورد خاص به بدل رمز الـPIN المشترك. لما تضيف أول حساب، النظام هيطلب تسجيل الدخول من المرة الجاية." data-en="Each employee logs in with their own username and password instead of the shared PIN code. Once you add the first account, the system will require login from next time.">كل موظف بيدخل بيوزر واسم مستخدم وباسورد خاص به بدل رمز الـPIN المشترك. لما تضيف أول حساب، النظام هيطلب تسجيل الدخول من المرة الجاية.</span><br>
+<span class="t" style="color:#e0c068;" data-ar="⚠️ ملحوظة: التطبيق شغال محلي في المتصفح من غير سيرفر، فده نظام تنظيمي لتوزيع الصلاحيات ومتابعة مين عمل إيه — مش حماية أمنية قوية ضد شخص عنده خبرة تقنية ووصول للجهاز." data-en="⚠️ Note: the app runs locally in the browser without a server, so this is an organizational system for distributing permissions and tracking who did what — not strong security protection against someone with technical skill and device access.">⚠️ ملحوظة: التطبيق شغال محلي في المتصفح من غير سيرفر، فده نظام تنظيمي لتوزيع الصلاحيات ومتابعة مين عمل إيه — مش حماية أمنية قوية ضد شخص عنده خبرة تقنية ووصول للجهاز.</span>
+</div>
+<div id="staff-users-list" style="margin-bottom:10px;"></div>
+<div id="staff-users-owner-only-msg" class="hidden" style="font-size:12px;color:var(--muted);text-align:center;padding:10px;">🔒 <span class="t" data-ar="إدارة الحسابات للمالك فقط" data-en="Account management is for the owner only">إدارة الحسابات للمالك فقط</span></div>
+<button class="btn bg" id="staff-users-add-btn" onclick="openStaffUserModal()">+ <span class="t" data-ar="إضافة موظف" data-en="Add Employee">إضافة موظف</span></button>
 </div>
 </div>
 <div>
@@ -8056,7 +8100,8 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
     displayNetEGP>=0?"#27ae60":"#e74c3c");
 
   if(custList.length===0){
-    // مفيش عهدة — بس زرار إضافة
+    // مفيش عهدة — بس زرار إضافة (للمالك بس)
+    if(!canManageOwnerMoney()) return html;
     html += `<div style="text-align:center;margin-top:6px;">
       <button onclick="openCustodyModal()" style="background:none;border:1px dashed rgba(201,168,76,0.3);color:var(--muted);border-radius:8px;padding:6px 14px;font-size:11px;cursor:pointer;">
         🔒 ${ar?'إضافة عهدة':'Add Custody'}</button></div>`;
@@ -8083,7 +8128,7 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:13px;font-weight:700;color:${color};">£${c.amt.toLocaleString()}</span>
-        <button onclick="openCustodyModal('${c.id}')" style="background:none;border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:2px 7px;font-size:10px;color:var(--muted);cursor:pointer;">✏️</button>
+        ${canManageOwnerMoney()?`<button onclick="openCustodyModal('${c.id}')" style="background:none;border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:2px 7px;font-size:10px;color:var(--muted);cursor:pointer;">✏️</button>`:''}
       </div>
     </div>`;
   }).join('');
@@ -8111,16 +8156,16 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
       <span style="font-size:11px;color:var(--muted);">${ar?'الربح المتاح':'Available Profit'}</span>
       <span style="font-size:14px;font-weight:800;color:${availNet>0?'#27ae60':availNet<0?'#e74c3c':'var(--muted)'};">£${availNet.toLocaleString()}</span>
     </div>
-    ${_fromOwnerTotal>0?`<div style="margin-top:8px;background:rgba(230,126,34,0.12);border:1px solid rgba(230,126,34,0.4);border-radius:8px;padding:8px 10px;font-size:11px;color:#e67e22;line-height:1.5;">
+    ${_fromOwnerTotal>0 && canManageOwnerMoney()?`<div style="margin-top:8px;background:rgba(230,126,34,0.12);border:1px solid rgba(230,126,34,0.4);border-radius:8px;padding:8px 10px;font-size:11px;color:#e67e22;line-height:1.5;">
       ⚠️ ${ar
         ?`فيه سلفة من المالك لسه قايمة <strong>£${_fromOwnerTotal.toLocaleString()}</strong> — مخصومة من الربح هنا لحد ما يتسجل سداد فعلي ليها.`
         :`There's an outstanding advance of <strong>£${_fromOwnerTotal.toLocaleString()}</strong> from the owner — it's deducted from profit here until an actual repayment is logged.`}
       <div style="margin-top:6px;"><button onclick="repayOwnerAdvance()" style="background:rgba(230,126,34,0.25);border:1px solid rgba(230,126,34,0.6);border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;color:#e67e22;cursor:pointer;">💵 ${ar?'سداد السلفة':'Repay Advance'}</button></div>
     </div>`:''}
-    <div style="display:flex;gap:6px;margin-top:10px;">
+    ${canManageOwnerMoney()?`<div style="display:flex;gap:6px;margin-top:10px;">
       ${availNet>0?`<button onclick="openTransferToCustomdy(${availNet},${availNet})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${ar?'تحويل للعهدة':'Transfer'}</button>`:''}
       <button onclick="openCustodyModal()" style="flex:1;padding:9px;background:none;border:1px dashed rgba(155,89,182,0.3);border-radius:8px;color:var(--muted);font-size:11px;cursor:pointer;">+ ${ar?'عهدة جديدة':'Add Custody'}</button>
-    </div>
+    </div>`:''}
   </div>`;
 
   return html;
@@ -8408,6 +8453,7 @@ renderAlerts();
 renderBirthdayAlerts();
 renderLiveDash();
 renderPredictiveOccupancy();
+if(typeof applyRolePermissions==='function') applyRolePermissions();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -11567,6 +11613,14 @@ function renderStaffAdvSummary(){
 // ═══════════ EXPENSES ═══════════
 
 function renderExpenses(){
+const finView=document.getElementById("ex-financial-view"), lockMsg=document.getElementById("ex-reception-lock-msg");
+if(!canSeeFinancials()){
+  if(finView) finView.style.display='none';
+  if(lockMsg) lockMsg.classList.remove('hidden');
+  return;
+}
+if(finView) finView.style.display='';
+if(lockMsg) lockMsg.classList.add('hidden');
 const fc=document.getElementById("ex-fcat")?.value||"";
 const fm=document.getElementById("ex-fmon")?.value||"";
 const fy=document.getElementById("ex-fyr")?.value||"";
@@ -11681,6 +11735,7 @@ return subtotalRow+
       "<span style='color:"+col+";font-weight:700;font-size:13px;'>"+ic+" "+e.cat+"</span>"+
       "<span style='color:var(--muted);font-size:11px;'>"+fmtD(e.date)+"</span>"+
       (e.paid?"<span style='font-size:10px;color:var(--muted);'>· "+e.paid+"</span>":"")+
+      (e.createdBy?"<span style='font-size:10px;color:var(--muted);'> · 👤 "+e.createdBy+"</span>":"")+
     "</div>"+
     "<div style='font-size:12px;color:var(--text);margin-bottom:4px;'>"+e.desc+tagBadge+"</div>"+
     "<div style='display:flex;gap:10px;flex-wrap:wrap;'>"+
@@ -11906,6 +11961,7 @@ notes:document.getElementById("ex-notes").value,
 tag:document.getElementById("em-tag").value.trim(),
 source:document.getElementById("em-source").value||"net_profit",
 advDeductEGP:parseFloat(advDeductEGP.toFixed(2)),
+createdBy:exEdit!==null?(expenses[exEdit].createdBy||_currentUserLabel()):_currentUserLabel(),
 };
 if(exEdit!==null) expenses[exEdit]=ex; else expenses.push(ex);
 sv("dta_ex",expenses);
@@ -16580,6 +16636,10 @@ function applyLang(){
   document.querySelectorAll(".t[data-ar][data-en]").forEach(el=>{
     el.textContent = isAr ? el.dataset.ar : el.dataset.en;
   });
+  // Handle [data-ph-ar][data-ph-en] input placeholders
+  document.querySelectorAll("[data-ph-ar][data-ph-en]").forEach(el=>{
+    el.placeholder = isAr ? el.dataset.phAr : el.dataset.phEn;
+  });
   const lbl = document.getElementById("lang-label");
   if(lbl) lbl.textContent = isAr ? "عربي" : "EN";
   const optEn = document.getElementById("lang-opt-en");
@@ -16601,6 +16661,8 @@ function setLang(lang){
   renderRooms();
   renderExpenses();
   if(typeof renderMinibar==='function' && document.getElementById('page-minibar')?.classList.contains('on')) renderMinibar();
+  if(typeof renderStaffUsersList==='function') renderStaffUsersList();
+  if(typeof applyRolePermissions==='function') applyRolePermissions();
   // Re-run DOM translation after renders settle
   if(currentLang !== "ar") setTimeout(_translateDOM, 100);
   if(typeof _restartVoiceForLang==='function') _restartVoiceForLang();
@@ -16616,6 +16678,8 @@ function toggleLang(){
   renderRooms();
   renderExpenses();
   if(typeof renderMinibar==='function' && document.getElementById('page-minibar')?.classList.contains('on')) renderMinibar();
+  if(typeof renderStaffUsersList==='function') renderStaffUsersList();
+  if(typeof applyRolePermissions==='function') applyRolePermissions();
   if(currentLang !== "ar") setTimeout(_translateDOM, 100);
   if(typeof _restartVoiceForLang==='function') _restartVoiceForLang();
   if(typeof DTA_BRANCH!=='undefined') DTA_BRANCH.renderBranchSwitcher();
@@ -20321,7 +20385,7 @@ if(calFinEl){
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:13px;font-weight:700;color:${color};">£${c.amt.toLocaleString()}</span>
-            <button onclick="openCustodyModal('${c.id}')" style="background:none;border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:2px 7px;font-size:10px;color:var(--muted);cursor:pointer;">✏️</button>
+            ${canManageOwnerMoney()?`<button onclick="openCustodyModal('${c.id}')" style="background:none;border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:2px 7px;font-size:10px;color:var(--muted);cursor:pointer;">✏️</button>`:''}
           </div>
         </div>`;
       }).join('');
@@ -20346,19 +20410,20 @@ if(calFinEl){
           <span style="font-size:11px;color:var(--muted);">${_ar?'الربح المتاح':'Available Profit'}</span>
           <span style="font-size:14px;font-weight:800;color:${calAvailNet>0?'#27ae60':calAvailNet<0?'#e74c3c':'var(--muted)'};">£${calAvailNet.toLocaleString()}</span>
         </div>
-        ${calFromOwnerTotal>0?`<div style="margin-top:8px;background:rgba(230,126,34,0.12);border:1px solid rgba(230,126,34,0.4);border-radius:8px;padding:8px 10px;font-size:11px;color:#e67e22;line-height:1.5;">
+        ${calFromOwnerTotal>0 && canManageOwnerMoney()?`<div style="margin-top:8px;background:rgba(230,126,34,0.12);border:1px solid rgba(230,126,34,0.4);border-radius:8px;padding:8px 10px;font-size:11px;color:#e67e22;line-height:1.5;">
           ⚠️ ${_ar
             ?`فيه سلفة من المالك لسه قايمة <strong>£${calFromOwnerTotal.toLocaleString()}</strong> — مخصومة من الربح هنا لحد ما يتسجل سداد فعلي ليها.`
             :`There's an outstanding advance of <strong>£${calFromOwnerTotal.toLocaleString()}</strong> from the owner — it's deducted from profit here until an actual repayment is logged.`}
           <div style="margin-top:6px;"><button onclick="repayOwnerAdvance()" style="background:rgba(230,126,34,0.25);border:1px solid rgba(230,126,34,0.6);border-radius:7px;padding:6px 12px;font-size:11px;font-weight:700;color:#e67e22;cursor:pointer;">💵 ${_ar?'سداد السلفة':'Repay Advance'}</button></div>
         </div>`:''}
-        <div style="display:flex;gap:6px;margin-top:10px;">
+        ${canManageOwnerMoney()?`<div style="display:flex;gap:6px;margin-top:10px;">
           ${calAvailNet>0?`<button onclick="openTransferToCustomdy(${calAvailNet},${calAvailNet})" style="flex:1;padding:9px;background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.5);border-radius:8px;color:#9b59b6;font-size:12px;font-weight:700;cursor:pointer;">💸 ${_ar?'تحويل للعهدة':'Transfer'}</button>`:''}
           <button onclick="openCustodyModal()" style="flex:1;padding:9px;background:none;border:1px dashed rgba(155,89,182,0.3);border-radius:8px;color:var(--muted);font-size:11px;cursor:pointer;">+ ${_ar?'عهدة جديدة':'Add Custody'}</button>
-        </div>
+        </div>`:''}
       </div>`;
     }
   }
+  if(typeof applyRolePermissions==='function') applyRolePermissions();
 }
 // Build header row
 let html="<thead><tr><th style='min-width:55px;'>الغرفة</th>";
@@ -21994,9 +22059,238 @@ function loadPINSettings(){
   }
 }
 
-// Check PIN on load
+// ═══════════ STAFF USERS & ROLES (تسجيل الدخول والصلاحيات) ═══════════
+window._staffUsers = [];
+window._currentUser = null; // {id, username, name, role}
+const STAFFUSERS_KEY = 'dta_staff_users';
+try{ window._staffUsers = JSON.parse(localStorage.getItem(STAFFUSERS_KEY)||'[]'); }catch(e){ window._staffUsers=[]; }
+
+function _simpleHash(str){
+  // تعمية بسيطة للباسورد — التطبيق شغال محلي في المتصفح من غير سيرفر، فده تنظيم صلاحيات مش تشفير أمني حقيقي
+  let h=0;
+  for(let i=0;i<(str||'').length;i++){ h=((h<<5)-h+str.charCodeAt(i))|0; }
+  return 'h'+Math.abs(h)+'_'+(str||'').length;
+}
+
+async function staffUsersLoad(){
+  try{
+    const data = await DTA_DB.getSetting(STAFFUSERS_KEY, null);
+    // مهم: ما نكتبش فوق أي حساب اتضاف/اتحفظ لحد لما القراءة دي خلصت (سباق توقيت)
+    if(Array.isArray(data) && data.length>0 && window._staffUsers.length===0){
+      window._staffUsers = data;
+      localStorage.setItem(STAFFUSERS_KEY, JSON.stringify(data));
+      if(typeof renderStaffUsersList==='function') renderStaffUsersList();
+    }
+  }catch(e){}
+}
+async function staffUsersSave(){
+  localStorage.setItem(STAFFUSERS_KEY, JSON.stringify(window._staffUsers));
+  try{ await DTA_DB.setSetting(STAFFUSERS_KEY, window._staffUsers); }catch(e){}
+}
+staffUsersLoad();
+
+function hasStaffLoginSystem(){ return window._staffUsers && window._staffUsers.length>0; }
+function currentUserRole(){ return window._currentUser ? window._currentUser.role : null; }
+// لو النظام لسه ما فُعّلش (مفيش يوزرات) نعتبر كل حد مالك عشان مانكسرش استخدام النسخة القديمة
+function isOwnerUser(){ return !hasStaffLoginSystem() || currentUserRole()==='owner'; }
+function isManagerUser(){ return currentUserRole()==='manager'; }
+function isReceptionUser(){ return currentUserRole()==='reception'; }
+function isManagerOrOwner(){ return isOwnerUser() || isManagerUser(); }
+function canSeeFinancials(){ return isOwnerUser() || isManagerUser(); }         // ريسبشن مايشوفش الأرباح/التقارير
+function canManageOwnerMoney(){ return isOwnerUser(); }                        // سحب/تحويل المالك للمالك بس
+function canWipeData(){ return isOwnerUser(); }                                // مسح البيانات للمالك بس
+function _currentUserLabel(){ return (hasStaffLoginSystem() && window._currentUser) ? (window._currentUser.name||window._currentUser.username) : null; }
+
+function _restoreUserSession(){
+  if(!hasStaffLoginSystem()) return true;
+  const uid = localStorage.getItem('dta_current_user_id');
+  const sess = localStorage.getItem('dta_current_user_session');
+  if(uid && sess && (Date.now()-parseInt(sess,10) < 1800000)){
+    const u = window._staffUsers.find(x=>x.id===uid && x.active!==false);
+    if(u){ window._currentUser = {id:u.id, username:u.username, name:u.name, role:u.role}; return true; }
+  }
+  return false;
+}
+
+function showStaffLoginOverlay(){
+  const ov=document.getElementById('staff-login-overlay');
+  if(!ov) return;
+  ov.classList.remove('hidden');
+  const uEl=document.getElementById('sl-username'), pEl=document.getElementById('sl-password'), eEl=document.getElementById('sl-error');
+  if(uEl) uEl.value=''; if(pEl) pEl.value=''; if(eEl) eEl.textContent='';
+  if(uEl) setTimeout(()=>uEl.focus(),200);
+}
+
+function staffLoginAttempt(){
+  const uEl=document.getElementById('sl-username'), pEl=document.getElementById('sl-password'), errEl=document.getElementById('sl-error');
+  const username=(uEl.value||'').trim().toLowerCase();
+  const password=pEl.value||'';
+  if(!username || !password){ errEl.textContent=isEn()?'Please enter username and password':'من فضلك دخّل اسم المستخدم وكلمة المرور'; return; }
+  const user = window._staffUsers.find(u=>u.username.toLowerCase()===username && u.active!==false);
+  if(user && user.passwordHash===_simpleHash(password)){
+    window._currentUser = {id:user.id, username:user.username, name:user.name, role:user.role};
+    localStorage.setItem('dta_current_user_id', user.id);
+    localStorage.setItem('dta_current_user_session', Date.now().toString());
+    document.getElementById('staff-login-overlay').classList.add('hidden');
+    pEl.value=''; errEl.textContent='';
+    sNotify(isEn()?'✅ Logged in':'✅ تم الدخول', (isEn()?'Welcome ':'أهلاً ')+(user.name||user.username)+' 🌊','success',2500);
+    if(typeof _resetIdleTimer==='function') _resetIdleTimer();
+    if(typeof applyRolePermissions==='function') applyRolePermissions();
+    if(typeof renderDashboard==='function') renderDashboard();
+  } else {
+    errEl.textContent=isEn()?'❌ Incorrect username or password':'❌ اسم المستخدم أو كلمة المرور غير صحيحة';
+    pEl.value='';
+  }
+}
+
+function staffLogout(){
+  window._currentUser=null;
+  localStorage.removeItem('dta_current_user_id');
+  localStorage.removeItem('dta_current_user_session');
+  showStaffLoginOverlay();
+}
+
+// ── طوارئ: لو نظام الدخول اتقفل ومفيش يوزر/باسورد شغال، ده الطريق الوحيد للرجوع كمالك ──
+function staffLoginEmergencyReset(){
+  const ar = currentLang === 'ar';
+  const msg1 = ar
+    ? 'هيتم مسح كل حسابات الموظفين (يوزر/باسورد) وترجع تدخل كمالك مباشرة من غير تسجيل دخول. متأكد؟'
+    : 'This will delete ALL staff accounts (username/password) and let you back in directly as owner. Are you sure?';
+  if(!confirm(msg1)) return;
+  const msg2 = ar
+    ? 'تأكيد أخير: هتقدر تضيف حسابات الموظفين تاني بعدين لو حبيت. نكمل؟'
+    : 'Final confirmation: you can add staff accounts again later if you want. Continue?';
+  if(!confirm(msg2)) return;
+  try{
+    window._staffUsers = [];
+    localStorage.removeItem(STAFFUSERS_KEY);
+    localStorage.removeItem('dta_current_user_id');
+    localStorage.removeItem('dta_current_user_session');
+    try{ DTA_DB.setSetting(STAFFUSERS_KEY, []); }catch(e){}
+  }catch(e){}
+  location.reload();
+}
+
+// ── إدارة الحسابات (مالك بس) ──
+window._staffUserEditId = null;
+function openStaffUserModal(editId){
+  if(!isOwnerUser()){ sNotify(isEn()?'🔒 Not allowed':'🔒 غير مسموح', isEn()?'Account management is for the owner only':'إدارة الحسابات للمالك فقط','error',3000); return; }
+  window._staffUserEditId = editId||null;
+  const u = editId ? window._staffUsers.find(x=>x.id===editId) : null;
+  const ar = currentLang === 'ar';
+  let mc=document.getElementById('staff-user-modal');
+  if(!mc){mc=document.createElement('div');mc.id='staff-user-modal';mc.className='ovl';document.body.appendChild(mc);}
+  mc.innerHTML = `<div class="modal" style="max-width:380px;">
+    <div class="mtitle">👤 ${editId?(ar?'تعديل موظف':'Edit Employee'):(ar?'موظف جديد':'New Employee')}</div>
+    <div class="fld"><label>${ar?'الاسم':'Name'}</label><input id="su-name" type="text" value="${u?(u.name||''):''}" placeholder="${ar?'اسم الموظف':'Employee name'}"></div>
+    <div class="fld"><label>${ar?'اسم المستخدم':'Username'}</label><input id="su-username" type="text" value="${u?u.username:''}" placeholder="username" style="direction:ltr;" ${editId?'':''}></div>
+    <div class="fld"><label>${editId?(ar?'كلمة مرور جديدة (اتركها فاضية لو مش عايز تغيّرها)':'New password (leave empty to keep current)'):(ar?'كلمة المرور':'Password')}</label><input id="su-password" type="password" placeholder="••••••"></div>
+    <div class="fld"><label>${ar?'الدور':'Role'}</label>
+      <select id="su-role">
+        <option value="owner" ${u&&u.role==='owner'?'selected':''}>${ar?'مالك (كل الصلاحيات)':'Owner (full access)'}</option>
+        <option value="manager" ${!u||u.role==='manager'?'selected':''}>${ar?'مدير':'Manager'}</option>
+        <option value="reception" ${u&&u.role==='reception'?'selected':''}>${ar?'ريسبشن/موظف':'Reception/Staff'}</option>
+      </select>
+    </div>
+    <div id="su-error" style="color:#e74c3c;font-size:11px;margin:4px 0;min-height:14px;"></div>
+    <div class="flex mt">
+      <button class="btn bg" style="flex:1;" onclick="saveStaffUser()">💾 ${ar?'حفظ':'Save'}</button>
+      ${editId?`<button class="btn br" onclick="deleteStaffUser('${editId}')">🗑️</button>`:''}
+    </div>
+    <button class="btn bb" style="width:100%;margin-top:8px;" onclick="closeM('staff-user-modal')">${ar?'إغلاق':'Close'}</button>
+  </div>`;
+  mc.classList.add('on');
+}
+function saveStaffUser(){
+ try{
+  const name=document.getElementById('su-name').value.trim();
+  const username=document.getElementById('su-username').value.trim().toLowerCase();
+  const password=document.getElementById('su-password').value;
+  const role=document.getElementById('su-role').value;
+  const errEl=document.getElementById('su-error');
+  const editId=window._staffUserEditId;
+  if(!name||!username){ errEl.textContent=isEn()?'Please enter the name and username':'من فضلك دخّل الاسم واسم المستخدم'; return; }
+  const dup=window._staffUsers.find(u=>u.username.toLowerCase()===username && u.id!==editId);
+  if(dup){ errEl.textContent=isEn()?'This username is already taken':'اسم المستخدم ده مستخدم قبل كده'; return; }
+  if(!editId && !password){ errEl.textContent=isEn()?'Please enter a password':'من فضلك دخّل كلمة مرور'; return; }
+  if(editId){
+    const idx=window._staffUsers.findIndex(u=>u.id===editId);
+    if(idx>-1){
+      window._staffUsers[idx].name=name;
+      window._staffUsers[idx].username=username;
+      window._staffUsers[idx].role=role;
+      if(password) window._staffUsers[idx].passwordHash=_simpleHash(password);
+    }
+  } else {
+    window._staffUsers.push({id:'u_'+Date.now(), name, username, role, passwordHash:_simpleHash(password), active:true, createdAt:new Date().toISOString()});
+  }
+  staffUsersSave();
+  renderStaffUsersList();
+  closeM('staff-user-modal');
+  sNotify(isEn()?'✅ Saved':'✅ تم الحفظ', name,'success',2500);
+ }catch(err){
+  sNotify(isEn()?'❌ Error':'❌ خطأ', (err && err.message)||'', 'error', 4000);
+  console.error('saveStaffUser error:', err);
+ }
+}
+function deleteStaffUser(id){
+  if(!confirm(isEn()?'Delete this employee account?':'تحذف حساب الموظف ده؟')) return;
+  window._staffUsers=window._staffUsers.filter(u=>u.id!==id);
+  staffUsersSave();
+  renderStaffUsersList();
+  closeM('staff-user-modal');
+}
+function renderStaffUsersList(){
+  const el=document.getElementById('staff-users-list');
+  const addBtn=document.getElementById('staff-users-add-btn');
+  const lockMsg=document.getElementById('staff-users-owner-only-msg');
+  if(!el) return;
+  if(!isOwnerUser()){
+    el.innerHTML='';
+    if(addBtn) addBtn.classList.add('hidden');
+    if(lockMsg) lockMsg.classList.remove('hidden');
+    return;
+  }
+  if(addBtn) addBtn.classList.remove('hidden');
+  if(lockMsg) lockMsg.classList.add('hidden');
+  const roleLabel=isEn()?{owner:'Owner',manager:'Manager',reception:'Reception/Staff'}:{owner:'مالك',manager:'مدير',reception:'ريسبشن/موظف'};
+  if(!window._staffUsers.length){ el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px;">'+(isEn()?'No accounts yet — tap "Add Employee" to start username/password login':'لسه مفيش حسابات — دوس "إضافة موظف" لبدء نظام الدخول بيوزر/باسورد')+'</div>'; return; }
+  el.innerHTML = window._staffUsers.map(u=>`
+    <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:9px 10px;margin-bottom:6px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:13px;">${u.name||u.username}</div>
+        <div style="font-size:11px;color:var(--muted);">@${u.username} · ${roleLabel[u.role]||u.role}</div>
+      </div>
+      <button class="btn bsm" onclick="openStaffUserModal('${u.id}')" style="font-size:11px;padding:6px 8px;">✏️</button>
+    </div>`).join('');
+}
+
+// ── إخفاء/إظهار عناصر حساسة حسب الدور ──
+function applyRolePermissions(){
+  const finHidden = !canSeeFinancials();
+  document.querySelectorAll('[data-role-financial]').forEach(elm=>{ if(finHidden) elm.style.display='none'; });
+  document.querySelectorAll('[data-role-owner]').forEach(elm=>{ if(!isOwnerUser()) elm.style.display='none'; });
+  const banner=document.getElementById('current-user-banner');
+  if(banner){
+    if(hasStaffLoginSystem() && window._currentUser){
+      banner.style.display='flex';
+      const roleLabel=isEn()?{owner:'Owner',manager:'Manager',reception:'Reception/Staff'}:{owner:'مالك',manager:'مدير',reception:'ريسبشن/موظف'};
+      const nEl=document.getElementById('current-user-name'), rEl=document.getElementById('current-user-role');
+      if(nEl) nEl.textContent=window._currentUser.name||window._currentUser.username;
+      if(rEl) rEl.textContent=roleLabel[window._currentUser.role]||window._currentUser.role;
+    } else {
+      banner.style.display='none';
+    }
+  }
+  if(typeof renderStaffUsersList==='function') renderStaffUsersList();
+}
+
+// Check PIN / Staff-login on load
 (function(){
-  if(isPINEnabled()){
+  if(hasStaffLoginSystem()){
+    if(!_restoreUserSession()) setTimeout(showStaffLoginOverlay, 300);
+    else setTimeout(()=>{ if(typeof applyRolePermissions==='function') applyRolePermissions(); }, 500);
+  } else if(isPINEnabled()){
     const sess = localStorage.getItem('dahab_pin_session');
     const now = Date.now();
     // Lock if no session or session older than 30 min
@@ -22006,17 +22300,25 @@ function loadPINSettings(){
   }
 })();
 
-// ══ FEATURE 10b: AUTO-LOCK ON IDLE (بيشتغل بس لو قفل PIN مفعّل) ══
+// ══ FEATURE 10b: AUTO-LOCK ON IDLE (بيشتغل لو قفل PIN أو نظام اليوزرات مفعّل) ══
 const PIN_IDLE_TIMEOUT_MS = 5*60*1000; // 5 دقايق خمول
 let _idleTimer = null;
 function _resetIdleTimer(){
   if(_idleTimer){ clearTimeout(_idleTimer); _idleTimer=null; }
-  if(!isPINEnabled()) return;
-  const ov = document.getElementById('pin-overlay');
+  const staffMode = hasStaffLoginSystem();
+  if(!staffMode && !isPINEnabled()) return;
+  const ovId = staffMode ? 'staff-login-overlay' : 'pin-overlay';
+  const ov = document.getElementById(ovId);
   if(ov && !ov.classList.contains('hidden')) return; // أصلاً مقفول
   _idleTimer = setTimeout(()=>{
-    const ov2 = document.getElementById('pin-overlay');
-    if(ov2 && ov2.classList.contains('hidden')) lockApp();
+    if(staffMode){
+      window._currentUser=null;
+      localStorage.removeItem('dta_current_user_session');
+      showStaffLoginOverlay();
+    } else {
+      const ov2 = document.getElementById('pin-overlay');
+      if(ov2 && ov2.classList.contains('hidden')) lockApp();
+    }
   }, PIN_IDLE_TIMEOUT_MS);
 }
 ['mousemove','mousedown','keydown','touchstart','scroll','click'].forEach(function(evt){
