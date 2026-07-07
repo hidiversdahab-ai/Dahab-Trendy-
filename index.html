@@ -23900,7 +23900,7 @@ function sendBdayWA(){
 
 // ══ REPEATER GUEST DETECTION ══
 let _repeaterMatch = null;
-function checkRepeaterGuest(){
+function checkRepeaterGuestLegacy(){
   const name = (document.getElementById('bm-name')?.value||'').trim().toLowerCase();
   const wa   = (document.getElementById('bm-whatsapp')?.value||'').replace(/[^0-9]/g,'');
   const alertDiv = document.getElementById('repeater-alert');
@@ -33696,7 +33696,7 @@ self.onmessage = function(e){
 
 // ── ربط Web Worker بصفحة الـ Analytics ──
 const _renderLiveDash_orig = typeof renderLiveDash==='function' ? renderLiveDash : null;
-function renderLiveDash(){
+renderLiveDash = function(){
   if(_renderLiveDash_orig) _renderLiveDash_orig();
   // حساب analytics في الخلفية وتحديث الـ DOM عند الانتهاء
   DTA_WORKER.calcAnalytics(result=>{
