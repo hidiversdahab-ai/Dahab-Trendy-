@@ -560,6 +560,9 @@ select option{background:#1a1a2e;color:var(--text)}
 
 /* ══ FEATURE 10: PIN Lock ══ */
 #pin-overlay{position:fixed;inset:0;background:rgba(10,10,20,0.97);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+#staff-login-overlay{position:fixed;inset:0;background:rgba(10,10,20,0.97);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+/* قاعدة عامة لأي عنصر بياخد class="hidden" ومفيهوش قاعدة خاصة بيه — كانت ناقصة وبتسبب ظهور عناصر مفروض تكون مخفية */
+.hidden{display:none !important;}
 #pin-overlay.hidden{display:none;}
 .pin-box{background:#1e2a3a;border:1px solid var(--bdr);border-radius:16px;padding:30px 28px;text-align:center;min-width:300px;}
 .pin-dots{display:flex;gap:12px;justify-content:center;margin:18px 0;}
@@ -22174,6 +22177,7 @@ function openStaffUserModal(editId){
   mc.classList.add('on');
 }
 function saveStaffUser(){
+ try{
   const name=document.getElementById('su-name').value.trim();
   const username=document.getElementById('su-username').value.trim().toLowerCase();
   const password=document.getElementById('su-password').value;
@@ -22199,6 +22203,10 @@ function saveStaffUser(){
   renderStaffUsersList();
   closeM('staff-user-modal');
   sNotify(isEn()?'✅ Saved':'✅ تم الحفظ', name,'success',2500);
+ }catch(err){
+  console.error('saveStaffUser error:', err);
+  sNotify('⚠️ Error / خطأ', (err && err.message)||String(err), 'error', 6000);
+ }
 }
 function deleteStaffUser(id){
   if(!confirm(isEn()?'Delete this employee account?':'تحذف حساب الموظف ده؟')) return;
