@@ -571,6 +571,18 @@ select option{background:#1a1a2e;color:var(--text)}
 .pin-key:active{transform:scale(.95);}
 .pin-error{color:#e74c3c;font-size:12px;margin-top:8px;min-height:18px;}
 
+/* ══ FEATURE EMP: Employee Login & Roles ══ */
+#emp-login-overlay{position:fixed;inset:0;background:rgba(10,10,20,0.97);z-index:10010;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+#emp-login-overlay.hidden{display:none;}
+.emp-login-box{background:#1e2a3a;border:1px solid var(--bdr);border-radius:16px;padding:30px 28px;text-align:center;min-width:280px;max-width:340px;width:90%;}
+.emp-login-box input{width:100%;padding:11px;border-radius:8px;background:rgba(255,255,255,0.07);border:1px solid rgba(201,168,76,0.3);color:#f0e6cc;font-size:14px;margin-top:10px;box-sizing:border-box;outline:none;}
+.emp-login-error{color:#e74c3c;font-size:12px;margin-top:8px;min-height:16px;}
+.emp-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:20px;padding:5px 12px;font-size:11px;color:var(--gold);font-weight:700;white-space:nowrap;}
+.emp-row{display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(255,255,255,0.03);border:1px solid var(--bdr);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.emp-row-info{flex:1;text-align:right;}
+.emp-row-name{font-size:13px;font-weight:700;color:var(--text);}
+.emp-row-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+
 /* ══ FEATURE 13: Voice Commands ══ */
 .voice-fab{position:fixed;bottom:22px;left:22px;z-index:1200;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,0.5);display:flex;align-items:center;justify-content:center;font-size:22px;transition:all .2s;}
 .voice-fab:hover{transform:scale(1.1);}
@@ -1545,6 +1557,20 @@ label {
     <div id="pin-default-hint" style="margin-top:14px;font-size:10px;color:var(--muted);">الرمز الافتراضي: 1234</div>
   </div>
 </div>
+
+<!-- Employee Login Overlay -->
+<div id="emp-login-overlay" class="hidden">
+  <div class="emp-login-box">
+    <div style="font-size:28px;margin-bottom:8px;">👤</div>
+    <div style="color:var(--gold);font-size:16px;font-weight:700;">Dahab Trendy</div>
+    <div style="color:var(--muted);font-size:11px;margin-top:4px;"><span class="t" data-ar="تسجيل دخول الموظف" data-en="Staff Login">تسجيل دخول الموظف</span></div>
+    <input id="emp-login-user" type="text" placeholder="اسم المستخدم" autocomplete="username">
+    <input id="emp-login-pass" type="password" placeholder="كلمة المرور" autocomplete="current-password" onkeydown="if(event.key==='Enter') empTryLogin()">
+    <div class="emp-login-error" id="emp-login-error"></div>
+    <button class="btn bg" style="width:100%;margin-top:14px;" onclick="empTryLogin()">🔓 <span class="t" data-ar="دخول" data-en="Login">دخول</span></button>
+  </div>
+</div>
+
 <!-- Smart Notifications Container -->
 <div class="snotif-container" id="snotif-container"></div>
 
@@ -1582,6 +1608,7 @@ label {
 <!-- More Menu (slides up from bottom nav) -->
 <div id="bn-more-menu">
   <div class="bn-more-grid">
+    <div class="bn-more-item" id="bn-emp-badge-item" style="display:none;border-color:rgba(201,168,76,0.6);background:rgba(201,168,76,0.12);" onclick="empLogout()"><span class="bm-icon">🚪</span><span id="bn-emp-badge-text" style="font-size:11px;">خروج</span></div>
     <div class="bn-more-item" onclick="openOwnerDailyReport();closeBnMore()" style="position:relative;border-color:rgba(201,168,76,0.7);background:rgba(201,168,76,0.15);"><span class="bm-icon" style="color:var(--gold);">📋</span><span class="t" style="color:var(--gold);font-weight:700;" data-ar="تقرير المالك" data-en="Owner Report">تقرير المالك</span></div>
     <div class="bn-more-item" onclick="openMorningBriefing();closeBnMore()" style="border-color:rgba(245,197,24,0.5);background:rgba(245,197,24,0.1);"><span class="bm-icon" style="color:#f5c518;">☀️</span><span style="color:#f5c518;" class="t" data-ar="التقرير الصباحي" data-en="Morning Briefing">التقرير الصباحي</span></div>
     <div class="bn-more-item" onclick="openPDFReport();closeBnMore()" style="position:relative;border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);"><span class="bm-icon">📅</span><span class="t" data-ar="تقرير شهري" data-en="Monthly Report">تقرير شهري</span></div>
@@ -2523,6 +2550,10 @@ document.addEventListener('DOMContentLoaded', function(){
   <span id="nav-clock-time" style="font-size:15px;font-weight:700;color:var(--gold);font-family:monospace;letter-spacing:2px;"></span>
   <span id="nav-clock-date" style="font-size:9px;color:var(--muted);font-family:Arial,sans-serif;white-space:nowrap;"></span>
   <span id="nav-clock-hijri" style="font-size:9px;color:#7ab8f5;font-family:Arial,sans-serif;white-space:nowrap;"></span>
+</div>
+<div id="emp-nav-badge" style="display:none;align-items:center;gap:8px;margin-left:6px;">
+  <span class="emp-badge" id="emp-nav-badge-text"></span>
+  <button class="nb" style="padding:6px 10px;font-size:11px;" onclick="empLogout()">🚪 <span class="t" data-ar="خروج" data-en="Logout">خروج</span></button>
 </div>
 <button class="nb act" onclick="goPage('dashboard',this)">📊 <span class="t" data-ar="الرئيسية" data-en="Dashboard">Dashboard</span></button>
 <button class="nb" onclick="goPage('calendar',this)">🗓️ <span class="t" data-ar="التقويم" data-en="Calendar">Calendar</span></button>
@@ -4439,6 +4470,52 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 </div>
 <div id="pin-status" style="font-size:11px;margin-top:8px;"></div>
 </div>
+
+<!-- Employee Roles & Login Management -->
+<div class="card" style="border:1px solid rgba(155,89,182,0.35);background:rgba(155,89,182,0.04);">
+<div class="ctitle" style="color:#c39bd3;">👥 <span class="t" data-ar="نظام صلاحيات الموظفين" data-en="Staff Roles &amp; Login">نظام صلاحيات الموظفين</span></div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;"><span class="t" data-ar="لما تفعّل النظام، كل موظف بيسجل دخول بيوزرنيم وباسورد خاص بيه، ويشوف بس الصفحات المسموحة لدوره. المالك يشوف كل حاجة." data-en="Once enabled, each employee logs in with their own username and password, and only sees the pages allowed for their role. The owner sees everything.">لما تفعّل النظام، كل موظف بيسجل دخول بيوزرنيم وباسورد خاص بيه، ويشوف بس الصفحات المسموحة لدوره. المالك يشوف كل حاجة.</span></div>
+<div class="fld">
+  <label><span class="t" data-ar="تفعيل نظام دخول الموظفين" data-en="Enable staff login system">تفعيل نظام دخول الموظفين</span></label>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+    <input type="checkbox" id="emp-sys-enabled" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer;" onchange="empToggleSetting()">
+    <label for="emp-sys-enabled" style="letter-spacing:0;text-transform:none;font-size:13px;cursor:pointer;"><span class="t" data-ar="مفعّل" data-en="Enabled">مفعّل</span></label>
+  </div>
+</div>
+<div id="emp-mgmt-box" style="display:none;margin-top:14px;">
+  <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:10px;font-size:11px;color:#e0c068;margin-bottom:12px;line-height:1.7;">
+    <span class="t" data-ar="⚠️ حساب المالك الافتراضي أول ما تفعّل النظام:" data-en="⚠️ Default owner account when first enabled:">⚠️ حساب المالك الافتراضي أول ما تفعّل النظام:</span> <b>owner / owner123</b> — <span class="t" data-ar="غيّر كلمة المرور دي فورًا من هنا." data-en="change this password right away from here.">غيّر كلمة المرور دي فورًا من هنا.</span>
+  </div>
+  <div id="emp-list-wrap" style="margin-bottom:10px;"></div>
+  <button class="btn bg bsm" onclick="empOpenForm(null)" style="width:100%;">➕ <span class="t" data-ar="إضافة موظف" data-en="Add Employee">إضافة موظف</span></button>
+
+  <div id="emp-form-box" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(155,89,182,0.25);">
+    <div id="emp-form-title" style="font-size:13px;font-weight:700;color:#c39bd3;margin-bottom:8px;">➕ <span class="t" data-ar="إضافة موظف" data-en="Add Employee">إضافة موظف</span></div>
+    <div class="fld"><label><span class="t" data-ar="الاسم" data-en="Name">الاسم</span></label><input id="emp-f-name" placeholder="مثال: أحمد"></div>
+    <div class="fld mt"><label><span class="t" data-ar="اسم المستخدم" data-en="Username">اسم المستخدم</span></label><input id="emp-f-user" placeholder="username" style="direction:ltr;"></div>
+    <div class="fld mt"><label><span class="t" data-ar="كلمة المرور (اتركها فاضية لو مش عايز تغيّرها)" data-en="Password (leave blank to keep unchanged)">كلمة المرور (اتركها فاضية لو مش عايز تغيّرها)</span></label><input id="emp-f-pass" type="password" placeholder="••••••" style="direction:ltr;"></div>
+    <div class="fld mt">
+      <label><span class="t" data-ar="الدور / الصلاحيات" data-en="Role / Permissions">الدور / الصلاحيات</span></label>
+      <select id="emp-f-role">
+        <option value="reception" class="t" data-ar="ريسبشن" data-en="Reception">ريسبشن</option>
+        <option value="accountant" class="t" data-ar="محاسب" data-en="Accountant">محاسب</option>
+        <option value="housekeeping_role" class="t" data-ar="هاوس كيبينج" data-en="Housekeeping">هاوس كيبينج</option>
+        <option value="owner" class="t" data-ar="المالك (صلاحية كاملة)" data-en="Owner (full access)">المالك (صلاحية كاملة)</option>
+      </select>
+    </div>
+    <div class="fld mt" style="display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="emp-f-active" checked style="width:16px;height:16px;accent-color:var(--gold);">
+      <label style="letter-spacing:0;text-transform:none;font-size:12px;"><span class="t" data-ar="حساب فعّال (يقدر يسجل دخول)" data-en="Active account (can log in)">حساب فعّال (يقدر يسجل دخول)</span></label>
+    </div>
+    <div id="emp-form-error" style="color:#e74c3c;font-size:11px;margin-top:6px;min-height:14px;"></div>
+    <div class="flex mt">
+      <button class="btn bg" onclick="empSaveForm()" style="flex:1;">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ</span></button>
+      <button class="btn bb" onclick="empCloseForm()" style="flex:1;"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء</span></button>
+    </div>
+  </div>
+</div>
+</div>
+
 </div>
 <div>
 <div class="card">
@@ -16606,6 +16683,9 @@ function setLang(lang){
   if(typeof _restartVoiceForLang==='function') _restartVoiceForLang();
   if(typeof DTA_BRANCH!=='undefined') DTA_BRANCH.renderBranchSwitcher();
   if(typeof cb_renderPage==='function' && document.getElementById('page-chatbot')?.classList.contains('on')) cb_renderPage();
+  if(typeof empApplyLangUI==='function') empApplyLangUI();
+  if(typeof empRenderEmployeeList==='function' && document.getElementById('emp-mgmt-box')?.style.display!=='none') empRenderEmployeeList();
+  if(typeof empApplyPermissions==='function') empApplyPermissions();
 }
 function toggleLang(){
   currentLang = currentLang === "en" ? "ar" : "en";
@@ -16620,6 +16700,9 @@ function toggleLang(){
   if(typeof _restartVoiceForLang==='function') _restartVoiceForLang();
   if(typeof DTA_BRANCH!=='undefined') DTA_BRANCH.renderBranchSwitcher();
   if(typeof cb_renderPage==='function' && document.getElementById('page-chatbot')?.classList.contains('on')) cb_renderPage();
+  if(typeof empApplyLangUI==='function') empApplyLangUI();
+  if(typeof empRenderEmployeeList==='function' && document.getElementById('emp-mgmt-box')?.style.display!=='none') empRenderEmployeeList();
+  if(typeof empApplyPermissions==='function') empApplyPermissions();
 }
 function toggleLangMenu(){
   const menu = document.getElementById("lang-menu");
@@ -21852,6 +21935,7 @@ function pinSaveNewFromRecovery(){
   pinForgotClose();
   sNotify('✅ تم تغيير الرمز','تم حفظ رمز جديد والدخول للنظام','success',3500);
   if(typeof _resetIdleTimer==='function') _resetIdleTimer();
+  if(typeof empCheckLoginRequired==='function') setTimeout(empCheckLoginRequired, 200);
 }
 
 function _pinLockUntil(){ return parseInt(localStorage.getItem('dahab_pin_lock_until')||'0',10); }
@@ -21915,6 +21999,7 @@ function checkPIN(){
     localStorage.removeItem('dahab_pin_lock_until');
     sNotify('✅ تم الدخول','مرحباً بك في Dahab Trendy 🌊','success',2500);
     if(typeof _resetIdleTimer==='function') _resetIdleTimer();
+    if(typeof empCheckLoginRequired==='function') setTimeout(empCheckLoginRequired, 200);
   } else {
     const fails = (parseInt(localStorage.getItem('dahab_pin_fails')||'0',10)) + 1;
     if(fails >= PIN_MAX_ATTEMPTS){
@@ -22023,6 +22108,293 @@ function _resetIdleTimer(){
   document.addEventListener(evt, _resetIdleTimer, {passive:true});
 });
 _resetIdleTimer();
+
+// ═══════════════════════════════════════════════════════════
+// ══ FEATURE EMP: نظام دخول الموظفين والصلاحيات (Roles) ══
+// ═══════════════════════════════════════════════════════════
+const ALL_PAGE_IDS = ['dashboard','calendar','bookings','rooms','expenses','debt','groupbooking','roomlist','pricelist','invoice','restaurant','tours','events','chatbot','statusboard','settings','analytics','guestsreg','housekeeping','opsboard','eodclose','shiftchecklist','amanat','minibar','reviews','waitlist','airporttransfers','wakeup','lostandfound','guestreq','staffshift','guesthistory','dailyactivity'];
+
+const PAGE_LABELS = {
+  dashboard:{ar:'الرئيسية',en:'Dashboard'}, calendar:{ar:'التقويم',en:'Calendar'}, bookings:{ar:'الحجوزات',en:'Bookings'},
+  rooms:{ar:'الغرف',en:'Rooms'}, expenses:{ar:'المصروفات',en:'Expenses'}, debt:{ar:'مديونيات',en:'Debt'},
+  groupbooking:{ar:'حجز جروب',en:'Group Booking'}, roomlist:{ar:'قائمة الغرف',en:'Room List'}, pricelist:{ar:'قائمة الأسعار',en:'Price List'},
+  invoice:{ar:'الفاتورة',en:'Invoice'}, restaurant:{ar:'المطعم',en:'Restaurant'}, tours:{ar:'رحلات',en:'Tours'},
+  events:{ar:'أحداث',en:'Events'}, chatbot:{ar:'شات بوت',en:'Chatbot'}, statusboard:{ar:'لوحة الحالة',en:'Status Board'},
+  settings:{ar:'الإعدادات',en:'Settings'}, analytics:{ar:'تحليلات',en:'Analytics'}, guestsreg:{ar:'سجل الضيوف',en:'Guests Register'},
+  housekeeping:{ar:'هاوس كيبينج',en:'Housekeeping'}, opsboard:{ar:'لوحة يوم العمل',en:'Ops Board'}, eodclose:{ar:'تسوية آخر اليوم',en:'EOD Close'},
+  shiftchecklist:{ar:'قائمة الشيفت',en:'Shift Checklist'}, amanat:{ar:'الأمانات',en:'Valuables'}, minibar:{ar:'مينيبار',en:'Minibar'},
+  reviews:{ar:'التقييمات',en:'Reviews'}, waitlist:{ar:'قائمة الانتظار',en:'Waiting List'}, airporttransfers:{ar:'نقل المطار',en:'Airport Transfers'},
+  wakeup:{ar:'تنبيه الإيقاظ',en:'Wake-up Calls'}, lostandfound:{ar:'المفقودات',en:'Lost & Found'}, guestreq:{ar:'طلبات الضيوف',en:'Guest Requests'},
+  staffshift:{ar:'شيفت الموظفين',en:'Staff Shift'}, guesthistory:{ar:'سجل تاريخ الضيف',en:'Guest History'}, dailyactivity:{ar:'الأنشطة اليومية',en:'Daily Activity'}
+};
+
+const EMP_ROLE_DEFS = {
+  owner:{ar:'المالك',en:'Owner'},
+  reception:{ar:'ريسبشن',en:'Reception'},
+  accountant:{ar:'محاسب',en:'Accountant'},
+  housekeeping_role:{ar:'هاوس كيبينج',en:'Housekeeping'}
+};
+const EMP_DEFAULT_ROLE_PAGES = {
+  reception:['dashboard','calendar','bookings','rooms','groupbooking','roomlist','pricelist','invoice','guestsreg','guesthistory','debt','statusboard','waitlist','tours','events','dailyactivity','airporttransfers','wakeup','guestreq','lostandfound','amanat','minibar','opsboard','shiftchecklist','chatbot'],
+  accountant:['dashboard','expenses','analytics','debt','invoice','bookings','guestsreg','eodclose','reviews'],
+  housekeeping_role:['dashboard','housekeeping','rooms','roomlist','staffshift','lostandfound','minibar','shiftchecklist','opsboard','wakeup']
+};
+
+function empHash(str){
+  let h=0;
+  for(let i=0;i<str.length;i++){ h=((h<<5)-h)+str.charCodeAt(i); h=h&h; }
+  return Math.abs(h).toString(36);
+}
+function empGetAll(){ try{ return JSON.parse(localStorage.getItem('dta_employees'))||[]; }catch(e){ return []; } }
+function empSaveAll(list){ localStorage.setItem('dta_employees', JSON.stringify(list)); }
+function empIsEnabled(){ return localStorage.getItem('dta_emp_enabled')==='1'; }
+function empRolePagesOverride(){ try{ return JSON.parse(localStorage.getItem('dta_emp_role_pages'))||{}; }catch(e){ return {}; } }
+function empRolePages(role){
+  if(role==='owner') return ALL_PAGE_IDS.slice();
+  const overrides = empRolePagesOverride();
+  if(overrides[role]) return overrides[role].slice();
+  return (EMP_DEFAULT_ROLE_PAGES[role]||[]).slice();
+}
+function empEnsureDefaultOwner(){
+  const list = empGetAll();
+  if(list.length===0){
+    list.push({id:'emp_'+Date.now(), name:'المالك / Owner', username:'owner', passHash:empHash('owner123'), role:'owner', active:true});
+    empSaveAll(list);
+  }
+}
+function empCurrentSession(){ try{ return JSON.parse(localStorage.getItem('dta_emp_session'))||null; }catch(e){ return null; } }
+function empCurrentEmployee(){
+  const s = empCurrentSession();
+  if(!s) return null;
+  const list = empGetAll();
+  return list.find(function(e){ return e.id===s.id && e.active!==false; }) || null;
+}
+function empAllowedPages(){
+  if(!empIsEnabled()) return null; // مفيش تقييد
+  const emp = empCurrentEmployee();
+  if(!emp) return []; // لسه مسجلش دخول
+  if(emp.role==='owner') return null; // صلاحية كاملة
+  return empRolePages(emp.role);
+}
+function empCanAccess(pageId){
+  const allowed = empAllowedPages();
+  return allowed===null || allowed.indexOf(pageId) !== -1;
+}
+function empLangIsEn(){ return (typeof currentLang!=='undefined' ? currentLang : (document.documentElement.lang||'ar')) === 'en'; }
+function empApplyLangUI(){
+  const en = empLangIsEn();
+  const u = document.getElementById('emp-login-user');
+  const p = document.getElementById('emp-login-pass');
+  if(u) u.placeholder = en ? 'Username' : 'اسم المستخدم';
+  if(p) p.placeholder = en ? 'Password' : 'كلمة المرور';
+  const fu = document.getElementById('emp-f-user');
+  if(fu) fu.placeholder = 'username';
+  const fp = document.getElementById('emp-f-pass');
+  if(fp) fp.placeholder = en ? 'Leave blank to keep unchanged' : '••••••';
+  const fn = document.getElementById('emp-f-name');
+  if(fn) fn.placeholder = en ? 'e.g. Ahmed' : 'مثال: أحمد';
+}
+function empShowLogin(){
+  const ov = document.getElementById('emp-login-overlay');
+  if(!ov) return;
+  document.getElementById('emp-login-user').value='';
+  document.getElementById('emp-login-pass').value='';
+  document.getElementById('emp-login-error').textContent='';
+  ov.classList.remove('hidden');
+  empApplyLangUI();
+  setTimeout(function(){ const u=document.getElementById('emp-login-user'); if(u) u.focus(); },200);
+}
+function empTryLogin(){
+  const uEl=document.getElementById('emp-login-user'), pEl=document.getElementById('emp-login-pass'), errEl=document.getElementById('emp-login-error');
+  const en0 = empLangIsEn();
+  const u=(uEl.value||'').trim().toLowerCase(), p=pEl.value||'';
+  if(!u || !p){ errEl.textContent = en0?'Please enter username and password':'من فضلك أدخل اسم المستخدم وكلمة المرور'; return; }
+  const list = empGetAll();
+  const emp = list.find(function(e){ return e.username.toLowerCase()===u && e.active!==false; });
+  if(!emp || emp.passHash !== empHash(p)){
+    errEl.textContent = en0 ? '❌ Incorrect login details' : '❌ بيانات الدخول غير صحيحة';
+    return;
+  }
+  localStorage.setItem('dta_emp_session', JSON.stringify({id:emp.id, ts:Date.now()}));
+  document.getElementById('emp-login-overlay').classList.add('hidden');
+  const en = empLangIsEn();
+  const roleLbl = emp.role==='owner' ? (en?'Owner':'المالك') : (EMP_ROLE_DEFS[emp.role]?(en?EMP_ROLE_DEFS[emp.role].en:EMP_ROLE_DEFS[emp.role].ar):emp.role);
+  if(typeof sNotify==='function') sNotify((en?'✅ Welcome ':'✅ أهلاً ')+emp.name, roleLbl, 'success', 3000);
+  empApplyPermissions();
+}
+function empLogout(){
+  localStorage.removeItem('dta_emp_session');
+  location.reload();
+}
+function empCheckLoginRequired(){
+  if(!empIsEnabled()) return;
+  empEnsureDefaultOwner();
+  const emp = empCurrentEmployee();
+  if(!emp){ empShowLogin(); } else { empApplyPermissions(); }
+}
+function empApplyPermissions(){
+  const emp = empCurrentEmployee();
+  const badgeD = document.getElementById('emp-nav-badge');
+  const badgeText = document.getElementById('emp-nav-badge-text');
+  const bnBadgeItem = document.getElementById('bn-emp-badge-item');
+  const bnBadgeText = document.getElementById('bn-emp-badge-text');
+  if(emp){
+    const en = empLangIsEn();
+    const roleLabel = emp.role==='owner' ? (en?'Owner':'المالك') : (EMP_ROLE_DEFS[emp.role]?(en?EMP_ROLE_DEFS[emp.role].en:EMP_ROLE_DEFS[emp.role].ar):emp.role);
+    if(badgeD) badgeD.style.display='flex';
+    if(badgeText) badgeText.textContent='👤 '+emp.name+' · '+roleLabel;
+    if(bnBadgeItem) bnBadgeItem.style.display='';
+    if(bnBadgeText) bnBadgeText.textContent=(en?'🚪 Logout (':'🚪 خروج (')+emp.name+')';
+  } else {
+    if(badgeD) badgeD.style.display='none';
+    if(bnBadgeItem) bnBadgeItem.style.display='none';
+  }
+  empFilterNav();
+  const allowed = empAllowedPages();
+  if(allowed !== null){
+    const activePage = document.querySelector('.page.on');
+    const activeId = activePage ? activePage.id.replace('page-','') : null;
+    if(activeId && allowed.indexOf(activeId)===-1){
+      const fallback = allowed.indexOf('dashboard')!==-1 ? 'dashboard' : allowed[0];
+      if(fallback && typeof goPage==='function') goPage(fallback, null);
+    }
+  }
+}
+function empFilterNav(){
+  const allowed = empAllowedPages();
+  document.querySelectorAll('.nav .nb[onclick]').forEach(function(btn){
+    const m = btn.getAttribute('onclick').match(/goPage\('([a-z]+)'/);
+    if(m){
+      const pid=m[1];
+      btn.style.display = (allowed===null || allowed.indexOf(pid)!==-1) ? '' : 'none';
+    } else if(btn.id==='branch-switch-btn'){
+      btn.style.display = (allowed===null) ? '' : 'none';
+    }
+  });
+  document.querySelectorAll('#bottom-nav .bn-item[onclick]').forEach(function(btn){
+    const m = btn.getAttribute('onclick').match(/bnGo\('([a-z]+)'/);
+    if(m){
+      const pid=m[1];
+      btn.style.display = (allowed===null || allowed.indexOf(pid)!==-1) ? '' : 'none';
+    }
+  });
+  document.querySelectorAll('#bn-more-menu .bn-more-item').forEach(function(item){
+    if(item.id==='bn-emp-badge-item') return;
+    const onclickAttr = item.getAttribute('onclick')||'';
+    const m = onclickAttr.match(/bnGo\('([a-z]+)'/);
+    if(m){
+      const pid=m[1];
+      item.style.display = (allowed===null || allowed.indexOf(pid)!==-1) ? '' : 'none';
+    } else {
+      item.style.display = (allowed===null) ? '' : 'none';
+    }
+  });
+}
+
+// تشغيل تلقائي عند فتح التطبيق — لو قفل PIN معطّل، نتحقق من دخول الموظف فورًا
+document.addEventListener('DOMContentLoaded', function(){
+  if(!isPINEnabled()){
+    setTimeout(empCheckLoginRequired, 350);
+  }
+});
+
+// ══ إدارة الموظفين من صفحة الإعدادات ══
+let _empEditingId = null;
+function empToggleSetting(){
+  const cb = document.getElementById('emp-sys-enabled');
+  const box = document.getElementById('emp-mgmt-box');
+  const en = empLangIsEn();
+  if(cb.checked){
+    localStorage.setItem('dta_emp_enabled','1');
+    empEnsureDefaultOwner();
+    box.style.display='block';
+    if(typeof sNotify==='function') sNotify(en?'✅ Staff login system enabled':'✅ نظام صلاحيات الموظفين مفعّل', en?'Default owner account: owner / owner123 — change the password immediately':'حساب المالك الافتراضي: owner / owner123 — غيّر كلمة المرور فورًا','success',5000);
+  } else {
+    localStorage.removeItem('dta_emp_enabled');
+    box.style.display='none';
+  }
+  empRenderEmployeeList();
+  empApplyPermissions();
+}
+function empRenderEmployeeList(){
+  const wrap = document.getElementById('emp-list-wrap');
+  if(!wrap) return;
+  const en = empLangIsEn();
+  const list = empGetAll();
+  if(list.length===0){ wrap.innerHTML='<div style="font-size:11px;color:var(--muted);">'+(en?'No employees yet':'لا يوجد موظفين بعد')+'</div>'; return; }
+  wrap.innerHTML = list.map(function(e){
+    const roleLbl = e.role==='owner' ? (en?'Owner':'المالك') : (EMP_ROLE_DEFS[e.role]?(en?EMP_ROLE_DEFS[e.role].en:EMP_ROLE_DEFS[e.role].ar):e.role);
+    const inactiveLbl = en ? ' · ⛔ Suspended' : ' · ⛔ موقوف';
+    return '<div class="emp-row">'
+      +'<div class="emp-row-info"><div class="emp-row-name">'+e.name+' <span style="color:var(--muted);font-size:10px;">('+e.username+')</span></div>'
+      +'<div class="emp-row-meta">'+roleLbl+(e.active===false?inactiveLbl:'')+'</div></div>'
+      +'<div style="display:flex;gap:6px;">'
+      +'<button class="btn bb bsm" onclick="empOpenForm(\''+e.id+'\')">✏️</button>'
+      +'<button class="btn br bsm" onclick="empDeleteEmployee(\''+e.id+'\')">🗑️</button>'
+      +'</div></div>';
+  }).join('');
+}
+function empOpenForm(id){
+  _empEditingId = id || null;
+  const emp = id ? empGetAll().find(function(e){return e.id===id;}) : null;
+  const en = empLangIsEn();
+  document.getElementById('emp-form-title').textContent = emp ? (en?'✏️ Edit Employee':'✏️ تعديل موظف') : (en?'➕ Add Employee':'➕ إضافة موظف');
+  document.getElementById('emp-f-name').value = emp ? emp.name : '';
+  document.getElementById('emp-f-user').value = emp ? emp.username : '';
+  document.getElementById('emp-f-pass').value = '';
+  document.getElementById('emp-f-role').value = emp ? emp.role : 'reception';
+  document.getElementById('emp-f-active').checked = emp ? emp.active!==false : true;
+  document.getElementById('emp-form-error').textContent='';
+  document.getElementById('emp-form-box').style.display='block';
+  empApplyLangUI();
+}
+function empCloseForm(){ document.getElementById('emp-form-box').style.display='none'; _empEditingId=null; }
+function empSaveForm(){
+  const en = empLangIsEn();
+  const name=(document.getElementById('emp-f-name').value||'').trim();
+  const user=(document.getElementById('emp-f-user').value||'').trim().toLowerCase();
+  const pass=document.getElementById('emp-f-pass').value||'';
+  const role=document.getElementById('emp-f-role').value;
+  const active=document.getElementById('emp-f-active').checked;
+  const errEl=document.getElementById('emp-form-error');
+  if(!name || !user){ errEl.textContent = en?'Please enter the name and username':'من فضلك أدخل الاسم واسم المستخدم'; return; }
+  const list = empGetAll();
+  const dup = list.find(function(e){ return e.username.toLowerCase()===user && e.id!==_empEditingId; });
+  if(dup){ errEl.textContent = en?'This username is already taken':'اسم المستخدم ده مستخدم بالفعل'; return; }
+  if(_empEditingId){
+    const emp = list.find(function(e){return e.id===_empEditingId;});
+    if(!emp){ errEl.textContent = en?'Unexpected error':'خطأ غير متوقع'; return; }
+    emp.name=name; emp.username=user; emp.role=role; emp.active=active;
+    if(pass) emp.passHash=empHash(pass);
+  } else {
+    if(!pass || pass.length<4){ errEl.textContent = en?'Password must be at least 4 characters':'كلمة المرور 4 حروف/أرقام على الأقل'; return; }
+    list.push({id:'emp_'+Date.now(), name:name, username:user, passHash:empHash(pass), role:role, active:active});
+  }
+  empSaveAll(list);
+  empCloseForm();
+  empRenderEmployeeList();
+  if(typeof sNotify==='function') sNotify(en?'✅ Saved':'✅ تم الحفظ', en?'Employee data saved':'بيانات الموظف اتحفظت','success',2500);
+}
+function empDeleteEmployee(id){
+  const en = empLangIsEn();
+  const list = empGetAll();
+  const emp = list.find(function(e){return e.id===id;});
+  if(emp && emp.role==='owner' && list.filter(function(e){return e.role==='owner' && e.active!==false;}).length<=1){
+    if(typeof sNotify==='function') sNotify(en?'⚠️ Not allowed':'⚠️ غير مسموح', en?'At least one active owner account must remain':'لازم يفضل حساب مالك واحد فعّال على الأقل','error',3500);
+    return;
+  }
+  if(!confirm(en?'Confirm delete this employee?':'تأكيد حذف الموظف؟')) return;
+  empSaveAll(list.filter(function(e){return e.id!==id;}));
+  empRenderEmployeeList();
+}
+function empLoadSettingsUI(){
+  const cb = document.getElementById('emp-sys-enabled');
+  if(!cb) return;
+  cb.checked = empIsEnabled();
+  document.getElementById('emp-mgmt-box').style.display = empIsEnabled() ? 'block':'none';
+  empRenderEmployeeList();
+  empApplyLangUI();
+}
 
 // ═══════════════════════════════════════════════════════════
 // ══ FEATURE 11: ADVANCED ANALYTICS (v20 Enhanced) ══
@@ -22807,7 +23179,7 @@ const _origGoPage = goPage;
 goPage = function(id, btn){
   _origGoPage(id, btn);
   if(id === 'analytics') renderAnalytics();
-  if(id === 'settings') { loadPINSettings(); loadAIKeyToSettings(); }
+  if(id === 'settings') { loadPINSettings(); loadAIKeyToSettings(); if(typeof empLoadSettingsUI==='function') empLoadSettingsUI(); }
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -39840,5 +40212,40 @@ window.ownerTxSave            = ownerTxSave;
     </style>`;
   document.body.appendChild(splash);
   setTimeout(()=>{splash.style.opacity='0';setTimeout(()=>splash.remove(),650);},2200);
+})();
+
+// ══════════════════════════════════════════════════════
+// ══ FEATURE EMP: حارس نهائي للصلاحيات — يلف حول كل نسخ goPage/bnGo السابقة ══
+// لازم يفضل آخر كود بيلمس goPage/bnGo في الملف عشان يضمن إن أي محاولة
+// دخول لصفحة غير مسموحة تتوقف قبل أي رندر، حتى لو في كود قديم بيحاول
+// يفتح الصفحة بطريقة مباشرة.
+// ══════════════════════════════════════════════════════
+(function(){
+  const _finalGoPage = window.goPage;
+  if(typeof _finalGoPage === 'function'){
+    window.goPage = function(id, btn){
+      if(typeof empCanAccess === 'function' && !empCanAccess(id)){
+        const en = (typeof empLangIsEn==='function') ? empLangIsEn() : (document.documentElement.lang==='en');
+        const msg = en ? "You don't have permission to access this page" : 'ماعندكش صلاحية الوصول للصفحة دي';
+        if(typeof sNotify === 'function') sNotify('🚫 '+(en?'Denied':'ممنوع'), msg, 'error', 3000);
+        else if(typeof notify === 'function') notify('🚫 '+msg, 'error');
+        return;
+      }
+      _finalGoPage(id, btn);
+    };
+  }
+  const _finalBnGo = window.bnGo;
+  if(typeof _finalBnGo === 'function'){
+    window.bnGo = function(pageId, clickedBtn){
+      if(typeof empCanAccess === 'function' && !empCanAccess(pageId)){
+        const en = (typeof empLangIsEn==='function') ? empLangIsEn() : (document.documentElement.lang==='en');
+        const msg = en ? "You don't have permission to access this page" : 'ماعندكش صلاحية الوصول للصفحة دي';
+        if(typeof sNotify === 'function') sNotify('🚫 '+(en?'Denied':'ممنوع'), msg, 'error', 3000);
+        else if(typeof notify === 'function') notify('🚫 '+msg, 'error');
+        return;
+      }
+      _finalBnGo(pageId, clickedBtn);
+    };
+  }
 })();
 </script>
