@@ -78,9 +78,13 @@
     const planName = { B:'Basic', P:'Pro', E:'Enterprise' }[payload.pl] || 'Pro';
     return { valid:true, plan:planName, expiry:expiryDisplay, daysLeft: isLifetime?9999:daysLeft, isLifetime, hotel: { n:payload.n, a:payload.a||'', p:payload.p||'', e:payload.e||'' } };
   }
+  function cleanKeyInput(raw) {
+    return (raw || '').replace(/[\u200B-\u200F\u2028-\u202E\u2060-\u2069\uFEFF\s]/g, '');
+  }
   function validateKey(rawKey) {
     if (!rawKey) return { valid: false, reason: 'no_key' };
-    const trimmed = rawKey.trim();
+    const trimmed = cleanKeyInput(rawKey);
+    if (!trimmed) return { valid: false, reason: 'no_key' };
     if (trimmed.indexOf('.') !== -1) {
       const v2 = validateKeyV2(trimmed);
       if (v2) return v2;
