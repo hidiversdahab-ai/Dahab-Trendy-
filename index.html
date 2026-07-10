@@ -10,7 +10,7 @@
 ╚══════════════════════════════════════════════════════════════╝
 -->
 <!-- ═══════════════════════════════════════════════════
-     LICENSE SYSTEM — Dahab Trendy
+     LICENSE SYSTEM — Dahab Trendy (v2: hotel-branded keys)
      لا تعدّل هذا القسم
 ════════════════════════════════════════════════════ -->
 <script>
@@ -25,8 +25,12 @@
     }
     return Math.abs(hash).toString(36).toUpperCase().padStart(6, '0');
   }
-  function validateKey(key) {
-    if (!key) return { valid: false, reason: 'no_key' };
+  function b64DecodeUnicode(str) {
+    return decodeURIComponent(Array.prototype.map.call(atob(str), function(c){
+      return '%' + ('00'+c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+  }
+  function validateKeyLegacy(key) {
     key = key.trim().toUpperCase();
     const parts = key.split('-');
     if (parts.length !== 5 || parts[4] !== 'HOTEL') return { valid: false, reason: 'bad_format' };
@@ -48,7 +52,44 @@
     const planName = { B1:'Basic', P2:'Pro', E3:'Enterprise' }[planCode] || 'Pro';
     const isLifetime = year >= 2099;
     const expiryDisplay = isLifetime ? 'دائم' : expiryDate.toLocaleDateString('ar-EG', { year:'numeric', month:'long', day:'numeric' });
-    return { valid: true, plan: planName, expiry: expiryDisplay, daysLeft: isLifetime ? 9999 : daysLeft, isLifetime };
+    return { valid: true, plan: planName, expiry: expiryDisplay, daysLeft: isLifetime ? 9999 : daysLeft, isLifetime, hotel: null };
+  }
+  function validateKeyV2(trimmed) {
+    const idx = trimmed.lastIndexOf('.');
+    if (idx === -1) return null;
+    const payloadB64 = trimmed.slice(0, idx);
+    const sig = trimmed.slice(idx+1);
+    if (simpleHash(SECRET + payloadB64) !== sig) return { valid:false, reason:'tampered' };
+    let payload;
+    try { payload = JSON.parse(b64DecodeUnicode(payloadB64)); } catch(e){ return { valid:false, reason:'bad_format' }; }
+    if (!payload || !payload.n || !payload.x) return { valid:false, reason:'bad_format' };
+    let isLifetime = false, daysLeft = 9999, expiryDisplay = 'دائم';
+    if (payload.x !== 'LIFETIME') {
+      const expiryDate = new Date(payload.x + 'T00:00:00');
+      const today = new Date(); today.setHours(0,0,0,0);
+      if (isNaN(expiryDate.getTime())) return { valid:false, reason:'bad_date' };
+      if (expiryDate < today) {
+        const d = expiryDate.toLocaleDateString('ar-EG', { year:'numeric', month:'long', day:'numeric' });
+        return { valid:false, reason:'expired', expiry:d };
+      }
+      daysLeft = Math.ceil((expiryDate - today) / (1000*60*60*24));
+      expiryDisplay = expiryDate.toLocaleDateString('ar-EG', { year:'numeric', month:'long', day:'numeric' });
+    }
+    const planName = { B:'Basic', P:'Pro', E:'Enterprise' }[payload.pl] || 'Pro';
+    return { valid:true, plan:planName, expiry:expiryDisplay, daysLeft: isLifetime?9999:daysLeft, isLifetime, hotel: { n:payload.n, a:payload.a||'', p:payload.p||'', e:payload.e||'' } };
+  }
+  function validateKey(rawKey) {
+    if (!rawKey) return { valid: false, reason: 'no_key' };
+    const trimmed = rawKey.trim();
+    if (trimmed.indexOf('.') !== -1) {
+      const v2 = validateKeyV2(trimmed);
+      if (v2) return v2;
+    }
+    return validateKeyLegacy(trimmed);
+  }
+  function applyHotelInfo(result) {
+    if (result && result.hotel) localStorage.setItem('_sys_lic_hotel', JSON.stringify(result.hotel));
+    else localStorage.removeItem('_sys_lic_hotel');
   }
   function showLicenseScreen(reason, expiry) {
     document.documentElement.style.overflow = 'hidden';
@@ -65,12 +106,12 @@
       + '<p style="color:#7a8fa6;font-size:13px;margin-bottom:24px;line-height:1.7;">' + subtitle + '</p>'
       + '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:20px;margin-bottom:16px;">'
       + '<label style="display:block;color:#c9a84c;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">🔑 أدخل License Key</label>'
-      + '<input id="license-input" type="text" placeholder="XXXX-XXXX-XXXX-XXXX-HOTEL" style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:12px;color:#f0e6cc;font-size:14px;outline:none;text-align:center;letter-spacing:2px;direction:ltr;font-family:Arial,sans-serif;" oninput="this.value=this.value.toUpperCase()">'
+      + '<textarea id="license-input" rows="3" placeholder="الصق مفتاح الترخيص هنا" style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:12px;color:#f0e6cc;font-size:12px;outline:none;text-align:center;direction:ltr;font-family:monospace;word-break:break-all;resize:vertical;"></textarea>'
       + '<div id="license-error" style="display:none;color:#e74c3c;font-size:12px;margin-top:8px;"></div>'
       + '<button onclick="window._activateLicense()" style="width:100%;margin-top:12px;padding:13px;background:#c9a84c;color:#1a1a2e;border:none;border-radius:8px;font-size:15px;font-weight:800;cursor:pointer;font-family:Arial,sans-serif;">✅ تفعيل النظام</button>'
       + '</div>'
       + '<p style="color:#4a5a6a;font-size:11px;">للحصول على ترخيص تواصل مع مطور النظام</p>'
-      + '<p style="color:#2a3a4a;font-size:10px;margin-top:6px;">© Dahab Trendy System — All Rights Reserved</p>'
+      + '<p style="color:#2a3a4a;font-size:10px;margin-top:6px;">© ' + PROP.name + ' System — All Rights Reserved</p>'
       + '</div>';
     document.body ? document.body.appendChild(overlay) : document.addEventListener('DOMContentLoaded', function(){ document.body.appendChild(overlay); });
     window._activateLicense = function() {
@@ -79,23 +120,24 @@
       const errEl = document.getElementById('license-error');
       if (!result.valid) {
         errEl.style.display = 'block';
-        const msgs = { no_key:'⚠️ أدخل الـ Key أولاً', bad_format:'❌ Key غير صحيح — تحقق من الكتابة', bad_date:'❌ Key تالف — تواصل مع المطور', expired:'❌ هذا الـ Key منتهي الصلاحية — انتهى في ' + result.expiry };
+        const msgs = { no_key:'⚠️ أدخل الـ Key أولاً', bad_format:'❌ Key غير صحيح — تحقق من النسخ', bad_date:'❌ Key تالف — تواصل مع المطور', tampered:'❌ Key غير صالح', expired:'❌ هذا الـ Key منتهي الصلاحية — انتهى في ' + result.expiry };
         errEl.textContent = msgs[result.reason] || '❌ Key غير صحيح';
         return;
       }
       localStorage.setItem('_sys_lic', key);
       localStorage.setItem('_sys_lic_info', JSON.stringify(result));
+      applyHotelInfo(result);
       document.getElementById('license-overlay').remove();
       document.documentElement.style.overflow = '';
       const toast = document.createElement('div');
-      toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2ecc71;color:#fff;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;z-index:999999;font-family:Arial,sans-serif;';
-      toast.textContent = '✅ تم التفعيل — ' + result.plan + ' — ' + (result.isLifetime ? 'دائم' : 'متبقي ' + result.daysLeft + ' يوم');
+      toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2ecc71;color:#fff;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;z-index:999999;font-family:Arial,sans-serif;text-align:center;max-width:90%;';
+      toast.textContent = '✅ ' + (result.hotel && result.hotel.n ? result.hotel.n + ' — ' : '') + 'تم التفعيل — ' + result.plan + ' — ' + (result.isLifetime ? 'دائم' : 'متبقي ' + result.daysLeft + ' يوم');
       document.body.appendChild(toast);
-      setTimeout(function(){ toast.remove(); }, 4000);
+      setTimeout(function(){ toast.remove(); location.reload(); }, 1800);
     };
     setTimeout(function(){
       var inp = document.getElementById('license-input');
-      if(inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') window._activateLicense(); });
+      if(inp) inp.focus();
     }, 100);
   }
   function checkLicense() {
@@ -103,6 +145,7 @@
     if (savedKey) {
       var result = validateKey(savedKey);
       if (result.valid) {
+        applyHotelInfo(result);
         if (!result.isLifetime && result.daysLeft <= 14) {
           document.addEventListener('DOMContentLoaded', function(){
             setTimeout(function(){
@@ -137,7 +180,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Dahab Trendy">
+<meta name="apple-mobile-web-app-title" content="" + PROP.name + "">
 <!-- Google Identity Services for Drive Sync -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <!-- Google Fonts: Inter + Tajawal (Arabic) -->
@@ -1476,7 +1519,7 @@ label {
 <meta name="theme-color" content="#0f0f1a" id="theme-color-meta">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Dahab Trendy">
+<meta name="apple-mobile-web-app-title" content="" + PROP.name + "">
 </head>
 <body>
 <script>
@@ -1496,7 +1539,7 @@ label {
 
 <!-- PWA Install Bar -->
 <div id="pwa-install-bar">
-  <span>📱 ثبّت Dahab Trendy على هاتفك للوصول السريع!</span>
+  <span id="pwa-install-text">📱 ثبّت Dahab Trendy على هاتفك للوصول السريع!</span>
   <button class="btn bg bsm" onclick="installPWA()">تثبيت الآن</button>
   <button class="btn bb bsm" onclick="document.getElementById('pwa-install-bar').classList.remove('show')">لاحقاً</button>
 </div>
@@ -1505,7 +1548,7 @@ label {
 <div id="pin-overlay" class="hidden">
   <div class="pin-box">
     <div style="font-size:28px;margin-bottom:8px;">🔐</div>
-    <div style="color:var(--gold);font-size:16px;font-weight:700;letter-spacing:1px;">Dahab Trendy</div>
+    <div id="pin-brand-title" style="color:var(--gold);font-size:16px;font-weight:700;letter-spacing:1px;">Dahab Trendy</div>
     <div style="color:var(--muted);font-size:11px;margin-top:4px;" id="pin-subtitle">أدخل رمز الدخول</div>
 
     <div id="pin-normal-panel">
@@ -1562,7 +1605,7 @@ label {
 <div id="emp-login-overlay" class="hidden">
   <div class="emp-login-box">
     <div style="font-size:28px;margin-bottom:8px;">👤</div>
-    <div style="color:var(--gold);font-size:16px;font-weight:700;">Dahab Trendy</div>
+    <div id="emp-brand-title" style="color:var(--gold);font-size:16px;font-weight:700;">Dahab Trendy</div>
     <div style="color:var(--muted);font-size:11px;margin-top:4px;"><span class="t" data-ar="تسجيل دخول الموظف" data-en="Staff Login">تسجيل دخول الموظف</span></div>
     <input id="emp-login-user" type="text" placeholder="اسم المستخدم" autocomplete="username">
     <input id="emp-login-pass" type="password" placeholder="كلمة المرور" autocomplete="current-password" onkeydown="if(event.key==='Enter') empTryLogin()">
@@ -4126,7 +4169,7 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 
   <!-- Header رأس النموذج -->
   <div style="text-align:center;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid #c9a84c;">
-    <div contenteditable="true" style="font-size:20px;font-weight:700;color:#1a1a2e;letter-spacing:1px;outline:none;border-bottom:1px dashed #c9a84c;display:inline-block;min-width:200px;padding:2px 6px;cursor:text;" title="اضغط للتعديل">Dahab Trendy Accommodation</div>
+    <div contenteditable="true" style="font-size:20px;font-weight:700;color:#1a1a2e;letter-spacing:1px;outline:none;border-bottom:1px dashed #c9a84c;display:inline-block;min-width:200px;padding:2px 6px;cursor:text;" title="اضغط للتعديل">' + PROP.name + '</div>
     <div contenteditable="true" style="font-size:13px;color:#555;margin-top:6px;outline:none;border-bottom:1px dashed #ccc;display:inline-block;min-width:300px;padding:2px 6px;cursor:text;" title="اضغط للتعديل">دهب تريندي للإقامة — وسط مدينة دهب، جنوب سيناء، مصر</div>
     <div contenteditable="true" style="font-size:11px;color:#888;margin-top:6px;outline:none;border-bottom:1px dashed #ccc;display:inline-block;min-width:280px;padding:2px 6px;cursor:text;" title="اضغط للتعديل">📞 +20 109 953 1272 &nbsp;|&nbsp; ✉️ dahabtrendyinn@gmail.com</div>
     <div style="margin-top:10px;display:flex;justify-content:center;gap:30px;font-size:12px;color:#333;flex-wrap:wrap;">
@@ -4166,7 +4209,7 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
     <div style="text-align:center;border-top:1px solid #999;padding-top:6px;" contenteditable="true" title="اضغط للتعديل" style="outline:none;cursor:text;">تاريخ التسليم</div>
   </div>
   <div contenteditable="true" title="اضغط للتعديل" style="margin-top:16px;text-align:center;font-size:9px;color:#aaa;border-top:1px solid #eee;padding-top:8px;outline:none;cursor:text;">
-    تم إنشاؤه بواسطة نظام Dahab Trendy الإلكتروني
+    تم إنشاؤه بواسطة نظام ' + PROP.name + ' الإلكتروني
   </div>
 
 </div><!-- end gr-print-area -->
@@ -4516,6 +4559,35 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 </div>
 </div>
 
+<!-- Hotel Info -->
+<div class="card" style="border:1px solid rgba(46,204,113,0.35);background:rgba(46,204,113,0.04);">
+<div class="ctitle" style="color:#58d68d;">🏨 <span class="t" data-ar="معلومات الفندق" data-en="Hotel Info">معلومات الفندق</span></div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;"><span class="t" data-ar="عدّل اسم وبيانات فندقك، وهتتغير في كل التطبيق فورًا (الطباعات، الواتساب، الفواتير) من غير ما تحتاج مفتاح ترخيص." data-en="Edit your hotel's info and it updates everywhere instantly (prints, WhatsApp, invoices) without needing a license key.">عدّل اسم وبيانات فندقك، وهتتغير في كل التطبيق فورًا (الطباعات، الواتساب، الفواتير) من غير ما تحتاج مفتاح ترخيص.</span></div>
+<div class="fld"><label><span class="t" data-ar="اسم الفندق" data-en="Hotel Name">اسم الفندق</span></label><input id="prop-f-name" placeholder="Dahab Trendy Accommodation"></div>
+<div class="fld mt"><label><span class="t" data-ar="العنوان" data-en="Address">العنوان</span></label><input id="prop-f-address" placeholder="Dahab, South Sinai, Egypt"></div>
+<div class="row-fld mt" style="display:flex;gap:8px;">
+  <div class="fld" style="flex:1;"><label><span class="t" data-ar="الهاتف" data-en="Phone">الهاتف</span></label><input id="prop-f-phone" style="direction:ltr;"></div>
+  <div class="fld" style="flex:1;"><label><span class="t" data-ar="الإيميل" data-en="Email">الإيميل</span></label><input id="prop-f-email" style="direction:ltr;"></div>
+</div>
+<div id="prop-form-error" style="color:#e74c3c;font-size:11px;margin-top:6px;min-height:14px;"></div>
+<div class="flex mt" style="display:flex;gap:8px;">
+  <button class="btn bg" onclick="propSaveHotelInfo()" style="flex:1;">💾 <span class="t" data-ar="حفظ" data-en="Save">حفظ</span></button>
+  <button class="btn bb" onclick="propResetHotelInfo()" style="flex:1;">↩️ <span class="t" data-ar="رجوع للافتراضي" data-en="Reset to default">رجوع للافتراضي</span></button>
+</div>
+</div>
+
+<!-- Rooms Management -->
+<div class="card" style="border:1px solid rgba(52,152,219,0.35);background:rgba(52,152,219,0.04);">
+<div class="ctitle" style="color:#5dade2;">🚪 <span class="t" data-ar="إدارة الغرف" data-en="Rooms Management">إدارة الغرف</span></div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;"><span class="t" data-ar="ضيف أو احذف غرف من هنا. الغرفة المشغولة أو المحجوزة حاليًا مينفعش تتحذف." data-en="Add or remove rooms from here. A room that is currently occupied or reserved cannot be removed.">ضيف أو احذف غرف من هنا. الغرفة المشغولة أو المحجوزة حاليًا مينفعش تتحذف.</span></div>
+<div id="rooms-mgmt-list" style="margin-bottom:12px;"></div>
+<div style="display:flex;gap:8px;">
+  <input id="rooms-add-input" placeholder="مثال: 115" style="flex:1;direction:ltr;" onkeydown="if(event.key==='Enter') roomsAddFromUI()">
+  <button class="btn bg bsm" onclick="roomsAddFromUI()">➕ <span class="t" data-ar="إضافة" data-en="Add">إضافة</span></button>
+</div>
+<div id="rooms-add-error" style="color:#e74c3c;font-size:11px;margin-top:6px;min-height:14px;"></div>
+</div>
+
 </div>
 <div>
 <div class="card">
@@ -4557,11 +4629,11 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <!-- ══ About Card ══ -->
 <div class="card" style="margin-top:16px;background:linear-gradient(135deg,rgba(201,168,76,0.07),rgba(155,89,182,0.07));border:1px solid rgba(201,168,76,0.3);border-radius:16px;padding:20px;text-align:center;">
   <div style="font-size:28px;margin-bottom:8px;">🏨</div>
-  <div style="font-size:16px;font-weight:800;color:var(--gold);margin-bottom:4px;">Dahab Trendy Accommodation</div>
+  <div style="font-size:16px;font-weight:800;color:var(--gold);margin-bottom:4px;">' + PROP.name + '</div>
   <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">نظام إدارة الفندق — Hotel Management System</div>
   <div style="width:60px;height:1px;background:rgba(201,168,76,0.3);margin:0 auto 12px;"></div>
   <div style="font-size:11px;color:var(--muted);line-height:2;">
-    <div>© 2025 <span style="color:var(--gold);font-weight:700;">Hany</span> — Dahab Trendy Accommodation</div>
+    <div>© 2025 <span style="color:var(--gold);font-weight:700;">Hany</span> — ' + PROP.name + '</div>
     <div>جميع الحقوق محفوظة · All Rights Reserved</div>
     <div style="margin-top:4px;">📍 دهب — جنوب سيناء، مصر</div>
   </div>
@@ -5528,7 +5600,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 
   <!-- Kiosk Footer -->
   <div style="text-align:center;padding:20px;color:#4a5a6a;font-size:12px;border-top:1px solid rgba(255,255,255,0.05);">
-    📞 للاستفسار · For Inquiries: <strong style="color:var(--gold);">+20 109 953 1272</strong> &nbsp;·&nbsp; Dahab Trendy Accommodation
+    📞 للاستفسار · For Inquiries: <strong style="color:var(--gold);">+20 109 953 1272</strong> &nbsp;·&nbsp; ' + PROP.name + '
   </div>
 </div>
 
@@ -6949,7 +7021,7 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 </div>
 <div style="font-size:11px;color:var(--muted);margin-bottom:8px;background:rgba(52,152,219,0.07);border:1px solid rgba(52,152,219,0.2);border-radius:6px;padding:6px 10px;">💡 يعرف كل شيء عن حجوزاتك وإيراداتك وغرفك — اسأله أي سؤال!</div>
 <div class="ai-chat-msgs" id="ai-chat-msgs">
-<div class="ai-msg-ai">مرحباً! أنا مستشارك الذكي لـ Dahab Trendy 🌊<br><br>
+<div class="ai-msg-ai">مرحباً! أنا مستشارك الذكي لـ ' + PROP.name + ' 🌊<br><br>
 <strong>لدي وصول كامل لبياناتك الحقيقية:</strong><br>
 • <strong>"ما إجمالي الإيراد هذا الشهر؟"</strong><br>
 • <strong>"حلّل أداء الشهر مقارنة بالسابق"</strong><br>
@@ -7081,9 +7153,114 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 </div>
 <script>
 // ═══════════ DATA ═══════════
-const PROP = {name:"Dahab Trendy Accommodation",address:"Dahab, South Sinai, Egypt",phone:"+20 109 953 1272",email:"dahabtrendyinn@gmail.com"};
+const _licHotelInfo = (function(){ try{ return JSON.parse(localStorage.getItem('_sys_lic_hotel')); }catch(e){ return null; } })();
+const PROP = {
+  name: (_licHotelInfo && _licHotelInfo.n) || "Dahab Trendy Accommodation",
+  address: (_licHotelInfo && _licHotelInfo.a) || "Dahab, South Sinai, Egypt",
+  phone: (_licHotelInfo && _licHotelInfo.p) || "+20 109 953 1272",
+  email: (_licHotelInfo && _licHotelInfo.e) || "dahabtrendyinn@gmail.com"
+};
+function applyBrandingToDOM(){
+  if(PROP.name){
+    document.title = PROP.name + ' — Property System';
+    document.querySelectorAll('meta[name="apple-mobile-web-app-title"]').forEach(function(m){ m.setAttribute('content', PROP.name); });
+  }
+  var navTitle = document.querySelector('.ntitle');
+  if(navTitle) navTitle.textContent = '🌊 ' + PROP.name;
+  var pinBrand = document.getElementById('pin-brand-title');
+  if(pinBrand) pinBrand.textContent = PROP.name;
+  var empBrand = document.getElementById('emp-brand-title');
+  if(empBrand) empBrand.textContent = PROP.name;
+  var pwaText = document.getElementById('pwa-install-text');
+  if(pwaText) pwaText.textContent = '📱 ثبّت ' + PROP.name + ' على هاتفك للوصول السريع!';
+}
+document.addEventListener('DOMContentLoaded', applyBrandingToDOM);
+// ══ FEATURE: تعديل بيانات الفندق مباشرة من الإعدادات (بدل ما تمر بمفتاح ترخيص) ══
+function propLoadSettingsUI(){
+  var n = document.getElementById('prop-f-name');
+  if(!n) return;
+  n.value = PROP.name || '';
+  document.getElementById('prop-f-address').value = PROP.address || '';
+  document.getElementById('prop-f-phone').value = PROP.phone || '';
+  document.getElementById('prop-f-email').value = PROP.email || '';
+}
+function propSaveHotelInfo(){
+  var en = (typeof empLangIsEn==='function') ? empLangIsEn() : false;
+  var name = (document.getElementById('prop-f-name').value||'').trim();
+  var address = (document.getElementById('prop-f-address').value||'').trim();
+  var phone = (document.getElementById('prop-f-phone').value||'').trim();
+  var email = (document.getElementById('prop-f-email').value||'').trim();
+  var errEl = document.getElementById('prop-form-error');
+  if(!name){ errEl.textContent = en?'Please enter the hotel name':'من فضلك أدخل اسم الفندق'; return; }
+  errEl.textContent = '';
+  PROP.name = name; PROP.address = address; PROP.phone = phone; PROP.email = email;
+  localStorage.setItem('_sys_lic_hotel', JSON.stringify({n:name, a:address, p:phone, e:email}));
+  applyBrandingToDOM();
+  if(typeof sNotify==='function') sNotify(en?'✅ Saved':'✅ اتحفظت', en?'Hotel info updated everywhere':'بيانات الفندق اتحدثت في كل حتة','success',2500);
+}
+function propResetHotelInfo(){
+  var en = (typeof empLangIsEn==='function') ? empLangIsEn() : false;
+  if(!confirm(en?'Reset to default Dahab Trendy info?':'ترجع لبيانات Dahab Trendy الافتراضية؟')) return;
+  localStorage.removeItem('_sys_lic_hotel');
+  PROP.name = "Dahab Trendy Accommodation";
+  PROP.address = "Dahab, South Sinai, Egypt";
+  PROP.phone = "+20 109 953 1272";
+  PROP.email = "dahabtrendyinn@gmail.com";
+  applyBrandingToDOM();
+  propLoadSettingsUI();
+  if(typeof sNotify==='function') sNotify(en?'↩️ Reset done':'↩️ رجعت للوضع الافتراضي', '', 'success', 2000);
+}
 const RTYPES = ["Single","Double","Triple","Suite","Dorm Bed"];
-const ROOMS = Array.from({length:14},(_,i)=>101+i);
+let ROOMS = (function(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('dta_rooms_list'));
+    if(Array.isArray(saved) && saved.length) return saved;
+  }catch(e){}
+  const def = Array.from({length:14},(_,i)=>101+i);
+  localStorage.setItem('dta_rooms_list', JSON.stringify(def));
+  return def;
+})();
+function roomsSaveList(){ localStorage.setItem('dta_rooms_list', JSON.stringify(ROOMS)); }
+function roomsAdd(num){
+  const en = (typeof empLangIsEn==='function') ? empLangIsEn() : false;
+  num = String(num).trim();
+  if(!num) return {ok:false,msg: en?'Empty room number':'رقم الغرفة فاضي'};
+  if(ROOMS.map(String).includes(num)) return {ok:false,msg: en?'This room already exists':'الرقم ده موجود بالفعل'};
+  const val = /^\d+$/.test(num) ? Number(num) : num;
+  ROOMS.push(val);
+  ROOMS.sort(function(a,b){ return (typeof a==='number'&&typeof b==='number') ? a-b : String(a).localeCompare(String(b)); });
+  roomsSaveList();
+  // لو الغرفة الجديدة رقم واقع في نطاق الفرع النشط أو امتداد طبيعي له، وسّع نطاق الفرع عشان الغرفة تظهر في كل الصفحات
+  if(typeof val === 'number' && typeof DTA_BRANCH !== 'undefined' && DTA_BRANCH.getActive){
+    try{
+      const branch = DTA_BRANCH.getActive();
+      if(branch){
+        if(val >= branch.roomStart){
+          const neededCount = (val - branch.roomStart) + 1;
+          if(neededCount > branch.roomCount) DTA_BRANCH.updateBranch(branch.id, { roomCount: neededCount });
+        } else {
+          const newCount = branch.roomCount + (branch.roomStart - val);
+          DTA_BRANCH.updateBranch(branch.id, { roomStart: val, roomCount: newCount });
+        }
+      }
+    }catch(e){}
+  }
+  return {ok:true};
+}
+function roomsRemove(num){
+  const s = String(num);
+  const idx = ROOMS.findIndex(function(r){ return String(r)===s; });
+  if(idx===-1) return {ok:false};
+  ROOMS.splice(idx,1);
+  roomsSaveList();
+  return {ok:true};
+}
+// يرجّع غرف الفرع الفعلية من قائمة ROOMS الحقيقية (بدل توليد رينچ تخيلي)، فأي غرفة اتضافت يدويًا تظهر صح
+function roomsInBranch(branch){
+  if(!branch) return ROOMS;
+  const start = branch.roomStart, end = branch.roomStart + branch.roomCount - 1;
+  return ROOMS.filter(function(r){ const n = Number(r); return !isNaN(n) && n >= start && n <= end; });
+}
 const DEF_PRICES = {Single:{usd:30,egp:1500,eur:28},Double:{usd:55,egp:2700,eur:52},Triple:{usd:75,egp:3700,eur:70},Suite:{usd:100,egp:5000,eur:93},"Dorm Bed":{usd:15,egp:750,eur:14}};
 const DEF_DU_PRICES = {Single:{usd:15,egp:750,eur:14},Double:{usd:25,egp:1250,eur:23},Triple:{usd:35,egp:1750,eur:33},Suite:{usd:50,egp:2500,eur:47},"Dorm Bed":{usd:8,egp:400,eur:8}};
 const EICONS = {Salaries:"👔",Rent:"🏠",Maintenance:"🔧",Electricity:"⚡",Water:"💧",Laundry:"👕",Supplies:"🛒",Internet:"📡",Other:"📦"};
@@ -7367,7 +7544,7 @@ function fillRoomSel(id, extraRoom){
 const s=document.getElementById(id);
 if(!s) return;
 const _br = (typeof DTA_BRANCH!=='undefined') ? DTA_BRANCH.getActive() : null;
-let _rooms = _br ? Array.from({length:_br.roomCount},(_,i)=>_br.roomStart+i) : ROOMS;
+let _rooms = _br ? roomsInBranch(_br) : ROOMS;
 if(extraRoom!==undefined && extraRoom!==null && extraRoom!=="" && !_rooms.map(String).includes(String(extraRoom))){
   _rooms = [..._rooms, Number(extraRoom)].sort((a,b)=>a-b);
 }
@@ -7432,7 +7609,7 @@ function renderBirthdayAlerts(){
       "🎂 كل سنة وأنت بخير "+g.name+"!\n"+
       "يسعدنا أن نتمنى لك عيد ميلاد سعيد 🎉\n"+
       "نتمنى لك الصحة والسعادة دائماً 💛\n"+
-      "— فريق Dahab Trendy"
+      "— فريق ' + PROP.name + '"
     );
     const phone=g.phone?g.phone.replace(/\D/g,""):"";
     const waLink=phone
@@ -8002,7 +8179,7 @@ function renderDashboard(){
 const td=toDay();
 // ── فلترة حسب الفرع النشط (Multi-Property Phase 2) ──
 const _dbBranch = (typeof DTA_BRANCH!=='undefined') ? DTA_BRANCH.getActive() : null;
-const dbRooms = _dbBranch ? Array.from({length:_dbBranch.roomCount},(_,i)=>_dbBranch.roomStart+i) : ROOMS;
+const dbRooms = _dbBranch ? roomsInBranch(_dbBranch) : ROOMS;
 const dbBookings = _dbBranch ? bookings.filter(b=> b.branchId ? b.branchId===_dbBranch.id : _dbBranch.id==='main') : bookings;
 const dbExpenses = _dbBranch ? expenses.filter(e=> e.branchId ? e.branchId===_dbBranch.id : _dbBranch.id==='main') : expenses;
 const active=dbBookings.filter(b=>b.status!=="Cancelled"&&!b.coConfirmed&&(b.dayuse?b.ci===td:(b.ci<=td&&b.co>td)));
@@ -8547,7 +8724,7 @@ function renderLiveDash(){
     const occPctEl = document.getElementById("live-occ-pct");
     if(occPctEl) occPctEl.textContent = occPct + "% إشغال";
     const _ldBranch = (typeof DTA_BRANCH!=='undefined') ? DTA_BRANCH.getActive() : null;
-    const _ldRooms = _ldBranch ? Array.from({length:_ldBranch.roomCount},(_,i)=>_ldBranch.roomStart+i) : ROOMS;
+    const _ldRooms = _ldBranch ? roomsInBranch(_ldBranch) : ROOMS;
     roomMap.innerHTML = _ldRooms.map(r=>{
       const st = roomSt[r] || "available";
       const hasActive = active.find(b=>String(b.room)===String(r));
@@ -8617,7 +8794,7 @@ function isCheckedOut(b){ return b.coConfirmed===true || b.co < toDay(); }
 const fs=document.getElementById("bk-fstat")?.value||"";
 const fq=(document.getElementById("bk-fsrc")?.value||"").toLowerCase();
 const bkBranch = (typeof DTA_BRANCH!=='undefined') ? DTA_BRANCH.getActive() : null;
-const bkBranchRoomSet = bkBranch ? new Set(Array.from({length:bkBranch.roomCount},(_,i)=>String(bkBranch.roomStart+i))) : null;
+const bkBranchRoomSet = bkBranch ? new Set(roomsInBranch(bkBranch).map(String)) : null;
 if(typeof DTA_BRANCH!=='undefined') DTA_BRANCH.renderIndicator('bk-branch-indicator');
 const list=bookings.filter(b=>{
 if(bkBranchRoomSet && !bkBranchRoomSet.has(String(b.room)))return false;
@@ -11063,8 +11240,8 @@ function sendReviewWA(b){
   const gmLink="https://maps.app.goo.gl/Mcwxstz449hBRvVt5?g_st=ac";
   const taLink="https://www.tripadvisor.com/Hotel_Review-g297547-d34223219-Reviews-Dahab_Trendy_Accommodation-Dahab_South_Sinai_Red_Sea_and_Sinai.html";
   const msg=
-    "🌟 شكراً "+b.name+" على إقامتك معنا في Dahab Trendy!\n"+
-    "🌟 Dear "+b.name+", thank you for staying with us at Dahab Trendy!\n\n"+
+    "🌟 شكراً "+b.name+" على إقامتك معنا في " + PROP.name + "!\n"+
+    "🌟 Dear "+b.name+", thank you for staying with us at " + PROP.name + "!\n\n"+
     "سعدنا باستضافتك 🙏\n"+
     "We truly enjoyed having you 🙏\n\n"+
     "يسعدنا لو شاركت تجربتك | Please share your experience:\n\n"+
@@ -11083,12 +11260,12 @@ function openReviewModal(b){
   const phone=(b.phone||"").replace(/[^0-9]/g,"");
 
   const msgs = {
-    ar: `🌟 عزيزنا *${b.name}*\n\nشكراً جزيلاً على إقامتك معنا في *Dahab Trendy* 🙏\nسعدنا باستضافتك وكان من دواعي سرورنا خدمتك.\n\nفضلاً وليس أمراً، نرجو منك مشاركة تجربتك:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nرأيك يهمنا ويساعد ضيوفنا القادمين 💛\n— فريق *Dahab Trendy*`,
-    en: `🌟 Dear *${b.name}*\n\nThank you so much for staying with us at *Dahab Trendy* 🙏\nIt was truly a pleasure having you as our guest.\n\nIf you don't mind, we'd love to hear about your experience:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nYour feedback means the world to us 💛\n— Team *Dahab Trendy*`,
-    de: `🌟 Liebe/r *${b.name}*\n\nVielen herzlichen Dank für Ihren Aufenthalt bei *Dahab Trendy* 🙏\nEs war uns eine große Freude, Sie bei uns begrüßen zu dürfen.\n\nWir würden uns sehr freuen, wenn Sie Ihre Erfahrung teilen möchten:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nIhr Feedback ist uns sehr wichtig 💛\n— Team *Dahab Trendy*`,
-    fr: `🌟 Cher(e) *${b.name}*\n\nMerci infiniment pour votre séjour chez *Dahab Trendy* 🙏\nNous avons eu le grand plaisir de vous accueillir parmi nous.\n\nSi vous le souhaitez, nous vous invitons à partager votre expérience:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nVotre avis nous tient à cœur 💛\n— Équipe *Dahab Trendy*`,
-    ru: `🌟 Уважаемый(ая) *${b.name}*\n\nБольшое спасибо за то, что остановились в *Dahab Trendy* 🙏\nДля нас было настоящим удовольствием принимать вас у себя.\n\nЕсли вы не против, мы будем рады услышать ваше мнение:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nВаш отзыв очень важен для нас 💛\n— Команда *Dahab Trendy*`,
-    it: `🌟 Caro/a *${b.name}*\n\nGrazie mille per aver soggiornato presso *Dahab Trendy* 🙏\nÈ stato un vero piacere averti come nostro ospite.\n\nSe ti va, ci farebbe molto piacere leggere la tua esperienza:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nLa tua opinione è preziosa per noi 💛\n— Team *Dahab Trendy*`
+    ar: `🌟 عزيزنا *${b.name}*\n\nشكراً جزيلاً على إقامتك معنا في *${PROP.name}* 🙏\nسعدنا باستضافتك وكان من دواعي سرورنا خدمتك.\n\nفضلاً وليس أمراً، نرجو منك مشاركة تجربتك:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nرأيك يهمنا ويساعد ضيوفنا القادمين 💛\n— فريق *${PROP.name}*`,
+    en: `🌟 Dear *${b.name}*\n\nThank you so much for staying with us at *${PROP.name}* 🙏\nIt was truly a pleasure having you as our guest.\n\nIf you don't mind, we'd love to hear about your experience:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nYour feedback means the world to us 💛\n— Team *${PROP.name}*`,
+    de: `🌟 Liebe/r *${b.name}*\n\nVielen herzlichen Dank für Ihren Aufenthalt bei *${PROP.name}* 🙏\nEs war uns eine große Freude, Sie bei uns begrüßen zu dürfen.\n\nWir würden uns sehr freuen, wenn Sie Ihre Erfahrung teilen möchten:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nIhr Feedback ist uns sehr wichtig 💛\n— Team *${PROP.name}*`,
+    fr: `🌟 Cher(e) *${b.name}*\n\nMerci infiniment pour votre séjour chez *${PROP.name}* 🙏\nNous avons eu le grand plaisir de vous accueillir parmi nous.\n\nSi vous le souhaitez, nous vous invitons à partager votre expérience:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nVotre avis nous tient à cœur 💛\n— Équipe *${PROP.name}*`,
+    ru: `🌟 Уважаемый(ая) *${b.name}*\n\nБольшое спасибо за то, что остановились в *${PROP.name}* 🙏\nДля нас было настоящим удовольствием принимать вас у себя.\n\nЕсли вы не против, мы будем рады услышать ваше мнение:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nВаш отзыв очень важен для нас 💛\n— Команда *${PROP.name}*`,
+    it: `🌟 Caro/a *${b.name}*\n\nGrazie mille per aver soggiornato presso *${PROP.name}* 🙏\nÈ stato un vero piacere averti come nostro ospite.\n\nSe ti va, ci farebbe molto piacere leggere la tua esperienza:\n\n📍 Google Maps:\n${gmLink}\n\n✈️ TripAdvisor:\n${taLink}\n\nLa tua opinione è preziosa per noi 💛\n— Team *${PROP.name}*`
   };
 
   const langs = [
@@ -11272,7 +11449,7 @@ const td=toDay();
 renderAlerts();
 if(typeof DTA_BRANCH!=='undefined') DTA_BRANCH.renderIndicator('rm-branch-indicator');
 const rmBranch = (typeof DTA_BRANCH!=='undefined') ? DTA_BRANCH.getActive() : null;
-const rmRooms = rmBranch ? Array.from({length:rmBranch.roomCount},(_,i)=>rmBranch.roomStart+i) : ROOMS;
+const rmRooms = rmBranch ? roomsInBranch(rmBranch) : ROOMS;
 document.getElementById("rm-grid").innerHTML=rmRooms.map(r=>{
 const b=bookings.filter(bk=>bk.room===String(r)&&bk.ci<=td&&bk.co>td&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.dayuse&&!bk.coConfirmed).sort((a,z)=>z.ci.localeCompare(a.ci))[0];
 const du=bookings.filter(bk=>bk.room===String(r)&&bk.ci===td&&bk.dayuse&&bk.status!=="Cancelled"&&bk.status!=="Standby"&&!bk.coConfirmed).sort((a,z)=>z.ci.localeCompare(a.ci))[0];
@@ -13338,8 +13515,8 @@ function setPLBreakfast(val){
   if(wrap) wrap.style.display = (val==='included'||val==='optional') ? 'block' : 'none';
 }
 
-const PL_PROMO_DEFAULT = `🏨 *Dahab Trendy Accommodation* – قائمة أسعار الغرف 🇪🇬
-🏨 *Dahab Trendy Accommodation* – Room Price List 🇪🇬
+const PL_PROMO_DEFAULT = `🏨 *${PROP.name}* – قائمة أسعار الغرف 🇪🇬
+🏨 *${PROP.name}* – Room Price List 🇪🇬
 
 ✨ استمتع بإقامة مريحة في مكان جديد بالكامل مع تكييف هواء، حمام خاص، سمارت TV، ميني بار، حمام سباحة، وإنترنت مجاني.
 ✨ Enjoy a comfortable stay in a brand-new place with air conditioning, private bathroom, Smart TV, mini bar, swimming pool, and free WiFi.
@@ -13352,7 +13529,7 @@ const PL_PROMO_DEFAULT = `🏨 *Dahab Trendy Accommodation* – قائمة أس�
 👨‍👩‍👧‍👦 غرفة رباعي / Quad Room: *1800 جنيه · EGP 1800*
 ⭐ سويت / Suite: *2000 جنيه · EGP 2000*
 
-📍 Dahab Trendy Accommodation
+📍 ${PROP.name}
 
 🏊 حمام سباحة · Swimming Pool
 ❄️ تكييف هواء · Air Conditioning
@@ -13828,7 +14005,7 @@ function sendAvailableRoomsWA(){
   }).join('\n\n');
 
   const msg =
-`🏨 *Dahab Trendy*
+`🏨 *${PROP.name}*
 ━━━━━━━━━━━━━━━━━━
 🛏️ *الغرف المتاحة | Available Rooms*
 📅 ${dateStr} | ${dateFmt}
@@ -14279,7 +14456,7 @@ function getGrpData(){
 }
 
 function sendGrpWA(){
-  const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy",phone:""};
+  const prop=(typeof PROP!=="undefined")?PROP:{name:"" + PROP.name + "",phone:""};
   const d = getGrpData();
   if(!d.ci||!d.co){sNotify('⚠️','أدخل تواريخ الإقامة أولاً','warning',2000);return;}
   const en = (typeof isEn==='function')?isEn():false;
@@ -14332,7 +14509,7 @@ ${d.remaining<=0?'✅ مسدد بالكامل':(()=>{ const cOraw=(d.deposit>0&&
 }
 
 function printGrpInvoice(){
-  const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy",phone:"",address:"",email:""};
+  const prop=(typeof PROP!=="undefined")?PROP:{name:"" + PROP.name + "",phone:"",address:"",email:""};
   const d = getGrpData();
   if(!d.ci||!d.co){sNotify('⚠️','أدخل تواريخ الإقامة أولاً','warning',2000);return;}
   const sym = d.sym;
@@ -14544,7 +14721,7 @@ async function downloadGrpInvoicePDF(){
   if(!d.company){sNotify('⚠️','أدخل اسم الشركة أولاً','warning',2000);return;}
 
   // Build same HTML as printGrpInvoice
-  const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy",phone:"",address:"",email:""};
+  const prop=(typeof PROP!=="undefined")?PROP:{name:"" + PROP.name + "",phone:"",address:"",email:""};
   const sym = d.sym;
   const invoiceNum = 'GRP-'+Date.now().toString().slice(-6);
   const en = (typeof isEn==='function')?isEn():false;
@@ -14732,7 +14909,7 @@ function renderRoomListPage(){
 }
 
 function _buildRoomListHTML(toCompany, toContact, notes, currency, season, checkin, checkout){
-  const prop=(typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy Accommodation",phone:"",address:"",email:""};
+  const prop=(typeof PROP!=="undefined")?PROP:{name:"" + PROP.name + "",phone:"",address:"",email:""};
   const rt  = (typeof roomTypes!=="undefined")?roomTypes:{};
   const rst = (typeof roomSt!=="undefined")?roomSt:{};
   const bks = (typeof bookings!=="undefined")?bookings:[];
@@ -14995,7 +15172,7 @@ function renderRoomListPreview(){
 
   let html = `<div style="background:#1a1a2e;border-radius:10px;padding:16px 20px;margin-bottom:14px;color:#fff;display:flex;justify-content:space-between;align-items:center;">
     <div>
-      <div style="color:#c9a84c;font-size:16px;font-weight:900;">🏨 ${(typeof PROP!=="undefined"?PROP.name:'Dahab Trendy')}</div>
+      <div style="color:#c9a84c;font-size:16px;font-weight:900;">🏨 ${(typeof PROP!=="undefined"?PROP.name:'${PROP.name}')}</div>
       ${toCompany?`<div style="font-size:12px;color:#a0b4c8;margin-top:3px;">إلى: <strong style="color:#fff;">${toCompany}</strong>${toContact?' — '+toContact:''}</div>`:''}
     </div>
     ${showPrices?`<div style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);border-radius:6px;padding:5px 10px;font-size:11px;color:#c9a84c;font-weight:700;">${{low:'🌥️ Low',mid:'⛅ Mid',high:'☀️ High',peak:'🎉 Peak'}[season]||''} Season</div>`:''}
@@ -15208,7 +15385,7 @@ function sendRoomListWA(){
   const totalRooms = ROOMS_ARR.length;
   const totalCap   = ROOMS_ARR.reduce((s,r)=>{ const i=rt['room_'+r]||{capacity:2}; return s+i.capacity;},0);
   const totalAvail = hasAvail ? ROOMS_ARR.filter(r=>availMap[r]).length : null;
-  const prop = (typeof PROP!=="undefined")?PROP:{name:"Dahab Trendy Accommodation",phone:"",address:"",email:""};
+  const prop = (typeof PROP!=="undefined")?PROP:{name:"" + PROP.name + "",phone:"",address:"",email:""};
 
   // تنسيق التاريخ — ثنائي اللغة
   const fmtDate = d => {
@@ -16081,7 +16258,7 @@ const html=`<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dahab Trendy — Backup ${toDay()}</title>
+<title>${PROP.name} — Backup ${toDay()}</title>
 <style>
 body{font-family:Arial,sans-serif;background:#0f0f1a;color:#f0e6cc;padding:30px;direction:rtl;}
 .box{background:#1a1a2e;border:2px solid #c9a84c;border-radius:13px;padding:24px;max-width:700px;margin:0 auto;}
@@ -16100,7 +16277,7 @@ pre{background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);border-radi
 </head>
 <body>
 <div class="box">
-<h1>🌊 Dahab Trendy — نسخة احتياطية</h1>
+<h1>🌊 ${PROP.name} — نسخة احتياطية</h1>
 <div class="sub">تاريخ الحفظ: ${new Date().toLocaleString("ar-EG")} · Backup Date: ${new Date().toLocaleString("en-GB")}</div>
 <div class="warn">⚠️ هذا الملف يحتوي على بيانات النظام — احتفظ به في مكان آمن. لا تعدّل المحتوى داخل الملف.</div>
 <div class="info">
@@ -16201,7 +16378,7 @@ const html=`<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dahab Trendy — Backup ${toDay()}</title>
+<title>${PROP.name} — Backup ${toDay()}</title>
 <style>
 body{font-family:Arial,sans-serif;background:#0f0f1a;color:#f0e6cc;padding:30px;direction:rtl;}
 .box{background:#1a1a2e;border:2px solid #c9a84c;border-radius:13px;padding:24px;max-width:700px;margin:0 auto;}
@@ -16220,7 +16397,7 @@ pre{background:rgba(0,0,0,0.4);border:1px solid rgba(201,168,76,0.2);border-radi
 </head>
 <body>
 <div class="box">
-<h1>🌊 Dahab Trendy — نسخة احتياطية</h1>
+<h1>🌊 ${PROP.name} — نسخة احتياطية</h1>
 <div class="sub">تاريخ الحفظ: ${new Date().toLocaleString("ar-EG")} · Backup Date: ${new Date().toLocaleString("en-GB")}</div>
 <div class="warn">⚠️ هذا الملف يحتوي على بيانات النظام — احتفظ به في مكان آمن. لا تعدّل المحتوى داخل الملف.</div>
 <div class="info">
@@ -16246,7 +16423,7 @@ a.download="DahabTrendy_Import_"+d+".json";
 document.body.appendChild(a);
 a.click();
 document.body.removeChild(a);
-alert("✅ تم تحميل ملف JSON!\\nالآن:\\n1. افتح نظام Dahab Trendy\\n2. اضغط زرار 📂 استيراد\\n3. اختر هذا الملف\\n\\nJSON downloaded! Now:\\n1. Open Dahab Trendy\\n2. Tap 📂 Import\\n3. Select this file");
+alert("✅ تم تحميل ملف JSON!\\nالآن:\\n1. افتح نظام ${PROP.name}\\n2. اضغط زرار 📂 استيراد\\n3. اختر هذا الملف\\n\\nJSON downloaded! Now:\\n1. Open ${PROP.name}\\n2. Tap 📂 Import\\n3. Select this file");
 }catch(e){alert("خطأ: "+e.message);}
 }
 <\/script>
@@ -16258,7 +16435,7 @@ if(navigator.share && navigator.canShare){
   const file=new File([blob],fileName,{type:"text/html"});
   if(navigator.canShare({files:[file]})){
     try{
-      await navigator.share({files:[file],title:"Dahab Trendy — نسخة احتياطية "+toDay()});
+      await navigator.share({files:[file],title:"" + PROP.name + " — نسخة احتياطية "+toDay()});
       return;
     }catch(err){
       if(err.name==="AbortError") return; // user cancelled
@@ -16686,6 +16863,7 @@ function setLang(lang){
   if(typeof empApplyLangUI==='function') empApplyLangUI();
   if(typeof empRenderEmployeeList==='function' && document.getElementById('emp-mgmt-box')?.style.display!=='none') empRenderEmployeeList();
   if(typeof empApplyPermissions==='function') empApplyPermissions();
+  if(typeof roomsRenderList==='function' && document.getElementById('page-settings')?.classList.contains('on')) roomsRenderList();
 }
 function toggleLang(){
   currentLang = currentLang === "en" ? "ar" : "en";
@@ -16703,6 +16881,7 @@ function toggleLang(){
   if(typeof empApplyLangUI==='function') empApplyLangUI();
   if(typeof empRenderEmployeeList==='function' && document.getElementById('emp-mgmt-box')?.style.display!=='none') empRenderEmployeeList();
   if(typeof empApplyPermissions==='function') empApplyPermissions();
+  if(typeof roomsRenderList==='function' && document.getElementById('page-settings')?.classList.contains('on')) roomsRenderList();
 }
 function toggleLangMenu(){
   const menu = document.getElementById("lang-menu");
@@ -16943,7 +17122,7 @@ const btn=document.getElementById("ai-run-btn");
 btn.textContent="⏳ جاري التوليد...";
 btn.disabled=true;
 try{
-const sysPrompt=`أنت مساعد كتابة احترافي لفندق "Dahab Trendy Accommodation" في دهب، مصر.
+const sysPrompt=`أنت مساعد كتابة احترافي لفندق "' + PROP.name + '" في دهب، مصر.
 اكتب الرسائل بالعربية أولاً ثم الإنجليزية (ثنائي اللغة).
 الأسلوب: ودي، احترافي، مرحّب.
 معلومات الفندق: هاتف ${PROP.phone} · ايميل ${PROP.email} · ${PROP.address}
@@ -17336,7 +17515,7 @@ function updateDA_BookStatus(idx, status){
         `🕐 الوقت · Time: *${b.time}*\n` +
         `👥 الأشخاص · Persons: *${b.persons}*\n` +
         (b.price?`💰 الإجمالي · Total: *£${Number(b.price).toLocaleString()}*\n`:'') +
-        `\n🏨 *Dahab Trendy Accommodation*\n📞 ${PROP.phone}`;
+        `\n🏨 *' + PROP.name + '*\n📞 ${PROP.phone}`;
       window.open("https://wa.me/"+b.phone.replace(/[^0-9]/g,"")+"?text="+encodeURIComponent(msg),"_blank");
     } else {
       sNotify("✅ تم التأكيد","الضيف ليس لديه رقم واتساب · Guest has no WhatsApp","info",3000);
@@ -17356,7 +17535,7 @@ function updateDA_BookStatus(idx, status){
         `👥 الأشخاص · Persons: *${b.persons||1}*\n\n` +
         `نأسف على الإلغاء، يسعدنا خدمتك في وقت آخر 🙏\n` +
         `We\'re sorry for the cancellation, we look forward to serving you again.\n\n` +
-        `🏨 *Dahab Trendy Accommodation*\n📞 ${PROP.phone}`;
+        `🏨 *' + PROP.name + '*\n📞 ${PROP.phone}`;
       window.open("https://wa.me/"+b.phone.replace(/[^0-9]/g,"")+"?text="+encodeURIComponent(msg),"_blank");
     } else {
       sNotify("❌ تم الإلغاء","الضيف ليس لديه رقم واتساب · Guest has no WhatsApp","info",3000);
@@ -17377,7 +17556,7 @@ function waDA_Supplier(idx){
   const bks = DA_getBookings();
   const b = bks[idx];
   if(!b) return;
-  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", phone:"+20 109 953 1272"};
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"' + PROP.name + '", phone:"+20 109 953 1272"};
   const supplierPhone = (b.supplierPhone||"").replace(/[^0-9]/g,"");
   if(!supplierPhone){
     sNotify("⚠️ لا يوجد رقم للشركة","أدخل رقم واتساب الشركة أولاً · No supplier WhatsApp","warning",3000);
@@ -18810,7 +18989,7 @@ function openTourInvoice(idx){
   _currentTourInvIdx = idx;
   const t = tours[idx];
   if(!t) return;
-  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", address:"Dahab, South Sinai, Egypt", phone:"+20 109 953 1272", email:"dahabtrendyinn@gmail.com"};
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"' + PROP.name + '", address:"Dahab, South Sinai, Egypt", phone:"+20 109 953 1272", email:"dahabtrendyinn@gmail.com"};
   const today = toDay();
   const invNo = t.invNo || ("TR-"+t.id.slice(-6));
 
@@ -18939,7 +19118,7 @@ function deleteTourDirect(idx){
 function waTourDirect(idx){
   const t = tours[idx];
   if(!t) return;
-  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", phone:"+20 109 953 1272"};
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"' + PROP.name + '", phone:"+20 109 953 1272"};
   const pricePerPerson = t.pricePerPerson || (t.persons>0 ? Math.round((t.price||0)/(t.persons||1)) : 0);
   const paid = t.paidAmount||0;
   const remaining = Math.max(0,(t.price||0)-paid);
@@ -18966,7 +19145,7 @@ function waTourDirect(idx){
 function waTourInvoice(){
   if(_currentTourInvIdx<0) return;
   const t = tours[_currentTourInvIdx];
-  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", phone:"+20 109 953 1272"};
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"' + PROP.name + '", phone:"+20 109 953 1272"};
   const pricePerPerson = t.pricePerPerson || (t.persons>0 ? Math.round((t.price||0)/(t.persons||1)) : 0);
   const paid = t.paidAmount||0;
   const remaining = Math.max(0,(t.price||0)-paid);
@@ -20719,7 +20898,7 @@ ROOMS.forEach(room=>{
 const occPct=Math.round(occupiedSlots/totalSlots*100);
 const revChange=lastMonthRev>0?Math.round((thisMonthRev-lastMonthRev)/lastMonthRev*100):0;
 
-const context=`أنت محلل مالي وخبير إدارة فنادق لـ "Dahab Trendy Accommodation" في دهب، مصر.
+const context=`أنت محلل مالي وخبير إدارة فنادق لـ "${PROP.name}" في دهب، مصر.
 لديك وصول كامل لجميع البيانات الحقيقية للنظام.
 
 📊 البيانات الحالية (${td}):
@@ -20969,7 +21148,7 @@ return "السلام عليكم "+b.name+" 🌊\n"+
 "📋 رقم الحجز: "+b.invNo+"\n"+
 "💰 المبلغ المتبقي: *"+sym+balance.toFixed(2)+"*\n"+
 "📅 موعد الوصول: "+fmtD(b.ci)+"\n\n"+
-"يرجى إتمام الدفع قبل تاريخ الوصول.\nشكراً لاختياركم Dahab Trendy 🙏\n"+PROP.phone;
+"يرجى إتمام الدفع قبل تاريخ الوصول.\nشكراً لاختياركم " + PROP.name + " 🙏\n"+PROP.phone;
 }
 function buildCOReminder(b){
 return "السلام عليكم "+b.name+" 🌊\n"+
@@ -21107,11 +21286,11 @@ function runSmartAlerts(){
   // Good morning greeting
   const hour = new Date().getHours();
   if(hour >= 6 && hour < 12){
-    setTimeout(()=> sNotify('🌅 صباح الخير!', 'مرحباً بك في Dahab Trendy 🌊', 'gold', 4000), 500);
+    setTimeout(()=> sNotify('🌅 صباح الخير!', 'مرحباً بك في ' + PROP.name + ' 🌊', 'gold', 4000), 500);
   } else if(hour >= 12 && hour < 18){
     setTimeout(()=> sNotify('🌤️ مساء النشاط!', 'لوحة التحكم جاهزة 🌊', 'gold', 3000), 500);
   } else {
-    setTimeout(()=> sNotify('🌙 مساء الخير!', 'مرحباً بك في Dahab Trendy 🌊', 'gold', 3000), 500);
+    setTimeout(()=> sNotify('🌙 مساء الخير!', 'مرحباً بك في ' + PROP.name + ' 🌊', 'gold', 3000), 500);
   }
 }
 
@@ -21178,7 +21357,7 @@ async function generateAIWelcome(){
     upsell: 'عرض خدمات إضافية: مطعم الفندق، Day Use للبحر، جولات غوص، نقل مطار'
   };
   const langNames = {ar:'Arabic (العربية)',en:'English',de:'German (Deutsch)',fr:'French (Français)',ru:'Russian (Русский)',it:'Italian (Italiano)'};
-  const prompt = `أنت مسؤول علاقات عملاء محترف في فندق "Dahab Trendy" في مدينة دهب، جنوب سيناء، مصر.
+  const prompt = `أنت مسؤول علاقات عملاء محترف في فندق "${PROP.name}" في مدينة دهب، جنوب سيناء، مصر.
 الفندق يقع على شاطئ البحر الأحمر، معروف بالغوص والحياة البحرية الرائعة.
 اكتب: ${typePrompts[_aiwType]}
 ${guestInfo ? 'معلومات الضيف: ' + guestInfo : 'للضيف العام'}
@@ -21362,7 +21541,7 @@ function buildReportHTML(type, from, to){
   const totalExp = expRange.reduce((s,e)=>s+e.egp,0);
   const netProfit = totalRev - totalExp;
   const occ = range.length;
-  const propName = repBranch ? (currentLang==='ar'?repBranch.nameAr:repBranch.nameEn) : (typeof PROP !== 'undefined' ? PROP.name : 'Dahab Trendy');
+  const propName = repBranch ? (currentLang==='ar'?repBranch.nameAr:repBranch.nameEn) : (typeof PROP !== 'undefined' ? PROP.name : '' + PROP.name + '');
 
   let rows = '';
   if(type==='bookings'||type==='monthly'){
@@ -21522,7 +21701,7 @@ function buildReportHTML(type, from, to){
     
     <!-- Footer -->
     <div style="border-top:1px solid #eee;padding-top:12px;text-align:center;color:#aaa;font-size:9px;line-height:1.8;">
-      تم إنشاؤه بواسطة Dahab Trendy Property System | ${new Date().toLocaleString('ar-EG')}
+      تم إنشاؤه بواسطة ${PROP.name} Property System | ${new Date().toLocaleString('ar-EG')}
     </div>
   </div>`;
 }
@@ -21568,7 +21747,7 @@ function shareReportWhatsApp(){
   const {from, to} = getPDFDateRange();
   if(!from||!to){ sNotify('⚠️ خطأ','يرجى اختيار الفترة الزمنية','warning'); return; }
   // Build plain text summary for WhatsApp
-  const propName = (typeof PROP !== 'undefined' ? PROP.name : 'Dahab Trendy');
+  const propName = (typeof PROP !== 'undefined' ? PROP.name : '' + PROP.name + '');
   const typeLabels = {monthly:'شهري شامل',bookings:'الحجوزات',financial:'مالي شامل',rooms:'الغرف والإشغال',expenses:'المصروفات'};
   const label = typeLabels[type] || type;
   // Get key numbers from bookings
@@ -21672,7 +21851,7 @@ function buildHKReportHTML(from, to) {
     </table>
 
     <div style="border-top:1px solid #eee;padding-top:10px;text-align:center;color:#aaa;font-size:9px;">
-      Dahab Trendy — Housekeeping Sheet — ${td}
+      ${PROP.name} — Housekeeping Sheet — ${td}
     </div>
   </div>`;
 }
@@ -21730,7 +21909,7 @@ function installPWA(){
     _pwaInstallPrompt.prompt();
     _pwaInstallPrompt.userChoice.then(result=>{
       if(result.outcome==='accepted'){
-        sNotify('📱 تم التثبيت!','تم تثبيت Dahab Trendy على جهازك بنجاح 🎉','success',5000);
+        sNotify('📱 تم التثبيت!','تم تثبيت ' + PROP.name + ' على جهازك بنجاح 🎉','success',5000);
         document.getElementById('pwa-install-bar').classList.remove('show');
       }
       _pwaInstallPrompt = null;
@@ -21741,7 +21920,7 @@ function installPWA(){
 }
 
 window.addEventListener('appinstalled', ()=>{
-  sNotify('🎉 مبروك!','تم تثبيت Dahab Trendy بنجاح على جهازك!','success',5000);
+  sNotify('🎉 مبروك!','تم تثبيت ' + PROP.name + ' بنجاح على جهازك!','success',5000);
   document.getElementById('pwa-install-bar').classList.remove('show');
   const navBtn = document.getElementById('pwa-nav-btn');
   if(navBtn) navBtn.style.display = 'none';
@@ -21997,7 +22176,7 @@ function checkPIN(){
     localStorage.removeItem('dahab_pin_fails');
     localStorage.removeItem('dahab_pin_lockout_level');
     localStorage.removeItem('dahab_pin_lock_until');
-    sNotify('✅ تم الدخول','مرحباً بك في Dahab Trendy 🌊','success',2500);
+    sNotify('✅ تم الدخول','مرحباً بك في ' + PROP.name + ' 🌊','success',2500);
     if(typeof _resetIdleTimer==='function') _resetIdleTimer();
     if(typeof empCheckLoginRequired==='function') setTimeout(empCheckLoginRequired, 200);
   } else {
@@ -22394,6 +22573,55 @@ function empLoadSettingsUI(){
   document.getElementById('emp-mgmt-box').style.display = empIsEnabled() ? 'block':'none';
   empRenderEmployeeList();
   empApplyLangUI();
+}
+
+// ══ FEATURE: إدارة الغرف يدويًا (Rooms Management) ══
+function roomsRenderList(){
+  const wrap = document.getElementById('rooms-mgmt-list');
+  if(!wrap) return;
+  const en = (typeof empLangIsEn==='function') ? empLangIsEn() : false;
+  if(!ROOMS.length){ wrap.innerHTML = '<div style="font-size:11px;color:var(--muted);">'+(en?'No rooms yet':'لا يوجد غرف بعد')+'</div>'; return; }
+  wrap.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + ROOMS.map(function(r){
+    const st = (typeof roomSt!=='undefined' ? roomSt[r] : null) || 'available';
+    const busy = (st==='occupied' || st==='reserved');
+    const title = busy ? (en?'Occupied/reserved - cannot delete':'مشغولة/محجوزة - مينفعش تتحذف') : (en?'Delete':'حذف');
+    return '<span style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid var(--bdr);border-radius:20px;padding:5px 10px;font-size:12px;">'
+      +'🚪 '+r
+      +'<button onclick="roomsRemovePrompt(\''+r+'\')" style="background:none;border:none;color:'+(busy?'#888':'#e74c3c')+';cursor:pointer;font-size:13px;padding:0;line-height:1;" title="'+title+'">✕</button>'
+      +'</span>';
+  }).join('') + '</div>';
+}
+function roomsAddFromUI(){
+  const en = (typeof empLangIsEn==='function') ? empLangIsEn() : false;
+  const inp = document.getElementById('rooms-add-input');
+  const errEl = document.getElementById('rooms-add-error');
+  const val = (inp.value||'').trim();
+  errEl.textContent='';
+  if(!val) return;
+  const res = roomsAdd(val);
+  if(!res.ok){ errEl.textContent = res.msg; return; }
+  inp.value='';
+  roomsRenderList();
+  if(typeof renderRooms==='function') renderRooms();
+  if(typeof renderStatusBoard==='function') renderStatusBoard();
+  if(typeof renderDashboard==='function') renderDashboard();
+  if(typeof sNotify==='function') sNotify(en?'✅ Room added':'✅ اتضافت الغرفة', String(val), 'success', 2000);
+}
+function roomsRemovePrompt(r){
+  const en = (typeof empLangIsEn==='function') ? empLangIsEn() : false;
+  const st = (typeof roomSt!=='undefined' ? roomSt[r] : null) || 'available';
+  if(st==='occupied' || st==='reserved'){
+    if(typeof sNotify==='function') sNotify(en?'🚫 Cannot delete':'🚫 مينفعش تتحذف', en?'This room is currently occupied or reserved':'الغرفة دي مشغولة أو محجوزة دلوقتي', 'error', 3000);
+    return;
+  }
+  if(!confirm((en?'Delete room ':'حذف غرفة ')+r+'?')) return;
+  const res = roomsRemove(r);
+  if(res.ok){
+    roomsRenderList();
+    if(typeof renderRooms==='function') renderRooms();
+    if(typeof renderStatusBoard==='function') renderStatusBoard();
+    if(typeof renderDashboard==='function') renderDashboard();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -22902,7 +23130,7 @@ async function runAIDemandForecast(){
       confirmedBookings: days.filter(d=>d.confirmed>0).length,
       weekendHigher: days.filter(d=>d.isWeekend&&d.pct>50).length > days.filter(d=>!d.isWeekend&&d.pct>50).length,
       historicalAvgOcc: Math.round(bookings.filter(b=>b.status!=='Cancelled').length / Math.max(1, (() => { const dates=new Set(bookings.filter(b=>b.status!=='Cancelled').map(b=>b.ci)); return dates.size; })()) * 100 / totalRooms),
-      property: 'Dahab Trendy Accommodation, Dahab, South Sinai, Egypt'
+      property: '' + PROP.name + ', Dahab, South Sinai, Egypt'
     };
     const prompt = `أنت خبير تحليل بيانات فنادق متخصص في دهب ومنطقة شرم الشيخ / سيناء.
 
@@ -23179,7 +23407,7 @@ const _origGoPage = goPage;
 goPage = function(id, btn){
   _origGoPage(id, btn);
   if(id === 'analytics') renderAnalytics();
-  if(id === 'settings') { loadPINSettings(); loadAIKeyToSettings(); if(typeof empLoadSettingsUI==='function') empLoadSettingsUI(); }
+  if(id === 'settings') { loadPINSettings(); loadAIKeyToSettings(); if(typeof empLoadSettingsUI==='function') empLoadSettingsUI(); if(typeof roomsRenderList==='function') roomsRenderList(); if(typeof propLoadSettingsUI==='function') propLoadSettingsUI(); }
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -23960,7 +24188,7 @@ function sendBdayWA(){
     '🎊 Joyeux Anniversaire!\n' +
     '🎈 Herzlichen Glückwunsch!\n' +
     '🥳 С Днём Рождения!\n\n' +
-    '🏨 Dahab Trendy Hotel wishes you a wonderful day! 🌊';
+    '🏨 ' + PROP.name + ' Hotel wishes you a wonderful day! 🌊';
   const url = phone
     ? 'https://wa.me/' + phone + '?text=' + encodeURIComponent(msg)
     : 'https://wa.me/?text='            + encodeURIComponent(msg);
@@ -24992,16 +25220,16 @@ function applyScanData(){
     var loyaltyN=active.length;
     var greet='';
     if(loyaltyN>=10) greet=en
-      ?'🏆 An exceptional VIP guest — your loyalty means the world to us. Thank you for making Dahab Trendy your home away from home!'
+      ?'🏆 An exceptional VIP guest — your loyalty means the world to us. Thank you for making ' + PROP.name + ' your home away from home!'
       :'🏆 ضيف VIP استثنائي — وفاؤك يعني لنا الكثير. شكراً لجعل دهب تريندي بيتك الثاني!';
     else if(loyaltyN>=5) greet=en
       ?'🥇 A valued Gold member — we cherish every moment of your visits. Looking forward to welcoming you again soon!'
       :'🥇 عضو ذهبي مميز — نقدّر كل لحظة من زياراتك. نتطلع لاستقبالك قريباً!';
     else if(loyaltyN>=2) greet=en
-      ?'🥈 Welcome back, Silver guest! It\'s always a pleasure to have you with us at Dahab Trendy.'
+      ?'🥈 Welcome back, Silver guest! It\'s always a pleasure to have you with us at ' + PROP.name + '.'
       :'🥈 أهلاً بعودتك أيها الضيف الفضي! يسعدنا دائماً وجودك معنا في دهب تريندي.';
     else greet=en
-      ?'🌟 Welcome to Dahab Trendy! We hope your stay was wonderful and look forward to seeing you again in beautiful Dahab.'
+      ?'🌟 Welcome to ' + PROP.name + '! We hope your stay was wonderful and look forward to seeing you again in beautiful Dahab.'
       :'🌟 أهلاً بك في دهب تريندي! نأمل أن تكون إقامتك رائعة ونتطلع لرؤيتك مجدداً في دهب الجميلة.';
 
     html+='<div style="margin-top:12px;padding:12px 14px;background:rgba(52,152,219,0.07);border:1px solid rgba(52,152,219,0.2);border-radius:10px;font-size:11px;color:#7ab8f5;line-height:1.6;font-style:italic;">'+greet+'</div>';
@@ -25030,7 +25258,7 @@ function applyScanData(){
     var bks=(typeof bookings!=='undefined'?bookings:[]).filter(function(b){return b.name.trim().toLowerCase()===q&&b.status!=='Cancelled';});
     if(!bks.length) return;
     var phone=(bks[0].whatsapp||bks[0].phone||'').replace(/[^0-9+]/g,'');
-    var msg='🏨 *Dahab Trendy — Guest Journey*\n\n👤 *'+_gjtGuest+'*\n📊 Stays: '+bks.length+'\n🏅 Level: '+gjtLoyalty(bks.length)+'\n\nThank you! 🙏\n— Dahab Trendy 🌊';
+    var msg='🏨 *' + PROP.name + ' — Guest Journey*\n\n👤 *'+_gjtGuest+'*\n📊 Stays: '+bks.length+'\n🏅 Level: '+gjtLoyalty(bks.length)+'\n\nThank you! 🙏\n— ' + PROP.name + ' 🌊';
     window.open(phone?'https://wa.me/'+phone+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg),'_blank');
   };
 
@@ -25113,10 +25341,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a2e;direc
     var date=new Date().toLocaleDateString('ar-EG',{year:'numeric',month:'long',day:'numeric'});
     w.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>Guest Journey — '+(_gjtGuest||'')+'</title><style>'+css+'</style></head><body>'
       +'<div class="page">'
-      +'<div class="header"><div><div class="hotel-name">🌊 Dahab Trendy — Guest Journey</div><div class="guest-name">'+(_gjtGuest||'')+'</div><div class="guest-sub">'+(sub?sub.textContent:'')+'</div></div><div class="logo">🗺️</div></div>'
+      +'<div class="header"><div><div class="hotel-name">🌊 '+PROP.name+' — Guest Journey</div><div class="guest-name">'+(_gjtGuest||'')+'</div><div class="guest-sub">'+(sub?sub.textContent:'')+'</div></div><div class="logo">🗺️</div></div>'
       +'<div class="kstrip">'+kpiRows+'</div>'
       +body
-      +'<div class="footer">Dahab Trendy · دهب تريندي &nbsp;|&nbsp; '+date+' &nbsp;|&nbsp; جميع الحقوق محفوظة ©</div>'
+      +'<div class="footer">'+PROP.name+' &nbsp;|&nbsp; '+date+' &nbsp;|&nbsp; جميع الحقوق محفوظة ©</div>'
       +'</div></body></html>');
     w.document.close();
     setTimeout(function(){w.print();},600);
@@ -25156,7 +25384,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a2e;direc
 <div id="kiosk-overlay">
   <div class="kiosk-hdr">
     <div>
-      <div class="kiosk-title">🌊 Dahab Trendy</div>
+      <div class="kiosk-title">🌊 ' + PROP.name + '</div>
       <div class="kiosk-date" id="kiosk-date"></div>
     </div>
     <div style="text-align:center;">
@@ -25490,7 +25718,7 @@ function openOwnerDailyReport(){
 
   // Footer
   html += `<div style="text-align:center;padding:6px 0 2px;font-size:9px;color:rgba(255,255,255,0.18);">
-    Dahab Trendy · ${dateStrEn} · ${timeStr}
+    ${PROP.name} · ${dateStrEn} · ${timeStr}
   </div>`;
 
   document.getElementById('odr-date-str').textContent = dateStrAr + '  ·  ' + dateStrEn + '  ·  ' + timeStr;
@@ -25666,7 +25894,7 @@ body{font-family:Arial,sans-serif;background:#fff;color:#1a1a2e;padding:0;max-wi
 <div style="padding:0 16px 16px;">${body}</div>
 <!-- FOOTER -->
 <div style="background:#f8f5ec;border-top:1px solid #e5d9b0;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;">
-  <div style="font-size:9px;color:#999;">Dahab Trendy Accommodation · South Sinai, Egypt</div>
+  <div style="font-size:9px;color:#999;">' + PROP.name + ' · South Sinai, Egypt</div>
   <div style="font-size:9px;color:#999;">${dateStrEn} · ${timeStr}</div>
 </div>
 <div class="no-print" style="padding:16px;text-align:center;">
@@ -25838,7 +26066,7 @@ function loadWATemplate(){
   const b=(bookings||[])[idx];
   if(!b){document.getElementById('wat-tpl-body').textContent='لا يوجد حجز';return;}
   _watCurrentBk=b;
-  const prop=(typeof PROP!=='undefined'?PROP:{name:'Dahab Trendy',phone:'',address:'دهب'});
+  const prop=(typeof PROP!=='undefined'?PROP:{name:'' + PROP.name + '',phone:'',address:'دهب'});
   const _propPhone=_watLang==='ar'?'\u200E'+(prop.phone||''):prop.phone||'';
   const sym=b.cur==='USD'?'$':b.cur==='EUR'?'€':'£';
   const nights_=nts(b.ci,b.co);
@@ -26137,7 +26365,7 @@ function watUseCustomTpl(i){
   const b=(bookings||[])[idx];
   let body=tpl.body;
   if(b){
-    const prop=(typeof PROP!=='undefined'?PROP:{name:'Dahab Trendy',phone:''});
+    const prop=(typeof PROP!=='undefined'?PROP:{name:'' + PROP.name + '',phone:''});
     body=body.replace(/\{name\}/g,b.name||'').replace(/\{room\}/g,b.room||'').replace(/\{ci\}/g,b.ci||'').replace(/\{co\}/g,b.co||'').replace(/\{total\}/g,b.total||'').replace(/\{phone\}/g,prop.phone||'');
   }
   document.getElementById('wat-tpl-title').textContent='📝 '+tpl.name;
@@ -26175,13 +26403,13 @@ function watClearHistory(){
 // FEATURE N3: iCAL EXPORT
 // ══════════════════════════════════════════════
 function exportIcal(){
-  const prop=(typeof PROP!=='undefined'?PROP:{name:'Dahab Trendy',address:'Dahab, South Sinai'});
+  const prop=(typeof PROP!=='undefined'?PROP:{name:'' + PROP.name + '',address:'Dahab, South Sinai'});
   const active=(bookings||[]).filter(b=>b.status!=='Cancelled');
   if(!active.length){alert('لا توجد حجوزات للتصدير');return;}
   function icsDate(d){return d.replace(/-/g,'');}
   function escIcs(s){return(s||'').replace(/[\\;,]/g,'\\$&').replace(/\n/g,'\\n');}
   const now=new Date().toISOString().replace(/[-:.]/g,'').slice(0,15)+'Z';
-  let cal=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Dahab Trendy//Property System//AR','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:'+escIcs(prop.name)+' Bookings'];
+  let cal=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//' + PROP.name + '//Property System//AR','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:'+escIcs(prop.name)+' Bookings'];
   active.forEach(b=>{
     const uid='dahabtrendy-'+(b.id||b.invNo||Math.random().toString(36).slice(2))+'@dt';
     const summary=escIcs(b.name+' — Room '+b.room);
@@ -27252,7 +27480,7 @@ function sendAmanatOverdueWhatsapp(){
     if(rem>0.001) parts.push("💰 "+sym(dep.currency)+rem.toFixed(2));
     text += `👤 *${dep.guest}*${dep.room?` — ${ar?'غرفة':'Room'} ${dep.room}`:''}\n⏰ ${days} ${ar?'يوم':'days'}\n${parts.join(' · ')}\n\n`;
   });
-  text += `🏨 Dahab Trendy Accommodation`;
+  text += `🏨 ' + PROP.name + '`;
   const encoded = encodeURIComponent(text);
   const url = `https://wa.me/${s.adminWhatsapp}?text=${encoded}`;
   window.open(url, '_blank');
@@ -27364,7 +27592,7 @@ function populateAmanatRoomLink(){
   const sel = document.getElementById("am-link-room");
   if(!sel) return;
   const rmBranch = (typeof DTA_BRANCH!=='undefined') ? DTA_BRANCH.getActive() : null;
-  const rmRooms = rmBranch ? Array.from({length:rmBranch.roomCount},(_,i)=>rmBranch.roomStart+i) : ROOMS;
+  const rmRooms = rmBranch ? roomsInBranch(rmBranch) : ROOMS;
   let opts = `<option value="">— ${ar?"اختر غرفة لتعبئة البيانات تلقائياً":"Select a room to auto-fill"} —</option>`;
   rmRooms.forEach(r=>{
     const b = getActiveBookingForRoom(r);
@@ -27410,7 +27638,7 @@ function generateAmanatDepositText(dep){
     text += `\n💰 *الرصيد المحفوظ في الخزنة:* ${sym}${dep.amount.toFixed(2)}\n💰 *Balance Kept in Safe:* ${sym}${dep.amount.toFixed(2)}\n_(يمكن سحبه كلياً أو جزئياً بعد الطلب)_\n_(Can be withdrawn fully or partially upon request)_`;
   }
 
-  text += `\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n👤 *استلمها:* ${dep.receivedBy}\n👤 *Received by:* ${dep.receivedBy}\n\n📌 هذه الرسالة إثبات أمانة بين الضيف والمكان. العناصر تُسلم عند المغادرة، والفلوس تُسحب بطلب الضيف.\n📌 This message serves as proof of trust between the guest and the property. Items are delivered at checkout; cash is withdrawn upon guest request.\n\n🏨 Dahab Trendy Accommodation`;
+  text += `\n\n━━━━━━━━━━━━━━━━━━━━━━\n\n👤 *استلمها:* ${dep.receivedBy}\n👤 *Received by:* ${dep.receivedBy}\n\n📌 هذه الرسالة إثبات أمانة بين الضيف والمكان. العناصر تُسلم عند المغادرة، والفلوس تُسحب بطلب الضيف.\n📌 This message serves as proof of trust between the guest and the property. Items are delivered at checkout; cash is withdrawn upon guest request.\n\n🏨 ' + PROP.name + '`;
 
   return text;
 }
@@ -27506,7 +27734,7 @@ function generateAmanatWithdrawText(item, amount, withdrawnBy){
     text += `✅ لا شيء متبقي — تم تسليم كل شيء\n✅ Nothing remaining — everything delivered\n`;
   }
 
-  text += `\n━━━━━━━━━━━━━━━━━━━━━━\n\n👤 *سلّمها:* ${withdrawnBy}\n👤 *Given by:* ${withdrawnBy}\n\n📌 هذه الرسالة إثبات سحب بين الضيف والمكان.\n📌 This message serves as proof of withdrawal between the guest and the property.\n\n🏨 Dahab Trendy Accommodation`;
+  text += `\n━━━━━━━━━━━━━━━━━━━━━━\n\n👤 *سلّمها:* ${withdrawnBy}\n👤 *Given by:* ${withdrawnBy}\n\n📌 هذه الرسالة إثبات سحب بين الضيف والمكان.\n📌 This message serves as proof of withdrawal between the guest and the property.\n\n🏨 ' + PROP.name + '`;
 
   return text;
 }
@@ -27657,7 +27885,7 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
   const w = window.open('','_blank','width=1050,height=800');
   w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head>
   <meta charset="UTF-8">
-  <title>${ar?'التقرير المالي الشامل':'Consolidated Financial Report'} — Dahab Trendy • ${refNum}</title>
+  <title>${ar?'التقرير المالي الشامل':'Consolidated Financial Report'} — ' + PROP.name + ' • ${refNum}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#222;background:#f4f4f4;}
@@ -27697,7 +27925,7 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
 
     <div class="hdr">
       <div class="hdr-left">
-        <h1>🏨 Dahab Trendy Accommodation</h1>
+        <h1>🏨 ' + PROP.name + '</h1>
         <div class="sub">دهب تريندي للإقامة — دهب، جنوب سيناء، مصر<br>
           📞 +20 109 953 1272 &nbsp;|&nbsp; ✉️ dahabtrendyinn@gmail.com</div>
       </div>
@@ -27740,7 +27968,7 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
     </div>
 
     <div class="footer">
-      <span>Dahab Trendy Accommodation Management System</span> &nbsp;·&nbsp;
+      <span>' + PROP.name + ' Management System</span> &nbsp;·&nbsp;
       ${ar?'وثيقة رسمية — للاستخدام الداخلي فقط':'Internal document — for internal use only'} &nbsp;·&nbsp;
       <span>${refNum}</span> &nbsp;·&nbsp; ${dateStr}
     </div>
@@ -27823,7 +28051,7 @@ function printAmanatReport(){
   const w = window.open('','_blank','width=1050,height=800');
   w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head>
   <meta charset="UTF-8">
-  <title>${ar?'تقرير الأمانات':'Valuables Report'} — Dahab Trendy • ${refNum}</title>
+  <title>${ar?'تقرير الأمانات':'Valuables Report'} — ' + PROP.name + ' • ${refNum}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#222;background:#f4f4f4;}
@@ -27864,7 +28092,7 @@ function printAmanatReport(){
 
     <div class="hdr">
       <div class="hdr-left">
-        <h1>🏨 Dahab Trendy Accommodation</h1>
+        <h1>🏨 ' + PROP.name + '</h1>
         <div class="sub">دهب تريندي للإقامة — دهب، جنوب سيناء، مصر<br>
           📞 +20 109 953 1272 &nbsp;|&nbsp; ✉️ dahabtrendyinn@gmail.com</div>
       </div>
@@ -27913,7 +28141,7 @@ function printAmanatReport(){
     </div>
 
     <div class="footer">
-      <span>Dahab Trendy Accommodation Management System</span> &nbsp;·&nbsp;
+      <span>' + PROP.name + ' Management System</span> &nbsp;·&nbsp;
       ${ar?'وثيقة رسمية — للاستخدام الداخلي فقط':'Internal document — for internal use only'} &nbsp;·&nbsp;
       <span>${refNum}</span> &nbsp;·&nbsp; ${today}
     </div>
@@ -28081,7 +28309,7 @@ function generateAmanatReceiptText(dep, itemId){
 👤 *سلّمها:* ${returnedBy}
 👤 *Delivered by:* ${returnedBy}
 
-🏨 Dahab Trendy Accommodation
+🏨 ' + PROP.name + '
 
 ✨ شكراً لاختيارك! — Thank you!`;
   
@@ -28479,7 +28707,7 @@ function hkPrintSheet() {
   <table><thead><tr><th>الغرفة</th><th>المسؤول</th><th>ملاحظات</th><th>اعتماد المشرف</th></tr></thead><tbody>
   ${inspect.map(r=>`<tr><td style="font-weight:700;">${r.room}</td><td>${r.assignee||"—"}</td><td>${r.notes||""}</td><td style="min-width:80px;"></td></tr>`).join("")}
   </tbody></table>` : ""}
-  <div class="footer">Dahab Trendy — Housekeeping Sheet — ${td}</div>
+  <div class="footer">' + PROP.name + ' — Housekeeping Sheet — ${td}</div>
   <script>window.onload=()=>{window.print();}<\/script>
   </body></html>`);
   w.document.close();
@@ -28522,7 +28750,7 @@ function hkSendCheckinWA(when) {
   });
   msg += `\n${"─".repeat(28)}\n`;
   msg += `📊 إجمالي: *${checkinRooms.length}* غرفة\n`;
-  msg += `🏨 Dahab Trendy`;
+  msg += `🏨 ' + PROP.name + '`;
 
   // فتح نافذة تأكيد قبل الإرسال
   document.getElementById("hk-wa-preview").textContent = msg;
@@ -28741,7 +28969,7 @@ function printGuestsRegister(){
   if(!area){ alert('لا يوجد بيانات للطباعة'); return; }
   const w = window.open('', '_blank', 'width=1100,height=750');
   w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
-  <title>كشف المقيمين — Dahab Trendy</title>
+  <title>كشف المقيمين — ' + PROP.name + '</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:Arial,sans-serif;font-size:11px;color:#111;padding:16px;}
@@ -29643,7 +29871,7 @@ function showPOSReceipt(tx){
   const _nt=new Date();const now=String(_nt.getHours()).padStart(2,"0")+":"+String(_nt.getMinutes()).padStart(2,"0");
   el.innerHTML = `
     <div style="text-align:center;border-bottom:1px dashed #ccc;padding-bottom:8px;margin-bottom:8px;">
-      <div style="font-weight:700;font-size:13px;">${PROP&&PROP.name?PROP.name:"Dahab Trendy"}</div>
+      <div style="font-weight:700;font-size:13px;">${PROP&&PROP.name?PROP.name:"${PROP.name}"}</div>
       <div style="color:#888;font-size:10px;">${toDay()} · ${now}</div>
       ${tx.tableNo?`<div style="color:#e67e22;font-size:12px;font-weight:700;">🪑 ${en?'Table':'ترابيزة'} ${tx.tableNo}</div>`:""}
       ${tx.room?`<div style="color:#888;font-size:10px;">${en?'Room':'غرفة'} ${tx.room}</div>`:""}
@@ -29772,7 +30000,7 @@ function printRestaurantInvoice(){
   <div class="inv-header">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
       <div>
-        <div class="inv-logo">🏨 ${prop.name||"Dahab Trendy"}</div>
+        <div class="inv-logo">🏨 ${prop.name||"${PROP.name}"}</div>
         <div class="inv-sub">🍽️ Restaurant Invoice / فاتورة مطعم</div>
         ${prop.phone?`<div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:6px;">📞 ${prop.phone}</div>`:""}
       </div>
@@ -29848,7 +30076,7 @@ function printRestaurantInvoice(){
 
   <!-- Footer -->
   <div class="inv-footer">
-    <strong>${prop.name||"Dahab Trendy"}</strong> — Thank you / شكراً لتعاملكم معنا 🙏
+    <strong>${prop.name||"${PROP.name}"}</strong> — Thank you / شكراً لتعاملكم معنا 🙏
     ${prop.phone?`<br>📞 ${prop.phone}`:""}
     <br><span style="font-size:10px;opacity:.6;">هذه فاتورة رسمية من مطعم الفندق</span>
   </div>
@@ -29879,7 +30107,7 @@ function sendPOSReceiptWA(){
 
   // Build WhatsApp message
   const lines = [
-    "🧾 *Restaurant Invoice — "+(prop.name||"Dahab Trendy")+"*",
+    "🧾 *Restaurant Invoice — "+(prop.name||"" + PROP.name + "")+"*",
     "📅 "+tx.date+" · ⏰ "+now,
     tx.room ? "🏨 Room "+tx.room : "",
     tx.customer ? "👤 "+tx.customer : "",
@@ -29938,7 +30166,7 @@ async function doSendTakeawayMenu(){
     }catch(e){}
   }
 
-  const prop = (typeof PROP!=='undefined'&&PROP) ? PROP : {name:'Dahab Trendy',phone:''};
+  const prop = (typeof PROP!=='undefined'&&PROP) ? PROP : {name:'' + PROP.name + '',phone:''};
   const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
   const waNum = qrs.waNum || '201099531272';
 
@@ -30058,7 +30286,7 @@ async function doSendMenuToGuest(){
   const {room, phone} = _getSendMenuRoomAndPhone();
   if(!room){ sNotify('⚠️','يرجى اختيار أو إدخال رقم الغرفة','info',3000); return; }
 
-  const prop = (typeof PROP!=='undefined'&&PROP) ? PROP : {name:'Dahab Trendy',phone:''};
+  const prop = (typeof PROP!=='undefined'&&PROP) ? PROP : {name:'' + PROP.name + '',phone:''};
   const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
   const waNum = (qrs.waNum || '201099531272');
 
@@ -30468,7 +30696,7 @@ function sendDrinksOrderWA(){
   const now = new Date().toLocaleTimeString("ar-EG",{hour:"2-digit",minute:"2-digit"});
   const today = toDay ? toDay() : new Date().toLocaleDateString("ar-EG");
   const lines = [
-    "🥤 *طلب مشروبات — "+(prop.name||"Dahab Trendy")+"*",
+    "🥤 *طلب مشروبات — "+(prop.name||"" + PROP.name + "")+"*",
     "📅 "+today+" · ⏰ "+now,
     "",
     "〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️",
@@ -32031,7 +32259,7 @@ ${catLines}
 ${detailLines}
 
 ━━━━━━━━━━━━━━━━━━━━━━
-_تم الإنشاء بواسطة نظام Dahab Trendy_
+_تم الإنشاء بواسطة نظام ${PROP.name}_
 📞 +20 109 953 1272
 ✉️ dahabtrendyinn@gmail.com
 🇪🇬 _دهب، جنوب سيناء، مصر_
@@ -32099,7 +32327,7 @@ function printExpensesPDF(){
   const w = window.open('','_blank','width=1050,height=800');
   w.document.write(`<!DOCTYPE html><html dir="rtl" lang="ar"><head>
   <meta charset="UTF-8">
-  <title>تقرير المصروفات — Dahab Trendy • ${refNum}</title>
+  <title>تقرير المصروفات — ${PROP.name} • ${refNum}</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#222;background:#f4f4f4;}
@@ -32164,7 +32392,7 @@ function printExpensesPDF(){
     <!-- Header -->
     <div class="hdr">
       <div class="hdr-left">
-        <h1>🏨 Dahab Trendy Accommodation</h1>
+        <h1>🏨 ${PROP.name}</h1>
         <div class="sub">دهب تريندي للإقامة — دهب، جنوب سيناء، مصر<br>
           📞 +20 109 953 1272 &nbsp;|&nbsp; ✉️ dahabtrendyinn@gmail.com</div>
       </div>
@@ -32250,7 +32478,7 @@ function printExpensesPDF(){
 
     <!-- Footer -->
     <div class="footer">
-      <span>Dahab Trendy Accommodation Management System</span> &nbsp;·&nbsp;
+      <span>${PROP.name} Management System</span> &nbsp;·&nbsp;
       وثيقة رسمية — للاستخدام الداخلي فقط &nbsp;·&nbsp;
       <span>${refNum}</span> &nbsp;·&nbsp; ${today}
     </div>
@@ -33847,13 +34075,13 @@ const DTA_NOTIFY = (function(){
     const unpaid    = (bookings||[]).filter(b=>b.status!=='Cancelled' && b.status!=='Paid' && b.co>=td && calcPaid(b)<(b.total||0));
 
     if(arrivals.length)
-      send('🛬 وصول اليوم — Dahab Trendy',
+      send('🛬 وصول اليوم — ' + PROP.name + '',
            arrivals.map(b=>b.name+' · غرفة '+b.room).join('\n'),
            {tag:'arrivals-'+td, sticky:true,
             onClick:()=>{ window.focus(); goPage('bookings',null); }});
 
     if(departures.length)
-      send('🛫 مغادرة اليوم — Dahab Trendy',
+      send('🛫 مغادرة اليوم — ' + PROP.name + '',
            departures.map(b=>b.name+' · غرفة '+b.room).join('\n'),
            {tag:'departures-'+td});
 
@@ -34054,7 +34282,7 @@ const DTA_BACKUP = (function(){
   }
 
   // مشاركة ملخص تقرير عبر Share API (موبايل)
-  async function shareReport(text, title='تقرير Dahab Trendy'){
+  async function shareReport(text, title='تقرير ' + PROP.name + ''){
     if(navigator.share){
       try{
         await navigator.share({ title, text, url: window.location.href });
@@ -34385,7 +34613,7 @@ function triggerIDBImport(){
 
     // 1. IndexedDB: اعرض مساحة التخزين في الـ console
     DTA_IDB.getUsage().then(({usedMB, quotaGB})=>{
-      console.log('[Dahab Trendy v10] Storage: IDB '+usedMB+'MB / '+quotaGB+'GB');
+      console.log('[' + PROP.name + ' v10] Storage: IDB '+usedMB+'MB / '+quotaGB+'GB');
     });
 
     // 2. Web Worker: حسب الـ analytics في الخلفية بعد ثانيتين
@@ -34428,7 +34656,7 @@ function triggerIDBImport(){
     setInterval(saveToIDBIdle, 5*60*1000);
     saveToIDBIdle();
 
-    console.log('[Dahab Trendy v10] ✅ Advanced Tech Stack ready: IndexedDB + Web Worker + Notifications + IntersectionObserver + CompressionStream');
+    console.log('[' + PROP.name + ' v10] ✅ Advanced Tech Stack ready: IndexedDB + Web Worker + Notifications + IntersectionObserver + CompressionStream');
   });
 })();
 
@@ -35049,7 +35277,7 @@ console.log('[DTA_DB v11] ✅ Full IndexedDB engine ready — Primary storage');
 // ╚══════════════════════════════════════════════════════════════╝
 const DTA_BRANCH = (function(){
   const DEFAULT_BRANCHES = [
-    { id:'main', nameAr:'دهب تريندي', nameEn:'Dahab Trendy', roomStart:101, roomCount:14, color:'#c9a84c' }
+    { id:'main', nameAr:'دهب تريندي', nameEn:'' + PROP.name + '', roomStart:101, roomCount:14, color:'#c9a84c' }
   ];
   let _branches = DEFAULT_BRANCHES.slice();
   let _activeId = 'main';
@@ -35290,7 +35518,7 @@ async function rua_suggestUpgrade(idx){
   }
 
   try{
-    const sysPrompt = `أنت مساعد فندقي لفندق "Dahab Trendy Accommodation" في دهب، مصر. اكتب عرض ترقية غرفة قصير وودود للضيف، باللغة العربية أولاً ثم الإنجليزية (نسخة كاملة بكل لغة). الأسلوب: مرحّب، غير إلحاحي، يبرز قيمة الترقية. اذكر الفرق في السعر بوضوح لكل ليلة. لا تكتب أي مقدمة أو شرح، فقط نص العرض جاهز للإرسال على واتساب.`;
+    const sysPrompt = `أنت مساعد فندقي لفندق "${PROP.name}" في دهب، مصر. اكتب عرض ترقية غرفة قصير وودود للضيف، باللغة العربية أولاً ثم الإنجليزية (نسخة كاملة بكل لغة). الأسلوب: مرحّب، غير إلحاحي، يبرز قيمة الترقية. اذكر الفرق في السعر بوضوح لكل ليلة. لا تكتب أي مقدمة أو شرح، فقط نص العرض جاهز للإرسال على واتساب.`;
     const userPrompt = `اسم الضيف: ${b.name||'-'}\nالغرفة الحالية: ${b.room} (${curType})\nالغرفة المقترحة: ${pick.room} (${pick.type})\nفرق السعر: ${sym}${diff.toFixed(0)} لكل ليلة\nاكتب عرض الترقية ثنائي اللغة.`;
     const response = await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
@@ -35425,7 +35653,7 @@ function renderStatusBoard(){
   if(!grid) return;
   if(typeof DTA_BRANCH!=='undefined') DTA_BRANCH.renderIndicator('rsb-branch-indicator');
   const rsbBranch = (typeof DTA_BRANCH!=='undefined') ? DTA_BRANCH.getActive() : null;
-  const rsbRooms = rsbBranch ? Array.from({length:rsbBranch.roomCount},(_,i)=>rsbBranch.roomStart+i) : ROOMS;
+  const rsbRooms = rsbBranch ? roomsInBranch(rsbBranch) : ROOMS;
   grid.innerHTML = rsbRooms.map(r=>{
     const {st, guest} = rsb_getStatus(r);
     const color = RSTATUS_COLOR[st]||'#7f8c8d';
@@ -35721,7 +35949,7 @@ self.addEventListener('fetch', e=>{
           return caches.match(self.registration.scope).then(page=>{
             if(page) return page;
             return new Response(
-              '<html dir="rtl"><body style="background:#0f0f1a;color:#c9a84c;font-family:Arial;text-align:center;padding:40px;"><h2>🏨 Dahab Trendy</h2><p>أنت offline — البيانات محفوظة محلياً</p><button onclick="location.reload()" style="background:#c9a84c;color:#1a1a2e;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🔄 إعادة المحاولة</button></body></html>',
+              '<html dir="rtl"><body style="background:#0f0f1a;color:#c9a84c;font-family:Arial;text-align:center;padding:40px;"><h2>🏨 ${PROP.name}</h2><p>أنت offline — البيانات محفوظة محلياً</p><button onclick="location.reload()" style="background:#c9a84c;color:#1a1a2e;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;">🔄 إعادة المحاولة</button></body></html>',
               {headers:{'Content-Type':'text/html;charset=utf-8'}}
             );
           });
@@ -35751,7 +35979,7 @@ async function processWAQueue(){
 self.addEventListener('push', e=>{
   const data = e.data ? e.data.json() : {};
   e.waitUntil(
-    self.registration.showNotification(data.title || '🏨 Dahab Trendy', {
+    self.registration.showNotification(data.title || '🏨 ${PROP.name}', {
       body: data.body || '',
       icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230f0f1a" rx="20"/><text y=".9em" font-size="80">🏨</text></svg>',
       badge: '',
@@ -35768,7 +35996,7 @@ self.addEventListener('notificationclick', e=>{
   );
 });
 
-console.log('[SW] Dahab Trendy v11 Service Worker loaded ✓');
+console.log('[SW] ${PROP.name} v11 Service Worker loaded ✓');
 `;
 
   try{
@@ -35902,7 +36130,7 @@ const DTA_WA = (function(){
 
   // ─── القوالب الجاهزة — ثنائية اللغة (عربي/إنجليزي) ───
   const TEMPLATES_AR = {
-    booking_confirm: (b)=>`🏨 *Dahab Trendy — تأكيد الحجز*
+    booking_confirm: (b)=>`🏨 *${PROP.name} — تأكيد الحجز*
 
 مرحباً *${b.name}* 👋
 
@@ -35920,10 +36148,10 @@ const DTA_WA = (function(){
 📍 العنوان: Dahab, South Sinai, Egypt
 📞 واتساب: +20 109 953 1272
 
-شكراً لاختيارك Dahab Trendy 🙏
+شكراً لاختيارك ${PROP.name} 🙏
 نتطلع لاستقبالك!`,
 
-    checkin_welcome: (b)=>`🌟 *أهلاً وسهلاً في Dahab Trendy!*
+    checkin_welcome: (b)=>`🌟 *أهلاً وسهلاً في ${PROP.name}!*
 
 عزيزنا *${b.name}*،
 يسعدنا استقبالك اليوم! 🎉
@@ -35940,10 +36168,10 @@ const DTA_WA = (function(){
 
 نتمنى لك إقامة ممتعة! 🌴`,
 
-    checkout_invoice: (b, total)=>`🧾 *Dahab Trendy — فاتورة المغادرة*
+    checkout_invoice: (b, total)=>`🧾 *${PROP.name} — فاتورة المغادرة*
 
 عزيزنا *${b.name}*،
-شكراً جزيلاً لاختيارك Dahab Trendy 🙏
+شكراً جزيلاً لاختيارك ${PROP.name} 🙏
 
 📋 *ملخص الإقامة:*
 • 🛬 الوصول: ${b.ci}
@@ -35957,7 +36185,7 @@ const DTA_WA = (function(){
 ⭐ شاركنا رأيك على Google Maps
 نتمنى لك سفراً سعيداً 🌟`,
 
-    payment_reminder: (b, remaining)=>`⏰ *تذكير بالدفع — Dahab Trendy*
+    payment_reminder: (b, remaining)=>`⏰ *تذكير بالدفع — ${PROP.name}*
 
 عزيزنا *${b.name}*،
 
@@ -35977,14 +36205,14 @@ const DTA_WA = (function(){
 عزيزنا *${name}*،
 
 بمناسبة عيد ميلادك،
-يتمنى لك فريق *Dahab Trendy* يوماً مليئاً بالسعادة والأفراح! 🎉🎊
+يتمنى لك فريق *${PROP.name}* يوماً مليئاً بالسعادة والأفراح! 🎉🎊
 
 🌟 نشكرك على ثقتك بنا
 💛 نتطلع لاستضافتك مجدداً
 
-— فريق Dahab Trendy 🏨`,
+— فريق ${PROP.name} 🏨`,
 
-    review_request: (b)=>`⭐ *شاركنا رأيك — Dahab Trendy*
+    review_request: (b)=>`⭐ *شاركنا رأيك — ${PROP.name}*
 
 عزيزنا *${b.name}*،
 
@@ -36002,7 +36230,7 @@ const DTA_WA = (function(){
   };
 
   const TEMPLATES_EN = {
-    booking_confirm: (b)=>`🏨 *Dahab Trendy — Booking Confirmation*
+    booking_confirm: (b)=>`🏨 *${PROP.name} — Booking Confirmation*
 
 Hello *${b.name}* 👋
 
@@ -36020,10 +36248,10 @@ Your booking has been confirmed ✅
 📍 Address: Dahab, South Sinai, Egypt
 📞 WhatsApp: +20 109 953 1272
 
-Thank you for choosing Dahab Trendy 🙏
+Thank you for choosing ${PROP.name} 🙏
 We look forward to welcoming you!`,
 
-    checkin_welcome: (b)=>`🌟 *Welcome to Dahab Trendy!*
+    checkin_welcome: (b)=>`🌟 *Welcome to ${PROP.name}!*
 
 Dear *${b.name}*,
 We're happy to welcome you today! 🎉
@@ -36040,10 +36268,10 @@ We're happy to welcome you today! 🎉
 
 We wish you a pleasant stay! 🌴`,
 
-    checkout_invoice: (b, total)=>`🧾 *Dahab Trendy — Checkout Invoice*
+    checkout_invoice: (b, total)=>`🧾 *${PROP.name} — Checkout Invoice*
 
 Dear *${b.name}*,
-Thank you so much for choosing Dahab Trendy 🙏
+Thank you so much for choosing ${PROP.name} 🙏
 
 📋 *Stay Summary:*
 • 🛬 Check-in: ${b.ci}
@@ -36057,7 +36285,7 @@ We'd love to welcome you again!
 ⭐ Share your feedback on Google Maps
 Have a safe trip 🌟`,
 
-    payment_reminder: (b, remaining)=>`⏰ *Payment Reminder — Dahab Trendy*
+    payment_reminder: (b, remaining)=>`⏰ *Payment Reminder — ${PROP.name}*
 
 Dear *${b.name}*,
 
@@ -36077,14 +36305,14 @@ Thank you for your cooperation 🙏`,
 Dear *${name}*,
 
 On the occasion of your birthday,
-the *Dahab Trendy* team wishes you a day full of happiness and joy! 🎉🎊
+the *${PROP.name}* team wishes you a day full of happiness and joy! 🎉🎊
 
 🌟 Thank you for trusting us
 💛 We look forward to hosting you again
 
-— Dahab Trendy Team 🏨`,
+— ${PROP.name} Team 🏨`,
 
-    review_request: (b)=>`⭐ *Share Your Feedback — Dahab Trendy*
+    review_request: (b)=>`⭐ *Share Your Feedback — ${PROP.name}*
 
 Dear *${b.name}*,
 
@@ -36122,21 +36350,21 @@ Thank you for your time! 😊`,
 
   // ─── النصوص الأصلية الخام (بصيغة {var}) — تُستخدم في خانات التعديل والاستعادة ───
   const _ORIGINAL_TPL_TEXT_AR = {
-    booking_confirm: `🏨 *Dahab Trendy — تأكيد الحجز*\n\nمرحباً *{name}* 👋\n\nتم تأكيد حجزك بنجاح ✅\n\n📋 *تفاصيل الحجز:*\n• غرفة: *{room}* ({type})\n• 🛬 الوصول: *{ci}*\n• 🛫 المغادرة: *{co}*\n• 🌙 عدد الليالي: *{nights}*\n• 💰 المبلغ الإجمالي: *{cur} {total}*\n• 💵 المدفوع: *{cur} {prepay}*\n• 📌 الرقم المرجعي: *{invNo}*\n\n📍 العنوان: Dahab, South Sinai, Egypt\n📞 واتساب: +20 109 953 1272\n\nشكراً لاختيارك Dahab Trendy 🙏\nنتطلع لاستقبالك!`,
-    checkin_welcome: `🌟 *أهلاً وسهلاً في Dahab Trendy!*\n\nعزيزنا *{name}*،\nيسعدنا استقبالك اليوم! 🎉\n\n🏨 غرفتك: *{room}*\n\n*خدماتنا:*\n🍽️ مطعم متاح من 7 صباحاً حتى 11 مساءً\n🌊 قريبون من شاطئ دهب الجميل\n🛁 تنظيف الغرف يومياً\n\n📞 للطوارئ أو الخدمة: 0109 953 1272\n\nنتمنى لك إقامة ممتعة! 🌴`,
-    checkout_invoice: `🧾 *Dahab Trendy — فاتورة المغادرة*\n\nعزيزنا *{name}*،\nشكراً جزيلاً لاختيارك Dahab Trendy 🙏\n\n📋 *ملخص الإقامة:*\n• 🛬 الوصول: {ci}\n• 🛫 المغادرة: {co}\n• 🌙 الليالي: {nights}\n• 💰 إجمالي الفاتورة: *{cur} {total}*\n\nنأمل أن تكون إقامتك كانت مريحة ومتعة 😊\nسيسعدنا استقبالك مجدداً!\n\n⭐ شاركنا رأيك على Google Maps\nنتمنى لك سفراً سعيداً 🌟`,
-    payment_reminder: `⏰ *تذكير بالدفع — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nنود التذكير بأن المبلغ المتبقي من حجزك هو:\n💰 *{cur} {remaining}*\n\n📌 رقم الحجز: {invNo}\n📅 تاريخ المغادرة: {co}\n\nللدفع يرجى التواصل معنا:\n📞 0109 953 1272\n\nشكراً لتعاونكم 🙏`,
-    birthday_greet: `🎂 *كل سنة وأنت بخير!*\n\nعزيزنا *{name}*،\n\nبمناسبة عيد ميلادك،\nيتمنى لك فريق *Dahab Trendy* يوماً مليئاً بالسعادة والأفراح! 🎉🎊\n\n🌟 نشكرك على ثقتك بنا\n💛 نتطلع لاستضافتك مجدداً\n\n— فريق Dahab Trendy 🏨`,
-    review_request: `⭐ *شاركنا رأيك — Dahab Trendy*\n\nعزيزنا *{name}*،\n\nشكراً لإقامتك معنا من {ci} إلى {co} 🙏\n\nرأيك يهمنا كثيراً وسيساعدنا على تحسين خدماتنا.\nهل يمكنك تقييمنا على Google Maps؟\n\n🔗 رابط التقييم: https://g.page/r/dahabtrendy\n\n📞 لأي استفسار: 0109 953 1272\nشكراً على وقتك الكريم! 😊`
+    booking_confirm: `🏨 *${PROP.name} — تأكيد الحجز*\n\nمرحباً *{name}* 👋\n\nتم تأكيد حجزك بنجاح ✅\n\n📋 *تفاصيل الحجز:*\n• غرفة: *{room}* ({type})\n• 🛬 الوصول: *{ci}*\n• 🛫 المغادرة: *{co}*\n• 🌙 عدد الليالي: *{nights}*\n• 💰 المبلغ الإجمالي: *{cur} {total}*\n• 💵 المدفوع: *{cur} {prepay}*\n• 📌 الرقم المرجعي: *{invNo}*\n\n📍 العنوان: Dahab, South Sinai, Egypt\n📞 واتساب: +20 109 953 1272\n\nشكراً لاختيارك ${PROP.name} 🙏\nنتطلع لاستقبالك!`,
+    checkin_welcome: `🌟 *أهلاً وسهلاً في ${PROP.name}!*\n\nعزيزنا *{name}*،\nيسعدنا استقبالك اليوم! 🎉\n\n🏨 غرفتك: *{room}*\n\n*خدماتنا:*\n🍽️ مطعم متاح من 7 صباحاً حتى 11 مساءً\n🌊 قريبون من شاطئ دهب الجميل\n🛁 تنظيف الغرف يومياً\n\n📞 للطوارئ أو الخدمة: 0109 953 1272\n\nنتمنى لك إقامة ممتعة! 🌴`,
+    checkout_invoice: `🧾 *${PROP.name} — فاتورة المغادرة*\n\nعزيزنا *{name}*،\nشكراً جزيلاً لاختيارك ${PROP.name} 🙏\n\n📋 *ملخص الإقامة:*\n• 🛬 الوصول: {ci}\n• 🛫 المغادرة: {co}\n• 🌙 الليالي: {nights}\n• 💰 إجمالي الفاتورة: *{cur} {total}*\n\nنأمل أن تكون إقامتك كانت مريحة ومتعة 😊\nسيسعدنا استقبالك مجدداً!\n\n⭐ شاركنا رأيك على Google Maps\nنتمنى لك سفراً سعيداً 🌟`,
+    payment_reminder: `⏰ *تذكير بالدفع — ${PROP.name}*\n\nعزيزنا *{name}*،\n\nنود التذكير بأن المبلغ المتبقي من حجزك هو:\n💰 *{cur} {remaining}*\n\n📌 رقم الحجز: {invNo}\n📅 تاريخ المغادرة: {co}\n\nللدفع يرجى التواصل معنا:\n📞 0109 953 1272\n\nشكراً لتعاونكم 🙏`,
+    birthday_greet: `🎂 *كل سنة وأنت بخير!*\n\nعزيزنا *{name}*،\n\nبمناسبة عيد ميلادك،\nيتمنى لك فريق *${PROP.name}* يوماً مليئاً بالسعادة والأفراح! 🎉🎊\n\n🌟 نشكرك على ثقتك بنا\n💛 نتطلع لاستضافتك مجدداً\n\n— فريق ${PROP.name} 🏨`,
+    review_request: `⭐ *شاركنا رأيك — ${PROP.name}*\n\nعزيزنا *{name}*،\n\nشكراً لإقامتك معنا من {ci} إلى {co} 🙏\n\nرأيك يهمنا كثيراً وسيساعدنا على تحسين خدماتنا.\nهل يمكنك تقييمنا على Google Maps؟\n\n🔗 رابط التقييم: https://g.page/r/dahabtrendy\n\n📞 لأي استفسار: 0109 953 1272\nشكراً على وقتك الكريم! 😊`
   };
 
   const _ORIGINAL_TPL_TEXT_EN = {
-    booking_confirm: `🏨 *Dahab Trendy — Booking Confirmation*\n\nHello *{name}* 👋\n\nYour booking has been confirmed ✅\n\n📋 *Booking Details:*\n• Room: *{room}* ({type})\n• 🛬 Check-in: *{ci}*\n• 🛫 Check-out: *{co}*\n• 🌙 Nights: *{nights}*\n• 💰 Total Amount: *{cur} {total}*\n• 💵 Paid: *{cur} {prepay}*\n• 📌 Reference No: *{invNo}*\n\n📍 Address: Dahab, South Sinai, Egypt\n📞 WhatsApp: +20 109 953 1272\n\nThank you for choosing Dahab Trendy 🙏\nWe look forward to welcoming you!`,
-    checkin_welcome: `🌟 *Welcome to Dahab Trendy!*\n\nDear *{name}*,\nWe're happy to welcome you today! 🎉\n\n🏨 Your room: *{room}*\n\n*Our services:*\n🍽️ Restaurant open from 7 AM to 11 PM\n🌊 Close to Dahab's beautiful beach\n🛁 Daily room cleaning\n\n📞 For emergencies or service: 0109 953 1272\n\nWe wish you a pleasant stay! 🌴`,
-    checkout_invoice: `🧾 *Dahab Trendy — Checkout Invoice*\n\nDear *{name}*,\nThank you so much for choosing Dahab Trendy 🙏\n\n📋 *Stay Summary:*\n• 🛬 Check-in: {ci}\n• 🛫 Check-out: {co}\n• 🌙 Nights: {nights}\n• 💰 Total Invoice: *{cur} {total}*\n\nWe hope you had a comfortable and enjoyable stay 😊\nWe'd love to welcome you again!\n\n⭐ Share your feedback on Google Maps\nHave a safe trip 🌟`,
-    payment_reminder: `⏰ *Payment Reminder — Dahab Trendy*\n\nDear *{name}*,\n\nThis is a reminder that the remaining balance for your booking is:\n💰 *{cur} {remaining}*\n\n📌 Booking No: {invNo}\n📅 Check-out date: {co}\n\nTo pay, please contact us:\n📞 0109 953 1272\n\nThank you for your cooperation 🙏`,
-    birthday_greet: `🎂 *Happy Birthday!*\n\nDear *{name}*,\n\nOn the occasion of your birthday,\nthe *Dahab Trendy* team wishes you a day full of happiness and joy! 🎉🎊\n\n🌟 Thank you for trusting us\n💛 We look forward to hosting you again\n\n— Dahab Trendy Team 🏨`,
-    review_request: `⭐ *Share Your Feedback — Dahab Trendy*\n\nDear *{name}*,\n\nThank you for staying with us from {ci} to {co} 🙏\n\nYour feedback matters to us and helps us improve our services.\nCould you rate us on Google Maps?\n\n🔗 Review link: https://g.page/r/dahabtrendy\n\n📞 For any inquiry: 0109 953 1272\nThank you for your time! 😊`
+    booking_confirm: `🏨 *${PROP.name} — Booking Confirmation*\n\nHello *{name}* 👋\n\nYour booking has been confirmed ✅\n\n📋 *Booking Details:*\n• Room: *{room}* ({type})\n• 🛬 Check-in: *{ci}*\n• 🛫 Check-out: *{co}*\n• 🌙 Nights: *{nights}*\n• 💰 Total Amount: *{cur} {total}*\n• 💵 Paid: *{cur} {prepay}*\n• 📌 Reference No: *{invNo}*\n\n📍 Address: Dahab, South Sinai, Egypt\n📞 WhatsApp: +20 109 953 1272\n\nThank you for choosing ${PROP.name} 🙏\nWe look forward to welcoming you!`,
+    checkin_welcome: `🌟 *Welcome to ${PROP.name}!*\n\nDear *{name}*,\nWe're happy to welcome you today! 🎉\n\n🏨 Your room: *{room}*\n\n*Our services:*\n🍽️ Restaurant open from 7 AM to 11 PM\n🌊 Close to Dahab's beautiful beach\n🛁 Daily room cleaning\n\n📞 For emergencies or service: 0109 953 1272\n\nWe wish you a pleasant stay! 🌴`,
+    checkout_invoice: `🧾 *${PROP.name} — Checkout Invoice*\n\nDear *{name}*,\nThank you so much for choosing ${PROP.name} 🙏\n\n📋 *Stay Summary:*\n• 🛬 Check-in: {ci}\n• 🛫 Check-out: {co}\n• 🌙 Nights: {nights}\n• 💰 Total Invoice: *{cur} {total}*\n\nWe hope you had a comfortable and enjoyable stay 😊\nWe'd love to welcome you again!\n\n⭐ Share your feedback on Google Maps\nHave a safe trip 🌟`,
+    payment_reminder: `⏰ *Payment Reminder — ${PROP.name}*\n\nDear *{name}*,\n\nThis is a reminder that the remaining balance for your booking is:\n💰 *{cur} {remaining}*\n\n📌 Booking No: {invNo}\n📅 Check-out date: {co}\n\nTo pay, please contact us:\n📞 0109 953 1272\n\nThank you for your cooperation 🙏`,
+    birthday_greet: `🎂 *Happy Birthday!*\n\nDear *{name}*,\n\nOn the occasion of your birthday,\nthe *${PROP.name}* team wishes you a day full of happiness and joy! 🎉🎊\n\n🌟 Thank you for trusting us\n💛 We look forward to hosting you again\n\n— ${PROP.name} Team 🏨`,
+    review_request: `⭐ *Share Your Feedback — ${PROP.name}*\n\nDear *{name}*,\n\nThank you for staying with us from {ci} to {co} 🙏\n\nYour feedback matters to us and helps us improve our services.\nCould you rate us on Google Maps?\n\n🔗 Review link: https://g.page/r/dahabtrendy\n\n📞 For any inquiry: 0109 953 1272\nThank you for your time! 😊`
   };
 
   // ─── تطبيق القوالب المخصصة المحفوظة عند التحميل (بنية ثنائية اللغة) ───
@@ -36560,7 +36788,7 @@ Thank you for your time! 😊`,
   window.testWASend = function(){
     const phone = document.getElementById('wa-test-phone')?.value;
     if(!phone){ if(typeof sNotify==='function') sNotify('⚠️','أدخل رقم الهاتف','urgent',2000); return; }
-    send(phone, '🏨 *Dahab Trendy* — رسالة اختبار ✓\nالنظام يعمل بشكل صحيح! ✅', {type:'test'});
+    send(phone, '🏨 *' + PROP.name + '* — رسالة اختبار ✓\nالنظام يعمل بشكل صحيح! ✅', {type:'test'});
   };
 
   // ─── تبديل تبويبات modal الإعدادات ───
@@ -36878,7 +37106,7 @@ const DTA_QR = (function(){
   // ─── صفحة الضيف (HTML مستقل) ───
   function buildGuestPage(roomNo){
     const room = String(roomNo);
-    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
+    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'' + PROP.name + '',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
     const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
     const wifiName     = qrs.wifiName     || 'DahabTrendy_Guest';
     const wifiPass     = qrs.wifiPass     || 'dahab2024';
@@ -37366,7 +37594,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 
   // ─── صفحة Takeaway (نفس تصميم صفحة الضيف — بدون غرفة/واي فاي) ───
   function buildTakeawayPage(){
-    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
+    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'' + PROP.name + '',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
     const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
     const waNum = qrs.waNum || '201099531272';
 
@@ -37653,7 +37881,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
   // ─── Modal عرض QR لغرفة ───
   async function openQRModal(roomNo){
     roomNo = String(roomNo);
-    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy'};
+    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'' + PROP.name + ''};
 
     // ── تأكّد إن المنيو محمَّل قبل بناء صفحة الضيف ──
     // محاولة من localStorage أولاً
@@ -37745,7 +37973,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
   window.printRoomQR = function(roomNo){
     const _qrWA2 = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
     const qrUrl  = generateQRSVG('https://wa.me/'+_qrWA2+'?text=Room+'+encodeURIComponent(roomNo), 300);
-    const prop   = (typeof PROP!=='undefined') ? PROP : {name:'Dahab Trendy'};
+    const prop   = (typeof PROP!=='undefined') ? PROP : {name:'' + PROP.name + ''};
     const w = window.open('','_blank','width=500,height=700');
     w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR غرفة ${roomNo}</title>
 <style>body{font-family:Arial,sans-serif;text-align:center;padding:30px;background:#fff;}
@@ -37821,7 +38049,7 @@ h2{color:#1a1a2e;margin-bottom:4px;}
   window.printAllRoomQRs = function(){
     const rooms = (typeof ROOMS !== 'undefined') ? ROOMS : [];
     if(!rooms.length){ alert('لا توجد غرف مُعرَّفة'); return; }
-    const prop = (typeof PROP!=='undefined') ? PROP : {name:'Dahab Trendy'};
+    const prop = (typeof PROP!=='undefined') ? PROP : {name:'' + PROP.name + ''};
     const w = window.open('','_blank');
     const items = rooms.map(r=>{
       const _qrWA4 = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
@@ -38118,9 +38346,9 @@ function saveQRSettings(){
   const icon512 = makeIconPNG(512);
 
   const manifestData = {
-    name: 'Dahab Trendy',
-    short_name: 'DahabTrendy',
-    description: 'نظام إدارة فندق دهب ترندي',
+    name: (typeof PROP!=='undefined' && PROP.name) ? PROP.name : '' + PROP.name + '',
+    short_name: ((typeof PROP!=='undefined' && PROP.name) ? PROP.name : '' + PROP.name + '').slice(0,12),
+    description: 'نظام إدارة فندق' + ((typeof PROP!=='undefined' && PROP.name) ? (' — ' + PROP.name) : ' دهب ترندي'),
     start_url: './',
     scope: './',
     display: 'standalone',
@@ -38145,7 +38373,7 @@ function saveQRSettings(){
   }
 })();
 
-console.log('[Dahab Trendy v11] ✅ FULL UPGRADE PACK loaded:');
+console.log('[' + PROP.name + ' v11] ✅ FULL UPGRADE PACK loaded:');
 console.log('  🗄️  IndexedDB Complete — 50MB+ storage');
 console.log('  📴  Service Worker — Full offline support');
 console.log('  💬  WhatsApp Business API — wa.me + Cloud API');
@@ -40197,11 +40425,11 @@ window.ownerTxSave            = ownerTxSave;
   splash.innerHTML = `
     <div style="text-align:center;padding:30px 20px;">
       <div style="font-size:56px;margin-bottom:16px;animation:splashPulse 1.5s ease-in-out infinite;">🏨</div>
-      <div style="font-size:22px;font-weight:800;color:#c9a84c;letter-spacing:1px;margin-bottom:6px;">Dahab Trendy</div>
+      <div style="font-size:22px;font-weight:800;color:#c9a84c;letter-spacing:1px;margin-bottom:6px;">${PROP.name}</div>
       <div style="font-size:13px;color:rgba(201,168,76,0.7);margin-bottom:28px;letter-spacing:2px;text-transform:uppercase;">Accommodation</div>
       <div style="width:50px;height:2px;background:linear-gradient(90deg,transparent,#c9a84c,transparent);margin:0 auto 28px;animation:splashLine 1.5s ease-in-out infinite;"></div>
       <div style="font-size:11px;color:rgba(255,255,255,0.35);line-height:2;">
-        <div>© 2025 Hany — Dahab Trendy Accommodation</div>
+        <div>© 2025 Hany — ${PROP.name}</div>
         <div>جميع الحقوق محفوظة · All Rights Reserved</div>
         <div style="margin-top:4px;font-size:10px;color:rgba(255,255,255,0.2);">📍 دهب — جنوب سيناء، مصر</div>
       </div>
