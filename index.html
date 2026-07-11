@@ -37957,13 +37957,13 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 
 <div class="sec">
   <div class="sec-title">
-    <span class="ico">🪑</span>
-    <span class="ar">رقم الترابيزة</span>
-    <span class="en">TABLE NUMBER</span>
+    <span class="ico">📍</span>
+    <span class="ar">رقم الترابيزة / مكانك</span>
+    <span class="en">TABLE NUMBER / YOUR LOCATION</span>
   </div>
-  <input type="number" id="table-num" class="table-input" placeholder="مثال: 5 · e.g. 5" min="1" inputmode="numeric"
+  <input type="text" id="table-num" class="table-input" placeholder="مثال: 5 — أو بجانب المسبح · e.g. 5 — or by the pool" inputmode="text"
     oninput="try{sessionStorage.setItem('dta_guest_table',this.value);}catch(e){} this.style.borderColor=''; if(typeof updateBar==='function') updateBar();">
-  <div class="table-hint">اكتب رقم الترابيزة اللي أنت قاعد عليها · Enter the number of the table you're sitting at</div>
+  <div class="table-hint">لو قاعد على ترابيزة اكتب رقمها، ولو في مكان تاني قريب من المطعم (المسبح، الشاطئ، اللوبي...) اكتب المكان · If you're at a table, write its number. If not, describe where you are (pool, beach, lobby...)</div>
 </div>
 
 <div class="sec" id="dod-sec" style="display:none;">
@@ -38199,7 +38199,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var table=(document.getElementById('table-num')||{}).value||'';
     var notes=(document.getElementById('order-notes')||{}).value||'';
     var t=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
-    var msg='🍽️ طلب من المنيو · Menu Order\\n🪑 ترابيزة رقم · Table: '+(table.trim()||'—')+'\\n⏰ '+t+'\\n\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n';
+    var msg='🍽️ طلب من المنيو · Menu Order\\n📍 المكان · Location: '+(table.trim()||'—')+'\\n⏰ '+t+'\\n\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n';
     msg+=items.map(function(it){ return it.e+' '+it.n+(it.ne?' / '+it.ne:'')+' \\xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\\n');
     msg+='\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n*الإجمالي · Total: '+total+' EGP*';
     if(notes.trim()){ msg+='\\n\\n📝 ملاحظات · Notes: '+notes.trim(); }
@@ -38210,7 +38210,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var tEl=document.getElementById('table-num');
     var table=(tEl||{}).value||'';
     if(!table.trim()){
-      alert('من فضلك اكتب رقم الترابيزة أولاً 🪑\\nPlease enter your table number first');
+      alert('من فضلك اكتب رقم الترابيزة أو مكانك أولاً 📍\\nPlease enter your table number or location first');
       if(tEl){ tEl.style.borderColor='#e74c3c'; tEl.scrollIntoView({behavior:'smooth',block:'center'}); tEl.focus(); }
       return false;
     }
@@ -38221,12 +38221,12 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var tEl=document.getElementById('table-num');
     var table=(tEl||{}).value||'';
     if(!table.trim()){
-      alert('من فضلك اكتب رقم الترابيزة أولاً 🪑\\nPlease enter your table number first');
+      alert('من فضلك اكتب رقم الترابيزة أو مكانك أولاً 📍\\nPlease enter your table number or location first');
       if(tEl){ tEl.style.borderColor='#e74c3c'; tEl.scrollIntoView({behavior:'smooth',block:'center'}); tEl.focus(); }
       return;
     }
     var t=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
-    var msg='🙋 طلب مساعدة — نداء جرسون · Call Waiter\\n🪑 ترابيزة رقم · Table: '+table.trim()+'\\n⏰ '+t;
+    var msg='🙋 طلب مساعدة — نداء جرسون · Call Waiter\\n📍 المكان · Location: '+table.trim()+'\\n⏰ '+t;
     window.location.href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);
   };
 
