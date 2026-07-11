@@ -37923,7 +37923,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     <span class="en">TABLE NUMBER</span>
   </div>
   <input type="number" id="table-num" class="table-input" placeholder="مثال: 5 · e.g. 5" min="1" inputmode="numeric"
-    oninput="sessionStorage.setItem('dta_guest_table',this.value); this.style.borderColor=''; if(typeof updateBar==='function') updateBar();">
+    oninput="try{sessionStorage.setItem('dta_guest_table',this.value);}catch(e){} this.style.borderColor=''; if(typeof updateBar==='function') updateBar();">
   <div class="table-hint">اكتب رقم الترابيزة اللي أنت قاعد عليها · Enter the number of the table you're sitting at</div>
 </div>
 
@@ -38122,7 +38122,8 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
   };
 
   (function(){
-    var savedTable=sessionStorage.getItem('dta_guest_table')||'';
+    var savedTable='';
+    try{ savedTable=sessionStorage.getItem('dta_guest_table')||''; }catch(e){}
     var tEl=document.getElementById('table-num');
     if(tEl && savedTable) tEl.value=savedTable;
   })();
