@@ -21459,18 +21459,47 @@ document.addEventListener('DOMContentLoaded',()=>{
 
       setTimeout(async function(){
         try{
+          // استخراج البيانات المضمّنة في الـ hash (#gd=... نص عادي أو #gz=... مضغوط gzip)
+          // بنعملها هنا برّه، عشان تتطبّق سواء وضع "المنيو العام" أو وضع "ضيف الغرفة"
+          const hash = window.location.hash || '';
+          const gdMatch = hash.match(/#gd=([A-Za-z0-9+/=]+)/);
+          const gzMatch = hash.match(/#gz=([A-Za-z0-9+/=]+)/);
+
           if(isMenuOnly){
             // ── وضع "المنيو العام" — بيستخدم نفس الرابط المُستضاف للنظام، من غير رقم غرفة ──
+            if(gdMatch || gzMatch){
+              try{
+                let decoded;
+                if(gzMatch){
+                  const binary = atob(gzMatch[1]);
+                  const bytes = new Uint8Array(binary.length);
+                  for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+                  const ds = new DecompressionStream('gzip');
+                  const writer = ds.writable.getWriter();
+                  writer.write(bytes); writer.close();
+                  const buf = await new Response(ds.readable).arrayBuffer();
+                  decoded = JSON.parse(new TextDecoder().decode(buf));
+                } else {
+                  decoded = JSON.parse(decodeURIComponent(escape(atob(gdMatch[1]))));
+                }
+                if(decoded.menu && decoded.menu.length){
+                  localStorage.setItem('dta_rest_menu', JSON.stringify(decoded.menu));
+                  window.restMenu = decoded.menu;
+                }
+                const qrSettings = {
+                  wifiName: decoded.wifi&&decoded.wifi.name || 'DahabTrendy_Guest',
+                  wifiPass: decoded.wifi&&decoded.wifi.pass || 'dahab2024',
+                  waNum: decoded.wa || '201099531272'
+                };
+                localStorage.setItem('dta_qr_settings', JSON.stringify(qrSettings));
+              }catch(e){ console.warn('[MenuMode] hash decode error:',e); }
+            }
             const menuHtml = DTA_QR.buildTakeawayPage();
             document.open();
             document.write(menuHtml);
             document.close();
             return;
           }
-          // استخراج البيانات المضمّنة في الـ hash (#gd=... نص عادي أو #gz=... مضغوط gzip)
-          const hash = window.location.hash || '';
-          const gdMatch = hash.match(/#gd=([A-Za-z0-9+/=]+)/);
-          const gzMatch = hash.match(/#gz=([A-Za-z0-9+/=]+)/);
           if(gdMatch || gzMatch){
             try{
               let decoded;
@@ -38332,7 +38361,55 @@ h1{text-align:center;color:#1a1a2e;margin-bottom:20px;font-size:18px;}
     patchRoomsPage();
   });
 
-  return { openQRModal, buildGuestPage, buildTakeawayPage, generateQRSVG, buildGuestQRUrl };
+  // ─── بناء رابط "QR المنيو العام" — لازم يضمّن المنيو نفسه جوّه الرابط (زي QR الغرفة بالظبط) ───
+  // لأن موبايل الضيف اللي بيمسح الكود مالوش نفس الـ localStorage بتاع جهازك، فلو الرابط مايحملش
+  // المنيو معاه، الضيف هيفتح صفحة فاضية من غير أي أصناف.
+  async function buildMenuQRUrl(){
+    const qrs = (function(){ try{ return JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'); }catch(e){ return {}; } })();
+
+    let menuSrc = [];
+    if (window.restMenu && Array.isArray(window.restMenu) && window.restMenu.length) {
+      menuSrc = window.restMenu;
+    } else {
+      try { const _ls = JSON.parse(localStorage.getItem('dta_rest_menu')||'[]'); if(Array.isArray(_ls)) menuSrc = _ls; } catch(e){}
+    }
+    const menuSlim = menuSrc.filter(function(it){ return it.available!==false; }).map(function(it){
+      return { name: it.name||'', nameEn: it.nameEn||'', price: parseInt(it.price,10)||0, emoji: it.emoji||'🍽️', cat: it.cat||'أخرى', available: true };
+    });
+
+    const base = (qrs.appUrl && qrs.appUrl.trim())
+      ? qrs.appUrl.trim().replace(/[?#].*$/, '')
+      : window.location.origin + window.location.pathname;
+
+    async function tryBuild(){
+      const payload = {
+        menu: menuSlim,
+        wifi: { name: qrs.wifiName || 'DahabTrendy_Guest', pass: qrs.wifiPass || 'dahab2024' },
+        wa: qrs.waNum || '201099531272'
+      };
+      const jsonStr = JSON.stringify(payload);
+      const gz = await gzipToBase64(jsonStr);
+      let hashPart = '';
+      if(gz){
+        hashPart = '#gz=' + gz;
+      } else {
+        let gd = '';
+        try { gd = btoa(unescape(encodeURIComponent(jsonStr))); } catch(e){ gd = ''; }
+        hashPart = gd ? ('#gd=' + gd) : '';
+      }
+      return base + '?menu=1' + hashPart;
+    }
+
+    let url = await tryBuild();
+    // لو المنيو كبير قوي والرابط طال أوي، القارئ بيرفض يولّد الكود — نرجع لرابط بدون بيانات مضمّنة
+    // (في الحالة دي الصفحة هتعرض المنيو بتاع localStorage الجهاز اللي فاتح منه، زي ما كانت قبل كده)
+    if(url.length > 2500){
+      url = base + '?menu=1';
+    }
+    return url;
+  }
+
+  return { openQRModal, buildGuestPage, buildTakeawayPage, generateQRSVG, buildGuestQRUrl, buildMenuQRUrl };
 })();
 
 window.DTA_QR = DTA_QR;
@@ -38409,6 +38486,25 @@ function exportMenuPageFile(){
     return;
   }
 
+  // ── محاولة تحميل مباشر أولاً (Blob + <a download>) — بيشتغل عادي على أي رابط https حقيقي ──
+  let directDownloadWorked = false;
+  try{
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = 'menu.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=> URL.revokeObjectURL(blobUrl), 4000);
+    directDownloadWorked = true;
+    if(typeof sNotify==='function')
+      sNotify('✅ تم التحميل','نزل ملف menu.html في مجلد Downloads بتاعك — دلوقتي ارفعه على GitHub جنب index.html','success',5000);
+  }catch(e){
+    console.warn('[exportMenuPageFile] direct download failed, falling back to copy modal:', e);
+  }
+
   let modal = document.getElementById('menu-export-modal');
   if(!modal){
     modal = document.createElement('div');
@@ -38419,14 +38515,15 @@ function exportMenuPageFile(){
   modal.innerHTML = `
 <div class="mdl" style="max-width:560px;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-    <div style="color:var(--gold);font-size:15px;font-weight:700;">📥 كود صفحة المنيو (menu.html)</div>
+    <div style="color:var(--gold);font-size:15px;font-weight:700;">📥 صفحة المنيو (menu.html)</div>
     <button onclick="this.closest('.ovl').classList.remove('on')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;">✕</button>
   </div>
   <div style="font-size:12px;color:var(--muted);line-height:1.9;margin-bottom:10px;">
-    1️⃣ اضغط "📋 نسخ الكود" تحت<br>
-    2️⃣ افتح تطبيق ملاحظات/محرر نصوص وحط الكود اللي اتنسخ<br>
-    3️⃣ احفظ الملف باسم <b style="direction:ltr;display:inline-block;">menu.html</b> (مهم جدًا الامتداد .html مش .txt)<br>
-    4️⃣ ارفع الملف على GitHub جنب index.html
+    ${directDownloadWorked
+      ? '✅ الملف اتحمّل تلقائيًا في مجلد Downloads باسم <b style="direction:ltr;display:inline-block;">menu.html</b>. لو مش لاقيه، استخدم "📋 نسخ الكود" تحت كبديل.'
+      : '⚠️ التحميل التلقائي ماشتغلش (يمكن الصفحة مفتوحة من تطبيق ملفات مش من متصفح حقيقي). استخدم "📋 نسخ الكود" تحت بدلاً منه:'}<br>
+    ${directDownloadWorked ? '' : '1️⃣ اضغط "📋 نسخ الكود" تحت<br>2️⃣ افتح تطبيق ملاحظات/محرر نصوص وحط الكود اللي اتنسخ<br>3️⃣ احفظ الملف باسم <b style="direction:ltr;display:inline-block;">menu.html</b> (مهم جدًا الامتداد .html مش .txt)<br>'}
+    ${directDownloadWorked ? '➡️ بعد كده' : '4️⃣'} ارفع الملف على GitHub جنب index.html
   </div>
   <textarea id="menu-export-textarea" readonly style="width:100%;height:160px;background:#0f1420;color:#9fd3ff;border:1px solid var(--bdr);border-radius:8px;padding:8px;font-size:10px;direction:ltr;font-family:monospace;" onclick="this.select()"></textarea>
   <div style="display:flex;gap:8px;margin-top:12px;">
@@ -38446,20 +38543,23 @@ function exportMenuPageFile(){
   document.getElementById('menu-export-textarea').value = html;
   modal.classList.add('on');
 }
-function openMenuQRModal(){
+async function openMenuQRModal(){
   var qrs = {};
   try { qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'); } catch(e){}
   var appUrl = (qrs.appUrl||'').trim() || (document.getElementById('qrs-app-url')?document.getElementById('qrs-app-url').value.trim():'');
   var legacyMenuUrl = (qrs.menuUrl||'').trim() || (document.getElementById('qrs-menu-url')?document.getElementById('qrs-menu-url').value.trim():'');
   var url;
-  if(appUrl){
-    // الأسهل: نفس رابط النظام المُستضاف (اللي بيشتغل بيه QR الغرف) + علامة ?menu=1 — من غير ملف منفصل خالص
-    url = appUrl.replace(/[?#].*$/, '') + '?menu=1';
-  } else if(legacyMenuUrl){
-    url = legacyMenuUrl;
-  } else {
-    if(typeof sNotify==='function') sNotify('⚠️ محتاج رابط الأول','اكتب "رابط النظام المُستضاف" في إعدادات QR (نفس اللي بتستخدمه لـ QR الغرف) واحفظ الإعدادات','error',5000);
-    else alert('محتاج "رابط النظام المُستضاف" الأول من إعدادات QR');
+  if(typeof sNotify==='function') sNotify('⏳ جارِ التجهيز','بيتم تجهيز كود QR المنيو...','info',1500);
+  try{
+    // نفس منطق QR الغرفة بالظبط: لو "رابط النظام المُستضاف" فاضي، بيستخدم رابط الصفحة الحالية
+    // تلقائي من غير ما يوقف — والمنيو بتتضمّن جوّه الرابط نفسه.
+    url = await DTA_QR.buildMenuQRUrl();
+  }catch(e){
+    url = appUrl ? (appUrl.replace(/[?#].*$/, '') + '?menu=1') : (legacyMenuUrl || '');
+  }
+  if(!url){
+    if(typeof sNotify==='function') sNotify('⚠️ حصل خطأ','معرفتش أجهّز رابط الـ QR، جرّب تاني','error',4000);
+    else alert('حصل خطأ في تجهيز رابط الـ QR');
     return;
   }
   const qrImageUrl = DTA_QR.generateQRSVG(url, 250);
