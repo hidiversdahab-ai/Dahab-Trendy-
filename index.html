@@ -5910,6 +5910,20 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     <div class="fld"><label><span class="t" data-ar="رمز / إيموجي" data-en="Emoji Icon">رمز / إيموجي</span></label><input id="mi-emoji" placeholder="🍕" maxlength="4" style="font-size:20px;text-align:center;"></div>
     <div class="fld s2"><label><span class="t" data-ar="ملاحظة (اختياري)" data-en="Note (optional)">ملاحظة (اختياري)</span></label><input id="mi-note" placeholder="مثال: متاح فقط الليل، حار جداً..."></div>
   </div>
+  <!-- طبق اليوم / عرض خاص -->
+  <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+    <label style="flex:1;min-width:140px;display:flex;align-items:center;gap:8px;background:rgba(201,168,76,0.07);border:1.5px solid rgba(201,168,76,0.3);border-radius:10px;padding:10px 12px;cursor:pointer;">
+      <input type="checkbox" id="mi-dod" style="width:17px;height:17px;accent-color:var(--gold);cursor:pointer;">
+      <span style="font-size:12px;color:var(--text);font-weight:700;">🌟 <span class="t" data-ar="طبق اليوم" data-en="Dish of the Day">طبق اليوم</span></span>
+    </label>
+    <label style="flex:1;min-width:140px;display:flex;align-items:center;gap:8px;background:rgba(230,126,34,0.07);border:1.5px solid rgba(230,126,34,0.3);border-radius:10px;padding:10px 12px;cursor:pointer;">
+      <input type="checkbox" id="mi-offer" onchange="document.getElementById('mi-offer-price-wrap').style.display=this.checked?'block':'none'" style="width:17px;height:17px;accent-color:#e67e22;cursor:pointer;">
+      <span style="font-size:12px;color:var(--text);font-weight:700;">🔥 <span class="t" data-ar="عرض خاص" data-en="Special Offer">عرض خاص</span></span>
+    </label>
+  </div>
+  <div id="mi-offer-price-wrap" style="display:none;margin-bottom:14px;">
+    <div class="fld"><label><span class="t" data-ar="سعر العرض بعد الخصم (اختياري)" data-en="Offer Price after discount (optional)">سعر العرض بعد الخصم (اختياري)</span></label><input id="mi-offer-price" type="number" min="0" step="0.5" placeholder="مثال: 80"></div>
+  </div>
   <!-- صورة الصنف -->
   <div style="margin-bottom:14px;">
     <label style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:8px;">📷 <span class="t" data-ar="صورة الصنف (اختياري)" data-en="Item Photo (optional)">صورة الصنف (اختياري)</span></label>
@@ -30493,6 +30507,10 @@ function openMenuItemM(idx){
   document.getElementById("mi-cat").value = item ? (item.cat||"أكل 🍽️") : "أكل 🍽️";
   document.getElementById("mi-note").value = item ? (item.note||"") : "";
   document.getElementById("mi-img").value = item ? (item.img||"") : "";
+  document.getElementById("mi-dod").checked = item ? !!item.dod : false;
+  document.getElementById("mi-offer").checked = item ? !!item.offer : false;
+  document.getElementById("mi-offer-price").value = item && item.offerPrice ? item.offerPrice : "";
+  document.getElementById("mi-offer-price-wrap").style.display = (item && item.offer) ? "block" : "none";
   const prevEl = document.getElementById("mi-img-preview");
   if(prevEl){
     if(item && item.img) prevEl.innerHTML = `<img src="${item.img}" style="width:100%;height:100%;object-fit:cover;">`;
@@ -30540,6 +30558,9 @@ function saveMenuItem(){
     cat: document.getElementById("mi-cat").value || "أكل 🍽️",
     note: document.getElementById("mi-note").value.trim(),
     img: document.getElementById("mi-img").value || "",
+    dod: document.getElementById("mi-dod").checked,
+    offer: document.getElementById("mi-offer").checked,
+    offerPrice: document.getElementById("mi-offer").checked ? (_parsePrice(document.getElementById("mi-offer-price").value)||0) : 0,
   };
   if(menuItemEdit!==null) restMenu[menuItemEdit]=item; else restMenu.push(item);
   window.restMenu = restMenu; // sync global reference
@@ -37248,7 +37269,7 @@ const DTA_QR = (function(){
       try { const _ls = JSON.parse(localStorage.getItem('dta_rest_menu')||'[]'); if(Array.isArray(_ls)) menuSrc = _ls; } catch(e){}
     }
     const menuSlim = menuSrc.filter(function(it){ return it.available!==false; }).map(function(it){
-      return { name: it.name||'', nameEn: it.nameEn||'', price: parseInt(it.price,10)||0, emoji: it.emoji||'🍽️', cat: it.cat||'أخرى', available: true };
+      return { name: it.name||'', nameEn: it.nameEn||'', price: parseInt(it.price,10)||0, emoji: it.emoji||'🍽️', cat: it.cat||'أخرى', available: true, dod: !!it.dod, offer: !!it.offer, offerPrice: parseInt(it.offerPrice,10)||0 };
     });
 
     // النشاطات
@@ -37804,7 +37825,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
       _restMenuRaw = restMenu.slice();
     }
     const _menuArr = _restMenuRaw.map(function(it){
-      return { n: it.name||'', ne: it.nameEn||'', p: parseInt(it.price,10)||0, e: it.emoji||'🍽️', c: it.cat||'أخرى', a: it.available!==false };
+      return { n: it.name||'', ne: it.nameEn||'', p: parseInt(it.price,10)||0, e: it.emoji||'🍽️', c: it.cat||'أخرى', a: it.available!==false, d: !!it.dod, o: !!it.offer, op: parseInt(it.offerPrice,10)||0 };
     });
     const _menuB64 = (function(){
       try { return btoa(unescape(encodeURIComponent(JSON.stringify(_menuArr)))); } catch(e){ return ''; }
@@ -37892,6 +37913,24 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 .table-input:focus{outline:none;border-color:var(--teal);}
 .table-hint{font-size:10.5px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.6;}
 
+.mi-ribbon{position:absolute;top:6px;right:6px;font-size:14px;z-index:2;}
+.mi-old{text-decoration:line-through;color:var(--muted);font-weight:400;font-size:10px;margin-left:3px;}
+
+.feat-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none;}
+.feat-scroll::-webkit-scrollbar{display:none;}
+.feat-card{flex-shrink:0;width:132px;background:rgba(255,255,255,0.04);border:1.5px solid var(--bdr);border-radius:14px;padding:14px 10px 10px;text-align:center;position:relative;}
+.feat-card.dod{border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.06);}
+.feat-card.offer{border-color:rgba(230,126,34,0.5);background:rgba(230,126,34,0.06);}
+.feat-card.active{box-shadow:0 0 0 2px rgba(26,188,156,0.3);}
+.feat-badge{position:absolute;top:-6px;right:-6px;background:var(--gold);color:#1a1a2e;font-size:9px;font-weight:800;padding:3px 7px;border-radius:8px;}
+.feat-card.offer .feat-badge{background:#e67e22;color:#fff;}
+.feat-emoji{font-size:28px;line-height:1;}
+.feat-name{font-size:11px;font-weight:700;color:var(--text);margin-top:6px;line-height:1.4;}
+.feat-name-en{font-size:9px;color:var(--muted);direction:ltr;display:block;font-weight:400;}
+.feat-price{font-size:12px;font-weight:800;color:var(--gold);margin-top:5px;}
+.feat-old{text-decoration:line-through;color:var(--muted);font-weight:400;font-size:10px;}
+.feat-new{color:#e67e22;}
+
 .call-waiter-btn{display:block;width:100%;background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;border:none;padding:15px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Tajawal',Arial,sans-serif;box-shadow:0 4px 16px rgba(230,126,34,0.25);}
 .call-waiter-btn:active{transform:scale(0.98);}
 .call-waiter-hint{font-size:10.5px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.6;}
@@ -37925,6 +37964,24 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
   <input type="number" id="table-num" class="table-input" placeholder="مثال: 5 · e.g. 5" min="1" inputmode="numeric"
     oninput="try{sessionStorage.setItem('dta_guest_table',this.value);}catch(e){} this.style.borderColor=''; if(typeof updateBar==='function') updateBar();">
   <div class="table-hint">اكتب رقم الترابيزة اللي أنت قاعد عليها · Enter the number of the table you're sitting at</div>
+</div>
+
+<div class="sec" id="dod-sec" style="display:none;">
+  <div class="sec-title">
+    <span class="ico">🌟</span>
+    <span class="ar">طبق اليوم</span>
+    <span class="en">DISH OF THE DAY</span>
+  </div>
+  <div class="feat-scroll" id="dod-scroll"></div>
+</div>
+
+<div class="sec" id="offer-sec" style="display:none;">
+  <div class="sec-title">
+    <span class="ico">🔥</span>
+    <span class="ar">عروض خاصة</span>
+    <span class="en">SPECIAL OFFERS</span>
+  </div>
+  <div class="feat-scroll" id="offer-scroll"></div>
 </div>
 
 <div class="sec">
@@ -38037,19 +38094,25 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     el.innerHTML=list.map(function(o){
       var it=o.it,i=o.i,q=QS[i]||0,has=q>0,avail=it.a!==false;
       var nameHtml='<div class="mi-name">'+it.n+(it.ne?'<br><span class="mi-name-en">'+it.ne+'</span>':'')+'</div>';
+      var ribbon = it.d ? '<div class="mi-ribbon dod">🌟</div>' : (it.o ? '<div class="mi-ribbon offer">🔥</div>' : '');
+      var priceHtml = (it.o && it.op>0)
+        ? '<span class="mi-old">'+it.p+'</span> '+it.op+' ج'
+        : it.p+' ج';
       if(!avail){
         return '<div class="mi-card unavail" id="mc'+i+'">'
+          +ribbon
           +'<span class="mi-emoji">'+it.e+'</span>'
           +nameHtml
-          +'<div class="mi-price">'+it.p+' ج</div>'
+          +'<div class="mi-price">'+priceHtml+'</div>'
           +'<div class="mi-unavail-tag">غير متوفر<br><span class="en">Not Available</span></div>'
           +'</div>';
       }
       return '<div class="mi-card'+(has?' active':'')+'" id="mc'+i+'">'
+        +ribbon
         +'<div class="mi-badge" id="mb'+i+'">'+(has?q:'')+'</div>'
         +'<span class="mi-emoji">'+it.e+'</span>'
         +nameHtml
-        +'<div class="mi-price">'+it.p+' ج</div>'
+        +'<div class="mi-price">'+priceHtml+'</div>'
         +'<div class="qty-row">'
         +'<button class="qbtn minus'+(has?' has':'')+'" onclick="chg('+i+',-1)">&#8722;</button>'
         +'<span class="qval" id="qv'+i+'">'+q+'</span>'
@@ -38058,19 +38121,65 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     }).join('');
   }
 
+  function renderFeat(scrollId, secId, list, cls){
+    var scrollEl=document.getElementById(scrollId), secEl=document.getElementById(secId);
+    if(!scrollEl||!secEl) return;
+    if(!list.length){ secEl.style.display='none'; return; }
+    secEl.style.display='block';
+    scrollEl.innerHTML=list.map(function(o){
+      var it=o.it,i=o.i,q=QS[i]||0,has=q>0;
+      var priceHtml=(cls==='offer'&&it.op>0)
+        ? '<span class="feat-old">'+it.p+'</span> <span class="feat-new">'+it.op+' ج</span>'
+        : it.p+' ج';
+      return '<div class="feat-card '+cls+(has?' active':'')+'" id="fc-'+cls+'-'+i+'">'
+        +'<div class="feat-badge">'+(cls==='dod'?'🌟':'🔥')+'</div>'
+        +'<div class="feat-emoji">'+it.e+'</div>'
+        +'<div class="feat-name">'+it.n+(it.ne?'<span class="feat-name-en">'+it.ne+'</span>':'')+'</div>'
+        +'<div class="feat-price">'+priceHtml+'</div>'
+        +'<div class="qty-row" style="margin-top:8px;">'
+        +'<button class="qbtn minus'+(has?' has':'')+'" onclick="chg('+i+',-1)">&#8722;</button>'
+        +'<span class="qval" id="qv-'+cls+'-'+i+'">'+q+'</span>'
+        +'<button class="qbtn plus" onclick="chg('+i+',1)">+</button>'
+        +'</div></div>';
+    }).join('');
+  }
+
+  function buildFeatured(){
+    var dodItems=MI.map(function(it,i){return{it:it,i:i};}).filter(function(o){ return o.it.d && o.it.a!==false; });
+    var offerItems=MI.map(function(it,i){return{it:it,i:i};}).filter(function(o){ return o.it.o && o.it.a!==false; });
+    renderFeat('dod-scroll','dod-sec',dodItems,'dod');
+    renderFeat('offer-scroll','offer-sec',offerItems,'offer');
+  }
+
   window.setCat=function(cat){ activeCat=cat; buildCats(); buildGrid(); };
 
-  window.chg=function(i,d){
-    QS[i]=Math.max(0,(QS[i]||0)+d);
-    var q=QS[i];
+  function syncItemUI(i){
+    var q=QS[i]||0;
     var qvEl=document.getElementById('qv'+i);
     var mbEl=document.getElementById('mb'+i);
     var mcEl=document.getElementById('mc'+i);
-    var minus=mcEl?mcEl.querySelector('.qbtn.minus'):null;
     if(qvEl) qvEl.textContent=q;
     if(mbEl){ mbEl.textContent=q>0?q:''; }
-    if(mcEl){ if(q>0){mcEl.classList.add('active');}else{mcEl.classList.remove('active');} }
-    if(minus){ if(q>0){minus.classList.add('has');}else{minus.classList.remove('has');} }
+    if(mcEl){
+      if(q>0){mcEl.classList.add('active');}else{mcEl.classList.remove('active');}
+      var minus=mcEl.querySelector('.qbtn.minus');
+      if(minus){ if(q>0){minus.classList.add('has');}else{minus.classList.remove('has');} }
+    }
+    ['dod','offer'].forEach(function(cls){
+      var fc=document.getElementById('fc-'+cls+'-'+i);
+      var fqv=document.getElementById('qv-'+cls+'-'+i);
+      if(fqv) fqv.textContent=q;
+      if(fc){
+        if(q>0){fc.classList.add('active');}else{fc.classList.remove('active');}
+        var fm=fc.querySelector('.qbtn.minus');
+        if(fm){ if(q>0){fm.classList.add('has');}else{fm.classList.remove('has');} }
+      }
+    });
+  }
+
+  window.chg=function(i,d){
+    QS[i]=Math.max(0,(QS[i]||0)+d);
+    syncItemUI(i);
     buildCats();
     updateBar();
   };
@@ -38079,7 +38188,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var bar=document.getElementById('order-bar');
     var items=[],total=0;
     MI.forEach(function(it,i){
-      if(QS[i]>0){ var p=parseInt(it.p,10)||0; items.push({n:it.n,ne:it.ne||'',q:QS[i],p:p,e:it.e}); total+=QS[i]*p; }
+      if(QS[i]>0){ var p=(it.o&&it.op>0)?it.op:(parseInt(it.p,10)||0); items.push({n:it.n,ne:it.ne||'',q:QS[i],p:p,e:it.e}); total+=QS[i]*p; }
     });
     if(!items.length){ bar.classList.remove('show'); return; }
     bar.classList.add('show');
@@ -38130,12 +38239,13 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 
   window.clearOrd=function(){
     QS=new Array(MI.length).fill(0);
-    buildCats(); buildGrid();
+    buildCats(); buildGrid(); buildFeatured();
     document.getElementById('order-bar').classList.remove('show');
   };
 
   buildCats();
   buildGrid();
+  buildFeatured();
 })();
 <\/script>
 </body>
@@ -38452,7 +38562,7 @@ h1{text-align:center;color:#1a1a2e;margin-bottom:20px;font-size:18px;}
       try { const _ls = JSON.parse(localStorage.getItem('dta_rest_menu')||'[]'); if(Array.isArray(_ls)) menuSrc = _ls; } catch(e){}
     }
     const menuSlim = menuSrc.filter(function(it){ return it.available!==false; }).map(function(it){
-      return { name: it.name||'', nameEn: it.nameEn||'', price: parseInt(it.price,10)||0, emoji: it.emoji||'🍽️', cat: it.cat||'أخرى', available: true };
+      return { name: it.name||'', nameEn: it.nameEn||'', price: parseInt(it.price,10)||0, emoji: it.emoji||'🍽️', cat: it.cat||'أخرى', available: true, dod: !!it.dod, offer: !!it.offer, offerPrice: parseInt(it.offerPrice,10)||0 };
     });
 
     const base = (qrs.appUrl && qrs.appUrl.trim())
