@@ -7109,10 +7109,10 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 <input id="qrs-app-url" class="inp" type="text" placeholder="https://username.github.io/index.html" style="width:100%;direction:ltr;font-size:11px;">
 </div>
 <div style="border-top:1px solid var(--bdr);padding-top:12px;margin-top:4px;">
-<label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">🍽️ رابط صفحة المنيو المستضافة (menu.html بعد رفعها على GitHub)</label>
+<label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">🍽️ رابط منفصل لصفحة منيو خاصة (اختياري — مش لازم لو عبّيت "رابط النظام المُستضاف" فوق، لأن QR المنيو هيستخدمه تلقائي)</label>
 <input id="qrs-menu-url" class="inp" type="text" placeholder="https://username.github.io/menu.html" style="width:100%;direction:ltr;font-size:11px;">
 <div style="display:flex;gap:8px;margin-top:8px;">
-<button class="btn bbl" onclick="exportMenuPageFile()" style="flex:1;font-size:12px;">📥 تصدير menu.html</button>
+<button class="btn bbl" onclick="try{exportMenuPageFile()}catch(e){alert('❌ خطأ: '+e.message)}" style="flex:1;font-size:12px;">📥 تصدير menu.html</button>
 <button class="btn bg" onclick="openMenuQRModal()" style="flex:1;font-size:12px;">📱 QR المنيو</button>
 </div>
 </div>
@@ -21449,12 +21449,21 @@ document.addEventListener('DOMContentLoaded',()=>{
     try{
       const params = new URLSearchParams(window.location.search);
       const guestRoom = params.get('guest');
-      if(!guestRoom) return;
+      const isMenuOnly = params.get('menu') === '1';
+      if(!guestRoom && !isMenuOnly) return;
 
       document.body.style.visibility='hidden';
 
       setTimeout(async function(){
         try{
+          if(isMenuOnly){
+            // ── وضع "المنيو العام" — بيستخدم نفس الرابط المُستضاف للنظام، من غير رقم غرفة ──
+            const menuHtml = DTA_QR.buildTakeawayPage();
+            document.open();
+            document.write(menuHtml);
+            document.close();
+            return;
+          }
           // استخراج البيانات المضمّنة في الـ hash (#gd=... نص عادي أو #gz=... مضغوط gzip)
           const hash = window.location.hash || '';
           const gdMatch = hash.match(/#gd=([A-Za-z0-9+/=]+)/);
@@ -38351,73 +38360,70 @@ function saveQRSettings(){
 }
 
 // ══ FEATURE: صفحة منيو مستقلة (رابط ثابت) لضيوف خارج الفندق ══
-async function exportMenuPageFile(){
+// ملحوظة مهمة: لو الصفحة مفتوحة من رابط content:// (زي فتح ملف من تطبيق ملفات على أندرويد)،
+// المتصفح بيمنع window.open و التحميل التلقائي و navigator.share تمامًا وبيرفضهم بصمت من غير أي error.
+// فبدل ما نعتمد على أي حاجة من دول، بنعرض المحتوى جوه مودال في نفس الصفحة عشان ينسخه يدوي — ده الطريقة الوحيدة المضمونة 100%.
+function exportMenuPageFile(){
   let html;
   try{
     html = DTA_QR.buildTakeawayPage();
   }catch(e){
     console.error('[exportMenuPageFile] build error:', e);
-    if(typeof sNotify==='function') sNotify('❌ خطأ','فشل بناء صفحة المنيو: '+e.message,'urgent',5000);
-    else alert('فشل بناء صفحة المنيو: '+e.message);
+    alert('❌ فشل بناء صفحة المنيو: '+e.message);
     return;
   }
 
-  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-
-  // ── محاولة 1: مشاركة الملف مباشرة (بتشتغل غالباً حتى لو الصفحة مفتوحة كملف محلي file://) ──
-  try{
-    if(navigator.canShare && navigator.share){
-      const file = new File([blob], 'menu.html', {type:'text/html'});
-      if(navigator.canShare({files:[file]})){
-        await navigator.share({files:[file], title:'menu.html'});
-        if(typeof sNotify==='function') sNotify('✅ اتشارك','احفظ الملف menu.html من قايمة المشاركة، وارفعه على GitHub جنب index.html','success',6000);
-        return;
-      }
-    }
-  }catch(shareErr){
-    // المستخدم لغى المشاركة أو حصل خطأ — نكمل على المحاولة التالية بدل ما نوقف
-    console.warn('[exportMenuPageFile] share failed/cancelled:', shareErr);
-    if(shareErr && shareErr.name === 'AbortError') return; // المستخدم لغى بنفسه، متعملش حاجة تانية
+  let modal = document.getElementById('menu-export-modal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'menu-export-modal';
+    modal.className = 'ovl';
+    document.body.appendChild(modal);
   }
-
-  // ── محاولة 2: تحميل عادي عن طريق Blob + a.click() (بيشتغل في المتصفح العادي، وغالباً بيفشل بصمت لو فاتح الصفحة كملف file://) ──
-  try{
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'menu.html';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url), 15000);
-    if(typeof sNotify==='function') sNotify('✅ اتنزّل','لو الملف نزل فعلاً في مجلد Download، ارفعه على GitHub جنب index.html. لو مفيش حاجة نزلت، افتح النظام من رابط حقيقي (مش بفتح الملف مباشرة) وجرب تاني','success',6000);
-  }catch(dlErr){
-    console.warn('[exportMenuPageFile] blob download failed:', dlErr);
-    // ── محاولة 3: فتح المحتوى في تاب جديد عشان يحفظه يدوي من المتصفح ──
-    try{
-      const w = window.open('', '_blank');
-      if(w){
-        w.document.open();
-        w.document.write(html);
-        w.document.close();
-        if(typeof sNotify==='function') sNotify('📄 اتفتح في تاب جديد','مقدرناش ننزّل الملف تلقائي. من قايمة المتصفح (⋮) اختار "تحميل الصفحة" أو "حفظ باسم" واحفظه بإسم menu.html، بعدين ارفعه على GitHub','info',7000);
-        else alert('اتفتحت صفحة المنيو في تاب جديد — احفظها باسم menu.html من قايمة المتصفح');
-      } else {
-        throw new Error('popup blocked');
+  modal.innerHTML = `
+<div class="mdl" style="max-width:560px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div style="color:var(--gold);font-size:15px;font-weight:700;">📥 كود صفحة المنيو (menu.html)</div>
+    <button onclick="this.closest('.ovl').classList.remove('on')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;">✕</button>
+  </div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.9;margin-bottom:10px;">
+    1️⃣ اضغط "📋 نسخ الكود" تحت<br>
+    2️⃣ افتح تطبيق ملاحظات/محرر نصوص وحط الكود اللي اتنسخ<br>
+    3️⃣ احفظ الملف باسم <b style="direction:ltr;display:inline-block;">menu.html</b> (مهم جدًا الامتداد .html مش .txt)<br>
+    4️⃣ ارفع الملف على GitHub جنب index.html
+  </div>
+  <textarea id="menu-export-textarea" readonly style="width:100%;height:160px;background:#0f1420;color:#9fd3ff;border:1px solid var(--bdr);border-radius:8px;padding:8px;font-size:10px;direction:ltr;font-family:monospace;" onclick="this.select()"></textarea>
+  <div style="display:flex;gap:8px;margin-top:12px;">
+    <button class="btn bg" style="flex:2;" onclick="(function(){
+      var ta=document.getElementById('menu-export-textarea');
+      ta.style.display='block'; ta.focus(); ta.select();
+      try{
+        var ok = document.execCommand('copy');
+        alert(ok ? '✅ اتنسخ الكود! دلوقتي الصقه في محرر نصوص واحفظه باسم menu.html' : '⚠️ مقدرتش أنسخ تلقائيًا — دوس مطول على الصندوق فوق واختار تحديد الكل ثم نسخ');
+      }catch(err){
+        alert('⚠️ مقدرتش أنسخ تلقائيًا — دوس مطول على الصندوق فوق واختار تحديد الكل ثم نسخ');
       }
-    }catch(finalErr){
-      console.error('[exportMenuPageFile] all methods failed:', finalErr);
-      if(typeof sNotify==='function') sNotify('❌ خطأ','فشل تصدير المنيو بكل الطرق. جرب تفتح النظام من رابط حقيقي (http/https) مش بفتح الملف مباشرة من الموبايل','urgent',7000);
-      else alert('فشل تصدير المنيو. جرب تفتح النظام من رابط حقيقي مش بفتح الملف مباشرة');
-    }
-  }
+    })()">📋 نسخ الكود</button>
+    <button class="btn bbl" style="flex:1;" onclick="this.closest('.ovl').classList.remove('on')">إغلاق</button>
+  </div>
+</div>`;
+  document.getElementById('menu-export-textarea').value = html;
+  modal.classList.add('on');
 }
 function openMenuQRModal(){
   var qrs = {};
   try { qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'); } catch(e){}
-  var url = (qrs.menuUrl||'').trim() || (document.getElementById('qrs-menu-url')?document.getElementById('qrs-menu-url').value.trim():'');
-  if(!url){
-    if(typeof sNotify==='function') sNotify('⚠️ محتاج الرابط الأول','اكتب رابط menu.html بعد ما ترفعه على GitHub، واحفظ الإعدادات','error',4000);
+  var appUrl = (qrs.appUrl||'').trim() || (document.getElementById('qrs-app-url')?document.getElementById('qrs-app-url').value.trim():'');
+  var legacyMenuUrl = (qrs.menuUrl||'').trim() || (document.getElementById('qrs-menu-url')?document.getElementById('qrs-menu-url').value.trim():'');
+  var url;
+  if(appUrl){
+    // الأسهل: نفس رابط النظام المُستضاف (اللي بيشتغل بيه QR الغرف) + علامة ?menu=1 — من غير ملف منفصل خالص
+    url = appUrl.replace(/[?#].*$/, '') + '?menu=1';
+  } else if(legacyMenuUrl){
+    url = legacyMenuUrl;
+  } else {
+    if(typeof sNotify==='function') sNotify('⚠️ محتاج رابط الأول','اكتب "رابط النظام المُستضاف" في إعدادات QR (نفس اللي بتستخدمه لـ QR الغرف) واحفظ الإعدادات','error',5000);
+    else alert('محتاج "رابط النظام المُستضاف" الأول من إعدادات QR');
     return;
   }
   const qrImageUrl = DTA_QR.generateQRSVG(url, 250);
