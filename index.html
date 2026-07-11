@@ -8752,6 +8752,9 @@ function renderLiveDash(){
     }).join("");
   }
 }
+// حفظ مرجع للنسخة الأصلية من renderLiveDash فورًا بعد تعريفها — عشان أي wrapper لاحق (في script tag تاني)
+// يقدر ينده عليها من غير ما يعتمد على ترتيب الـ hoisting (اللي كانت بتسبب استدعاء ذاتي لا نهائي)
+window._renderLiveDash_baseImpl = renderLiveDash;
 
 function mkStat(n,l){return "<div class='sbox'><div class='snum'>"+n+"</div><div class='slbl'>"+l+"</div></div>";}
 function mkFin(n,l,bg,br,col,extra){
@@ -34036,7 +34039,7 @@ self.onmessage = function(e){
 })();
 
 // ── ربط Web Worker بصفحة الـ Analytics ──
-const _renderLiveDash_orig = typeof renderLiveDash==='function' ? renderLiveDash : null;
+const _renderLiveDash_orig = typeof window._renderLiveDash_baseImpl==='function' ? window._renderLiveDash_baseImpl : null;
 function renderLiveDash(){
   if(_renderLiveDash_orig) _renderLiveDash_orig();
   // حساب analytics في الخلفية وتحديث الـ DOM عند الانتهاء
@@ -38662,6 +38665,9 @@ console.log('  🌐  Offline Indicator + Storage Dashboard');
 
 // Expose QR Settings functions to global scope
 window.openQRSettings = openQRSettings;
+window.exportMenuPageFile = exportMenuPageFile;
+window.openMenuQRModal = openMenuQRModal;
+window.downloadMenuQR = downloadMenuQR;
 window.saveQRSettings = saveQRSettings;
 window.openQRRoomPicker = openQRRoomPicker;
 
@@ -40456,7 +40462,6 @@ async function _doTransfer(custId, amount){
 window.openTransferToCustomdy = openTransferToCustomdy;
 window._confirmTransfer = _confirmTransfer;
 window._doTransfer = _doTransfer;
-window._buildTransfersHTML = _buildTransfersHTML;
 window.openCustodyModal  = openCustodyModal;
 window.closeCustodyModal = closeCustodyModal;
 
