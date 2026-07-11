@@ -7104,6 +7104,18 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 <input id="qrs-checkout-time" class="inp" type="text" placeholder="12:00 PM" style="width:100%;direction:ltr;">
 </div>
 </div>
+<div style="border-top:1px solid var(--bdr);padding-top:12px;margin-top:4px;">
+<label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">🔗 رابط النظام المُستضاف (index.html بعد رفعه على GitHub — مهم عشان QR الغرف يشتغل مع موبايل الضيف. اتركه فاضي لو النظام شغال أونلاين فعلاً)</label>
+<input id="qrs-app-url" class="inp" type="text" placeholder="https://username.github.io/index.html" style="width:100%;direction:ltr;font-size:11px;">
+</div>
+<div style="border-top:1px solid var(--bdr);padding-top:12px;margin-top:4px;">
+<label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">🍽️ رابط صفحة المنيو المستضافة (menu.html بعد رفعها على GitHub)</label>
+<input id="qrs-menu-url" class="inp" type="text" placeholder="https://username.github.io/menu.html" style="width:100%;direction:ltr;font-size:11px;">
+<div style="display:flex;gap:8px;margin-top:8px;">
+<button class="btn bbl" onclick="exportMenuPageFile()" style="flex:1;font-size:12px;">📥 تصدير menu.html</button>
+<button class="btn bg" onclick="openMenuQRModal()" style="flex:1;font-size:12px;">📱 QR المنيو</button>
+</div>
+</div>
 </div>
 <div style="display:flex;gap:10px;margin-top:18px;">
 <button class="btn bg" onclick="saveQRSettings()" style="flex:1;">💾 حفظ</button>
@@ -17560,7 +17572,7 @@ function waDA_Supplier(idx){
   const bks = DA_getBookings();
   const b = bks[idx];
   if(!b) return;
-  const prop = (typeof PROP!=="undefined") ? PROP : {name:"' + PROP.name + '", phone:"+20 109 953 1272"};
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", phone:"+20 109 953 1272"};
   const supplierPhone = (b.supplierPhone||"").replace(/[^0-9]/g,"");
   if(!supplierPhone){
     sNotify("⚠️ لا يوجد رقم للشركة","أدخل رقم واتساب الشركة أولاً · No supplier WhatsApp","warning",3000);
@@ -18993,7 +19005,7 @@ function openTourInvoice(idx){
   _currentTourInvIdx = idx;
   const t = tours[idx];
   if(!t) return;
-  const prop = (typeof PROP!=="undefined") ? PROP : {name:"' + PROP.name + '", address:"Dahab, South Sinai, Egypt", phone:"+20 109 953 1272", email:"dahabtrendyinn@gmail.com"};
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", address:"Dahab, South Sinai, Egypt", phone:"+20 109 953 1272", email:"dahabtrendyinn@gmail.com"};
   const today = toDay();
   const invNo = t.invNo || ("TR-"+t.id.slice(-6));
 
@@ -19122,7 +19134,7 @@ function deleteTourDirect(idx){
 function waTourDirect(idx){
   const t = tours[idx];
   if(!t) return;
-  const prop = (typeof PROP!=="undefined") ? PROP : {name:"' + PROP.name + '", phone:"+20 109 953 1272"};
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", phone:"+20 109 953 1272"};
   const pricePerPerson = t.pricePerPerson || (t.persons>0 ? Math.round((t.price||0)/(t.persons||1)) : 0);
   const paid = t.paidAmount||0;
   const remaining = Math.max(0,(t.price||0)-paid);
@@ -19149,7 +19161,7 @@ function waTourDirect(idx){
 function waTourInvoice(){
   if(_currentTourInvIdx<0) return;
   const t = tours[_currentTourInvIdx];
-  const prop = (typeof PROP!=="undefined") ? PROP : {name:"' + PROP.name + '", phone:"+20 109 953 1272"};
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", phone:"+20 109 953 1272"};
   const pricePerPerson = t.pricePerPerson || (t.persons>0 ? Math.round((t.price||0)/(t.persons||1)) : 0);
   const paid = t.paidAmount||0;
   const remaining = Math.max(0,(t.price||0)-paid);
@@ -21443,16 +21455,34 @@ document.addEventListener('DOMContentLoaded',()=>{
 
       setTimeout(async function(){
         try{
-          // استخراج البيانات المضمّنة في الـ hash (#gd=...)
+          // استخراج البيانات المضمّنة في الـ hash (#gd=... نص عادي أو #gz=... مضغوط gzip)
           const hash = window.location.hash || '';
           const gdMatch = hash.match(/#gd=([A-Za-z0-9+/=]+)/);
-          if(gdMatch){
+          const gzMatch = hash.match(/#gz=([A-Za-z0-9+/=]+)/);
+          if(gdMatch || gzMatch){
             try{
-              const decoded = JSON.parse(decodeURIComponent(escape(atob(gdMatch[1]))));
+              let decoded;
+              if(gzMatch){
+                // فك ضغط gzip
+                const binary = atob(gzMatch[1]);
+                const bytes = new Uint8Array(binary.length);
+                for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+                const ds = new DecompressionStream('gzip');
+                const writer = ds.writable.getWriter();
+                writer.write(bytes); writer.close();
+                const buf = await new Response(ds.readable).arrayBuffer();
+                decoded = JSON.parse(new TextDecoder().decode(buf));
+              } else {
+                decoded = JSON.parse(decodeURIComponent(escape(atob(gdMatch[1]))));
+              }
               // تحميل المنيو في localStorage الضيف مؤقتاً
               if(decoded.menu && decoded.menu.length){
                 localStorage.setItem('dta_rest_menu', JSON.stringify(decoded.menu));
                 window.restMenu = decoded.menu;
+              }
+              // تحميل النشاطات المضمّنة (لو موجودة) عشان تظهر عند الضيف حتى لو الموبايل بتاعه مالوش نفس الـ localStorage
+              if(decoded.activities && decoded.activities.length){
+                localStorage.setItem('dta_activities', JSON.stringify(decoded.activities));
               }
               // تحميل إعدادات QR
               const qrSettings = {
@@ -21545,7 +21575,7 @@ function buildReportHTML(type, from, to){
   const totalExp = expRange.reduce((s,e)=>s+e.egp,0);
   const netProfit = totalRev - totalExp;
   const occ = range.length;
-  const propName = repBranch ? (currentLang==='ar'?repBranch.nameAr:repBranch.nameEn) : (typeof PROP !== 'undefined' ? PROP.name : '' + PROP.name + '');
+  const propName = repBranch ? (currentLang==='ar'?repBranch.nameAr:repBranch.nameEn) : (typeof PROP !== 'undefined' ? PROP.name : 'Dahab Trendy Accommodation');
 
   let rows = '';
   if(type==='bookings'||type==='monthly'){
@@ -21751,7 +21781,7 @@ function shareReportWhatsApp(){
   const {from, to} = getPDFDateRange();
   if(!from||!to){ sNotify('⚠️ خطأ','يرجى اختيار الفترة الزمنية','warning'); return; }
   // Build plain text summary for WhatsApp
-  const propName = (typeof PROP !== 'undefined' ? PROP.name : '' + PROP.name + '');
+  const propName = (typeof PROP !== 'undefined' ? PROP.name : 'Dahab Trendy Accommodation');
   const typeLabels = {monthly:'شهري شامل',bookings:'الحجوزات',financial:'مالي شامل',rooms:'الغرف والإشغال',expenses:'المصروفات'};
   const label = typeLabels[type] || type;
   // Get key numbers from bookings
@@ -26070,7 +26100,7 @@ function loadWATemplate(){
   const b=(bookings||[])[idx];
   if(!b){document.getElementById('wat-tpl-body').textContent='لا يوجد حجز';return;}
   _watCurrentBk=b;
-  const prop=(typeof PROP!=='undefined'?PROP:{name:'' + PROP.name + '',phone:'',address:'دهب'});
+  const prop=(typeof PROP!=='undefined'?PROP:{name:'Dahab Trendy Accommodation',phone:'',address:'دهب'});
   const _propPhone=_watLang==='ar'?'\u200E'+(prop.phone||''):prop.phone||'';
   const sym=b.cur==='USD'?'$':b.cur==='EUR'?'€':'£';
   const nights_=nts(b.ci,b.co);
@@ -26369,7 +26399,7 @@ function watUseCustomTpl(i){
   const b=(bookings||[])[idx];
   let body=tpl.body;
   if(b){
-    const prop=(typeof PROP!=='undefined'?PROP:{name:'' + PROP.name + '',phone:''});
+    const prop=(typeof PROP!=='undefined'?PROP:{name:'Dahab Trendy Accommodation',phone:''});
     body=body.replace(/\{name\}/g,b.name||'').replace(/\{room\}/g,b.room||'').replace(/\{ci\}/g,b.ci||'').replace(/\{co\}/g,b.co||'').replace(/\{total\}/g,b.total||'').replace(/\{phone\}/g,prop.phone||'');
   }
   document.getElementById('wat-tpl-title').textContent='📝 '+tpl.name;
@@ -26407,7 +26437,7 @@ function watClearHistory(){
 // FEATURE N3: iCAL EXPORT
 // ══════════════════════════════════════════════
 function exportIcal(){
-  const prop=(typeof PROP!=='undefined'?PROP:{name:'' + PROP.name + '',address:'Dahab, South Sinai'});
+  const prop=(typeof PROP!=='undefined'?PROP:{name:'Dahab Trendy Accommodation',address:'Dahab, South Sinai'});
   const active=(bookings||[]).filter(b=>b.status!=='Cancelled');
   if(!active.length){alert('لا توجد حجوزات للتصدير');return;}
   function icsDate(d){return d.replace(/-/g,'');}
@@ -30170,7 +30200,7 @@ async function doSendTakeawayMenu(){
     }catch(e){}
   }
 
-  const prop = (typeof PROP!=='undefined'&&PROP) ? PROP : {name:'' + PROP.name + '',phone:''};
+  const prop = (typeof PROP!=='undefined'&&PROP) ? PROP : {name:'Dahab Trendy Accommodation',phone:''};
   const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
   const waNum = qrs.waNum || '201099531272';
 
@@ -30290,7 +30320,7 @@ async function doSendMenuToGuest(){
   const {room, phone} = _getSendMenuRoomAndPhone();
   if(!room){ sNotify('⚠️','يرجى اختيار أو إدخال رقم الغرفة','info',3000); return; }
 
-  const prop = (typeof PROP!=='undefined'&&PROP) ? PROP : {name:'' + PROP.name + '',phone:''};
+  const prop = (typeof PROP!=='undefined'&&PROP) ? PROP : {name:'Dahab Trendy Accommodation',phone:''};
   const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
   const waNum = (qrs.waNum || '201099531272');
 
@@ -37107,10 +37137,88 @@ const DTA_QR = (function(){
     return apiUrl;
   }
 
+  // ─── ضغط نص (gzip) وتحويله لـ base64 — بيرجع null لو المتصفح مش بيدعم CompressionStream ───
+  async function gzipToBase64(str){
+    try{
+      if(typeof CompressionStream === 'undefined') return null;
+      const bytes = new TextEncoder().encode(str);
+      const cs = new CompressionStream('gzip');
+      const writer = cs.writable.getWriter();
+      writer.write(bytes); writer.close();
+      const buf = await new Response(cs.readable).arrayBuffer();
+      const outBytes = new Uint8Array(buf);
+      let binary = '';
+      for(let i=0;i<outBytes.length;i++) binary += String.fromCharCode(outBytes[i]);
+      return btoa(binary);
+    }catch(e){ return null; }
+  }
+
+  // ─── بناء رابط صفحة الضيف الحقيقي (فيه المنيو + الواي فاي + النشاطات) — هذا هو اللي المفروض الـ QR يشاور عليه ───
+  // ملحوظة: الدالة async عشان بتحاول تضغط بيانات المنيو (gzip) قبل ما تحطها في الرابط،
+  // لأن لو المنيو كبير والرابط طال أوي — الـ QR بيبقى كثيف جداً وأحياناً الـ API بيرفض يولّده (يظهر أيقونة بديلة بدل الكود)
+  async function buildGuestQRUrl(roomNo){
+    const room = String(roomNo);
+    const qrs = (function(){ try{ return JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'); }catch(e){ return {}; } })();
+
+    // المنيو
+    let menuSrc = [];
+    if (window.restMenu && Array.isArray(window.restMenu) && window.restMenu.length) {
+      menuSrc = window.restMenu;
+    } else {
+      try { const _ls = JSON.parse(localStorage.getItem('dta_rest_menu')||'[]'); if(Array.isArray(_ls)) menuSrc = _ls; } catch(e){}
+    }
+    const menuSlim = menuSrc.filter(function(it){ return it.available!==false; }).map(function(it){
+      return { name: it.name||'', nameEn: it.nameEn||'', price: parseInt(it.price,10)||0, emoji: it.emoji||'🍽️', cat: it.cat||'أخرى', available: true };
+    });
+
+    // النشاطات
+    let actSrc = [];
+    try { const _als = JSON.parse(localStorage.getItem('dta_activities')||'[]'); if(Array.isArray(_als)) actSrc = _als; } catch(e){}
+    const actSlim = actSrc.filter(function(a){ return a.available!==false; }).map(function(a){
+      return { emoji:a.emoji||'🎯', name:a.name||'', nameEn:a.nameEn||'', price:a.price||0, duration:a.duration||'', desc:a.desc||'', whatsapp:a.whatsapp||'' };
+    });
+
+    const qrsBase = (function(){ try{ return JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'); }catch(e){ return {}; } })();
+    const base = (qrsBase.appUrl && qrsBase.appUrl.trim())
+      ? qrsBase.appUrl.trim().replace(/[?#].*$/, '')
+      : window.location.origin + window.location.pathname;
+    async function tryBuild(withActivities){
+      const payload = {
+        menu: menuSlim,
+        activities: withActivities ? actSlim : [],
+        wifi: { name: qrs.wifiName || 'DahabTrendy_Guest', pass: qrs.wifiPass || 'dahab2024' },
+        wa: qrs.waNum || '201099531272'
+      };
+      const jsonStr = JSON.stringify(payload);
+      const gz = await gzipToBase64(jsonStr);
+      let hashPart = '';
+      if(gz){
+        hashPart = '#gz=' + gz;
+      } else {
+        let gd = '';
+        try { gd = btoa(unescape(encodeURIComponent(jsonStr))); } catch(e){ gd = ''; }
+        hashPart = gd ? ('#gd=' + gd) : '';
+      }
+      return base + '?guest=' + encodeURIComponent(room) + hashPart;
+    }
+
+    let url = await tryBuild(true);
+    // لو الرابط لسه طويل قوي (منيو كبير) — نجرب من غير النشاطات
+    if(url.length > 2200 && actSlim.length){
+      url = await tryBuild(false);
+    }
+    // لو لسه طويل قوي (منيو ضخم فعلاً) — نرجع لرابط قصير من غير بيانات مضمّنة
+    // (الحل الأنسب وقتها: استخدام "QR المنيو" العام في نفس الشاشة بعد رفع menu.html على GitHub)
+    if(url.length > 2500){
+      url = base + '?guest=' + encodeURIComponent(room);
+    }
+    return url;
+  }
+
   // ─── صفحة الضيف (HTML مستقل) ───
   function buildGuestPage(roomNo){
     const room = String(roomNo);
-    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'' + PROP.name + '',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
+    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy Accommodation',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
     const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
     const wifiName     = qrs.wifiName     || 'DahabTrendy_Guest';
     const wifiPass     = qrs.wifiPass     || 'dahab2024';
@@ -37598,7 +37706,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 
   // ─── صفحة Takeaway (نفس تصميم صفحة الضيف — بدون غرفة/واي فاي) ───
   function buildTakeawayPage(){
-    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'' + PROP.name + '',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
+    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy Accommodation',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
     const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
     const waNum = qrs.waNum || '201099531272';
 
@@ -37885,7 +37993,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
   // ─── Modal عرض QR لغرفة ───
   async function openQRModal(roomNo){
     roomNo = String(roomNo);
-    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'' + PROP.name + ''};
+    const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy Accommodation'};
 
     // ── تأكّد إن المنيو محمَّل قبل بناء صفحة الضيف ──
     // محاولة من localStorage أولاً
@@ -37912,12 +38020,16 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     // بناء صفحة الضيف وحفظها
     const guestPageHTML = buildGuestPage(roomNo);
 
-    // URL للـ QR — يمكن تغييره لرابط حقيقي
-    const qrText = `data:text/html;charset=utf-8,${encodeURIComponent(guestPageHTML)}`;
-    // استخدام نص بسيط للـ QR (الـ data URL طويل جداً)
-    const _qrWA = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
-    const qrDisplayText = 'https://wa.me/'+_qrWA+'?text=Room+'+encodeURIComponent(roomNo);
+    // URL للـ QR — رابط صفحة الضيف الحقيقي (فيه المنيو والواي فاي والنشاطات) مش رابط واتساب فاضي
+    const qrDisplayText = await buildGuestQRUrl(roomNo);
     const qrImageUrl = generateQRSVG(qrDisplayText, 250);
+
+    // تحذير لو الرابط مش هيشتغل مع موبايل ضيف تاني (فتح الملف محلي بدون ما يتحدد رابط النظام المُستضاف)
+    const _isLocalFile = qrDisplayText.indexOf('file://') === 0 || qrDisplayText.indexOf('null') === 0 || qrDisplayText.indexOf('http') !== 0;
+    const warningHTML = _isLocalFile ? `
+  <div style="background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.4);border-radius:8px;padding:10px;margin-bottom:14px;font-size:12px;color:#e74c3c;line-height:1.8;">
+    ⚠️ الرابط ده مش هيفتح على موبايل الضيف — لأن النظام مفتوح كملف محلي على جهازك. لازم ترفع النظام (أو الصفحة) على استضافة زي GitHub Pages، وتحط الرابط في "إعدادات QR ⚙️" في خانة "رابط النظام المُستضاف".
+  </div>` : '';
 
     let modal = document.getElementById('qr-room-modal');
     if(!modal){
@@ -37943,6 +38055,8 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
       <div style="font-size:10px;color:#666;margin-top:4px;">امسح لخدمات الضيف</div>
     </div>
   </div>
+  ${warningHTML}
+  <div style="font-size:10px;color:var(--muted);margin-bottom:14px;text-align:center;word-break:break-all;direction:ltr;opacity:0.7;">${qrDisplayText}</div>
 
   <!-- معلومات -->
   <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;line-height:2;">
@@ -37974,11 +38088,14 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
   }
 
   // ─── طباعة QR لغرفة واحدة ───
-  window.printRoomQR = function(roomNo){
-    const _qrWA2 = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
-    const qrUrl  = generateQRSVG('https://wa.me/'+_qrWA2+'?text=Room+'+encodeURIComponent(roomNo), 300);
-    const prop   = (typeof PROP!=='undefined') ? PROP : {name:'' + PROP.name + ''};
+  window.printRoomQR = async function(roomNo){
+    const prop = (typeof PROP!=='undefined') ? PROP : {name:'Dahab Trendy Accommodation'};
+    // نفتح النافذة أول حاجة (بشكل متزامن مع الضغطة) عشان متتحجبش من متصفح popup blocker
     const w = window.open('','_blank','width=500,height=700');
+    if(w){ w.document.write('<body style="background:#fff;text-align:center;padding:40px;font-family:Arial,sans-serif;color:#999;">جاري تجهيز الكود…</body>'); }
+    const qrUrl = generateQRSVG(await buildGuestQRUrl(roomNo), 300);
+    if(!w) return;
+    w.document.open();
     w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR غرفة ${roomNo}</title>
 <style>body{font-family:Arial,sans-serif;text-align:center;padding:30px;background:#fff;}
 .qr-wrap{border:3px solid #c9a84c;border-radius:16px;padding:24px;display:inline-block;background:linear-gradient(135deg,#fdf6e3,#fff);}
@@ -38000,9 +38117,8 @@ h2{color:#1a1a2e;margin-bottom:4px;}
   };
 
   // ─── تحميل QR كـ PNG ───
-  window.downloadRoomQR = function(roomNo){
-    const _qrWA3 = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
-    const qrUrl = generateQRSVG('https://wa.me/'+_qrWA3+'?text=Room+'+encodeURIComponent(roomNo), 400);
+  window.downloadRoomQR = async function(roomNo){
+    const qrUrl = generateQRSVG(await buildGuestQRUrl(roomNo), 400);
     const a = document.createElement('a');
     a.href = qrUrl;
     a.download = `QR_Room_${roomNo}.png`;
@@ -38044,20 +38160,33 @@ h2{color:#1a1a2e;margin-bottom:4px;}
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `GuestPage_Room_${roomNo}.html`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
     if(typeof sNotify==='function') sNotify('💾 تحميل','تم تحميل صفحة الضيف لغرفة '+roomNo,'success',3000);
   };
 
   // ─── طباعة QR لجميع الغرف ───
-  window.printAllRoomQRs = function(){
+  window.printAllRoomQRs = async function(){
     const rooms = (typeof ROOMS !== 'undefined') ? ROOMS : [];
     if(!rooms.length){ alert('لا توجد غرف مُعرَّفة'); return; }
-    const prop = (typeof PROP!=='undefined') ? PROP : {name:'' + PROP.name + ''};
+    const prop = (typeof PROP!=='undefined') ? PROP : {name:'Dahab Trendy Accommodation'};
     const w = window.open('','_blank');
+    if(w){ w.document.write('<body style="background:#fff;text-align:center;padding:40px;font-family:Arial,sans-serif;color:#999;">جاري تجهيز أكواد QR…</body>'); }
+
+    // البيانات (المنيو/الواي فاي/النشاطات) واحدة لكل الغرف، فنبنيها مرة واحدة بس بدل ما نضغطها لكل غرفة على حدة
+    const refUrl = await buildGuestQRUrl(rooms[0]);
+    const hashIdx = refUrl.indexOf('#');
+    const sharedHash = hashIdx>=0 ? refUrl.slice(hashIdx) : '';
+    const _qrsAll = (function(){ try{ return JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'); }catch(e){ return {}; } })();
+    const base = (_qrsAll.appUrl && _qrsAll.appUrl.trim())
+      ? _qrsAll.appUrl.trim().replace(/[?#].*$/, '')
+      : window.location.origin + window.location.pathname;
+
     const items = rooms.map(r=>{
-      const _qrWA4 = (JSON.parse(localStorage.getItem('dta_qr_settings')||'{}').waNum)||'201099531272';
-          const qrUrl = generateQRSVG('https://wa.me/'+_qrWA4+'?text=Room+'+encodeURIComponent(r), 200);
+      const roomUrl = base + '?guest=' + encodeURIComponent(String(r)) + sharedHash;
+      const qrUrl = generateQRSVG(roomUrl, 200);
       return `<div class="qr-card">
 <div class="hotel">${prop.name}</div>
 <div class="rnum">غرفة ${r}</div>
@@ -38066,6 +38195,8 @@ h2{color:#1a1a2e;margin-bottom:4px;}
 </div>`;
     }).join('');
 
+    if(!w) return;
+    w.document.open();
     w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QR جميع الغرف</title>
 <style>
 body{font-family:Arial,sans-serif;padding:20px;background:#fff;}
@@ -38156,7 +38287,7 @@ h1{text-align:center;color:#1a1a2e;margin-bottom:20px;font-size:18px;}
     patchRoomsPage();
   });
 
-  return { openQRModal, buildGuestPage, buildTakeawayPage, generateQRSVG };
+  return { openQRModal, buildGuestPage, buildTakeawayPage, generateQRSVG, buildGuestQRUrl };
 })();
 
 window.DTA_QR = DTA_QR;
@@ -38194,6 +38325,8 @@ function openQRSettings(){
   el = document.getElementById('qrs-wa-num');        if(el) el.value = qrs.waNum        || '201099531272';
   el = document.getElementById('qrs-checkin-time');  if(el) el.value = qrs.checkinTime  || '2:00 PM';
   el = document.getElementById('qrs-checkout-time'); if(el) el.value = qrs.checkoutTime || '12:00 PM';
+  el = document.getElementById('qrs-app-url');       if(el) el.value = qrs.appUrl        || '';
+  el = document.getElementById('qrs-menu-url');      if(el) el.value = qrs.menuUrl      || '';
   var modal = document.getElementById('qr-settings-modal');
   if(modal) modal.classList.add('on');
 }
@@ -38203,7 +38336,9 @@ function saveQRSettings(){
     wifiPass:     document.getElementById('qrs-wifi-pass').value.trim()   || 'dahab2024',
     waNum:        document.getElementById('qrs-wa-num').value.trim()      || '201099531272',
     checkinTime:  document.getElementById('qrs-checkin-time').value.trim()  || '2:00 PM',
-    checkoutTime: document.getElementById('qrs-checkout-time').value.trim() || '12:00 PM'
+    checkoutTime: document.getElementById('qrs-checkout-time').value.trim() || '12:00 PM',
+    appUrl:       document.getElementById('qrs-app-url').value.trim()      || '',
+    menuUrl:      document.getElementById('qrs-menu-url').value.trim()    || ''
   };
   // حفظ في localStorage للتوافق مع الكود الموجود
   localStorage.setItem('dta_qr_settings', JSON.stringify(qrs));
@@ -38213,6 +38348,108 @@ function saveQRSettings(){
   }
   closeM('qr-settings-modal');
   if(typeof sNotify==='function') sNotify('✅ تم الحفظ','تم حفظ إعدادات QR الغرف بنجاح','success',3000);
+}
+
+// ══ FEATURE: صفحة منيو مستقلة (رابط ثابت) لضيوف خارج الفندق ══
+async function exportMenuPageFile(){
+  let html;
+  try{
+    html = DTA_QR.buildTakeawayPage();
+  }catch(e){
+    console.error('[exportMenuPageFile] build error:', e);
+    if(typeof sNotify==='function') sNotify('❌ خطأ','فشل بناء صفحة المنيو: '+e.message,'urgent',5000);
+    else alert('فشل بناء صفحة المنيو: '+e.message);
+    return;
+  }
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+
+  // ── محاولة 1: مشاركة الملف مباشرة (بتشتغل غالباً حتى لو الصفحة مفتوحة كملف محلي file://) ──
+  try{
+    if(navigator.canShare && navigator.share){
+      const file = new File([blob], 'menu.html', {type:'text/html'});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file], title:'menu.html'});
+        if(typeof sNotify==='function') sNotify('✅ اتشارك','احفظ الملف menu.html من قايمة المشاركة، وارفعه على GitHub جنب index.html','success',6000);
+        return;
+      }
+    }
+  }catch(shareErr){
+    // المستخدم لغى المشاركة أو حصل خطأ — نكمل على المحاولة التالية بدل ما نوقف
+    console.warn('[exportMenuPageFile] share failed/cancelled:', shareErr);
+    if(shareErr && shareErr.name === 'AbortError') return; // المستخدم لغى بنفسه، متعملش حاجة تانية
+  }
+
+  // ── محاولة 2: تحميل عادي عن طريق Blob + a.click() (بيشتغل في المتصفح العادي، وغالباً بيفشل بصمت لو فاتح الصفحة كملف file://) ──
+  try{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'menu.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 15000);
+    if(typeof sNotify==='function') sNotify('✅ اتنزّل','لو الملف نزل فعلاً في مجلد Download، ارفعه على GitHub جنب index.html. لو مفيش حاجة نزلت، افتح النظام من رابط حقيقي (مش بفتح الملف مباشرة) وجرب تاني','success',6000);
+  }catch(dlErr){
+    console.warn('[exportMenuPageFile] blob download failed:', dlErr);
+    // ── محاولة 3: فتح المحتوى في تاب جديد عشان يحفظه يدوي من المتصفح ──
+    try{
+      const w = window.open('', '_blank');
+      if(w){
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+        if(typeof sNotify==='function') sNotify('📄 اتفتح في تاب جديد','مقدرناش ننزّل الملف تلقائي. من قايمة المتصفح (⋮) اختار "تحميل الصفحة" أو "حفظ باسم" واحفظه بإسم menu.html، بعدين ارفعه على GitHub','info',7000);
+        else alert('اتفتحت صفحة المنيو في تاب جديد — احفظها باسم menu.html من قايمة المتصفح');
+      } else {
+        throw new Error('popup blocked');
+      }
+    }catch(finalErr){
+      console.error('[exportMenuPageFile] all methods failed:', finalErr);
+      if(typeof sNotify==='function') sNotify('❌ خطأ','فشل تصدير المنيو بكل الطرق. جرب تفتح النظام من رابط حقيقي (http/https) مش بفتح الملف مباشرة من الموبايل','urgent',7000);
+      else alert('فشل تصدير المنيو. جرب تفتح النظام من رابط حقيقي مش بفتح الملف مباشرة');
+    }
+  }
+}
+function openMenuQRModal(){
+  var qrs = {};
+  try { qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'); } catch(e){}
+  var url = (qrs.menuUrl||'').trim() || (document.getElementById('qrs-menu-url')?document.getElementById('qrs-menu-url').value.trim():'');
+  if(!url){
+    if(typeof sNotify==='function') sNotify('⚠️ محتاج الرابط الأول','اكتب رابط menu.html بعد ما ترفعه على GitHub، واحفظ الإعدادات','error',4000);
+    return;
+  }
+  const qrImageUrl = DTA_QR.generateQRSVG(url, 250);
+  let modal = document.getElementById('qr-menu-modal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'qr-menu-modal';
+    modal.className = 'ovl';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+<div class="mdl" style="max-width:420px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="color:var(--gold);font-size:15px;font-weight:700;">🍽️ QR Code — منيو عام</div>
+    <button onclick="this.closest('.ovl').classList.remove('on')" style="background:none;border:none;color:var(--gold);font-size:20px;cursor:pointer;">✕</button>
+  </div>
+  <div style="text-align:center;background:#fff;border-radius:12px;padding:16px;">
+    <img src="${qrImageUrl}" style="width:100%;max-width:250px;border-radius:8px;">
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center;word-break:break-all;direction:ltr;">${url}</div>
+  <div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:center;">📲 أي حد يمسح الكود ده هيشوف المنيو مباشرة من غير رقم غرفة</div>
+  <button class="btn bg" style="width:100%;margin-top:14px;" onclick="downloadMenuQR('${url}')">💾 تحميل QR Code</button>
+</div>`;
+  modal.classList.add('on');
+}
+function downloadMenuQR(url){
+  const link = document.createElement('a');
+  link.href = DTA_QR.generateQRSVG(url, 500);
+  link.download = 'Menu_QR.png';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 
@@ -38350,8 +38587,8 @@ function saveQRSettings(){
   const icon512 = makeIconPNG(512);
 
   const manifestData = {
-    name: (typeof PROP!=='undefined' && PROP.name) ? PROP.name : '' + PROP.name + '',
-    short_name: ((typeof PROP!=='undefined' && PROP.name) ? PROP.name : '' + PROP.name + '').slice(0,12),
+    name: (typeof PROP!=='undefined' && PROP.name) ? PROP.name : 'Dahab Trendy',
+    short_name: ((typeof PROP!=='undefined' && PROP.name) ? PROP.name : 'Dahab Trendy').slice(0,12),
     description: 'نظام إدارة فندق' + ((typeof PROP!=='undefined' && PROP.name) ? (' — ' + PROP.name) : ' دهب ترندي'),
     start_url: './',
     scope: './',
