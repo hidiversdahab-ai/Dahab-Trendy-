@@ -7111,6 +7111,7 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 <div style="border-top:1px solid var(--bdr);padding-top:12px;margin-top:4px;">
 <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:4px;">🍽️ رابط منفصل لصفحة منيو خاصة (اختياري — مش لازم لو عبّيت "رابط النظام المُستضاف" فوق، لأن QR المنيو هيستخدمه تلقائي)</label>
 <input id="qrs-menu-url" class="inp" type="text" placeholder="https://username.github.io/menu.html" style="width:100%;direction:ltr;font-size:11px;">
+<div id="menu-qr-stale-banner" style="display:none;background:rgba(230,126,34,0.15);border:1px solid #e67e22;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11.5px;color:#f0ad4e;line-height:1.6;"></div>
 <div style="display:flex;gap:8px;margin-top:8px;">
 <button class="btn bbl" onclick="try{exportMenuPageFile()}catch(e){alert('❌ خطأ: '+e.message)}" style="flex:1;font-size:12px;">📥 تصدير menu.html</button>
 <button class="btn bg" onclick="openMenuQRModal()" style="flex:1;font-size:12px;">📱 QR المنيو</button>
@@ -37886,6 +37887,19 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 
 .footer{text-align:center;padding:24px 20px 10px;font-size:11px;color:var(--muted);line-height:2;}
 .footer a{color:var(--muted);text-decoration:none;}
+
+.table-input{width:100%;background:rgba(255,255,255,0.04);border:1.5px solid var(--bdr);border-radius:10px;padding:13px;font-size:17px;font-weight:800;color:var(--gold);text-align:center;font-family:'Tajawal',Arial,sans-serif;transition:border-color .15s;}
+.table-input:focus{outline:none;border-color:var(--teal);}
+.table-hint{font-size:10.5px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.6;}
+
+.call-waiter-btn{display:block;width:100%;background:linear-gradient(135deg,#e67e22,#d35400);color:#fff;border:none;padding:15px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Tajawal',Arial,sans-serif;box-shadow:0 4px 16px rgba(230,126,34,0.25);}
+.call-waiter-btn:active{transform:scale(0.98);}
+.call-waiter-hint{font-size:10.5px;color:var(--muted);text-align:center;margin-top:8px;line-height:1.6;}
+
+.order-notes-wrap{margin-bottom:12px;}
+.order-notes-lbl{display:block;font-size:10.5px;color:var(--muted);margin-bottom:6px;line-height:1.6;}
+.order-notes{width:100%;background:rgba(255,255,255,0.04);border:1.5px solid var(--bdr);border-radius:10px;padding:10px;font-size:12.5px;color:var(--text);font-family:'Tajawal',Arial,sans-serif;resize:vertical;min-height:52px;}
+.order-notes:focus{outline:none;border-color:var(--teal);}
 </style>
 </head>
 <body>
@@ -37904,6 +37918,17 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 
 <div class="sec">
   <div class="sec-title">
+    <span class="ico">🪑</span>
+    <span class="ar">رقم الترابيزة</span>
+    <span class="en">TABLE NUMBER</span>
+  </div>
+  <input type="number" id="table-num" class="table-input" placeholder="مثال: 5 · e.g. 5" min="1" inputmode="numeric"
+    oninput="sessionStorage.setItem('dta_guest_table',this.value); this.style.borderColor=''; if(typeof updateBar==='function') updateBar();">
+  <div class="table-hint">اكتب رقم الترابيزة اللي أنت قاعد عليها · Enter the number of the table you're sitting at</div>
+</div>
+
+<div class="sec">
+  <div class="sec-title">
     <span class="ico">🍽️</span>
     <span class="ar">الطعام والمشروبات</span>
     <span class="en">FOOD & DRINKS</span>
@@ -37914,9 +37939,23 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     <div class="order-title">🛒 طلبك · Your Order</div>
     <div class="order-items" id="order-items"></div>
     <div class="order-total" id="order-total"></div>
-    <a class="order-wa" id="order-wa" href="#">💬 أرسل الطلب عبر واتساب · Send Order via WhatsApp</a>
+    <div class="order-notes-wrap">
+      <label class="order-notes-lbl" for="order-notes">📝 ملاحظات على الطلب (مثال: بيتزا من غير بصل) · Order Notes (e.g. pizza without onion)</label>
+      <textarea id="order-notes" class="order-notes" placeholder="اكتب أي طلب خاص هنا... · Write any special request here..." oninput="if(typeof updateBar==='function') updateBar();"></textarea>
+    </div>
+    <a class="order-wa" id="order-wa" href="#" onclick="return validateOrder()">💬 أرسل الطلب عبر واتساب · Send Order via WhatsApp</a>
     <button class="order-clear" onclick="clearOrd()">🗑️ مسح الطلب · Clear</button>
   </div>
+</div>
+
+<div class="sec">
+  <div class="sec-title">
+    <span class="ico">🙋</span>
+    <span class="ar">محتاج مساعدة؟</span>
+    <span class="en">NEED HELP?</span>
+  </div>
+  <button class="call-waiter-btn" onclick="callWaiter()">🙋 نادِ الجرسون · Call Waiter</button>
+  <div class="call-waiter-hint">لو مش فاهم حاجة في المنيو أو محتاج أي مساعدة، دوس هنا وهيوصلنا رقم ترابيزتك على واتساب فورًا · Not sure about something on the menu, or need help? Tap here and we'll get your table number on WhatsApp right away</div>
 </div>
 
 <div class="sec">
@@ -38048,12 +38087,45 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
       return it.e+' '+it.n+(it.ne?' / '+it.ne:'')+' \xd7'+it.q+' = <strong style="color:var(--teal);">'+(it.q*it.p)+' EGP</strong>';
     }).join('<br>');
     document.getElementById('order-total').textContent='💰 الإجمالي · Total: '+total+' EGP';
+    var table=(document.getElementById('table-num')||{}).value||'';
+    var notes=(document.getElementById('order-notes')||{}).value||'';
     var t=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
-    var msg='🛵 طلب Takeaway\\n⏰ '+t+'\\n\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n';
+    var msg='🍽️ طلب من المنيو · Menu Order\\n🪑 ترابيزة رقم · Table: '+(table.trim()||'—')+'\\n⏰ '+t+'\\n\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n';
     msg+=items.map(function(it){ return it.e+' '+it.n+(it.ne?' / '+it.ne:'')+' \\xd7'+it.q+' = '+(it.q*it.p)+' EGP'; }).join('\\n');
     msg+='\\n〰️〰️〰️〰️〰️〰️〰️〰️〰️〰️\\n*الإجمالي · Total: '+total+' EGP*';
+    if(notes.trim()){ msg+='\\n\\n📝 ملاحظات · Notes: '+notes.trim(); }
     document.getElementById('order-wa').href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);
   }
+
+  window.validateOrder=function(){
+    var tEl=document.getElementById('table-num');
+    var table=(tEl||{}).value||'';
+    if(!table.trim()){
+      alert('من فضلك اكتب رقم الترابيزة أولاً 🪑\\nPlease enter your table number first');
+      if(tEl){ tEl.style.borderColor='#e74c3c'; tEl.scrollIntoView({behavior:'smooth',block:'center'}); tEl.focus(); }
+      return false;
+    }
+    return true;
+  };
+
+  window.callWaiter=function(){
+    var tEl=document.getElementById('table-num');
+    var table=(tEl||{}).value||'';
+    if(!table.trim()){
+      alert('من فضلك اكتب رقم الترابيزة أولاً 🪑\\nPlease enter your table number first');
+      if(tEl){ tEl.style.borderColor='#e74c3c'; tEl.scrollIntoView({behavior:'smooth',block:'center'}); tEl.focus(); }
+      return;
+    }
+    var t=new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+    var msg='🙋 طلب مساعدة — نداء جرسون · Call Waiter\\n🪑 ترابيزة رقم · Table: '+table.trim()+'\\n⏰ '+t;
+    window.location.href='https://wa.me/'+WA+'?text='+encodeURIComponent(msg);
+  };
+
+  (function(){
+    var savedTable=sessionStorage.getItem('dta_guest_table')||'';
+    var tEl=document.getElementById('table-num');
+    if(tEl && savedTable) tEl.value=savedTable;
+  })();
 
   window.clearOrd=function(){
     QS=new Array(MI.length).fill(0);
@@ -38411,6 +38483,10 @@ h1{text-align:center;color:#1a1a2e;margin-bottom:20px;font-size:18px;}
     if(url.length > 2500){
       url = base + '?menu=1';
     }
+    // حفظ "بصمة" المنيو وقت الطباعة، عشان بعدين نقدر نعرف لو المنيو اتغيّرت عن آخر كود اتطبع
+    try{
+      localStorage.setItem('dta_menu_qr_snapshot', JSON.stringify({ menu: menuSlim, ts: Date.now() }));
+    }catch(e){}
     return url;
   }
 
@@ -38456,6 +38532,49 @@ function openQRSettings(){
   el = document.getElementById('qrs-menu-url');      if(el) el.value = qrs.menuUrl      || '';
   var modal = document.getElementById('qr-settings-modal');
   if(modal) modal.classList.add('on');
+  checkMenuQRStale();
+}
+// ─── تنبيه: هل المنيو اتغيّرت عن آخر كود QR اتطبع؟ ───
+function checkMenuQRStale(){
+  const banner = document.getElementById('menu-qr-stale-banner');
+  if(!banner) return;
+  const ar = (typeof currentLang!=='undefined') ? currentLang==='ar' : true;
+  try{
+    let menuSrc = [];
+    if (window.restMenu && Array.isArray(window.restMenu) && window.restMenu.length) {
+      menuSrc = window.restMenu;
+    } else {
+      const _ls = JSON.parse(localStorage.getItem('dta_rest_menu')||'[]');
+      if(Array.isArray(_ls)) menuSrc = _ls;
+    }
+    if(!menuSrc.length){ banner.style.display='none'; return; }
+    const currentSlim = menuSrc.filter(it=>it.available!==false).map(it=>(
+      { name: it.name||'', nameEn: it.nameEn||'', price: parseInt(it.price,10)||0, emoji: it.emoji||'🍽️', cat: it.cat||'أخرى', available: true }
+    ));
+    const currentStr = JSON.stringify(currentSlim);
+
+    const snapRaw = localStorage.getItem('dta_menu_qr_snapshot');
+    if(!snapRaw){
+      banner.style.display='block';
+      banner.innerHTML = ar
+        ? '⚠️ لسه ما طبعتش كود QR للمنيو، أو المنيو اتغيّرت بعد آخر تحديث. اطبع كود جديد قبل ما تحطه على الترابيزات.'
+        : "⚠️ You haven't printed a Menu QR yet, or the menu changed since. Print a fresh code before placing it on tables.";
+      return;
+    }
+    const snap = JSON.parse(snapRaw);
+    if(currentStr !== JSON.stringify(snap.menu||[])){
+      const days = Math.floor((Date.now() - (snap.ts||0)) / 86400000);
+      const whenStr = ar ? (days<=0 ? 'النهاردة' : ('من ' + days + ' يوم')) : (days<=0 ? 'today' : (days + ' day(s) ago'));
+      banner.style.display='block';
+      banner.innerHTML = ar
+        ? '⚠️ المنيو اتغيّرت بعد آخر كود QR طبعته (' + whenStr + '). لازم تطبع كود جديد عشان الضيوف يشوفوا آخر تحديث.'
+        : '⚠️ The menu changed since your last printed QR (' + whenStr + '). Print a new code so guests see the latest version.';
+    } else {
+      banner.style.display='none';
+    }
+  }catch(e){
+    banner.style.display='none';
+  }
 }
 function saveQRSettings(){
   const qrs = {
@@ -38568,6 +38687,7 @@ async function openMenuQRModal(){
     return;
   }
   const qrImageUrl = DTA_QR.generateQRSVG(url, 250);
+  if(typeof checkMenuQRStale==='function') checkMenuQRStale();
   let modal = document.getElementById('qr-menu-modal');
   if(!modal){
     modal = document.createElement('div');
