@@ -17046,6 +17046,11 @@ if(manual && changes.length) showToast("✅ تم تحديث "+changes.length+" �
 }
 // ═══════════ EXPORT REMINDER ═══════════
 function checkExportReminder(){
+// ما تظهرش صفحة تذكير الـ Export دي أبداً في صفحات الضيف (QR الغرفة أو QR المنيو)
+try{
+const _p=new URLSearchParams(window.location.search);
+if(_p.get('guest')||_p.get('menu')==='1') return;
+}catch(e){}
 const ar=currentLang==="ar";
 const lastExport=localStorage.getItem("dta_last_export");
 const lastReminder=localStorage.getItem("dta_last_reminder");
