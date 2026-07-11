@@ -35903,6 +35903,39 @@ console.log('[FAQChatbot] ✅ Ready');
 // ╔══════════════════════════════════════════════════════════════╗
 // ║  UPGRADE 2: SERVICE WORKER — Offline-First PWA             ║
 // ╚══════════════════════════════════════════════════════════════╝
+// ── Force-bust أي كاش قديم (Service Worker + Cache Storage) لما يتغيّر رقم إصدار البناء ──
+// ده حل مباشر لمشكلة "الدوال القديمة لسه شغالة بعد التحديث" (زي exportMenuPageFile is not defined)
+// بيشتغل مرة واحدة بس لكل جهاز لما يكتشف إن النسخة المحفوظة مختلفة عن النسخة الحالية
+(function forceBustStaleCacheOnVersionChange(){
+  const APP_BUILD_VERSION = 'v13-2026-07-11'; // ⬅️ زوّد التاريخ/الرقم ده كل ما تعمل تحديث كبير
+  try{
+    const stored = localStorage.getItem('dta_app_build_version');
+    if(stored === APP_BUILD_VERSION) return; // نفس النسخة، مفيش داعي نعمل حاجة
+    if(!('serviceWorker' in navigator) && !('caches' in window)){
+      localStorage.setItem('dta_app_build_version', APP_BUILD_VERSION);
+      return;
+    }
+    Promise.resolve().then(async ()=>{
+      try{
+        if('serviceWorker' in navigator){
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for(const r of regs){ await r.unregister(); }
+        }
+        if('caches' in window){
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k=> caches.delete(k)));
+        }
+      }catch(e){ console.warn('[VersionBust] cleanup error:', e); }
+      localStorage.setItem('dta_app_build_version', APP_BUILD_VERSION);
+      // لو كان فيه SW شغال قبل كده (يعني ده مش أول مرة) — اعمل reload عشان تتحمل النسخة الفريش فورًا
+      if(stored){
+        console.log('[VersionBust] نسخة جديدة اتكشفت، جاري تفريغ الكاش وإعادة التحميل...');
+        location.reload();
+      }
+    });
+  }catch(e){ console.warn('[VersionBust] error:', e); }
+})();
+
 (function registerServiceWorker(){
   if(!('serviceWorker' in navigator)) return;
 
@@ -35918,7 +35951,7 @@ console.log('[FAQChatbot] ✅ Ready');
 
   // كود الـ Service Worker — يُحفظ كـ Blob URL
   const SW_CODE = `
-const CACHE_NAME = 'dahab-trendy-v12-${PAGE_HASH}';
+const CACHE_NAME = 'dahab-trendy-v13-${PAGE_HASH}';
 const OFFLINE_URL = 'offline.html';
 
 // الملفات الأساسية التي تُحفظ دائماً
@@ -35927,7 +35960,7 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', e=>{
-  console.log('[SW] Installing v11...');
+  console.log('[SW] Installing v13...');
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache=>{
       // حاول تخزين الصفحة الرئيسية
@@ -35945,7 +35978,7 @@ self.addEventListener('message', e=>{
 });
 
 self.addEventListener('activate', e=>{
-  console.log('[SW] Activating v11...');
+  console.log('[SW] Activating v13...');
   e.waitUntil(
     caches.keys().then(keys=>
       Promise.all(keys.filter(k=> k !== CACHE_NAME).map(k=> caches.delete(k)))
@@ -36039,7 +36072,7 @@ self.addEventListener('notificationclick', e=>{
   );
 });
 
-console.log('[SW] ${PROP.name} v11 Service Worker loaded ✓');
+console.log('[SW] ${PROP.name} v13 Service Worker loaded ✓');
 `;
 
   try{
