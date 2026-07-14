@@ -9806,7 +9806,7 @@ if(bkEdit===null){
     const bWords=bName.split(/\s+/).filter(w=>w.length>2);
     const sharedWords=nameWords.filter(w=>bWords.includes(w)).length;
     const charMatch=nameLower.length>3 && (bName.includes(nameLower.substring(0,Math.floor(nameLower.length*0.7))) || nameLower.includes(bName.substring(0,Math.floor(bName.length*0.7))));
-    const nameSimilar=(sharedWords>=1 && nameWords.length>=1) || charMatch;
+    const nameSimilar=(nameWords.length>=2 ? sharedWords>=2 : sharedWords>=1) || charMatch;
     if(!nameSimilar) return false;
     // Date overlap or within 3 days
     const bCi=new Date(b.ci);
@@ -13181,6 +13181,21 @@ btn.textContent="✓ Copied!";btn.style.background="#25a244";btn.style.color="#f
 setTimeout(()=>{btn.textContent="📋 Copy Message";btn.style.background="var(--gold)";btn.style.color="#1a1a2e";},2500);
 }
 // ══ TECH 8: PDF Invoice Direct Download ══
+function _hideFloatingOverlays(){
+  const ids=["birthday-popup","bday-badge","bm-birthday-banner","holiday-alarm-popup"];
+  const restored=[];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el && el.style.display!=="none"){
+      restored.push([el, el.style.display]);
+      el.style.display="none";
+    }
+  });
+  document.querySelectorAll(".holiday-banner").forEach(el=>{
+    if(el.style.display!=="none"){ restored.push([el, el.style.display]); el.style.display="none"; }
+  });
+  return ()=>restored.forEach(([el,d])=>{ el.style.display=d; });
+}
 async function downloadInvoicePDF(){
   const previewEl = document.getElementById("iv-preview");
   if(!previewEl || !previewEl.innerHTML.trim() || previewEl.innerHTML.includes("اضغط + Add Room")){
@@ -13194,13 +13209,15 @@ async function downloadInvoicePDF(){
     s.src = src; s.onload = res; s.onerror = rej;
     document.head.appendChild(s);
   });
+  let _restoreOverlays = ()=>{};
   try{
     showToast("⏳ جاري تحضير PDF...");
+    _restoreOverlays = _hideFloatingOverlays();
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
     // Clone the preview for clean rendering
     const clone = previewEl.cloneNode(true);
-    clone.style.cssText = "position:fixed;top:0;left:50%;transform:translateX(-50%);width:700px;background:#fff;color:#1a1a2e;font-size:11px;z-index:-9999;padding:20px;";
+    clone.style.cssText = "position:fixed;top:0;left:-9999px;width:700px;background:#fff;color:#1a1a2e;font-size:11px;z-index:999999;padding:20px;";
     document.body.appendChild(clone);
     await new Promise(r=>setTimeout(r,300));
     const canvas = await html2canvas(clone, {
@@ -13208,8 +13225,7 @@ async function downloadInvoicePDF(){
       useCORS: true,
       backgroundColor: "#ffffff",
       logging: false,
-      width: 700,
-      foreignObjectRendering: true
+      width: 700
     });
     document.body.removeChild(clone);
     const { jsPDF } = window.jspdf;
@@ -13231,6 +13247,8 @@ async function downloadInvoicePDF(){
   }catch(e){
     console.error(e);
     alert("خطأ في تحميل PDF.\nتأكد من الاتصال بالإنترنت.\n\nPDF error: "+e.message);
+  }finally{
+    _restoreOverlays();
   }
 }
 function doPrint(){
@@ -15348,8 +15366,7 @@ async function downloadRoomListPDF(){
       backgroundColor: '#ffffff',
       logging: false,
       width: pageEl.scrollWidth,
-      windowWidth: 900,
-      foreignObjectRendering: true
+      windowWidth: 900
     });
     iframe.remove();
 
