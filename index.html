@@ -9689,13 +9689,12 @@ const p=isDU?(duPrices[type]||{usd:0,egp:0,eur:0}):(prices[type]||{usd:0,egp:0,e
 const baseRate=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
 const customP=parseFloat(document.getElementById("bm-customprice").value)||0;
 const rate=customP>0?customP:baseRate;
-// ══ فحص سعر مشبوه ══
+// ══ فحص سعر مشبوه (تنبيه فقط — لا يمنع الحفظ، لأن السعر بيتغير يدوياً حسب الحجز) ══
 if(customP>0 && baseRate>0 && customP > baseRate*2){
   const sym2=cur==="USD"?"$":cur==="EUR"?"€":"£";
-  alert("⚠️ تنبيه: سعر مشبوه!\n\nالسعر الافتراضي للغرفة: "+sym2+baseRate+"\nالسعر المدخل: "+sym2+customP+"\n\nالسعر المدخل أعلى من الضعف! يرجى التحقق قبل الحفظ.");
-  return;
+  if(!confirm("⚠️ تنبيه: السعر المدخل أعلى من الضعف!\n\nالسعر الافتراضي للغرفة: "+sym2+baseRate+"\nالسعر المدخل: "+sym2+customP+"\n\nهل أنت متأكد من هذا السعر؟")) return;
 }
-if(customP>0 && baseRate>0 && customP > baseRate*1.5){
+else if(customP>0 && baseRate>0 && customP > baseRate*1.5){
   const sym2=cur==="USD"?"$":cur==="EUR"?"€":"£";
   if(!confirm("⚠️ تحذير: السعر المدخل أعلى من المعتاد!\n\nالسعر الافتراضي: "+sym2+baseRate+"\nالسعر المدخل: "+sym2+customP+"\n\nهل أنت متأكد؟")) return;
 }
