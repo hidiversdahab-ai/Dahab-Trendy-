@@ -9832,6 +9832,10 @@ if(bkEdit!==null) bookings[bkEdit]=bk; else bookings.push(bk);
 sv("dta_bk",bookings);
 closeM("bk-modal");
 renderBookings();
+if(typeof renderRooms==="function") renderRooms();
+if(typeof renderDashboard==="function") renderDashboard();
+if(typeof autoUpdateRooms==="function") autoUpdateRooms(false);
+if(typeof renderCalendar==="function") renderCalendar();
 }
 // ═══════════ CANCELLATION WITH REFUND ═══════════
 let cancelIdx=null;
