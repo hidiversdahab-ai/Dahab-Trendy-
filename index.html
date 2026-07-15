@@ -12802,6 +12802,11 @@ const first=lines[0]||{room:"—",type:"—",ci:"",co:"",n:0,rate:0,adults:2,chi
 const gname=document.getElementById("iv-name").value.trim();
 return{
 name:gname||"—",
+gender:(function(){
+  const gd = (typeof curBookingIdx!=="undefined" && curBookingIdx>=0 && bookings[curBookingIdx]) ? bookings[curBookingIdx] : null;
+  if(!gd) return "";
+  return (gd.allGuestsData && gd.allGuestsData[0] && gd.allGuestsData[0].gender) || gd.gender || "";
+})(),
 phone:document.getElementById("iv-phone").value||"—",
 bsource:(function(){
   const sel=document.getElementById("iv-bsource").value;
@@ -12828,6 +12833,24 @@ duIn:first.duIn||"",
 duOut:first.duOut||"",
 lines,
 };
+}
+function guessGenderFromName(fullName){
+  if(!fullName) return 'm';
+  const first = fullName.trim().split(/\s+/)[0];
+  const clean = first.replace(/^(ال|أبو|ابو|أم|ام)\s*/,'');
+  const femaleNames = new Set(["فاطمة","فاطمه","مريم","نور","نورا","نورهان","سارة","ساره","سلمى","سلمي","ياسمين","دينا","دنيا","هدى","هدي","منى","مني","أمل","امل","إيمان","ايمان","رنا","رنيم","جنى","جني","ندى","ندي","لمى","لمي","ريم","رهف","شهد","جودي","جوري","لينا","لين","ملك","روان","آلاء","الاء","إسراء","اسراء","سما","سماء","هبة","هبه","وفاء","سهر","سحر","سعاد","سعدية","نادية","ناديه","سميرة","سميره","نجلاء","نجلا","عبير","بسمة","بسمه","أميرة","اميره","اميرة","نهى","نهي","رحمة","رحمه","جميلة","جميله","زينب","خديجة","خديجه","عائشة","عائشه","أسماء","اسماء","حنان","إيناس","ايناس","نيرمين","شيماء","هاجر","لبنى","لبني","سلوى","سلوي","نهال","تسنيم","ملاك","جنات","روضة","روضه","ليلى","ليلي","علياء","عليا","دعاء","إلهام","الهام","سوسن","نانسي","كريمة","كريمه","فايزة","فايزه","سناء","صفاء","نبيلة","نبيله","هالة","هاله","هند","أروى","اروى","تهاني","سهام","وداد","سميحة","سميحه","كوثر","مايا","لارا","ليان","تالا","جانا","مي","إلين","الين","كارمن","نجوى","نجوي","حبيبة","حبيبه","مروة","مروه","اسيل","أسيل","جيهان"]);
+  const maleExceptionsEndingTa = new Set(["أسامة","اسامة","حمزة","معاوية","عطية","طلحة","عبيدة","خليفة","شعبة","قتيبة","ربيعة","عقبة","مصعب","يحيى","يحيي","عبده","مصطفى","موسى","موسي","عيسى","عيسي","إلياس","الياس"]);
+  if(femaleNames.has(clean) || femaleNames.has(first)) return 'f';
+  if(maleExceptionsEndingTa.has(clean) || maleExceptionsEndingTa.has(first)) return 'm';
+  if(/[ةه]$/.test(clean) && clean.length>2) return 'f';
+  if(/اء$/.test(clean)) return 'f';
+  const enFemale = ["mary","sara","sarah","nour","dina","lina","mona","laila","layla","yasmin","nada","rana","hala","aya","salma","mai","may","dalia","reem","farida","mervat","nesma","heba","amira","fatma","fatima"];
+  if(enFemale.includes(clean.toLowerCase())) return 'f';
+  return 'm';
+}
+function guestGenderIcon(genderVal, name, isChild){
+  const g = genderVal==="أنثى" ? "f" : genderVal==="ذكر" ? "m" : guessGenderFromName(name);
+  return isChild ? (g==="f"?"👧":"👦") : (g==="f"?"👩":"👨");
 }
 function buildPreview(){
 const d=getIV();
@@ -13010,12 +13033,13 @@ proformaBanner+
         const isCh = gi >= (d.adults-1);
         const nm = (g.name||"").trim();
         if(!nm) return "";
-        return "<div>"+(isCh?"🧒 ":"👤 ")+"<span dir='auto' style='unicode-bidi:plaintext;'>"+nm+"</span></div>";
+        const icon = guestGenderIcon(g.gender, nm, isCh);
+        return "<div>"+icon+" <span dir='auto' style='unicode-bidi:plaintext;'>"+nm+"</span></div>";
       }).join("")+
       "</div>"
     : "";
   return "<div class='invp-gbox' style='display:flex;gap:12px;align-items:flex-start;'>"+
-    "<div style='flex:1;'><div><strong>"+d.name+"</strong></div>"+
+    "<div style='flex:1;'><div><strong>"+guestGenderIcon(d.gender, d.name, false)+" "+d.name+"</strong></div>"+
 "<div style='color:#555;'>"+d.nat+"</div>"+
 "<div dir='ltr' style='color:#555;unicode-bidi:bidi-override;direction:ltr;text-align:right;'>"+d.phone+"</div>"+
 "<div style='color:#555;'>"+d.email+"</div>"+
