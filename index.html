@@ -26090,7 +26090,8 @@ function watSwitchTab(tab){
 }
 
 function openWATemplates(){
-  _watAllActive=(bookings||[]).filter(b=>b.status!=='Cancelled').sort((a,b)=>b.ci.localeCompare(a.ci));
+  const _watToday=toDay();
+  _watAllActive=(bookings||[]).filter(b=>b.status!=='Cancelled' && b.co && b.co>=_watToday).sort((a,b)=>a.ci.localeCompare(b.ci));
   _watBulkSelected=new Set();
   _watEditMode=false;
   const _savedWatLang=localStorage.getItem('dta_wat_lang');
