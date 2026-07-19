@@ -1696,6 +1696,11 @@ label {
     <div class="bn-more-item" onclick="bnGo('pricelist',null);closeBnMore()" style="border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);"><span class="bm-icon">💰</span><span class="t" data-ar="قائمة الأسعار" data-en="Price List">قائمة الأسعار</span></div>
     <div class="bn-more-item" onclick="exportAll();closeBnMore()"><span class="bm-icon">💾</span><span class="t" data-ar="تصدير" data-en="Export">تصدير</span></div>
     <div class="bn-more-item" onclick="shareBackupWA();closeBnMore()" style="border-color:rgba(37,211,102,0.4);background:rgba(37,211,102,0.07);"><span class="bm-icon" style="color:#25D366;">📤</span><span class="t" data-ar="مشاركة نسخة" data-en="Share Backup">مشاركة نسخة</span></div>
+    <div class="bn-more-item" onclick="DTA_DiskBackup.chooseFile();closeBnMore()" style="border-color:rgba(149,165,166,0.4);background:rgba(52,73,94,0.1);position:relative;">
+      <span class="bm-icon" style="color:#95a5a6;">📁</span>
+      <span class="t" data-ar="حفظ على الهارد" data-en="Save to Disk">حفظ على الهارد</span>
+      <span id="disk-backup-status-mobile" style="display:block;font-size:9px;color:#7a8fa6;margin-top:2px;"></span>
+    </div>
     <div class="bn-more-item" onclick="showImportGuide();closeBnMore()"><span class="bm-icon">📂</span><span class="t" data-ar="استيراد" data-en="Import">استيراد</span></div>
     <div class="bn-more-item" onclick="exportData();closeBnMore()" style="border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.07);"><span class="bm-icon" style="color:#1abc9c;">🗄️</span><span style="color:#1abc9c;">Export IDB</span></div>
     <div class="bn-more-item" onclick="triggerIDBImport();closeBnMore()" style="border-color:rgba(155,89,182,0.4);background:rgba(155,89,182,0.07);"><span class="bm-icon" style="color:#c39bd3;">📥</span><span style="color:#c39bd3;">Import IDB</span></div>
@@ -2664,6 +2669,8 @@ document.addEventListener('DOMContentLoaded', function(){
 <button class="nb" onclick="openYoY()" style="background:rgba(26,188,156,0.12);color:#1abc9c;border-color:rgba(26,188,156,0.3);font-weight:700;" title="مقارنة السنوات">📊 YoY</button>
 <button class="nb" id="undo-btn" onclick="undoLast()" style="background:rgba(231,76,60,0.12);color:#e74c3c;border-color:rgba(231,76,60,0.4);font-weight:700;opacity:0.4;" title="تراجع عن آخر عملية">↩️ <span class="btn-txt-hide">Undo</span></button>
 <button class="nb exp-btn" onclick="exportAll()">💾 <span class="t" data-ar="تصدير" data-en="Export">Export</span></button>
+<button class="nb" onclick="DTA_DiskBackup.chooseFile()" style="background:rgba(52,73,94,0.18);color:#95a5a6;border-color:rgba(149,165,166,0.4);font-weight:700;" title="حفظ تلقائي مستمر على الهارد ديسك">📁 <span class="t" data-ar="حفظ على الهارد" data-en="Save to Disk">Save to Disk</span></button>
+<span id="disk-backup-status" style="font-size:11px;color:#7a8fa6;align-self:center;padding:0 6px;white-space:nowrap;"></span>
 <button class="nb" onclick="shareBackupWA()" style="background:rgba(37,211,102,0.12);color:#25D366;border-color:rgba(37,211,102,0.4);font-weight:700;" title="مشاركة نسخة احتياطية عبر واتساب">📤</button>
 <button class="nb imp-btn" onclick="showImportGuide()">📂 <span class="t" data-ar="استيراد" data-en="Import">Import</span></button>
 <button class="nb" onclick="exportData()" style="background:rgba(26,188,156,0.12);color:#1abc9c;border-color:rgba(26,188,156,0.4);font-weight:700;" title="تصدير قاعدة بيانات IDB">🗄️ <span class="t" data-ar="تصدير IDB" data-en="Export IDB">Export IDB</span></button>
@@ -5909,6 +5916,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
     <div class="fld"><label><span class="t" data-ar="السعر (EGP) *" data-en="Price (EGP) *">السعر (EGP) *</span></label><input id="mi-price" type="number" min="0" step="0.5" placeholder="0"></div>
     <div class="fld"><label><span class="t" data-ar="رمز / إيموجي" data-en="Emoji Icon">رمز / إيموجي</span></label><input id="mi-emoji" placeholder="🍕" maxlength="4" style="font-size:20px;text-align:center;"></div>
     <div class="fld s2"><label><span class="t" data-ar="ملاحظة (اختياري)" data-en="Note (optional)">ملاحظة (اختياري)</span></label><input id="mi-note" placeholder="مثال: متاح فقط الليل، حار جداً..."></div>
+    <div class="fld s2"><label><span class="t" data-ar="المكونات (اختياري)" data-en="Ingredients (optional)">المكونات (اختياري)</span></label><input id="mi-ingredients" placeholder="مثال: أرز، دجاج، فلفل رومي، صلصة طماطم..."></div>
   </div>
   <!-- طبق اليوم / عرض خاص -->
   <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
@@ -16957,6 +16965,7 @@ function setLang(lang){
   if(typeof empRenderEmployeeList==='function' && document.getElementById('emp-mgmt-box')?.style.display!=='none') empRenderEmployeeList();
   if(typeof empApplyPermissions==='function') empApplyPermissions();
   if(typeof roomsRenderList==='function' && document.getElementById('page-settings')?.classList.contains('on')) roomsRenderList();
+  if(typeof renderMenuEditor==='function' && document.getElementById('page-restaurant')?.classList.contains('on') && document.getElementById('menu-grid')) renderMenuEditor();
 }
 function toggleLang(){
   currentLang = currentLang === "en" ? "ar" : "en";
@@ -16975,6 +16984,7 @@ function toggleLang(){
   if(typeof empRenderEmployeeList==='function' && document.getElementById('emp-mgmt-box')?.style.display!=='none') empRenderEmployeeList();
   if(typeof empApplyPermissions==='function') empApplyPermissions();
   if(typeof roomsRenderList==='function' && document.getElementById('page-settings')?.classList.contains('on')) roomsRenderList();
+  if(typeof renderMenuEditor==='function' && document.getElementById('page-restaurant')?.classList.contains('on') && document.getElementById('menu-grid')) renderMenuEditor();
 }
 function toggleLangMenu(){
   const menu = document.getElementById("lang-menu");
@@ -29411,8 +29421,10 @@ function renderMenuEditor(){
   if(catFilterSel){
     const cats = [...new Set(restMenu.map(i=>i.cat).filter(Boolean))];
     const curVal = catFilterSel.value;
-    catFilterSel.innerHTML = '<option value="">كل الفئات</option>' +
-      cats.map(c=>`<option value="${c}" ${c===curVal?"selected":""}>${c}</option>`).join("");
+    const en = typeof isEn==='function' && isEn();
+    const catMetaSel = getCatMeta();
+    catFilterSel.innerHTML = `<option value="">${en?'All Categories':'كل الفئات'}</option>` +
+      cats.map(c=>`<option value="${c}" ${c===curVal?"selected":""}>${en && catMetaSel[c] ? catMetaSel[c].en : c}</option>`).join("");
   }
 
   // Category stats chips
@@ -29467,6 +29479,7 @@ function renderMenuEditor(){
         }</div>
         <div style="font-size:16px;font-weight:800;color:var(--gold);margin-bottom:6px;">£${item.price}</div>
         ${item.note?`<div style="font-size:9px;color:var(--muted);margin-bottom:8px;line-height:1.4;">${item.note}</div>`:""}
+        ${item.ingredients?`<div style="font-size:9px;color:var(--muted);margin-bottom:8px;line-height:1.4;">🧂 ${item.ingredients}</div>`:""}
         <div style="display:flex;gap:4px;">
           <button class="btn bb bsm" style="flex:1;" onclick="openMenuItemM(${i})">✏️ تعديل</button>
           <button class="btn bsm" style="flex:1;background:#e74c3c;color:#fff;" onclick="deleteMenuItem(${i})">🗑</button>
@@ -29610,6 +29623,7 @@ function renderMenuBrowse(){
             <div class="menu-item-name">${_dispName(item)}</div>
             <div class="menu-item-price">£${item.price}</div>
             ${item.note?`<div class="menu-item-note-tag">${item.note}</div>`:""}
+            ${item.ingredients?`<div class="menu-item-note-tag" style="opacity:.75;">🧂 ${item.ingredients}</div>`:""}
           </div>`;
         }).join("")}
       </div>`;
@@ -30566,6 +30580,7 @@ function openMenuItemM(idx){
   document.getElementById("mi-emoji").value = item ? (item.emoji||"") : "";
   document.getElementById("mi-cat").value = item ? (item.cat||"أكل 🍽️") : "أكل 🍽️";
   document.getElementById("mi-note").value = item ? (item.note||"") : "";
+  document.getElementById("mi-ingredients").value = item ? (item.ingredients||"") : "";
   document.getElementById("mi-img").value = item ? (item.img||"") : "";
   document.getElementById("mi-dod").checked = item ? !!item.dod : false;
   document.getElementById("mi-offer").checked = item ? !!item.offer : false;
@@ -30617,6 +30632,7 @@ function saveMenuItem(){
     emoji: document.getElementById("mi-emoji").value.trim()||"🍽️",
     cat: document.getElementById("mi-cat").value || "أكل 🍽️",
     note: document.getElementById("mi-note").value.trim(),
+    ingredients: document.getElementById("mi-ingredients").value.trim(),
     img: document.getElementById("mi-img").value || "",
     dod: document.getElementById("mi-dod").checked,
     offer: document.getElementById("mi-offer").checked,
@@ -33406,6 +33422,44 @@ window.addEventListener('load',()=>{
 // ═══════════════════════════════════════════════
 //  🎉 HOLIDAY NOTIFICATIONS — تنبيهات المناسبات
 // ═══════════════════════════════════════════════
+const HOLIDAY_NAME_EN = {
+  '🎆 رأس السنة الميلادية': "🎆 New Year's Day",
+  '💘 عيد الحب (Valentine\'s)': "💘 Valentine's Day",
+  '👩 عيد المرأة العالمي': "👩 International Women's Day",
+  '🌍 يوم الأرض': '🌍 Earth Day',
+  '👷 عيد العمال': '👷 Labor Day',
+  '👨\u200d👩\u200d👧 عيد الأم': "👨\u200d👩\u200d👧 Mother's Day",
+  '👨 عيد الأب': "👨 Father's Day",
+  '🎃 الهالوين (Halloween)': '🎃 Halloween',
+  '🎄 عيد الميلاد (Christmas)': '🎄 Christmas',
+  '🐣 عيد القيامة (Easter)': '🐣 Easter',
+  '🌙 شهر رمضان المبارك': '🌙 Holy Month of Ramadan',
+  '🎊 عيد الفطر المبارك': '🎊 Eid al-Fitr',
+  '🐑 عيد الأضحى المبارك': '🐑 Eid al-Adha',
+  '🌟 ليلة القدر': '🌟 Laylat al-Qadr',
+  '🕌 رأس السنة الهجرية': '🕌 Islamic New Year',
+  '🌹 المولد النبوي الشريف': "🌹 Prophet's Birthday (Mawlid)",
+  '✨ الإسراء والمعراج': "✨ Isra and Mi'raj",
+  '🇪🇬 عيد الشرطة المصرية': '🇪🇬 Egyptian Police Day',
+  '🇪🇬 عيد ثورة 25 يناير': '🇪🇬 Jan 25 Revolution Day',
+  '🇪🇬 عيد الشرطة / ثورة يناير': '🇪🇬 Police Day / Jan 25 Revolution',
+  '🇪🇬 عيد تحرير سيناء': '🇪🇬 Sinai Liberation Day',
+  '🇪🇬 عيد العمال المصري': '🇪🇬 Egyptian Labor Day',
+  '🇪🇬 ثورة 30 يونيو': '🇪🇬 June 30 Revolution',
+  '🇪🇬 ثورة 23 يوليو': '🇪🇬 July 23 Revolution',
+  '🇪🇬 يوم الوفاء والانتماء': '🇪🇬 Loyalty & Belonging Day',
+  '🇪🇬 انتصار أكتوبر المجيد': '🇪🇬 October Victory Day',
+  '🩺 يوم الصحة العالمي': '🩺 World Health Day',
+  '🌐 يوم الإنترنت الآمن': '🌐 Safer Internet Day',
+  '📚 يوم الكتاب العالمي': '📚 World Book Day',
+  '🏨 يوم السياحة العالمي': '🏨 World Tourism Day',
+  '🤝 يوم التسامح العالمي': '🤝 International Tolerance Day',
+  '🎓 يوم الطالب العالمي': "🎓 International Students' Day",
+  '🎉 يوم السعادة العالمي': '🎉 International Day of Happiness',
+};
+function holidayNameLocalized(arName){
+  return (typeof isEn==='function' && isEn()) ? (HOLIDAY_NAME_EN[arName] || arName) : arName;
+}
 (function initHolidayBanner(){
   const today = new Date();
   today.setHours(0,0,0,0);
@@ -33540,9 +33594,11 @@ window.addEventListener('load',()=>{
   if(!unique.length) return;
 
   const msgs = unique.map(u=>{
-    if(u.diff === 0) return `🎉 اليوم ${u.name}!`;
-    if(u.diff === 1) return `⏰ غداً ${u.name}`;
-    return `⏰ بعد ${u.diff} أيام — ${u.name}`;
+    const nm = holidayNameLocalized(u.name);
+    const en = typeof isEn==='function' && isEn();
+    if(u.diff === 0) return en ? `🎉 Today: ${nm}!` : `🎉 اليوم ${nm}!`;
+    if(u.diff === 1) return en ? `⏰ Tomorrow: ${nm}` : `⏰ غداً ${nm}`;
+    return en ? `⏰ In ${u.diff} days — ${nm}` : `⏰ بعد ${u.diff} أيام — ${nm}`;
   });
 
   const msgEl = document.getElementById('holiday-banner-msg');
@@ -33668,10 +33724,12 @@ window.addEventListener('load',()=>{
     const old=document.getElementById('holiday-alarm-popup');
     if(old) old.remove();
 
+    const enL = typeof isEn==='function' && isEn();
     const msgs=holidays.map(u=>{
-      if(u.diff===0) return `🎉 اليوم — ${u.name}`;
-      if(u.diff===1) return `⏰ غداً — ${u.name}`;
-      return `⏰ بعد ${u.diff} أيام — ${u.name}`;
+      const nm = holidayNameLocalized(u.name);
+      if(u.diff===0) return enL ? `🎉 Today — ${nm}` : `🎉 اليوم — ${nm}`;
+      if(u.diff===1) return enL ? `⏰ Tomorrow — ${nm}` : `⏰ غداً — ${nm}`;
+      return enL ? `⏰ In ${u.diff} days — ${nm}` : `⏰ بعد ${u.diff} أيام — ${nm}`;
     }).join('<br>');
 
     const popup=document.createElement('div');
@@ -33679,9 +33737,9 @@ window.addEventListener('load',()=>{
     popup.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999999;background:linear-gradient(135deg,#1a1400,#2a2000);border:2px solid #f5c518;border-radius:16px;padding:20px 28px;min-width:300px;max-width:460px;text-align:center;box-shadow:0 8px 40px rgba(245,197,24,0.5);font-family:inherit;';
     popup.innerHTML=`
       <div style="font-size:32px;margin-bottom:8px;">🔔</div>
-      <div style="font-size:16px;font-weight:700;color:#f5c518;margin-bottom:10px;">تنبيه المناسبات</div>
+      <div style="font-size:16px;font-weight:700;color:#f5c518;margin-bottom:10px;">${enL ? 'Occasion Reminder' : 'تنبيه المناسبات'}</div>
       <div style="font-size:13px;color:#ffe57a;line-height:1.8;">${msgs}</div>
-      <button onclick="document.getElementById('holiday-alarm-popup').remove()" style="margin-top:14px;background:#f5c518;color:#1a1a2e;border:none;border-radius:8px;padding:7px 22px;font-size:13px;font-weight:700;cursor:pointer;">حسناً ✓</button>
+      <button onclick="document.getElementById('holiday-alarm-popup').remove()" style="margin-top:14px;background:#f5c518;color:#1a1a2e;border:none;border-radius:8px;padding:7px 22px;font-size:13px;font-weight:700;cursor:pointer;">${enL ? 'OK ✓' : 'حسناً ✓'}</button>
     `;
     document.body.appendChild(popup);
 
@@ -33786,7 +33844,7 @@ window.addEventListener('load',()=>{
       showAlarmPopup(upcoming);
     } else {
       playAlarmSound();
-      showAlarmPopup([{name:'🔔 تجربة التنبيه — لا توجد مناسبات قريبة حالياً',diff:99}]);
+      showAlarmPopup([{name:(typeof isEn==='function' && isEn()) ? '🔔 Test Alert — no upcoming occasions right now' : '🔔 تجربة التنبيه — لا توجد مناسبات قريبة حالياً',diff:99}]);
     }
   };
 })();
@@ -35412,6 +35470,155 @@ if(typeof sv === 'function'){
     }
   };
 }
+
+// ═══════════════════════════════════════════════
+//  📁 DISK AUTO-BACKUP — نسخة تلقائية حية على الهارد ديسك
+//  (تعمل جنب IndexedDB الحالي، مش بديل عنه — تحتاج Chrome/Edge على كمبيوتر)
+// ═══════════════════════════════════════════════
+const DTA_DiskBackup = (function(){
+  const SUPPORTED = typeof window.showSaveFilePicker === 'function';
+  let fileHandle = null;
+  let lastSavedAt = null;
+  let saveTimer = null;
+  let saving = false;
+
+  function enLocal(){ return (typeof isEn==='function') && isEn(); }
+
+  function setStatus(state){
+    const el = document.getElementById('disk-backup-status');
+    const elM = document.getElementById('disk-backup-status-mobile');
+    if(!el && !elM) return;
+    const en = enLocal();
+    let text, color;
+    if(!SUPPORTED){
+      text = en ? '📱 Tap = manual export' : '📱 اضغط = تصدير يدوي';
+      color = '#7a8fa6';
+    } else if(state === 'needs-permission'){
+      text = en ? '⚠️ Tap to re-enable' : '⚠️ اضغط للتفعيل تاني';
+      color = '#e0a030';
+    } else if(state === 'error'){
+      text = en ? '❌ Save failed' : '❌ فشل الحفظ';
+      color = '#e74c3c';
+    } else if(fileHandle){
+      const t = lastSavedAt ? lastSavedAt.toLocaleTimeString(en?'en-GB':'ar-EG') : '—';
+      text = en ? ('✅ Auto-saving · '+t) : ('✅ بيتحفظ تلقائيًا · '+t);
+      color = '#4cda7a';
+    } else {
+      text = en ? 'Not set up' : 'مش مفعّل';
+      color = '#7a8fa6';
+    }
+    if(el){
+      // النسخة اللي في الشريط العلوي بتدعم رابط "تفعيل" قابل للضغط عند الحاجة لإذن
+      if(state === 'needs-permission'){
+        el.innerHTML = en
+          ? '⚠️ Permission needed — <a href="javascript:void(0)" onclick="DTA_DiskBackup.grantPermission()" style="color:#f5c518;">Re-enable</a>'
+          : '⚠️ محتاج إذن تاني — <a href="javascript:void(0)" onclick="DTA_DiskBackup.grantPermission()" style="color:#f5c518;">تفعيل</a>';
+      } else {
+        el.textContent = text;
+      }
+      el.style.color = color;
+    }
+    if(elM){ elM.textContent = text; elM.style.color = color; }
+  }
+
+  async function loadStoredHandle(){
+    if(!SUPPORTED) { setStatus(); return null; }
+    try{
+      const h = await DTA_DB.getSetting('diskBackupHandle', null);
+      if(!h){ setStatus(); return null; }
+      fileHandle = h;
+      const perm = await h.queryPermission({mode:'readwrite'});
+      if(perm === 'granted'){ setStatus('active'); scheduleSave(); }
+      else setStatus('needs-permission');
+      return h;
+    }catch(e){ setStatus(); return null; }
+  }
+
+  async function chooseFile(){
+    if(!SUPPORTED){
+      // على الموبايل/المتصفحات اللي مش بتدعم الميزة — نعمل نسخة احتياطية يدوية فوراً بدل تنبيه فاضي
+      try{
+        if(typeof exportAll === 'function'){
+          exportAll();
+        } else {
+          alert(enLocal() ? 'Export function not found — please reload the page.' : 'دالة التصدير مش موجودة — جرّب تعمل Refresh للصفحة.');
+        }
+      }catch(e){
+        console.warn('[DiskBackup] mobile fallback export failed', e);
+        alert(enLocal() ? ('Export failed: '+e.message) : ('فشل التصدير: '+e.message));
+      }
+      return false;
+    }
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'DahabTrendy_LiveBackup.json',
+        types: [{ description:'JSON Backup', accept:{'application/json':['.json']} }]
+      });
+      fileHandle = handle;
+      await DTA_DB.setSetting('diskBackupHandle', handle);
+      await writeSnapshotNow();
+      return true;
+    }catch(e){
+      if(e && e.name !== 'AbortError') console.warn('[DiskBackup] pick failed', e);
+      return false;
+    }
+  }
+
+  async function grantPermission(){
+    if(!fileHandle) return false;
+    try{
+      const perm = await fileHandle.requestPermission({mode:'readwrite'});
+      if(perm === 'granted'){ setStatus('active'); scheduleSave(); return true; }
+    }catch(e){}
+    setStatus('needs-permission');
+    return false;
+  }
+
+  async function writeSnapshotNow(){
+    if(!SUPPORTED || !fileHandle || saving) return false;
+    try{
+      const perm = await fileHandle.queryPermission({mode:'readwrite'});
+      if(perm !== 'granted'){ setStatus('needs-permission'); return false; }
+      saving = true;
+      const data = (typeof _collectFullBackup==='function') ? _collectFullBackup() : {};
+      const writable = await fileHandle.createWritable();
+      await writable.write(JSON.stringify(data, null, 2));
+      await writable.close();
+      lastSavedAt = new Date();
+      saving = false;
+      setStatus('active');
+      return true;
+    }catch(e){
+      saving = false;
+      console.warn('[DiskBackup] write failed', e);
+      setStatus('error');
+      return false;
+    }
+  }
+
+  function scheduleSave(){
+    if(!SUPPORTED || !fileHandle) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(writeSnapshotNow, 4000); // تأجيل بسيط عشان ما يكتبش مع كل ضغطة زرار
+  }
+
+  // كل تغيير في البيانات (عن طريق sv) يجدول حفظ على الهارد
+  if(typeof sv === 'function'){
+    const _sv_disk = sv;
+    sv = function(key, val){
+      _sv_disk(key, val);
+      scheduleSave();
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){ loadStoredHandle(); });
+
+  return {
+    chooseFile, grantPermission, writeSnapshotNow,
+    get supported(){ return SUPPORTED; },
+    get active(){ return !!fileHandle; }
+  };
+})();
 
 // ─── عرض معلومات التخزين في الـ nav ───
 document.addEventListener('DOMContentLoaded', function(){
