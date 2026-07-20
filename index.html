@@ -1696,7 +1696,7 @@ label {
     <div class="bn-more-item" onclick="bnGo('pricelist',null);closeBnMore()" style="border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);"><span class="bm-icon">💰</span><span class="t" data-ar="قائمة الأسعار" data-en="Price List">قائمة الأسعار</span></div>
     <div class="bn-more-item" onclick="exportAll();closeBnMore()"><span class="bm-icon">💾</span><span class="t" data-ar="تصدير" data-en="Export">تصدير</span></div>
     <div class="bn-more-item" onclick="shareBackupWA();closeBnMore()" style="border-color:rgba(37,211,102,0.4);background:rgba(37,211,102,0.07);"><span class="bm-icon" style="color:#25D366;">📤</span><span class="t" data-ar="مشاركة نسخة" data-en="Share Backup">مشاركة نسخة</span></div>
-    <div class="bn-more-item" onclick="DTA_DiskBackup.chooseFile();closeBnMore()" style="border-color:rgba(149,165,166,0.4);background:rgba(52,73,94,0.1);position:relative;">
+    <div class="bn-more-item" onclick="try{DTA_DiskBackup.chooseFile();}catch(e){alert('خطأ Save to Disk: '+e.message);}closeBnMore()" style="border-color:rgba(149,165,166,0.4);background:rgba(52,73,94,0.1);position:relative;">
       <span class="bm-icon" style="color:#95a5a6;">📁</span>
       <span class="t" data-ar="حفظ على الهارد" data-en="Save to Disk">حفظ على الهارد</span>
       <span id="disk-backup-status-mobile" style="display:block;font-size:9px;color:#7a8fa6;margin-top:2px;"></span>
@@ -35535,12 +35535,16 @@ const DTA_DiskBackup = (function(){
   }
 
   async function chooseFile(){
+    console.log('[DiskBackup] chooseFile tapped. SUPPORTED=', SUPPORTED);
     if(!SUPPORTED){
-      // على الموبايل/المتصفحات اللي مش بتدعم الميزة — نعمل نسخة احتياطية يدوية فوراً بدل تنبيه فاضي
+      // على الموبايل/المتصفحات اللي مش بتدعم الميزة (كل متصفحات أندرويد بما فيها Chrome
+      // مش بتدعم showSaveFilePicker) — نعمل نسخة احتياطية يدوية فوراً (تنزيل ملف) بدل تنبيه فاضي
       try{
         if(typeof exportAll === 'function'){
           exportAll();
+          alert(enLocal() ? '✅ Backup file downloaded — check your Downloads folder / notifications.' : '✅ اتحمّل ملف نسخة احتياطية — شوف مجلد Downloads أو شريط الإشعارات.');
         } else {
+          console.warn('[DiskBackup] exportAll is not defined at call time');
           alert(enLocal() ? 'Export function not found — please reload the page.' : 'دالة التصدير مش موجودة — جرّب تعمل Refresh للصفحة.');
         }
       }catch(e){
@@ -35638,6 +35642,7 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 window.DTA_DB = DTA_DB;
+window.DTA_DiskBackup = DTA_DiskBackup;
 console.log('[DTA_DB v11] ✅ Full IndexedDB engine ready — Primary storage');
 
 // ╔══════════════════════════════════════════════════════════════╗
