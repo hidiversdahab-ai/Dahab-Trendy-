@@ -16965,6 +16965,7 @@ function setLang(lang){
   if(typeof empRenderEmployeeList==='function' && document.getElementById('emp-mgmt-box')?.style.display!=='none') empRenderEmployeeList();
   if(typeof empApplyPermissions==='function') empApplyPermissions();
   if(typeof roomsRenderList==='function' && document.getElementById('page-settings')?.classList.contains('on')) roomsRenderList();
+  if(typeof renderMenuEditor==='function' && document.getElementById('page-restaurant')?.classList.contains('on') && document.getElementById('menu-grid')) renderMenuEditor();
 }
 function toggleLang(){
   currentLang = currentLang === "en" ? "ar" : "en";
@@ -16983,6 +16984,7 @@ function toggleLang(){
   if(typeof empRenderEmployeeList==='function' && document.getElementById('emp-mgmt-box')?.style.display!=='none') empRenderEmployeeList();
   if(typeof empApplyPermissions==='function') empApplyPermissions();
   if(typeof roomsRenderList==='function' && document.getElementById('page-settings')?.classList.contains('on')) roomsRenderList();
+  if(typeof renderMenuEditor==='function' && document.getElementById('page-restaurant')?.classList.contains('on') && document.getElementById('menu-grid')) renderMenuEditor();
 }
 function toggleLangMenu(){
   const menu = document.getElementById("lang-menu");
@@ -29419,8 +29421,10 @@ function renderMenuEditor(){
   if(catFilterSel){
     const cats = [...new Set(restMenu.map(i=>i.cat).filter(Boolean))];
     const curVal = catFilterSel.value;
-    catFilterSel.innerHTML = '<option value="">كل الفئات</option>' +
-      cats.map(c=>`<option value="${c}" ${c===curVal?"selected":""}>${c}</option>`).join("");
+    const en = typeof isEn==='function' && isEn();
+    const catMetaSel = getCatMeta();
+    catFilterSel.innerHTML = `<option value="">${en?'All Categories':'كل الفئات'}</option>` +
+      cats.map(c=>`<option value="${c}" ${c===curVal?"selected":""}>${en && catMetaSel[c] ? catMetaSel[c].en : c}</option>`).join("");
   }
 
   // Category stats chips
