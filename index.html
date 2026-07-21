@@ -5792,6 +5792,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
             <button type="button" id="pos-pay-cash" onclick="setPOSPayMethod('cash')" style="flex:1;padding:8px 4px;border-radius:7px;border:2px solid rgba(37,211,102,0.5);background:rgba(37,211,102,0.15);color:#4cda7a;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">💵 <span class="t" data-ar="كاش" data-en="Cash">كاش</span></button>
             <button type="button" id="pos-pay-card" onclick="setPOSPayMethod('card')" style="flex:1;padding:8px 4px;border-radius:7px;border:2px solid rgba(74,144,217,0.3);background:transparent;color:#7ab8f5;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">💳 <span class="t" data-ar="بطاقة" data-en="Card">بطاقة</span></button>
             <button type="button" id="pos-pay-room" onclick="setPOSPayMethod('room')" style="flex:1;padding:8px 4px;border-radius:7px;border:2px solid rgba(201,168,76,0.3);background:transparent;color:var(--gold);font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">🏨 <span class="t" data-ar="غرفة" data-en="Room">غرفة</span></button>
+            <button type="button" id="pos-pay-unpaid" onclick="setPOSPayMethod('unpaid')" style="flex:1;padding:8px 4px;border-radius:7px;border:2px solid rgba(231,76,60,0.3);background:transparent;color:#e74c3c;font-size:12px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;">⏳ <span class="t" data-ar="آجل" data-en="Unpaid">آجل</span></button>
           </div>
         </div>
         <div class="fld" style="margin-bottom:12px;">
@@ -6090,6 +6091,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 <option>تحويل بنكي</option>
 <option>بطاقة / Card</option>
 <option>أونلاين / Online</option>
+<option>آجل / Credit (Unpaid)</option>
 </select>
 </div>
 <div class="fld s2"><label>ملاحظات</label><textarea id="rest-notes" rows="2"></textarea></div>
@@ -6802,7 +6804,7 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 <div class="fld"><label>= USD</label><input id="em-usd" type="number" readonly style="opacity:.6;"></div>
 <div class="fld"><label>= EUR</label><input id="em-eur" type="number" readonly style="opacity:.6;"></div>
 <div class="fld"><label>Paid By</label>
-<select id="em-paid"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Owner</option></select>
+<select id="em-paid"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Owner</option><option>آجل / Unpaid (Credit)</option></select>
 </div>
 <div class="fld s2">
   <label>🏦 يتخصم من</label>
@@ -7386,6 +7388,9 @@ let actEdit = null;
 let events = LS("dta_events",[]);
 let restFilter="all";
 let restaurantTx=LS("dta_rest",[]);
+// ── مصروفات/مشتريات آجلة: بتفضل مش محسوبة في صافي الربح لحد ما تتسجل كـ "اتدفع" ──
+function isPaidExpense(e){ return !((e.paid||"").includes("آجل")); }
+function isPaidRestTx(t){ return t.paid!==false; }
 let blacklist = LS("dta_blacklist",[]);  // قائمة الضيوف المحظورين
 let invCur="USD", sCur="USD";
 let curInvNo = genNo();
@@ -8246,12 +8251,12 @@ const paidEGP=b.cur==="EGP"?paid:paid*exRate;
 return s+paidEGP;
 },0)+cancelRevEGP;
 const unpaidEGP=revEGP-collectedEGP;
-const expEGP=dbExpenses.reduce((s,e)=>s+e.egp,0);
+const expEGP=dbExpenses.filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
 // فصل المصروفات: من العهدة / من Net Profit
-const expFromCustody=dbExpenses.filter(e=>e.source==='custody').reduce((s,e)=>s+e.egp,0);
-const expFromNetProfit=dbExpenses.filter(e=>e.source!=='custody').reduce((s,e)=>s+e.egp,0);
+const expFromCustody=dbExpenses.filter(e=>e.source==='custody').filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
+const expFromNetProfit=dbExpenses.filter(e=>e.source!=='custody').filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
 const restIncEGP=restaurantTx.filter(t=>t.type==="income").reduce((s,t)=>s+t.egp,0);
-const restExpEGP=restaurantTx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.egp,0);
+const restExpEGP=restaurantTx.filter(t=>t.type==="expense").filter(isPaidRestTx).reduce((s,t)=>s+t.egp,0);
 const restNetEGP=restIncEGP-restExpEGP;
 // تحويلات المالك للمكان (from_owner): تعوّض المصروفات ولا تُعدّ إيراداً
 // from_owner = سلفة من المالك (دين عليك) → تُخصم من Net Profit
@@ -8728,8 +8733,8 @@ function renderLiveDash(){
     return s+(b.cur==="USD"?ded*(exRate||50):b.cur==="EUR"?ded*(eurRate||55):ded);
   },0);
   const thisRev = calcRevEGP(allActive) + cancelRevForStats;
-  const totalExp = (expenses||[]).reduce((s,e)=>s+e.egp,0);
-  const thisExp = (expenses||[]).filter(e=>e.date&&e.date.startsWith(thisMonthStr)).reduce((s,e)=>s+e.egp,0);
+  const totalExp = (expenses||[]).filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
+  const thisExp = (expenses||[]).filter(isPaidExpense).filter(e=>e.date&&e.date.startsWith(thisMonthStr)).reduce((s,e)=>s+e.egp,0);
   const thisNet = thisRev - totalExp;
   const revChange = null;
   const occPct = Math.round(active.length / ROOMS.length * 100);
@@ -11894,10 +11899,10 @@ return s+(b.cur==="EGP"?paid:paid*exRate);
 // صافي الربح هنا = بالظبط نفس حسبة الصفحة الرئيسية (بعد خصم مصروفات العهدة ومسحوبات/تحويلات المالك)
 // عشان الرقم يبقى موحّد في كل الصفحات ومفيش لخبطة بين "ربح خام" و"ربح متاح فعلاً"
 const exAllExp = exBranch? expenses.filter(e=>e.branchId?e.branchId===exBranch.id:exBranch.id==='main') : expenses;
-const exExpFromNetProfit = exAllExp.filter(e=>e.source!=='custody').reduce((s,e)=>s+e.egp,0);
-const exExpFromCustody   = exAllExp.filter(e=>e.source==='custody').reduce((s,e)=>s+e.egp,0);
+const exExpFromNetProfit = exAllExp.filter(e=>e.source!=='custody').filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
+const exExpFromCustody   = exAllExp.filter(e=>e.source==='custody').filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
 const exRestIncEGP = (restaurantTx||[]).filter(t=>t.type==="income").reduce((s,t)=>s+t.egp,0);
-const exRestExpEGP = (restaurantTx||[]).filter(t=>t.type==="expense").reduce((s,t)=>s+t.egp,0);
+const exRestExpEGP = (restaurantTx||[]).filter(t=>t.type==="expense").filter(isPaidRestTx).reduce((s,t)=>s+t.egp,0);
 const exRestNetEGP = exRestIncEGP - exRestExpEGP;
 const exCustList = window._custodyList || [];
 const ex_fromOwnerTotal = exCustList.filter(c=>c.type==='from_owner').reduce((s,c)=>s+c.amt,0);
@@ -11980,6 +11985,7 @@ return subtotalRow+
       "<span style='color:"+col+";font-weight:700;font-size:13px;'>"+ic+" "+e.cat+"</span>"+
       "<span style='color:var(--muted);font-size:11px;'>"+fmtD(e.date)+"</span>"+
       (e.paid?"<span style='font-size:10px;color:var(--muted);'>· "+e.paid+"</span>":"")+
+      ((e.paid||"").includes("آجل")?"<span style='font-size:10px;color:#e74c3c;font-weight:700;background:rgba(231,76,60,0.15);border-radius:4px;padding:1px 6px;'>⏳ لسه ماتدفعش</span>":"")+
     "</div>"+
     "<div style='font-size:12px;color:var(--text);margin-bottom:4px;'>"+e.desc+tagBadge+"</div>"+
     "<div style='display:flex;gap:10px;flex-wrap:wrap;'>"+
@@ -11991,6 +11997,7 @@ return subtotalRow+
   "</div>"+
   // Right: action buttons
   "<div style='display:flex;flex-direction:column;gap:5px;min-width:80px;'>"+
+    ((e.paid||"").includes("آجل")?"<button class='btn' onclick='markExpensePaid("+i+")' style='padding:8px 14px;font-size:13px;font-weight:700;background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.4);'>✅ اتدفع</button>":"")+
     "<button class='btn bb' onclick='openEM("+i+")' style='padding:8px 14px;font-size:13px;font-weight:700;'>✏️ Edit</button>"+
     "<button class='btn br' onclick='delEx("+i+")' style='padding:8px 14px;font-size:13px;font-weight:700;'>🗑 Del</button>"+
   "</div>"+
@@ -12222,6 +12229,13 @@ closeM("ex-modal");
 renderExpenses();
 }
 function delEx(i){if(confirm("Delete this expense?")){pushUndo("حذف مصروف: "+(expenses[i]?.cat||""), getUndoSnapshot());expenses.splice(i,1);sv("dta_ex",expenses);renderExpenses();}}
+function markExpensePaid(i){
+  if(!expenses[i]) return;
+  expenses[i].paid = "Cash";
+  sv("dta_ex",expenses);
+  renderExpenses();
+  sNotify("✅","اتسجل إنه اتدفع للمورد","success",2000);
+}
 function clearExFilter(){["ex-fcat","ex-fmon","ex-fyr"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});renderExpenses();}
 // ═══════════ INVOICE TYPE ═══════════
 let invType = "official";
@@ -19787,7 +19801,7 @@ function waEventDirect(idx){
 function renderRestaurant(){
 const list=restaurantTx.filter(t=>restFilter==="all"||t.type===restFilter);
 const totalIn=restaurantTx.filter(t=>t.type==="income").reduce((s,t)=>s+t.egp,0);
-const totalOut=restaurantTx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.egp,0);
+const totalOut=restaurantTx.filter(t=>t.type==="expense").filter(isPaidRestTx).reduce((s,t)=>s+t.egp,0);
 const net=totalIn-totalOut;
 document.getElementById("rest-stats").innerHTML=
 mkFin("£"+totalIn.toFixed(0),"إجمالي الدخول","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
@@ -19812,8 +19826,10 @@ return "<tr><td colspan='9' style='padding:4px 0;border:none;'>" +
     "<span style='color:var(--muted);font-size:11px;'>📅 "+fmtD(t.date)+"</span>" +
     (t.method?"<span style='color:var(--muted);font-size:11px;'>💳 "+t.method+"</span>":"")+
     (t.notes?"<span style='color:var(--muted);font-size:11px;'>📝 "+t.notes+"</span>":"")+
+    (t.paid===false?"<span style='font-size:10px;color:#e74c3c;font-weight:700;background:rgba(231,76,60,0.15);border-radius:4px;padding:1px 6px;'>⏳ "+(isInc?"لسه ماتحصلش":"لسه ماتدفعش")+"</span>":"")+
   "</div>" +
   "<div style='display:flex;gap:5px;flex-shrink:0;'>" +
+    (t.paid===false?"<button class='btn bsm' onclick='toggleRestTxPaid(\""+t.id+"\")' style='background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.4);'>✅</button>":"")+
     "<button class='btn bb bsm' onclick='openRestM("+idx+")'>✏️</button>" +
     "<button class='btn br bsm' onclick='delRest("+idx+")'>🗑️</button>" +
   "</div>" +
@@ -19882,6 +19898,7 @@ usd:parseFloat(document.getElementById("rest-usd").value)||0,
 eur:parseFloat(document.getElementById("rest-eur").value)||0,
 method:document.getElementById("rest-method").value,
 notes:document.getElementById("rest-notes").value,
+paid: !(document.getElementById("rest-method").value||"").includes("آجل"),
 };
 if(restEdit!==null) restaurantTx[restEdit]=tx; else restaurantTx.push(tx);
 sv("dta_rest",restaurantTx);
@@ -20271,7 +20288,7 @@ function _revRestaurant(from,to){
     .reduce((s,t)=>s+t.egp,0);
 }
 function _revExpenses(from,to){
-  return expenses.filter(e=>e.date>=from&&e.date<to).reduce((s,e)=>s+e.egp,0);
+  return expenses.filter(isPaidExpense).filter(e=>e.date>=from&&e.date<to).reduce((s,e)=>s+e.egp,0);
 }
 function _occPct(from,to){
   const days=Math.max(1,Math.round((new Date(to)-new Date(from))/(86400000)));
@@ -20623,12 +20640,12 @@ if(calFinEl){
   },0);
   const calUnpaidEGP=calRevEGP-calCollectedEGP;
   // ── فصل المصروفات تماماً كـ Dashboard ──
-  const calExpFromCustody=(expenses||[]).filter(e=>e.source==='custody').reduce((s,e)=>s+e.egp,0);
-  const calExpFromNetProfit=(expenses||[]).filter(e=>e.source!=='custody').reduce((s,e)=>s+e.egp,0);
-  const calExpEGP=(expenses||[]).reduce((s,e)=>s+e.egp,0);
+  const calExpFromCustody=(expenses||[]).filter(e=>e.source==='custody').filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
+  const calExpFromNetProfit=(expenses||[]).filter(e=>e.source!=='custody').filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
+  const calExpEGP=(expenses||[]).filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
   // ── صافي المطعم كـ Dashboard ──
   const calRestIncEGP=(restaurantTx||[]).filter(t=>t.type==="income").reduce((s,t)=>s+t.egp,0);
-  const calRestExpEGP=(restaurantTx||[]).filter(t=>t.type==="expense").reduce((s,t)=>s+t.egp,0);
+  const calRestExpEGP=(restaurantTx||[]).filter(t=>t.type==="expense").filter(isPaidRestTx).reduce((s,t)=>s+t.egp,0);
   const calRestNetEGP=calRestIncEGP-calRestExpEGP;
   // تحويلات المالك للمكان (from_owner): تعوّض المصروفات ولا تُعدّ إيراداً
   // from_owner = سلفة دين → تُخصم | to_owner = ردّ للمالك → يُضاف (مطابق للـ Dashboard)
@@ -20965,8 +20982,8 @@ const lastMonthBks=bookings.filter(b=>b.status!=="Cancelled"&&b.ci&&b.ci.startsW
 const thisMonthRev=calcRevEGP(thisMonthBks);
 const lastMonthRev=calcRevEGP(lastMonthBks);
 const totalRevEGP=calcRevEGP(bookings.filter(b=>b.status!=="Cancelled"));
-const totalExpEGP=(expenses||[]).reduce((s,e)=>s+e.egp,0);
-const thisMonthExp=(expenses||[]).filter(e=>e.date&&e.date.startsWith(thisMonthStr)).reduce((s,e)=>s+e.egp,0);
+const totalExpEGP=(expenses||[]).filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
+const thisMonthExp=(expenses||[]).filter(isPaidExpense).filter(e=>e.date&&e.date.startsWith(thisMonthStr)).reduce((s,e)=>s+e.egp,0);
 const netProfitTotal=totalRevEGP-totalExpEGP;
 const netProfitMonth=thisMonthRev-thisMonthExp;
 
@@ -21385,6 +21402,27 @@ function runSmartAlerts(){
     setTimeout(()=> sNotify('💳 مدفوعات معلقة', `${pending.length} حجز بمدفوعات غير مكتملة`, 'default', 5000), 4000);
   }
   
+  // فواتير مطعم آجلة — فلوس للمطعم على الزباين (لسه ماتحصلتش)
+  const unpaidRestIncome = (restaurantTx||[]).filter(t=>t.paid===false && t.type==='income');
+  if(unpaidRestIncome.length > 0){
+    const unpaidRestIncTotal = unpaidRestIncome.reduce((s,t)=>s+t.egp,0);
+    setTimeout(()=> sNotify('🍽️ فواتير مطعم آجلة', `${unpaidRestIncome.length} فاتورة بقيمة £${unpaidRestIncTotal.toFixed(0)} لسه ماتحصلتش من الزباين`, 'warning', 5500), 4700);
+  }
+
+  // مشتريات المطعم الآجلة — فلوس على المطعم لموردين (لسه ماتدفعتش)
+  const unpaidRestExpense = (restaurantTx||[]).filter(t=>t.paid===false && t.type==='expense');
+  if(unpaidRestExpense.length > 0){
+    const unpaidRestExpTotal = unpaidRestExpense.reduce((s,t)=>s+t.egp,0);
+    setTimeout(()=> sNotify('📦 مشتريات مطعم آجلة', `${unpaidRestExpense.length} فاتورة مورد بقيمة £${unpaidRestExpTotal.toFixed(0)} لسه ماتدفعتش`, 'warning', 5900), 5000);
+  }
+
+  // مصروفات/مشتريات المكان الآجلة — فلوس على المكان لموردين (لسه ماتدفعتش)
+  const unpaidPlaceExpense = (expenses||[]).filter(e=>(e.paid||'').includes('آجل'));
+  if(unpaidPlaceExpense.length > 0){
+    const unpaidPlaceExpTotal = unpaidPlaceExpense.reduce((s,e)=>s+e.egp,0);
+    setTimeout(()=> sNotify('📦 مشتريات آجلة (المكان)', `${unpaidPlaceExpense.length} فاتورة مورد بقيمة £${unpaidPlaceExpTotal.toFixed(0)} لسه ماتدفعتش`, 'warning', 5900), 5300);
+  }
+
   // Rooms in maintenance
   const maint = Object.values(roomSt||{}).filter(s=>s==='maintenance').length;
   if(maint > 0){
@@ -21702,7 +21740,7 @@ function buildReportHTML(type, from, to){
     return s+(b.cur==='USD'?b.total*exRate:b.cur==='EUR'?b.total*eurRate:b.total);
   },0);
   const expRange = repExAll.filter(e=>e.date>=from&&e.date<=to);
-  const totalExp = expRange.reduce((s,e)=>s+e.egp,0);
+  const totalExp = expRange.filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
   const netProfit = totalRev - totalExp;
   const occ = range.length;
   const propName = repBranch ? (currentLang==='ar'?repBranch.nameAr:repBranch.nameEn) : (typeof PROP !== 'undefined' ? PROP.name : 'Dahab Trendy Accommodation');
@@ -22847,7 +22885,7 @@ function renderAnalytics(){
     const bks = bookings.filter(b=>b.status!=='Cancelled' && b.ci && b.ci.startsWith(m.key));
     const exps = expenses.filter(e=>e.date && e.date.startsWith(m.key));
     const revEGP = bks.reduce((s,b)=> s+(b.cur==='USD'?b.total*exRate:b.cur==='EUR'?b.total*eurRate:b.total),0);
-    const expEGP = exps.reduce((s,e)=>s+e.egp,0);
+    const expEGP = exps.filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
     const totalNights = bks.reduce((s,b)=>s+nts(b.ci,b.co),0);
     const daysInMonth = new Date(parseInt(m.key.split('-')[0]), parseInt(m.key.split('-')[1]),0).getDate();
     const availableRoomNights = TOTAL_ROOMS * daysInMonth;
@@ -22882,7 +22920,7 @@ function renderAnalytics(){
   const prevBks = bookings.filter(b=>b.status!=='Cancelled'&&b.ci&&b.ci.startsWith(prevKey));
   const prevExps = expenses.filter(e=>e.date&&e.date.startsWith(prevKey));
   const prevRevEGP = prevBks.reduce((s,b)=>s+(b.cur==='USD'?b.total*exRate:b.cur==='EUR'?b.total*eurRate:b.total),0);
-  const prevExpEGP = prevExps.reduce((s,e)=>s+e.egp,0);
+  const prevExpEGP = prevExps.filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
   const prevNights = prevBks.reduce((s,b)=>s+nts(b.ci,b.co),0);
   const prevDays = new Date(parseInt(prevKey.split('-')[0]),parseInt(prevKey.split('-')[1]),0).getDate();
   const prevOcc = prevDays>0 ? Math.round((prevNights/(TOTAL_ROOMS*prevDays))*100) : 0;
@@ -25751,7 +25789,7 @@ function openOwnerDailyReport(){
 
   // ── TODAY expenses ──
   const allExp = expenses || [];
-  const todayExp = allExp.filter(e => (e.date||'').startsWith(td) || (e.createdAt||'').startsWith(td));
+  const todayExp = allExp.filter(e => (e.date||'').startsWith(td) || (e.createdAt||'').startsWith(td)).filter(isPaidExpense);
   const todayExpTotal     = todayExp.reduce((s,e)=>s+e.egp,0);
   const todayExpCustody   = todayExp.filter(e=>e.source==='custody').reduce((s,e)=>s+e.egp,0);
   // نطرح جزء السلفة اللي اتخصم من المرتب عشان الكاش اللي خرج فعلاً النهارده يبان صح (مش المرتب الكامل)
@@ -25765,7 +25803,7 @@ function openOwnerDailyReport(){
   // ── TODAY restaurant ──
   const restTx = restaurantTx || [];
   const todayRestInc = restTx.filter(t=>t.type==='income'&&((t.date||'').startsWith(td)||(t.createdAt||'').startsWith(td))).reduce((s,t)=>s+t.egp,0);
-  const todayRestExp = restTx.filter(t=>t.type==='expense'&&((t.date||'').startsWith(td)||(t.createdAt||'').startsWith(td))).reduce((s,t)=>s+t.egp,0);
+  const todayRestExp = restTx.filter(t=>t.type==='expense'&&((t.date||'').startsWith(td)||(t.createdAt||'').startsWith(td))).filter(isPaidRestTx).reduce((s,t)=>s+t.egp,0);
   const todayRestNet = todayRestInc - todayRestExp;
 
   // ── Custody balance (running, not daily) ──
@@ -25929,13 +25967,13 @@ function printOwnerReport(){
   const todayColl     = todayCI.reduce((s,b)=>s+paidToEGP(b),0);
   const todayUnpaid   = Math.max(0,todayRevEGP-todayColl);
   const allExp=expenses||[];
-  const todayExp=allExp.filter(e=>(e.date||'').startsWith(td)||(e.createdAt||'').startsWith(td));
+  const todayExp=allExp.filter(e=>(e.date||'').startsWith(td)||(e.createdAt||'').startsWith(td)).filter(isPaidExpense);
   const todayExpTotal    =todayExp.reduce((s,e)=>s+e.egp,0);
   const todayExpProfit   =todayExp.filter(e=>e.source!=='custody').reduce((s,e)=>s+e.egp,0);
   const todayExpCustody  =todayExp.filter(e=>e.source==='custody').reduce((s,e)=>s+e.egp,0);
   const restTx=restaurantTx||[];
   const todayRestInc=restTx.filter(t=>t.type==='income'&&((t.date||'').startsWith(td)||(t.createdAt||'').startsWith(td))).reduce((s,t)=>s+t.egp,0);
-  const todayRestExp=restTx.filter(t=>t.type==='expense'&&((t.date||'').startsWith(td)||(t.createdAt||'').startsWith(td))).reduce((s,t)=>s+t.egp,0);
+  const todayRestExp=restTx.filter(t=>t.type==='expense'&&((t.date||'').startsWith(td)||(t.createdAt||'').startsWith(td))).filter(isPaidRestTx).reduce((s,t)=>s+t.egp,0);
   const todayRestNet=todayRestInc-todayRestExp;
   const custList=window._custodyList||[];
   const custodyAmt=custList.filter(c=>c.type!=='from_owner'&&c.type!=='to_owner').reduce((s,c)=>s+c.amt,0);
@@ -26612,7 +26650,7 @@ function renderYoY(){
     const revEGP=bks.reduce((s,b)=>s+(b.cur==='USD'?b.total*(exRate||50):b.cur==='EUR'?b.total*(eurRate||55):b.total),0);
     const nights_=bks.reduce((s,b)=>s+nts(b.ci,b.co),0);
     const exps=(expenses||[]).filter(e=>e.date>=from&&e.date<=to);
-    const expEGP=exps.reduce((s,e)=>s+e.egp,0);
+    const expEGP=exps.filter(isPaidExpense).reduce((s,e)=>s+e.egp,0);
     const pm={};
     bks.forEach(b=>{const me=b.method||'Cash';pm[me]=(pm[me]||0)+(b.cur==='USD'?b.total*(exRate||50):b.cur==='EUR'?b.total*(eurRate||55):b.total);});
     return{bks,revEGP,nights:nights_,expEGP,net:revEGP-expEGP,pm};
@@ -28007,7 +28045,7 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
   // ── Restaurant ──
   const restInPeriod = (restaurantTx||[]).filter(t=> (t.date||"")>=from && (t.date||"")<=to);
   const restIncEGP = restInPeriod.filter(t=>t.type==="income").reduce((s,t)=>s+(t.egp||0),0);
-  const restExpEGP = restInPeriod.filter(t=>t.type==="expense").reduce((s,t)=>s+(t.egp||0),0);
+  const restExpEGP = restInPeriod.filter(t=>t.type==="expense").filter(isPaidRestTx).reduce((s,t)=>s+(t.egp||0),0);
 
   // ── Tours ──
   const toursInPeriod = (tours||[]).filter(t=> (t.date||"")>=from && (t.date||"")<=to);
@@ -28015,7 +28053,7 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
 
   // ── Expenses (general) ──
   const expInPeriod = (expenses||[]).filter(e=> (e.date||"").slice(0,10)>=from && (e.date||"").slice(0,10)<=to);
-  const expTotalEGP = expInPeriod.reduce((s,e)=>s+(e.egp||0),0);
+  const expTotalEGP = expInPeriod.filter(isPaidExpense).reduce((s,e)=>s+(e.egp||0),0);
 
   // ── Amanat (معلومة فقط، مش إيراد) ──
   const amanatList = getAmanatList();
@@ -29946,12 +29984,12 @@ function calcPOSTotal(){
 
 function setPOSPayMethod(method){
   posPayMethod = method;
-  ["cash","card","room"].forEach(m=>{
+  ["cash","card","room","unpaid"].forEach(m=>{
     const btn = document.getElementById("pos-pay-"+m);
     if(!btn) return;
-    const colors = {cash:"rgba(37,211,102,0.5)",card:"rgba(74,144,217,0.5)",room:"rgba(201,168,76,0.5)"};
-    const bgs = {cash:"rgba(37,211,102,0.15)",card:"rgba(74,144,217,0.12)",room:"rgba(201,168,76,0.12)"};
-    const txts = {cash:"#4cda7a",card:"#7ab8f5",room:"var(--gold)"};
+    const colors = {cash:"rgba(37,211,102,0.5)",card:"rgba(74,144,217,0.5)",room:"rgba(201,168,76,0.5)",unpaid:"rgba(231,76,60,0.5)"};
+    const bgs = {cash:"rgba(37,211,102,0.15)",card:"rgba(74,144,217,0.12)",room:"rgba(201,168,76,0.12)",unpaid:"rgba(231,76,60,0.15)"};
+    const txts = {cash:"#4cda7a",card:"#7ab8f5",room:"var(--gold)",unpaid:"#e74c3c"};
     btn.style.borderColor = m===method ? colors[m] : colors[m].replace("0.5","0.25");
     btn.style.background = m===method ? bgs[m] : "transparent";
     btn.style.color = txts[m];
@@ -29983,7 +30021,10 @@ function submitPOSOrder(){
   const room = document.getElementById("pos-room-select")?.value||"";
   const customer = document.getElementById("pos-customer")?.value.trim()||"";
   const notes = document.getElementById("pos-notes")?.value.trim()||"";
-  const methodLabel = {cash:"💵 كاش",card:"💳 بطاقة",room:"🏨 على الغرفة"}[posPayMethod]||"كاش";
+  const methodLabel = {cash:"💵 كاش",card:"💳 بطاقة",room:"🏨 على الغرفة",unpaid:"⏳ آجل"}[posPayMethod]||"كاش";
+  if(posPayMethod==="unpaid" && !document.getElementById("pos-customer")?.value.trim()){
+    if(!confirm("مفيش اسم عميل مكتوب. تكمل تسجيل الفاتورة كـ 'آجل' من غير اسم؟\nNo customer name entered. Continue saving as 'Unpaid' without a name?")) return;
+  }
   const roomGuest = room ? bookings.find(b=>String(b.room)===String(room)&&b.ci<=toDay()&&b.co>=toDay()&&b.status!=="Cancelled") : null;
   const tableNo = document.getElementById("pos-table")?.value.trim()||"";
   const orderDesc = posCart.map(c=>{const _s=(c.nameEn&&c.nameEn.trim()&&c.nameEn.trim().toLowerCase()!==c.name.trim().toLowerCase())?' / '+c.nameEn.trim():'';return c.emoji+c.name+_s+'×'+c.qty;}).join(", ");
@@ -30008,6 +30049,7 @@ function submitPOSOrder(){
     customer:customer,
     tableNo:tableNo||"",
     notes:notes,
+    paid: posPayMethod!=="unpaid",
   };
   restaurantTx.push(tx);
   sv("dta_rest", restaurantTx);
@@ -30524,6 +30566,16 @@ async function doPreviewGuestPageFromModal(){
   setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
 
+function toggleRestTxPaid(orderId){
+  const idx = restaurantTx.findIndex(t=>t.id===orderId);
+  if(idx===-1) return;
+  restaurantTx[idx].paid = !restaurantTx[idx].paid;
+  sv("dta_rest", restaurantTx);
+  renderPOSTodayOrders();
+  if(typeof renderRestaurant==="function") renderRestaurant();
+  sNotify(restaurantTx[idx].paid?"✅":"⏳", restaurantTx[idx].paid?"اتحصّل الفلوس":"اتسجلت كآجل تاني", "success", 2000);
+}
+
 function deletePOSOrder(orderId){
   if(!confirm("🗑️ حذف هذا الطلب؟\nDelete this order?")) return;
   const idx = restaurantTx.findIndex(t=>t.id===orderId);
@@ -30542,13 +30594,16 @@ function renderPOSTodayOrders(){
   const orders = restaurantTx.filter(t=>t.posOrder&&t.date===td).slice().reverse();
   if(!orders.length){ el.innerHTML=`<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">لا توجد طلبات اليوم</div>`; return; }
   const totalToday = orders.reduce((s,t)=>s+t.egp,0);
-  el.innerHTML = `<div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:8px;">إجمالي اليوم: £${totalToday.toFixed(0)} — ${orders.length} طلب</div>`+
+  const unpaidToday = orders.filter(t=>t.paid===false).length;
+  el.innerHTML = `<div style="font-size:11px;color:var(--gold);font-weight:700;margin-bottom:8px;">إجمالي اليوم: £${totalToday.toFixed(0)} — ${orders.length} طلب${unpaidToday>0?` — <span style="color:#e74c3c;">⏳ ${unpaidToday} آجل</span>`:""}</div>`+
   orders.map((t,i)=>`
-    <div style="background:rgba(230,126,34,0.07);border:1px solid rgba(230,126,34,0.2);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:11px;">
+    <div style="background:${t.paid===false?"rgba(231,76,60,0.1)":"rgba(230,126,34,0.07)"};border:1px solid ${t.paid===false?"rgba(231,76,60,0.35)":"rgba(230,126,34,0.2)"};border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:11px;">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
         <span style="font-weight:700;color:var(--gold);">£${t.egp.toFixed(0)}</span>
         <span style="color:var(--muted);font-size:10px;">${t.method}</span>
         ${t.room?`<span style="background:rgba(201,168,76,0.15);color:var(--gold);border-radius:4px;padding:1px 6px;font-size:9px;">غرفة ${t.room}</span>`:""}
+        ${t.paid===false?`<span style="background:rgba(231,76,60,0.18);color:#e74c3c;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;">⏳ آجل${t.customer?" — "+t.customer:""}</span>`:""}
+        ${t.paid===false?`<button onclick="toggleRestTxPaid('${t.id}')" style="background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.4);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;flex-shrink:0;" title="تم استلام الفلوس">✅ اتحصّل</button>`:""}
         <button onclick="deletePOSOrder('${t.id}')" style="margin-right:auto;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.35);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;flex-shrink:0;" title="حذف الطلب">🗑️</button>
       </div>
       <div style="color:var(--muted);margin-top:3px;font-size:10px;">${t.items?t.items.map(c=>c.emoji+""+(isEn()&&c.nameEn&&c.nameEn.trim()?c.nameEn:c.name)+"×"+c.qty).join(", "):t.desc}</div>
@@ -31046,7 +31101,7 @@ renderRestaurant = function(){
     return t.type===restFilter;
   });
   const totalIn=restaurantTx.filter(t=>t.type==="income").reduce((s,t)=>s+t.egp,0);
-  const totalOut=restaurantTx.filter(t=>t.type==="expense").reduce((s,t)=>s+t.egp,0);
+  const totalOut=restaurantTx.filter(t=>t.type==="expense").filter(isPaidRestTx).reduce((s,t)=>s+t.egp,0);
   const net=totalIn-totalOut;
   const posTotal=restaurantTx.filter(t=>t.posOrder).reduce((s,t)=>s+t.egp,0);
   document.getElementById("rest-stats").innerHTML=
@@ -31073,8 +31128,10 @@ renderRestaurant = function(){
     (t.room?"<span style='color:var(--gold);font-size:11px;'>🏨 "+t.room+"</span>":"")+
     (t.method?"<span style='color:var(--muted);font-size:11px;'>💳 "+t.method+"</span>":"")+
     (t.notes?"<span style='color:var(--muted);font-size:11px;'>📝 "+t.notes+"</span>":"")+
+    (t.paid===false?"<span style='font-size:10px;color:#e74c3c;font-weight:700;background:rgba(231,76,60,0.15);border-radius:4px;padding:1px 6px;'>⏳ "+(isInc?"لسه ماتحصلش":"لسه ماتدفعش")+"</span>":"")+
   "</div>" +
   "<div style='display:flex;gap:6px;'>" +
+    (t.paid===false?"<button class='btn' style='flex:1;padding:8px;font-size:13px;font-weight:700;background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.4);' onclick='toggleRestTxPaid(\""+t.id+"\")'>✅ "+(isInc?"اتحصّل":"اتدفع")+"</button>":"")+
     (isPOS?"":"<button class='btn bb' style='flex:1;padding:8px;font-size:13px;' onclick='openRestM("+idx+")'>✏️ تعديل</button>")+
     "<button class='btn br' style='flex:1;padding:8px;font-size:13px;font-weight:700;' onclick='delRest("+idx+")'>🗑️ حذف</button>" +
   "</div>" +
@@ -34091,7 +34148,7 @@ self.onmessage = function(e){
     });
 
     // مصروفات
-    let totalExpEGP = expenses.reduce((s,e)=>s+(e.egp||0),0);
+    let totalExpEGP = expenses.filter(isPaidExpense).reduce((s,e)=>s+(e.egp||0),0);
 
     // ADR & RevPAR
     const adr = totalNights > 0 ? totalRevEGP / totalNights : 0;
