@@ -3094,10 +3094,10 @@ document.addEventListener('DOMContentLoaded', function(){
 <div class="ctitle">💰 <span class="t" data-ar="ملخص مالي" data-en="Financial Summary">Financial Summary</span></div>
 <div id="db-finance" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;"></div>
 </div>
-<!-- 📦 SUPPLIER DEBTS TRACKER -->
-<div id="db-supplierdebt-tracker" style="margin-bottom:12px;"></div>
 <div id="db-commission-section" style="display:none;margin-bottom:12px;"></div>
 <!-- ══ OWNER TRANSFER SECTION ══ -->
+
+<div id="db-supplierdebt-tracker" style="margin-bottom:12px;"></div>
 
 <!-- ══ RESTAURANT REVENUE SECTION ══ -->
 <div id="db-restaurant-section" style="display:none;margin-bottom:12px;"></div>
@@ -8748,7 +8748,7 @@ document.getElementById("db-recent").innerHTML=rec.length?rec.map(b=>{
 }).join(""):"<div class='empty'>"+(ar?"لا توجد حجوزات":"No bookings yet")+"</div>";
 renderAlerts();
 renderBirthdayAlerts();
-renderSupplierDebtTracker();
+try{ renderSupplierDebtTracker(); }catch(e){ console.warn('[renderSupplierDebtTracker]', e); }
 renderLiveDash();
 renderPredictiveOccupancy();
 }
@@ -17017,7 +17017,6 @@ function setLang(lang){
   renderRooms();
   renderExpenses();
   if(typeof renderMinibar==='function' && document.getElementById('page-minibar')?.classList.contains('on')) renderMinibar();
-  if(typeof renderSupplierDebt==='function' && document.getElementById('page-supplierdebt')?.classList.contains('on')) renderSupplierDebt();
   // Re-run DOM translation after renders settle
   if(currentLang !== "ar") setTimeout(_translateDOM, 100);
   if(typeof _restartVoiceForLang==='function') _restartVoiceForLang();
@@ -17038,7 +17037,6 @@ function toggleLang(){
   renderRooms();
   renderExpenses();
   if(typeof renderMinibar==='function' && document.getElementById('page-minibar')?.classList.contains('on')) renderMinibar();
-  if(typeof renderSupplierDebt==='function' && document.getElementById('page-supplierdebt')?.classList.contains('on')) renderSupplierDebt();
   if(currentLang !== "ar") setTimeout(_translateDOM, 100);
   if(typeof _restartVoiceForLang==='function') _restartVoiceForLang();
   if(typeof DTA_BRANCH!=='undefined') DTA_BRANCH.renderBranchSwitcher();
@@ -21463,20 +21461,14 @@ function runSmartAlerts(){
   const unpaidRestExpense = (restaurantTx||[]).filter(t=>t.paid===false && t.type==='expense');
   if(unpaidRestExpense.length > 0){
     const unpaidRestExpTotal = unpaidRestExpense.reduce((s,t)=>s+t.egp,0);
-    const restNamesList = unpaidRestExpense.slice(0,3).map(t=>`${t.desc||'—'} (£${t.egp.toFixed(0)})`).join('، ');
-    const restExtraCount = unpaidRestExpense.length - 3;
-    const restNamesMsg = restNamesList + (restExtraCount>0 ? ` و${restExtraCount} تانيين` : '');
-    setTimeout(()=> sNotify('📦 مشتريات مطعم آجلة', `${restNamesMsg} — الإجمالي £${unpaidRestExpTotal.toFixed(0)}`, 'warning', 6500), 5000);
+    setTimeout(()=> sNotify('📦 مشتريات مطعم آجلة', `${unpaidRestExpense.length} فاتورة مورد بقيمة £${unpaidRestExpTotal.toFixed(0)} لسه ماتدفعتش`, 'warning', 5900), 5000);
   }
 
   // مصروفات/مشتريات المكان الآجلة — فلوس على المكان لموردين (لسه ماتدفعتش)
   const unpaidPlaceExpense = (expenses||[]).filter(e=>(e.paid||'').includes('آجل'));
   if(unpaidPlaceExpense.length > 0){
     const unpaidPlaceExpTotal = unpaidPlaceExpense.reduce((s,e)=>s+e.egp,0);
-    const namesList = unpaidPlaceExpense.slice(0,3).map(e=>`${e.desc||e.cat||'—'} (£${e.egp.toFixed(0)})`).join('، ');
-    const extraCount = unpaidPlaceExpense.length - 3;
-    const namesMsg = namesList + (extraCount>0 ? ` و${extraCount} تانيين` : '');
-    setTimeout(()=> sNotify('📦 مشتريات آجلة (المكان)', `${namesMsg} — الإجمالي £${unpaidPlaceExpTotal.toFixed(0)}`, 'warning', 6500), 5300);
+    setTimeout(()=> sNotify('📦 مشتريات آجلة (المكان)', `${unpaidPlaceExpense.length} فاتورة مورد بقيمة £${unpaidPlaceExpTotal.toFixed(0)} لسه ماتدفعتش`, 'warning', 5900), 5300);
   }
 
   // Rooms in maintenance
@@ -31692,26 +31684,29 @@ function exportDebtCSV(){
 // ── SUPPLIER DEBTS (مستحقات الموردين) ──
 // Unifies deferred (آجل) place expenses + unpaid restaurant supplier bills into one list of money the hotel owes.
 function getSupplierDebtData(){
-  const expList = (expenses||[]).map((e,i)=>({
-    kind:'expense', origIdx:i, id:e.id, date:e.date, desc:e.desc, cat:e.cat, tag:e.tag,
-    egp:e.egp, usd:e.usd, eur:e.eur, cur:e.cur, notes:e.notes
-  })).filter(e=>{
-    const src = (expenses[e.origIdx]||{}).paid || '';
-    return src.includes('آجل');
-  });
-  const restList = (restaurantTx||[]).filter(t=>t.type==='expense' && t.paid===false).map(t=>({
-    kind:'restaurant', id:t.id, date:t.date, desc:t.desc, cat:currentLang==='ar'?'مطعم':'Restaurant', tag:'',
-    egp:t.egp, usd:t.usd, eur:t.eur, cur:t.cur||'EGP', notes:t.notes
-  }));
-  return [...expList, ...restList];
+  try{
+    const expList = (expenses||[]).map((e,i)=>({
+      kind:'expense', origIdx:i, id:e.id, date:e.date, desc:e.desc, cat:e.cat, tag:e.tag,
+      egp:e.egp, usd:e.usd, eur:e.eur, cur:e.cur, notes:e.notes
+    })).filter(e=>{
+      const src = (expenses[e.origIdx]||{}).paid;
+      return typeof src === 'string' && src.includes('آجل');
+    });
+    const restList = (restaurantTx||[]).filter(t=>t && t.type==='expense' && t.paid===false).map(t=>({
+      kind:'restaurant', id:t.id, date:t.date, desc:t.desc, cat:currentLang==='ar'?'مطعم':'Restaurant', tag:'',
+      egp:t.egp, usd:t.usd, eur:t.eur, cur:t.cur||'EGP', notes:t.notes
+    }));
+    return [...expList, ...restList];
+  }catch(e){
+    console.warn('[getSupplierDebtData]', e);
+    return [];
+  }
 }
 
 function renderSupplierDebt(){
   const filter = (document.getElementById('supplierdebt-filter')||{}).value || 'all';
   const search = ((document.getElementById('supplierdebt-search')||{}).value||'').toLowerCase();
   const ar = currentLang==='ar';
-  const searchEl = document.getElementById('supplierdebt-search');
-  if(searchEl) searchEl.placeholder = ar ? '🔍 بحث...' : '🔍 Search...';
 
   let list = getSupplierDebtData();
 
@@ -31783,21 +31778,6 @@ function renderSupplierDebt(){
   }).join('');
 }
 
-function exportSupplierDebtCSV(){
-  const list = getSupplierDebtData();
-  const ar = currentLang==='ar';
-  if(!list.length){ alert(ar?'لا توجد مستحقات موردين للتصدير':'No supplier debts to export'); return; }
-  const headers = ar ? ['النوع','الوصف','الفئة','التاريخ','المبلغ','العملة'] : ['Type','Description','Category','Date','Amount','Currency'];
-  const rows = list.map(x => [x.kind==='expense'?(ar?'مصروفات':'Expenses'):(ar?'مطعم':'Restaurant'), x.desc||'', x.cat||'', x.date||'', (x.egp||0).toFixed(2), x.cur||'EGP']);
-  const csv = [headers, ...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url;
-  a.download = 'DahabTrendy_SupplierDebts_'+toDay()+'.csv';
-  a.click(); URL.revokeObjectURL(url);
-  sNotify('⬇️ '+(ar?'تصدير':'Export'), ar?'تم تصدير مستحقات الموردين':'Supplier debts exported', 'success', 2500);
-}
-
 // ── DASHBOARD WIDGET: Supplier Debts Tracker (compact "track" view) ──
 function renderSupplierDebtTracker(){
   const el = document.getElementById('db-supplierdebt-tracker');
@@ -31843,6 +31823,20 @@ function renderSupplierDebtTracker(){
     ${moreCount>0?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px;">+${moreCount} ${ar?'أخرى':'more'}</div>`:''}
     <button class="btn bsm" style="width:100%;background:rgba(230,126,34,0.15);color:#e67e22;border:1px solid rgba(230,126,34,0.4);font-weight:700;" onclick="bnGo('supplierdebt',null)">📦 ${ar?'عرض كل المستحقات':'View All Supplier Debts'} →</button>
   </div>`;
+}
+
+function exportSupplierDebtCSV(){
+  const list = getSupplierDebtData();
+  if(!list.length){ alert('لا توجد مستحقات موردين للتصدير'); return; }
+  const headers = ['النوع','الوصف','الفئة','التاريخ','المبلغ','العملة'];
+  const rows = list.map(x => [x.kind==='expense'?'مصروفات':'مطعم', x.desc||'', x.cat||'', x.date||'', (x.egp||0).toFixed(2), x.cur||'EGP']);
+  const csv = [headers, ...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url;
+  a.download = 'DahabTrendy_SupplierDebts_'+toDay()+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  sNotify('⬇️ تصدير', 'تم تصدير مستحقات الموردين', 'success', 2500);
 }
 
 // ── MOBILE BOOKINGS CARDS VIEW ──
