@@ -876,6 +876,14 @@ select option{background:#1a1a2e;color:var(--text)}
 }
 #bn-more-menu .bn-more-item:active{background:rgba(201,168,76,0.15);color:var(--gold);}
 #bn-more-menu .bn-more-item .bm-icon{font-size:22px;}
+#bn-more-menu .bn-more-item{position:relative;}
+.bn-more-badge{
+  position:absolute;top:4px;right:4px;
+  background:#e74c3c;color:#fff;border-radius:50%;
+  min-width:15px;height:15px;padding:0 2px;font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  line-height:1;
+}
 /* Body padding for bottom nav on mobile */
 @media(max-width:768px){
   #bottom-nav{display:flex;flex-direction:column;}
@@ -1661,7 +1669,8 @@ label {
     <div class="bn-more-item" onclick="openPDFReport();closeBnMore()" style="position:relative;border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);"><span class="bm-icon">📅</span><span class="t" data-ar="تقرير شهري" data-en="Monthly Report">تقرير شهري</span></div>
     <div class="bn-more-item" onclick="bnGo('calendar',null);closeBnMore()"><span class="bm-icon">🗓️</span><span class="t" data-ar="التقويم" data-en="Calendar">التقويم</span></div>
     <div class="bn-more-item" onclick="bnGo('rooms',null);closeBnMore()"><span class="bm-icon">🏨</span><span class="t" data-ar="الغرف" data-en="Rooms">الغرف</span></div>
-    <div class="bn-more-item" onclick="bnGo('expenses',null);closeBnMore()"><span class="bm-icon">💸</span><span class="t" data-ar="مصروفات" data-en="Expenses">مصروفات</span></div>
+    <div class="bn-more-item" onclick="bnGo('expenses',null);closeBnMore()"><span class="bm-icon">💸</span><span class="t" data-ar="مصروفات" data-en="Expenses">مصروفات</span><span id="bn-exp-badge" class="bn-more-badge" style="display:none;">0</span></div>
+    <div class="bn-more-item" onclick="bnGo('supplierdebt',null);closeBnMore()"><span class="bm-icon">📦</span><span class="t" data-ar="مستحقات الموردين" data-en="Supplier Debts">مستحقات الموردين</span><span id="bn-supdebt-badge" class="bn-more-badge" style="display:none;">0</span></div>
     <div class="bn-more-item" onclick="bnGo('invoice',null);closeBnMore()"><span class="bm-icon">📄</span><span class="t" data-ar="فاتورة" data-en="Invoice">فاتورة</span></div>
     <div class="bn-more-item" onclick="bnGo('analytics',null);closeBnMore()"><span class="bm-icon">📊</span><span class="t" data-ar="تحليلات" data-en="Analytics">تحليلات</span></div>
     <div class="bn-more-item" onclick="bnGo('housekeeping',null);closeBnMore()"><span class="bm-icon">🧹</span><span class="t" data-ar="تنظيف" data-en="HK">تنظيف</span></div>
@@ -1672,7 +1681,7 @@ label {
     <div class="bn-more-item" onclick="bnGo('guestreq',null);closeBnMore()" style="border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.07);"><span class="bm-icon" style="color:#7ab8f5;">🛎️</span><span style="color:#7ab8f5;" class="t" data-ar="طلبات ضيوف" data-en="Requests">طلبات</span></div>
     <div class="bn-more-item" onclick="bnGo('staffshift',null);closeBnMore()" style="border-color:rgba(155,89,182,0.4);background:rgba(155,89,182,0.07);"><span class="bm-icon" style="color:#c39bd3;">📊</span><span style="color:#c39bd3;" class="t" data-ar="شيفت" data-en="Staff Shift">شيفت</span></div>
     <div class="bn-more-item" onclick="bnGo('guestsreg',null);closeBnMore()"><span class="bm-icon">📋</span><span class="t" data-ar="سجل الضيوف" data-en="Guests Reg.">سجل الضيوف</span></div>
-    <div class="bn-more-item" onclick="bnGo('restaurant',null);closeBnMore()"><span class="bm-icon">🍽️</span><span class="t" data-ar="مطعم" data-en="Rest.">مطعم</span></div>
+    <div class="bn-more-item" onclick="bnGo('restaurant',null);closeBnMore()"><span class="bm-icon">🍽️</span><span class="t" data-ar="مطعم" data-en="Rest.">مطعم</span><span id="bn-rest-badge" class="bn-more-badge" style="display:none;">0</span></div>
     <div class="bn-more-item" onclick="bnGo('tours',null);closeBnMore()"><span class="bm-icon">🏔️</span><span class="t" data-ar="رحلات" data-en="Tours">رحلات</span></div>
     <div class="bn-more-item" onclick="bnGo('dailyactivity',null);closeBnMore()" style="border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.07);"><span class="bm-icon" style="color:#1abc9c;">🌅</span><span style="color:#1abc9c;" class="t" data-ar="نشاطات يومية" data-en="Daily Activity">نشاطات يومية</span></div>
     <div class="bn-more-item" onclick="bnGo('events',null);closeBnMore()" style="border-color:rgba(241,196,15,0.4);background:rgba(241,196,15,0.07);"><span class="bm-icon" style="color:#f1c40f;">🎉</span><span style="color:#f1c40f;" class="t" data-ar="أحداث" data-en="Events">أحداث</span></div>
@@ -2557,6 +2566,38 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 
 <!-- ══════════════════════════════════════════════
+  ══ SUPPLIER DEBTS PAGE (مستحقات الموردين) ══
+══════════════════════════════════════════════ -->
+<div id="page-supplierdebt" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <h2 style="color:#e74c3c;font-size:18px;">📦 <span class="t" data-ar="مستحقات الموردين" data-en="Supplier Debts">مستحقات الموردين</span></h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn bsm" style="background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);" onclick="exportSupplierDebtCSV()">📊 <span class="t" data-ar="تصدير CSV" data-en="Export CSV">تصدير</span></button>
+    </div>
+  </div>
+
+  <!-- Summary Strip -->
+  <div id="supplierdebt-summary-strip" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px;"></div>
+
+  <!-- Filter -->
+  <div class="card" style="padding:10px 14px;margin-bottom:12px;">
+    <div class="flex">
+      <span style="font-size:11px;color:var(--gold);font-weight:700;">فلتر / Filter:</span>
+      <select id="supplierdebt-filter" onchange="renderSupplierDebt()" style="width:auto;padding:4px 8px;font-size:12px;">
+        <option value="all"><span class="t" data-ar="الكل" data-en="All">All</span></option>
+        <option value="expenses"><span class="t" data-ar="مصروفات" data-en="Expenses">Expenses</span></option>
+        <option value="restaurant"><span class="t" data-ar="مطعم" data-en="Restaurant">Restaurant</span></option>
+      </select>
+      <input id="supplierdebt-search" placeholder="🔍 Search..." oninput="renderSupplierDebt()" style="width:160px;padding:4px 8px;font-size:12px;">
+    </div>
+  </div>
+
+  <!-- List -->
+  <div id="supplierdebt-list"></div>
+  <div id="supplierdebt-empty" class="empty" style="display:none;">✅ <span class="t" data-ar="لا توجد مستحقات للموردين!" data-en="No outstanding supplier debts!">لا توجد مستحقات للموردين!</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
   ══ DYNAMIC ROOM STATUS BOARD ══
 ══════════════════════════════════════════════ -->
 <div id="page-statusboard" class="page">
@@ -2611,13 +2652,14 @@ document.addEventListener('DOMContentLoaded', function(){
 <button class="nb" onclick="goPage('calendar',this)">🗓️ <span class="t" data-ar="التقويم" data-en="Calendar">Calendar</span></button>
 <button class="nb" onclick="goPage('bookings',this)">📋 <span class="t" data-ar="الحجوزات" data-en="Bookings">Bookings</span></button>
 <button class="nb" onclick="goPage('rooms',this)">🏨 <span class="t" data-ar="الغرف" data-en="Rooms">Rooms</span></button>
-<button class="nb" onclick="goPage('expenses',this)">💸 <span class="t" data-ar="المصروفات" data-en="Expenses">Expenses</span></button>
+<button class="nb" onclick="goPage('expenses',this)" style="position:relative;">💸 <span class="t" data-ar="المصروفات" data-en="Expenses">Expenses</span><span id="bn-exp-badge-desktop" class="bn-more-badge" style="display:none;top:-6px;right:-6px;">0</span></button>
 <button class="nb" onclick="goPage('debt',this)" style="background:rgba(231,76,60,0.12);color:#e74c3c;border-color:rgba(231,76,60,0.4);font-weight:700;">💳 <span class="t" data-ar="مديونيات" data-en="Debt">مديونيات</span></button>
+<button class="nb" onclick="goPage('supplierdebt',this)" style="background:rgba(230,126,34,0.12);color:#e67e22;border-color:rgba(230,126,34,0.4);font-weight:700;position:relative;">📦 <span class="t" data-ar="مستحقات الموردين" data-en="Supplier Debts">مستحقات الموردين</span><span id="bn-supdebt-badge-desktop" class="bn-more-badge" style="display:none;top:-6px;right:-6px;">0</span></button>
 <button class="nb" onclick="goPage('groupbooking',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;">🏢 <span class="t" data-ar="حجز جروب" data-en="Group Booking">حجز جروب</span></button>
     <button class="nb" onclick="goPage('roomlist',this)" style="background:rgba(46,204,113,0.12);color:#58d68d;border-color:rgba(46,204,113,0.4);font-weight:700;">🛏 <span class="t" data-ar="قائمة الغرف" data-en="Room List">قائمة الغرف</span></button>
 <button class="nb" onclick="goPage('pricelist',this)" style="background:rgba(201,168,76,0.12);color:#c9a84c;border-color:rgba(201,168,76,0.4);font-weight:700;">💰 <span class="t" data-ar="قائمة الأسعار" data-en="Price List">قائمة الأسعار</span></button>
 <button class="nb" onclick="goPage('invoice',this)">📄 <span class="t" data-ar="الفاتورة" data-en="Invoice">Invoice</span></button>
-<button class="nb" onclick="goPage('restaurant',this)">🍽️ <span class="t" data-ar="المطعم" data-en="Restaurant">Restaurant</span></button>
+<button class="nb" onclick="goPage('restaurant',this)" style="position:relative;">🍽️ <span class="t" data-ar="المطعم" data-en="Restaurant">Restaurant</span><span id="bn-rest-badge-desktop" class="bn-more-badge" style="display:none;top:-6px;right:-6px;">0</span></button>
 <button class="nb" onclick="goPage('tours',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;">🏔️ <span class="t" data-ar="رحلات" data-en="Tours">رحلات</span></button>
 <button class="nb" onclick="goPage('events',this)" style="background:rgba(241,196,15,0.12);color:#f1c40f;border-color:rgba(241,196,15,0.4);font-weight:700;">🎉 <span class="t" data-ar="أحداث" data-en="Events">أحداث</span></button>
 <button class="nb" onclick="goPage('chatbot',this)">🤖💬 <span class="t" data-ar="شات بوت" data-en="Chatbot">Chatbot</span></button>
@@ -3052,6 +3094,8 @@ document.addEventListener('DOMContentLoaded', function(){
 <div class="ctitle">💰 <span class="t" data-ar="ملخص مالي" data-en="Financial Summary">Financial Summary</span></div>
 <div id="db-finance" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;"></div>
 </div>
+<!-- 📦 SUPPLIER DEBTS TRACKER -->
+<div id="db-supplierdebt-tracker" style="margin-bottom:12px;"></div>
 <div id="db-commission-section" style="display:none;margin-bottom:12px;"></div>
 <!-- ══ OWNER TRANSFER SECTION ══ -->
 
@@ -7600,7 +7644,7 @@ document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
 document.querySelectorAll(".nb").forEach(b=>b.classList.remove("act"));
 document.getElementById("page-"+id).classList.add("on");
 if(btn) btn.classList.add("act");
-const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,tours:renderTours,events:renderEvents,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage,statusboard:renderStatusBoard,chatbot:cb_renderPage,dailyactivity:renderDailyActivity,opsboard:renderOpsBoard,eodclose:renderEODClose,shiftchecklist:renderSCL,amanat:renderAmanat};
+const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,supplierdebt:renderSupplierDebt,tours:renderTours,events:renderEvents,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage,statusboard:renderStatusBoard,chatbot:cb_renderPage,dailyactivity:renderDailyActivity,opsboard:renderOpsBoard,eodclose:renderEODClose,shiftchecklist:renderSCL,amanat:renderAmanat};
 if(map[id]) map[id]();
 if(id==="invoice"){renderInvRooms();buildPreview();}
 // ── Auto-refresh لوحة يوم العمل كل 20 ثانية طول ما هي مفتوحة ──
@@ -8704,6 +8748,7 @@ document.getElementById("db-recent").innerHTML=rec.length?rec.map(b=>{
 }).join(""):"<div class='empty'>"+(ar?"لا توجد حجوزات":"No bookings yet")+"</div>";
 renderAlerts();
 renderBirthdayAlerts();
+renderSupplierDebtTracker();
 renderLiveDash();
 renderPredictiveOccupancy();
 }
@@ -12227,13 +12272,15 @@ if(window._emAdvDeduction && window._emAdvDeduction.egp>0 && typeof staffAdvSave
 }
 closeM("ex-modal");
 renderExpenses();
+if(typeof updateBnBadges==='function') updateBnBadges();
 }
-function delEx(i){if(confirm("Delete this expense?")){pushUndo("حذف مصروف: "+(expenses[i]?.cat||""), getUndoSnapshot());expenses.splice(i,1);sv("dta_ex",expenses);renderExpenses();}}
+function delEx(i){if(confirm("Delete this expense?")){pushUndo("حذف مصروف: "+(expenses[i]?.cat||""), getUndoSnapshot());expenses.splice(i,1);sv("dta_ex",expenses);renderExpenses();if(typeof updateBnBadges==='function') updateBnBadges();}}
 function markExpensePaid(i){
   if(!expenses[i]) return;
   expenses[i].paid = "Cash";
   sv("dta_ex",expenses);
   renderExpenses();
+  if(typeof updateBnBadges==='function') updateBnBadges();
   sNotify("✅","اتسجل إنه اتدفع للمورد","success",2000);
 }
 function clearExFilter(){["ex-fcat","ex-fmon","ex-fyr"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});renderExpenses();}
@@ -16970,6 +17017,7 @@ function setLang(lang){
   renderRooms();
   renderExpenses();
   if(typeof renderMinibar==='function' && document.getElementById('page-minibar')?.classList.contains('on')) renderMinibar();
+  if(typeof renderSupplierDebt==='function' && document.getElementById('page-supplierdebt')?.classList.contains('on')) renderSupplierDebt();
   // Re-run DOM translation after renders settle
   if(currentLang !== "ar") setTimeout(_translateDOM, 100);
   if(typeof _restartVoiceForLang==='function') _restartVoiceForLang();
@@ -16990,6 +17038,7 @@ function toggleLang(){
   renderRooms();
   renderExpenses();
   if(typeof renderMinibar==='function' && document.getElementById('page-minibar')?.classList.contains('on')) renderMinibar();
+  if(typeof renderSupplierDebt==='function' && document.getElementById('page-supplierdebt')?.classList.contains('on')) renderSupplierDebt();
   if(currentLang !== "ar") setTimeout(_translateDOM, 100);
   if(typeof _restartVoiceForLang==='function') _restartVoiceForLang();
   if(typeof DTA_BRANCH!=='undefined') DTA_BRANCH.renderBranchSwitcher();
@@ -19904,9 +19953,10 @@ if(restEdit!==null) restaurantTx[restEdit]=tx; else restaurantTx.push(tx);
 sv("dta_rest",restaurantTx);
 closeM("rest-modal");
 renderRestaurant();
+if(typeof updateBnBadges==='function') updateBnBadges();
 }
 function delRest(i){
-if(confirm("حذف هذه المعاملة؟")){restaurantTx.splice(i,1);sv("dta_rest",restaurantTx);renderRestaurant();}
+if(confirm("حذف هذه المعاملة؟")){restaurantTx.splice(i,1);sv("dta_rest",restaurantTx);renderRestaurant();if(typeof updateBnBadges==='function') updateBnBadges();}
 }
 // ═══════════ ROOM MOVEMENT ═══════════
 let moveIdx = null;
@@ -21413,14 +21463,20 @@ function runSmartAlerts(){
   const unpaidRestExpense = (restaurantTx||[]).filter(t=>t.paid===false && t.type==='expense');
   if(unpaidRestExpense.length > 0){
     const unpaidRestExpTotal = unpaidRestExpense.reduce((s,t)=>s+t.egp,0);
-    setTimeout(()=> sNotify('📦 مشتريات مطعم آجلة', `${unpaidRestExpense.length} فاتورة مورد بقيمة £${unpaidRestExpTotal.toFixed(0)} لسه ماتدفعتش`, 'warning', 5900), 5000);
+    const restNamesList = unpaidRestExpense.slice(0,3).map(t=>`${t.desc||'—'} (£${t.egp.toFixed(0)})`).join('، ');
+    const restExtraCount = unpaidRestExpense.length - 3;
+    const restNamesMsg = restNamesList + (restExtraCount>0 ? ` و${restExtraCount} تانيين` : '');
+    setTimeout(()=> sNotify('📦 مشتريات مطعم آجلة', `${restNamesMsg} — الإجمالي £${unpaidRestExpTotal.toFixed(0)}`, 'warning', 6500), 5000);
   }
 
   // مصروفات/مشتريات المكان الآجلة — فلوس على المكان لموردين (لسه ماتدفعتش)
   const unpaidPlaceExpense = (expenses||[]).filter(e=>(e.paid||'').includes('آجل'));
   if(unpaidPlaceExpense.length > 0){
     const unpaidPlaceExpTotal = unpaidPlaceExpense.reduce((s,e)=>s+e.egp,0);
-    setTimeout(()=> sNotify('📦 مشتريات آجلة (المكان)', `${unpaidPlaceExpense.length} فاتورة مورد بقيمة £${unpaidPlaceExpTotal.toFixed(0)} لسه ماتدفعتش`, 'warning', 5900), 5300);
+    const namesList = unpaidPlaceExpense.slice(0,3).map(e=>`${e.desc||e.cat||'—'} (£${e.egp.toFixed(0)})`).join('، ');
+    const extraCount = unpaidPlaceExpense.length - 3;
+    const namesMsg = namesList + (extraCount>0 ? ` و${extraCount} تانيين` : '');
+    setTimeout(()=> sNotify('📦 مشتريات آجلة (المكان)', `${namesMsg} — الإجمالي £${unpaidPlaceExpTotal.toFixed(0)}`, 'warning', 6500), 5300);
   }
 
   // Rooms in maintenance
@@ -22493,11 +22549,12 @@ _resetIdleTimer();
 // ═══════════════════════════════════════════════════════════
 // ══ FEATURE EMP: نظام دخول الموظفين والصلاحيات (Roles) ══
 // ═══════════════════════════════════════════════════════════
-const ALL_PAGE_IDS = ['dashboard','calendar','bookings','rooms','expenses','debt','groupbooking','roomlist','pricelist','invoice','restaurant','tours','events','chatbot','statusboard','settings','analytics','guestsreg','housekeeping','opsboard','eodclose','shiftchecklist','amanat','minibar','reviews','waitlist','airporttransfers','wakeup','lostandfound','guestreq','staffshift','guesthistory','dailyactivity'];
+const ALL_PAGE_IDS = ['dashboard','calendar','bookings','rooms','expenses','debt','supplierdebt','groupbooking','roomlist','pricelist','invoice','restaurant','tours','events','chatbot','statusboard','settings','analytics','guestsreg','housekeeping','opsboard','eodclose','shiftchecklist','amanat','minibar','reviews','waitlist','airporttransfers','wakeup','lostandfound','guestreq','staffshift','guesthistory','dailyactivity'];
 
 const PAGE_LABELS = {
   dashboard:{ar:'الرئيسية',en:'Dashboard'}, calendar:{ar:'التقويم',en:'Calendar'}, bookings:{ar:'الحجوزات',en:'Bookings'},
   rooms:{ar:'الغرف',en:'Rooms'}, expenses:{ar:'المصروفات',en:'Expenses'}, debt:{ar:'مديونيات',en:'Debt'},
+  supplierdebt:{ar:'مستحقات الموردين',en:'Supplier Debts'},
   groupbooking:{ar:'حجز جروب',en:'Group Booking'}, roomlist:{ar:'قائمة الغرف',en:'Room List'}, pricelist:{ar:'قائمة الأسعار',en:'Price List'},
   invoice:{ar:'الفاتورة',en:'Invoice'}, restaurant:{ar:'المطعم',en:'Restaurant'}, tours:{ar:'رحلات',en:'Tours'},
   events:{ar:'أحداث',en:'Events'}, chatbot:{ar:'شات بوت',en:'Chatbot'}, statusboard:{ar:'لوحة الحالة',en:'Status Board'},
@@ -22517,7 +22574,7 @@ const EMP_ROLE_DEFS = {
 };
 const EMP_DEFAULT_ROLE_PAGES = {
   reception:['dashboard','calendar','bookings','rooms','groupbooking','roomlist','pricelist','invoice','guestsreg','guesthistory','debt','statusboard','waitlist','tours','events','dailyactivity','airporttransfers','wakeup','guestreq','lostandfound','amanat','minibar','opsboard','shiftchecklist','chatbot'],
-  accountant:['dashboard','expenses','analytics','debt','invoice','bookings','guestsreg','eodclose','reviews'],
+  accountant:['dashboard','expenses','analytics','debt','supplierdebt','invoice','bookings','guestsreg','eodclose','reviews'],
   housekeeping_role:['dashboard','housekeeping','rooms','roomlist','staffshift','lostandfound','minibar','shiftchecklist','opsboard','wakeup']
 };
 
@@ -30573,6 +30630,7 @@ function toggleRestTxPaid(orderId){
   sv("dta_rest", restaurantTx);
   renderPOSTodayOrders();
   if(typeof renderRestaurant==="function") renderRestaurant();
+  if(typeof updateBnBadges==='function') updateBnBadges();
   sNotify(restaurantTx[idx].paid?"✅":"⏳", restaurantTx[idx].paid?"اتحصّل الفلوس":"اتسجلت كآجل تاني", "success", 2000);
 }
 
@@ -30584,6 +30642,7 @@ function deletePOSOrder(orderId){
   sv("dta_rest", restaurantTx);
   renderPOSTodayOrders();
   renderRestaurant();
+  if(typeof updateBnBadges==='function') updateBnBadges();
   sNotify("🗑️","تم حذف الطلب","success",2500);
 }
 
@@ -31427,6 +31486,24 @@ function updateBnBadges(){
   const debtCount = getDebtData().length;
   const dbadge = document.getElementById('bn-debt-badge');
   if(dbadge){ dbadge.textContent=debtCount; dbadge.style.display=debtCount?'flex':'none'; }
+  // Expenses badge = unpaid/deferred (آجل) place expenses
+  const expUnpaidCount = (expenses||[]).filter(e=>(e.paid||'').includes('آجل')).length;
+  const ebadge = document.getElementById('bn-exp-badge');
+  if(ebadge){ ebadge.textContent=expUnpaidCount; ebadge.style.display=expUnpaidCount?'flex':'none'; }
+  const ebadgeD = document.getElementById('bn-exp-badge-desktop');
+  if(ebadgeD){ ebadgeD.textContent=expUnpaidCount; ebadgeD.style.display=expUnpaidCount?'flex':'none'; }
+  // Restaurant badge = unpaid restaurant transactions (income not yet collected + supplier bills not yet paid)
+  const restUnpaidCount = (restaurantTx||[]).filter(t=>t.paid===false).length;
+  const rbadge = document.getElementById('bn-rest-badge');
+  if(rbadge){ rbadge.textContent=restUnpaidCount; rbadge.style.display=restUnpaidCount?'flex':'none'; }
+  const rbadgeD = document.getElementById('bn-rest-badge-desktop');
+  if(rbadgeD){ rbadgeD.textContent=restUnpaidCount; rbadgeD.style.display=restUnpaidCount?'flex':'none'; }
+  // Supplier Debts badge = unpaid place expenses + unpaid restaurant SUPPLIER bills (expense-type only, not customer income)
+  const supDebtCount = getSupplierDebtData().length;
+  const sbadge = document.getElementById('bn-supdebt-badge');
+  if(sbadge){ sbadge.textContent=supDebtCount; sbadge.style.display=supDebtCount?'flex':'none'; }
+  const sbadgeD = document.getElementById('bn-supdebt-badge-desktop');
+  if(sbadgeD){ sbadgeD.textContent=supDebtCount; sbadgeD.style.display=supDebtCount?'flex':'none'; }
 }
 
 // FAB
@@ -31610,6 +31687,162 @@ function exportDebtCSV(){
   a.download = 'DahabTrendy_Debts_'+toDay()+'.csv';
   a.click(); URL.revokeObjectURL(url);
   sNotify('⬇️ تصدير', 'تم تصدير المديونيات', 'success', 2500);
+}
+
+// ── SUPPLIER DEBTS (مستحقات الموردين) ──
+// Unifies deferred (آجل) place expenses + unpaid restaurant supplier bills into one list of money the hotel owes.
+function getSupplierDebtData(){
+  const expList = (expenses||[]).map((e,i)=>({
+    kind:'expense', origIdx:i, id:e.id, date:e.date, desc:e.desc, cat:e.cat, tag:e.tag,
+    egp:e.egp, usd:e.usd, eur:e.eur, cur:e.cur, notes:e.notes
+  })).filter(e=>{
+    const src = (expenses[e.origIdx]||{}).paid || '';
+    return src.includes('آجل');
+  });
+  const restList = (restaurantTx||[]).filter(t=>t.type==='expense' && t.paid===false).map(t=>({
+    kind:'restaurant', id:t.id, date:t.date, desc:t.desc, cat:currentLang==='ar'?'مطعم':'Restaurant', tag:'',
+    egp:t.egp, usd:t.usd, eur:t.eur, cur:t.cur||'EGP', notes:t.notes
+  }));
+  return [...expList, ...restList];
+}
+
+function renderSupplierDebt(){
+  const filter = (document.getElementById('supplierdebt-filter')||{}).value || 'all';
+  const search = ((document.getElementById('supplierdebt-search')||{}).value||'').toLowerCase();
+  const ar = currentLang==='ar';
+  const searchEl = document.getElementById('supplierdebt-search');
+  if(searchEl) searchEl.placeholder = ar ? '🔍 بحث...' : '🔍 Search...';
+
+  let list = getSupplierDebtData();
+
+  if(filter === 'expenses') list = list.filter(x => x.kind==='expense');
+  else if(filter === 'restaurant') list = list.filter(x => x.kind==='restaurant');
+
+  if(search) list = list.filter(x => (x.desc||'').toLowerCase().includes(search) || (x.cat||'').toLowerCase().includes(search) || (x.tag||'').toLowerCase().includes(search));
+
+  // Sort: newest first
+  list.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+
+  // Summary strip
+  const all = getSupplierDebtData();
+  const totalEGP = all.reduce((s,x)=>s+(x.egp||0),0);
+  const strip = document.getElementById('supplierdebt-summary-strip');
+  if(strip){
+    strip.innerHTML = `
+      <div class="live-stat-card red">
+        <div class="live-stat-num" style="font-size:20px;">${all.length}</div>
+        <div class="live-stat-lbl">${ar?'إجمالي المستحقات':'Total Owed Items'}</div>
+      </div>
+      <div class="live-stat-card">
+        <div class="live-stat-num" style="font-size:18px;">£${totalEGP.toFixed(0)}</div>
+        <div class="live-stat-lbl">${ar?'إجمالي المبلغ':'Total Amount (EGP)'}</div>
+      </div>
+      <div class="live-stat-card blue">
+        <div class="live-stat-num" style="font-size:20px;">${list.length}</div>
+        <div class="live-stat-lbl">${ar?'النتائج الحالية':'Shown Results'}</div>
+      </div>
+    `;
+  }
+
+  const listEl = document.getElementById('supplierdebt-list');
+  const emptyEl = document.getElementById('supplierdebt-empty');
+  if(!listEl) return;
+
+  if(!list.length){
+    listEl.innerHTML = '';
+    if(emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+  if(emptyEl) emptyEl.style.display = 'none';
+
+  listEl.innerHTML = list.map(x => {
+    const sym = x.cur==='USD'?'$':x.cur==='EUR'?'€':'EGP ';
+    const amt = x.cur==='USD'?x.usd:x.cur==='EUR'?x.eur:x.egp;
+    const kindLbl = x.kind==='expense' ? (ar?'مصروفات':'Expenses') : (ar?'مطعم':'Restaurant');
+    const kindIcon = x.kind==='expense' ? '💸' : '🍽️';
+    const markPaidCall = x.kind==='expense' ? `markExpensePaid(${x.origIdx})` : `toggleRestTxPaid('${x.id}')`;
+    return `<div class="debt-card debt-unpaid">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--text);">${kindIcon} ${x.desc||(ar?'بدون وصف':'No description')}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">
+            🏷️ ${kindLbl}${x.cat?' · '+x.cat:''}${x.tag?' · '+x.tag:''} &nbsp;·&nbsp;
+            📅 ${fmtD(x.date)}
+          </div>
+          ${x.notes?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">📝 ${x.notes}</div>`:''}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:20px;font-weight:700;color:#e74c3c;">${sym}${(amt||0).toFixed(2)}</div>
+          <div style="font-size:10px;color:var(--muted);">${ar?'مستحق':'Owed'}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">
+        <button class="btn bsm" style="background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.3);" onclick="${markPaidCall};renderSupplierDebt();">✅ ${ar?'تم الدفع':'Mark Paid'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function exportSupplierDebtCSV(){
+  const list = getSupplierDebtData();
+  const ar = currentLang==='ar';
+  if(!list.length){ alert(ar?'لا توجد مستحقات موردين للتصدير':'No supplier debts to export'); return; }
+  const headers = ar ? ['النوع','الوصف','الفئة','التاريخ','المبلغ','العملة'] : ['Type','Description','Category','Date','Amount','Currency'];
+  const rows = list.map(x => [x.kind==='expense'?(ar?'مصروفات':'Expenses'):(ar?'مطعم':'Restaurant'), x.desc||'', x.cat||'', x.date||'', (x.egp||0).toFixed(2), x.cur||'EGP']);
+  const csv = [headers, ...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url;
+  a.download = 'DahabTrendy_SupplierDebts_'+toDay()+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  sNotify('⬇️ '+(ar?'تصدير':'Export'), ar?'تم تصدير مستحقات الموردين':'Supplier debts exported', 'success', 2500);
+}
+
+// ── DASHBOARD WIDGET: Supplier Debts Tracker (compact "track" view) ──
+function renderSupplierDebtTracker(){
+  const el = document.getElementById('db-supplierdebt-tracker');
+  if(!el) return;
+  const ar = currentLang==='ar';
+  const list = getSupplierDebtData();
+
+  if(!list.length){
+    el.innerHTML = '';
+    return;
+  }
+
+  const totalEGP = list.reduce((s,x)=>s+(x.egp||0),0);
+  // Show up to 4 items, oldest first (longest outstanding = most urgent)
+  const sorted = [...list].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const shown = sorted.slice(0,4);
+  const maxEGP = Math.max(...list.map(x=>x.egp||0), 1);
+
+  const rows = shown.map(x=>{
+    const kindIcon = x.kind==='expense' ? '💸' : '🍽️';
+    const pct = Math.max(6, Math.round(((x.egp||0)/maxEGP)*100));
+    return `<div style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:3px;">
+        <span style="color:var(--text);">${kindIcon} ${(x.desc||(ar?'بدون وصف':'No description')).slice(0,28)}</span>
+        <span style="color:#e67e22;font-weight:700;">£${(x.egp||0).toFixed(0)}</span>
+      </div>
+      <div class="debt-bar-track">
+        <div class="debt-bar-fill" style="width:${pct}%;background:#e67e22;"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const moreCount = list.length - shown.length;
+
+  el.innerHTML = `<div class="card" style="border-color:rgba(230,126,34,0.35);background:rgba(230,126,34,0.05);margin-bottom:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <div class="ctitle" style="margin-bottom:0;">📦 <span class="t" data-ar="مستحقات الموردين" data-en="Supplier Debts">مستحقات الموردين</span>
+        <span style="background:#e67e22;color:#1a1a2e;border-radius:20px;padding:1px 8px;font-size:11px;margin-${ar?'right':'left'}:6px;">${list.length}</span>
+      </div>
+      <div style="font-size:16px;font-weight:800;color:#e67e22;">£${totalEGP.toFixed(0)}</div>
+    </div>
+    ${rows}
+    ${moreCount>0?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px;">+${moreCount} ${ar?'أخرى':'more'}</div>`:''}
+    <button class="btn bsm" style="width:100%;background:rgba(230,126,34,0.15);color:#e67e22;border:1px solid rgba(230,126,34,0.4);font-weight:700;" onclick="bnGo('supplierdebt',null)">📦 ${ar?'عرض كل المستحقات':'View All Supplier Debts'} →</button>
+  </div>`;
 }
 
 // ── MOBILE BOOKINGS CARDS VIEW ──
