@@ -31843,7 +31843,8 @@ function renderSupplierDebtTracker(){
 
 // ── GUEST BOOKING REQUESTS (طلبات حجز الضيوف) — via Supabase ──
 const BKREQ_URL = 'https://yjornfwipngoqsriekhi.supabase.co';
-const BKREQ_KEY = 'sb_publishable_NfU9-hU8_PNWgLCN_uJ7nQ_dBXDIe6j';
+// ⚠️ حط هنا نفس الـ Legacy anon key اللي حطيته في فورم الضيف
+const BKREQ_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlqb3JuZndpcG5nb3Fzcmlla2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NjEwMTksImV4cCI6MjEwMDMzNzAxOX0.12qAZiWFJQyZKcI3vEVQqjih_hch6-9oeQuUHzzx3Js';
 let _bkReqCache = [];
 
 function bkReqEsc(s){
@@ -31853,7 +31854,7 @@ function bkReqEsc(s){
 async function fetchBookingRequests(){
   try{
     const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?order=created_at.desc', {
-      headers:{ apikey: BKREQ_KEY }
+      headers:{ apikey: BKREQ_KEY, 'Authorization': 'Bearer ' + BKREQ_KEY }
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
     return await res.json();
@@ -31935,7 +31936,7 @@ async function approveBookingRequest(id){
   try{
     const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?id=eq.'+id, {
       method:'PATCH',
-      headers:{ apikey:BKREQ_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      headers:{ apikey:BKREQ_KEY, 'Authorization': 'Bearer ' + BKREQ_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
       body: JSON.stringify({status:'approved'})
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
@@ -31954,7 +31955,7 @@ async function rejectBookingRequest(id){
   try{
     const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?id=eq.'+id, {
       method:'PATCH',
-      headers:{ apikey:BKREQ_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      headers:{ apikey:BKREQ_KEY, 'Authorization': 'Bearer ' + BKREQ_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
       body: JSON.stringify({status:'rejected'})
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
