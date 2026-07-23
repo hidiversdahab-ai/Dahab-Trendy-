@@ -16265,6 +16265,7 @@ prepay:document.getElementById("st-prepay").value,
 pnotes:document.getElementById("st-pnotes").value,
 };
 sv("dta_pol",policies);
+if(typeof syncPolicyToSupabase==='function') syncPolicyToSupabase();
 }
 let fixCOIdx=null;
 let fixCONextCI=null;
@@ -24262,6 +24263,8 @@ function _startBarcodeLoop(video){
               document.getElementById('scan-nat').value   = parsed.nationality||'';
               document.getElementById('scan-idno').value  = parsed.idNo||'';
               document.getElementById('scan-dob').value   = parsed.dob||'';
+              document.getElementById('scan-gender').value = parsed.gender||'';
+              document.getElementById('scan-address').value = parsed.address||'';
               document.getElementById('scan-result').style.display = 'block';
               stopLiveScan();
               sNotify(isAr?'📷 تم المسح':'📷 Scanned', isAr?'تم استخراج البيانات من الباركود':'Data extracted from barcode','success',3000);
@@ -24271,6 +24274,8 @@ function _startBarcodeLoop(video){
               document.getElementById('scan-nat').value   = '';
               document.getElementById('scan-idno').value  = '';
               document.getElementById('scan-dob').value   = '';
+              document.getElementById('scan-gender').value = '';
+              document.getElementById('scan-address').value = '';
               document.getElementById('scan-result').style.display = 'block';
             }
           }
@@ -24293,6 +24298,10 @@ function _parseBarcodeData(raw, format){
     r.dob  = _formatDOB(get('DBB'));
     r.idNo = get('DAQ');
     r.nationality = get('DCG')||'US';
+    const genderCode = get('DBC');
+    r.gender = genderCode==='1' ? 'Male' : genderCode==='2' ? 'Female' : '';
+    const street = get('DAG'), city = get('DAI'), state = get('DAJ'), zip = get('DAK');
+    r.address = [street, city, state, zip].filter(Boolean).join(', ');
     return r;
   }
   // MRZ-like in QR / raw text (2-line passport MRZ)
@@ -24309,11 +24318,13 @@ function _parseBarcodeData(raw, format){
       r.idNo = mrz2.slice(0,9).replace(/</g,'');
       const dob6 = mrz2.slice(13,19);
       r.dob = _formatDOB(dob6);
+      const genderChar = mrz2.slice(20,21);
+      r.gender = genderChar==='M' ? 'Male' : genderChar==='F' ? 'Female' : '';
     }
     return r;
   }
   // QR code — try JSON
-  try { const j=JSON.parse(raw); r.name=j.name||j.fullName||''; r.idNo=j.id||j.idNo||''; r.dob=j.dob||''; r.nationality=j.nat||j.nationality||''; return r; } catch(e){}
+  try { const j=JSON.parse(raw); r.name=j.name||j.fullName||''; r.idNo=j.id||j.idNo||''; r.dob=j.dob||''; r.nationality=j.nat||j.nationality||''; r.gender=j.gender||''; r.address=j.address||''; return r; } catch(e){}
   // Fallback: raw value as idNo
   r.idNo = raw.slice(0,30);
   return r;
@@ -24396,7 +24407,7 @@ async function captureID(){
           model:'claude-sonnet-4-20250514', max_tokens:300,
           messages:[{role:'user',content:[
             {type:'image',source:{type:'base64',media_type:_scanImageMime,data:_scanImageBase64}},
-            {type:'text',text:'استخرج من هذه الصورة بيانات الهوية أو الجواز. رد بـ JSON فقط بدون أي نص آخر: {"name":"...","nationality":"...","idNo":"...","dob":"YYYY-MM-DD"}. إذا لم تجد قيمة اتركها فارغة.'}
+            {type:'text',text:'استخرج من هذه الصورة بيانات الهوية أو الجواز. رد بـ JSON فقط بدون أي نص آخر: {"name":"...","nationality":"...","idNo":"...","dob":"YYYY-MM-DD","gender":"Male أو Female","address":"..."}. إذا لم تجد قيمة اتركها فارغة.'}
           ]}]
         })
       });
@@ -24408,6 +24419,8 @@ async function captureID(){
       document.getElementById('scan-nat').value   = p.nationality||'';
       document.getElementById('scan-idno').value  = p.idNo||'';
       document.getElementById('scan-dob').value   = p.dob||'';
+      document.getElementById('scan-gender').value = (p.gender==='Male'||p.gender==='Female') ? p.gender : '';
+      document.getElementById('scan-address').value = p.address||'';
       document.getElementById('scan-result').style.display = 'block';
       sNotify('📷 تم المسح','تم استخراج بيانات الهوية','success',3000);
     } catch(e){
@@ -24415,6 +24428,8 @@ async function captureID(){
       document.getElementById('scan-nat').value  = '';
       document.getElementById('scan-idno').value = '';
       document.getElementById('scan-dob').value  = '';
+      document.getElementById('scan-gender').value = '';
+      document.getElementById('scan-address').value = '';
       document.getElementById('scan-result').style.display = 'block';
       sNotify('⚠️ يدوي','أدخل البيانات يدوياً','warning',4000);
     }
@@ -24424,6 +24439,8 @@ async function captureID(){
     document.getElementById('scan-nat').value  = '';
     document.getElementById('scan-idno').value = '';
     document.getElementById('scan-dob').value  = '';
+    document.getElementById('scan-gender').value = '';
+    document.getElementById('scan-address').value = '';
     document.getElementById('scan-result').style.display = 'block';
   }
 }
@@ -24796,6 +24813,8 @@ function applyScanData(){
   const nat  = document.getElementById('scan-nat').value.trim();
   const idno = document.getElementById('scan-idno').value.trim();
   const dob  = document.getElementById('scan-dob').value.trim();
+  const gender  = document.getElementById('scan-gender').value.trim();
+  const address = document.getElementById('scan-address').value.trim();
   closeIDScanner();
   openBM();
   setTimeout(function(){
@@ -24803,6 +24822,12 @@ function applyScanData(){
     if(nat)   document.getElementById('bm-nat').value   = nat;
     if(idno)  document.getElementById('bm-idno').value  = idno;
     if(dob)   document.getElementById('bm-dob').value   = dob;
+    if(gender) document.getElementById('bm-gender').value = gender;
+    if(address){
+      const notesEl = document.getElementById('bm-notes');
+      const current = notesEl.value.trim();
+      notesEl.value = (current ? current+'\n' : '') + 'العنوان / Address: ' + address;
+    }
   }, 150);
   sNotify('✅ تم','تم فتح حجز جديد — أكمل باقي البيانات','success',3000);
 }
@@ -24970,6 +24995,10 @@ function applyScanData(){
       <div class="fld" style="margin-bottom:6px;"><label><span class="t" data-ar="الجنسية" data-en="Nationality">Nationality</span></label><input id="scan-nat" style="font-size:13px;"></div>
       <div class="fld" style="margin-bottom:6px;"><label><span class="t" data-ar="رقم الهوية / الجواز" data-en="ID / Passport No.">ID / Passport No.</span></label><input id="scan-idno" style="font-size:13px;"></div>
       <div class="fld" style="margin-bottom:6px;"><label><span class="t" data-ar="تاريخ الميلاد" data-en="Date of Birth">Date of Birth</span></label><input id="scan-dob" type="date" style="font-size:13px;"></div>
+      <div class="fld" style="margin-bottom:6px;"><label><span class="t" data-ar="النوع" data-en="Gender">Gender</span></label>
+        <select id="scan-gender" style="font-size:13px;"><option value="">—</option><option value="Male">Male / ذكر</option><option value="Female">Female / أنثى</option></select>
+      </div>
+      <div class="fld s2" style="margin-bottom:6px;"><label><span class="t" data-ar="العنوان" data-en="Address">Address</span></label><input id="scan-address" style="font-size:13px;"></div>
     </div>
     <button class="btn bg" onclick="applyScanData()" style="width:100%;margin-top:4px;">
       ✅ <span class="t" data-ar="فتح حجز جديد بهذه البيانات" data-en="Open New Booking with this data">Open New Booking with this data</span>
@@ -31857,6 +31886,29 @@ function renderSupplierDebtTracker(){
 }
 
 // ── ROOM AVAILABILITY SYNC — keeps Supabase updated so the guest form can show real availability ──
+async function syncPolicyToSupabase(){
+  try{
+    const feeLabels={none:{ar:'بدون رسوم إلغاء',en:'No cancellation fee'},'1night':{ar:'خصم قيمة ليلة واحدة',en:'One night charge applies'},'50pct':{ar:'خصم 50% من الإجمالي',en:'50% of total charged'},'100pct':{ar:'غير مسترد',en:'Non-refundable'}};
+    const prepayLabels={none:{ar:'بدون دفع مقدم',en:'No prepayment required'},'1night':{ar:'عربون ليلة واحدة',en:'One night deposit'},'10pct':{ar:'عربون 10%',en:'10% deposit'},'25pct':{ar:'عربون 25%',en:'25% deposit'},'50pct':{ar:'عربون 50%',en:'50% deposit'},'100pct':{ar:'الدفع الكامل مقدمًا',en:'Full payment in advance'}};
+    const fee=feeLabels[policies.fee]||feeLabels.none;
+    const prepay=prepayLabels[policies.prepay]||prepayLabels.none;
+    const row={
+      key:'booking_policy',
+      title:policies.title||'',
+      body:policies.text||'',
+      fee_ar:fee.ar, fee_en:fee.en,
+      prepay_ar:prepay.ar, prepay_en:prepay.en,
+      notes:policies.pnotes||'',
+      updated_at:new Date().toISOString()
+    };
+    await fetch(BKREQ_URL+'/rest/v1/dta_site_settings?on_conflict=key', {
+      method:'POST',
+      headers:{ apikey:BKREQ_KEY, 'Authorization':'Bearer '+BKREQ_KEY, 'Content-Type':'application/json', 'Prefer':'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify([row])
+    });
+  }catch(e){ console.warn('[syncPolicyToSupabase]', e); }
+}
+
 async function syncRoomsCatalogToSupabase(){
   try{
     const rows = ROOMS.map(r=>{
@@ -32254,6 +32306,7 @@ window.addEventListener('load', function(){
   setTimeout(function(){
     pollBookingRequests();
     syncRoomsCatalogToSupabase();
+    syncPolicyToSupabase();
     setInterval(pollBookingRequests, 60000); // check every 60s for new/updated requests
   }, 2500);
 });
