@@ -1671,6 +1671,7 @@ label {
     <div class="bn-more-item" onclick="bnGo('rooms',null);closeBnMore()"><span class="bm-icon">🏨</span><span class="t" data-ar="الغرف" data-en="Rooms">الغرف</span></div>
     <div class="bn-more-item" onclick="bnGo('expenses',null);closeBnMore()"><span class="bm-icon">💸</span><span class="t" data-ar="مصروفات" data-en="Expenses">مصروفات</span><span id="bn-exp-badge" class="bn-more-badge" style="display:none;">0</span></div>
     <div class="bn-more-item" onclick="bnGo('supplierdebt',null);closeBnMore()"><span class="bm-icon">📦</span><span class="t" data-ar="مستحقات الموردين" data-en="Supplier Debts">مستحقات الموردين</span><span id="bn-supdebt-badge" class="bn-more-badge" style="display:none;">0</span></div>
+    <div class="bn-more-item" onclick="bnGo('bookingrequests',null);closeBnMore()"><span class="bm-icon">📝</span><span class="t" data-ar="طلبات حجز الضيوف" data-en="Guest Requests">طلبات حجز الضيوف</span><span id="bn-bkreq-badge" class="bn-more-badge" style="display:none;">0</span></div>
     <div class="bn-more-item" onclick="bnGo('invoice',null);closeBnMore()"><span class="bm-icon">📄</span><span class="t" data-ar="فاتورة" data-en="Invoice">فاتورة</span></div>
     <div class="bn-more-item" onclick="bnGo('analytics',null);closeBnMore()"><span class="bm-icon">📊</span><span class="t" data-ar="تحليلات" data-en="Analytics">تحليلات</span></div>
     <div class="bn-more-item" onclick="bnGo('housekeeping',null);closeBnMore()"><span class="bm-icon">🧹</span><span class="t" data-ar="تنظيف" data-en="HK">تنظيف</span></div>
@@ -2597,6 +2598,17 @@ document.addEventListener('DOMContentLoaded', function(){
   <div id="supplierdebt-empty" class="empty" style="display:none;">✅ <span class="t" data-ar="لا توجد مستحقات للموردين!" data-en="No outstanding supplier debts!">لا توجد مستحقات للموردين!</span></div>
 </div>
 
+<div id="page-bookingrequests" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <h2 style="color:var(--gold);font-size:18px;">📝 <span class="t" data-ar="طلبات حجز الضيوف" data-en="Guest Booking Requests">طلبات حجز الضيوف</span></h2>
+    <button class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.35);" onclick="renderBookingRequests()">🔄 <span class="t" data-ar="تحديث" data-en="Refresh">تحديث</span></button>
+  </div>
+
+  <div id="bookingrequests-error" class="empty" style="display:none;color:#e0685e;">⚠️ <span class="t" data-ar="تعذر تحميل الطلبات. تحقق من الاتصال بالإنترنت." data-en="Couldn't load requests. Check your internet connection.">تعذر تحميل الطلبات. تحقق من الاتصال بالإنترنت.</span></div>
+  <div id="bookingrequests-list"></div>
+  <div id="bookingrequests-empty" class="empty" style="display:none;">📭 <span class="t" data-ar="لا توجد طلبات حجز حتى الآن" data-en="No booking requests yet">لا توجد طلبات حجز حتى الآن</span></div>
+</div>
+
 <!-- ══════════════════════════════════════════════
   ══ DYNAMIC ROOM STATUS BOARD ══
 ══════════════════════════════════════════════ -->
@@ -2655,6 +2667,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <button class="nb" onclick="goPage('expenses',this)" style="position:relative;">💸 <span class="t" data-ar="المصروفات" data-en="Expenses">Expenses</span><span id="bn-exp-badge-desktop" class="bn-more-badge" style="display:none;top:-6px;right:-6px;">0</span></button>
 <button class="nb" onclick="goPage('debt',this)" style="background:rgba(231,76,60,0.12);color:#e74c3c;border-color:rgba(231,76,60,0.4);font-weight:700;">💳 <span class="t" data-ar="مديونيات" data-en="Debt">مديونيات</span></button>
 <button class="nb" onclick="goPage('supplierdebt',this)" style="background:rgba(230,126,34,0.12);color:#e67e22;border-color:rgba(230,126,34,0.4);font-weight:700;position:relative;">📦 <span class="t" data-ar="مستحقات الموردين" data-en="Supplier Debts">مستحقات الموردين</span><span id="bn-supdebt-badge-desktop" class="bn-more-badge" style="display:none;top:-6px;right:-6px;">0</span></button>
+<button class="nb" onclick="goPage('bookingrequests',this)" style="background:rgba(201,168,76,0.12);color:var(--gold);border-color:rgba(201,168,76,0.4);font-weight:700;position:relative;">📝 <span class="t" data-ar="طلبات حجز الضيوف" data-en="Guest Requests">طلبات حجز الضيوف</span><span id="bn-bkreq-badge-desktop" class="bn-more-badge" style="display:none;top:-6px;right:-6px;">0</span></button>
 <button class="nb" onclick="goPage('groupbooking',this)" style="background:rgba(52,152,219,0.12);color:#7ab8f5;border-color:rgba(52,152,219,0.4);font-weight:700;">🏢 <span class="t" data-ar="حجز جروب" data-en="Group Booking">حجز جروب</span></button>
     <button class="nb" onclick="goPage('roomlist',this)" style="background:rgba(46,204,113,0.12);color:#58d68d;border-color:rgba(46,204,113,0.4);font-weight:700;">🛏 <span class="t" data-ar="قائمة الغرف" data-en="Room List">قائمة الغرف</span></button>
 <button class="nb" onclick="goPage('pricelist',this)" style="background:rgba(201,168,76,0.12);color:#c9a84c;border-color:rgba(201,168,76,0.4);font-weight:700;">💰 <span class="t" data-ar="قائمة الأسعار" data-en="Price List">قائمة الأسعار</span></button>
@@ -7644,7 +7657,7 @@ document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));
 document.querySelectorAll(".nb").forEach(b=>b.classList.remove("act"));
 document.getElementById("page-"+id).classList.add("on");
 if(btn) btn.classList.add("act");
-const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,supplierdebt:renderSupplierDebt,tours:renderTours,events:renderEvents,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage,statusboard:renderStatusBoard,chatbot:cb_renderPage,dailyactivity:renderDailyActivity,opsboard:renderOpsBoard,eodclose:renderEODClose,shiftchecklist:renderSCL,amanat:renderAmanat};
+const map={dashboard:renderDashboard,bookings:renderBookings,rooms:renderRooms,expenses:renderExpenses,settings:renderSettings,restaurant:renderRestaurant,guestsreg:renderGuestsRegister,debt:renderDebt,supplierdebt:renderSupplierDebt,bookingrequests:renderBookingRequests,tours:renderTours,events:renderEvents,groupbooking:renderGroupBooking,guesthistory:renderGuestHistoryPage,pricelist:renderPLPage,roomlist:renderRoomListPage,statusboard:renderStatusBoard,chatbot:cb_renderPage,dailyactivity:renderDailyActivity,opsboard:renderOpsBoard,eodclose:renderEODClose,shiftchecklist:renderSCL,amanat:renderAmanat};
 if(map[id]) map[id]();
 if(id==="invoice"){renderInvRooms();buildPreview();}
 // ── Auto-refresh لوحة يوم العمل كل 20 ثانية طول ما هي مفتوحة ──
@@ -31824,6 +31837,140 @@ function renderSupplierDebtTracker(){
     <button class="btn bsm" style="width:100%;background:rgba(230,126,34,0.15);color:#e67e22;border:1px solid rgba(230,126,34,0.4);font-weight:700;" onclick="bnGo('supplierdebt',null)">📦 ${ar?'عرض كل المستحقات':'View All Supplier Debts'} →</button>
   </div>`;
 }
+
+// ── GUEST BOOKING REQUESTS (طلبات حجز الضيوف) — via Supabase ──
+const BKREQ_URL = 'https://yjornfwipngoqsriekhi.supabase.co';
+const BKREQ_KEY = 'sb_publishable_NfU9-hU8_PNWgLCN_uJ7nQ_dBXDIe6j';
+let _bkReqCache = [];
+
+function bkReqEsc(s){
+  return (s||'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+async function fetchBookingRequests(){
+  try{
+    const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?order=created_at.desc', {
+      headers:{ apikey: BKREQ_KEY, Authorization: 'Bearer '+BKREQ_KEY }
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return await res.json();
+  }catch(e){
+    console.warn('[fetchBookingRequests]', e);
+    return null;
+  }
+}
+
+function updateBkReqBadge(count){
+  const b1 = document.getElementById('bn-bkreq-badge');
+  const b2 = document.getElementById('bn-bkreq-badge-desktop');
+  [b1,b2].forEach(b=>{
+    if(!b) return;
+    if(count>0){ b.textContent=count; b.style.display='inline-block'; } else { b.style.display='none'; }
+  });
+}
+
+async function renderBookingRequests(){
+  const listEl = document.getElementById('bookingrequests-list');
+  const emptyEl = document.getElementById('bookingrequests-empty');
+  const errEl = document.getElementById('bookingrequests-error');
+  if(!listEl) return;
+  const ar = currentLang==='ar';
+  listEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);">⏳ '+(ar?'جاري التحميل...':'Loading...')+'</div>';
+  if(errEl) errEl.style.display='none';
+  if(emptyEl) emptyEl.style.display='none';
+
+  const data = await fetchBookingRequests();
+  if(data===null){
+    listEl.innerHTML = '';
+    if(errEl) errEl.style.display='block';
+    return;
+  }
+  _bkReqCache = data;
+  updateBkReqBadge(data.filter(r=>r.status==='pending').length);
+
+  if(!data.length){
+    listEl.innerHTML = '';
+    if(emptyEl) emptyEl.style.display='block';
+    return;
+  }
+
+  listEl.innerHTML = data.map(r=>{
+    const statusColor = r.status==='pending' ? '#c9a84c' : r.status==='approved' ? '#4cda7a' : '#e0685e';
+    const statusLabel = r.status==='pending' ? (ar?'قيد المراجعة':'Pending') : r.status==='approved' ? (ar?'مقبول':'Approved') : (ar?'مرفوض':'Rejected');
+    const phoneDigits = (r.phone||'').replace(/\D/g,'');
+    const waLink = phoneDigits ? 'https://wa.me/'+phoneDigits : '';
+    return '<div class="card" style="border-color:'+statusColor+'55;margin-bottom:10px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:start;gap:8px;margin-bottom:8px;">'+
+        '<div>'+
+          '<div style="font-weight:800;font-size:14px;">'+bkReqEsc(r.name)+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+bkReqEsc(r.phone)+'</div>'+
+        '</div>'+
+        '<span style="background:'+statusColor+'22;color:'+statusColor+';border:1px solid '+statusColor+'55;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;white-space:nowrap;">'+statusLabel+'</span>'+
+      '</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--text);margin-bottom:8px;">'+
+        '<div>📅 '+fmtD(r.ci)+' → '+fmtD(r.co)+'</div>'+
+        '<div>🛏️ '+bkReqEsc(r.room_type||'-')+'</div>'+
+        '<div>👥 '+(r.adults||1)+(r.children?' + '+r.children+' 👶':'')+'</div>'+
+      '</div>'+
+      (r.notes?'<div style="font-size:12px;color:var(--muted);background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;margin-bottom:10px;">📝 '+bkReqEsc(r.notes)+'</div>':'')+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
+        (waLink?'<a href="'+waLink+'" target="_blank" class="btn bsm" style="background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);text-decoration:none;">💬 '+(ar?'واتساب':'WhatsApp')+'</a>':'')+
+        (r.status==='pending'?(
+          '<button class="btn bsm" style="background:rgba(76,218,122,0.15);color:#4cda7a;border:1px solid rgba(76,218,122,0.35);" onclick="approveBookingRequest(\''+r.id+'\')">✅ '+(ar?'قبول':'Approve')+'</button>'+
+          '<button class="btn bsm" style="background:rgba(224,104,94,0.15);color:#e0685e;border:1px solid rgba(224,104,94,0.35);" onclick="rejectBookingRequest(\''+r.id+'\')">❌ '+(ar?'رفض':'Reject')+'</button>'
+        ):'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+async function approveBookingRequest(id){
+  const r = _bkReqCache.find(x=>x.id===id);
+  if(!r) return;
+  const ar = currentLang==='ar';
+  if(!confirm((ar?'تأكيد قبول طلب ':'Confirm approving request from ')+r.name+'؟')) return;
+  try{
+    const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?id=eq.'+id, {
+      method:'PATCH',
+      headers:{ apikey:BKREQ_KEY, Authorization:'Bearer '+BKREQ_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      body: JSON.stringify({status:'approved'})
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    sNotify('✅ '+(ar?'تم القبول':'Approved'), ar?'افتح "حجز جديد" وسجل بيانات الضيف من الكارت':'Open "New Booking" and enter the guest\'s details from the card', 'success', 4000);
+    renderBookingRequests();
+  }catch(e){
+    sNotify('❌ '+(ar?'خطأ':'Error'), (ar?'فشل تحديث الطلب: ':'Failed to update request: ')+e.message, 'error', 3500);
+  }
+}
+
+async function rejectBookingRequest(id){
+  const r = _bkReqCache.find(x=>x.id===id);
+  if(!r) return;
+  const ar = currentLang==='ar';
+  if(!confirm((ar?'تأكيد رفض طلب ':'Confirm rejecting request from ')+r.name+'؟')) return;
+  try{
+    const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?id=eq.'+id, {
+      method:'PATCH',
+      headers:{ apikey:BKREQ_KEY, Authorization:'Bearer '+BKREQ_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      body: JSON.stringify({status:'rejected'})
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    sNotify('🗑️ '+(ar?'تم الرفض':'Rejected'), '', 'default', 2000);
+    renderBookingRequests();
+  }catch(e){
+    sNotify('❌ '+(ar?'خطأ':'Error'), (ar?'فشل تحديث الطلب: ':'Failed to update request: ')+e.message, 'error', 3500);
+  }
+}
+
+// Lightweight isolated startup check for the pending-requests badge (does not touch existing init flow)
+window.addEventListener('load', function(){
+  setTimeout(async function(){
+    try{
+      const data = await fetchBookingRequests();
+      if(data) updateBkReqBadge(data.filter(r=>r.status==='pending').length);
+    }catch(e){ console.warn('[bkReq startup badge]', e); }
+  }, 2500);
+});
 
 function exportSupplierDebtCSV(){
   const list = getSupplierDebtData();
