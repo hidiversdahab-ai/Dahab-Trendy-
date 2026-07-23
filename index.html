@@ -10770,7 +10770,7 @@ closeM("adj-modal");
 renderBookings();renderDashboard();autoUpdateRooms(false);if(typeof renderRooms==="function")renderRooms();
 showToast(mode==="add"?"🌙 تمديد "+amount+" ليلة — مغادرة: "+fmtD(newCo):"🌅 تقليل "+amount+" ليلة — مغادرة: "+fmtD(newCo));
 }
-function delBK(i){if(confirm("Delete this booking?")){const _delId=bookings[i]?.id;pushUndo("حذف حجز: "+(bookings[i]?.name||""), getUndoSnapshot());bookings.splice(i,1);sv("dta_bk",bookings);if(_delId) removeBookingSync(_delId);renderBookings();}}
+function delBK(i){if(confirm("Delete this booking?")){const _delId=bookings[i]?.id;pushUndo("حذف حجز: "+(bookings[i]?.name||""), getUndoSnapshot());bookings.splice(i,1);sv("dta_bk",bookings);if(_delId){ removeBookingSync(_delId); if(typeof removeLinkedBookingRequest==='function') removeLinkedBookingRequest(_delId); }renderBookings();}}
 function restoreBK(i){
   const b=bookings[i];
   if(!confirm("Restore this booking for "+b.name+"?")) return;
@@ -32035,16 +32035,21 @@ async function renderBookingRequests(){
 }
 
 async function deleteBookingRequest(id){
-  const r = _bkReqCache.find(x=>x.id===id);
+  const r = _bkReqCache.find(x=>String(x.id)===String(id));
   if(!r) return;
   const ar = currentLang==='ar';
   if(!confirm((ar?'تأكيد حذف طلب ':'Confirm deleting request from ')+r.name+(ar?' نهائيًا؟':' permanently?'))) return;
   try{
-    const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?id=eq.'+id, {
+    const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?id=eq.'+encodeURIComponent(String(id)), {
       method:'DELETE',
       headers:{ apikey:BKREQ_KEY, 'Authorization':'Bearer '+BKREQ_KEY, Prefer:'return=minimal' }
     });
-    if(!res.ok) throw new Error('HTTP '+res.status);
+    if(!res.ok){
+      const bodyText = await res.text().catch(()=> '');
+      throw new Error('HTTP '+res.status+(bodyText?' — '+bodyText:''));
+    }
+    // Remove it from the local cache right away so the list updates immediately.
+    _bkReqCache = _bkReqCache.filter(x=>String(x.id)!==String(id));
     sNotify('🗑️ '+(ar?'تم الحذف':'Deleted'), '', 'default', 2000);
     renderBookingRequests();
   }catch(e){
@@ -32052,10 +32057,29 @@ async function deleteBookingRequest(id){
   }
 }
 
+// Deletes a booking's linked guest-request row (matched by synced_booking_id) so that
+// deleting an approved booking from the Bookings page doesn't leave a stale "Approved"
+// request behind that points at a booking which no longer exists.
+async function removeLinkedBookingRequest(bookingId){
+  if(!bookingId) return;
+  try{
+    const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?synced_booking_id=eq.'+encodeURIComponent(String(bookingId)), {
+      method:'DELETE',
+      headers:{ apikey:BKREQ_KEY, 'Authorization':'Bearer '+BKREQ_KEY, Prefer:'return=minimal' }
+    });
+    if(!res.ok){ console.warn('[removeLinkedBookingRequest] HTTP', res.status, await res.text().catch(()=> '')); return; }
+    _bkReqCache = (_bkReqCache||[]).filter(x=>String(x.synced_booking_id)!==String(bookingId));
+    if(typeof updateBkReqBadge==='function') updateBkReqBadge(_bkReqCache.filter(r=>r.status==='pending').length);
+    if(typeof renderDashGuestReqAlert==='function') renderDashGuestReqAlert();
+    const listEl = document.getElementById('bookingrequests-list');
+    if(listEl && listEl.offsetParent !== null && typeof renderBookingRequests==='function') renderBookingRequests();
+  }catch(e){ console.warn('[removeLinkedBookingRequest]', e); }
+}
+
 let _bkReqActiveApproval = null;
 
 async function approveBookingRequest(id){
-  const r = _bkReqCache.find(x=>x.id===id);
+  const r = _bkReqCache.find(x=>String(x.id)===String(id));
   if(!r) return;
   const ar = currentLang==='ar';
   if(!confirm((ar?'تأكيد قبول طلب ':'Confirm approving request from ')+r.name+'؟')) return;
@@ -32180,7 +32204,7 @@ ${prop.phone}${cancelLink?`\n\n${ar?'عايز تلغي؟':'Need to cancel?'} ${c
 }
 
 async function rejectBookingRequest(id){
-  const r = _bkReqCache.find(x=>x.id===id);
+  const r = _bkReqCache.find(x=>String(x.id)===String(id));
   if(!r) return;
   const ar = currentLang==='ar';
   if(!confirm((ar?'تأكيد رفض طلب ':'Confirm rejecting request from ')+r.name+'؟')) return;
