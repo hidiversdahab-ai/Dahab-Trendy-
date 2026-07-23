@@ -32187,6 +32187,12 @@ function sendBookingConfirmationWA(bk, req){
   const paidSum = (typeof calcPaid==='function') ? calcPaid(bk) : (bk.prepay||0);
   const remaining = Math.max(0,(bk.total||0)-paidSum);
   const cancelLink = req?.id ? GUEST_BOOKING_FORM_URL+'?cancel='+req.id : '';
+  // ⚠️ عدّل بيانات الـ InstaPay بتاعتك هنا
+  const INSTAPAY_ID = 'hanyname@instapay';
+  const INSTAPAY_NAME = 'Hany — Dahab Trendy Accommodation';
+  const instapayBlock = (remaining>0 && bk.cur==='EGP')
+    ? `\n💳 *${ar?'ادفع المتبقي عن طريق InstaPay':'Pay balance via InstaPay'}*\n📱 ${INSTAPAY_ID}\n👤 ${INSTAPAY_NAME}\n`
+    : '';
   const msg =
 `✅ *تأكيد حجزك — ${prop.name}*
 ✅ *Booking Confirmed — ${prop.name}*
@@ -32198,7 +32204,7 @@ function sendBookingConfirmationWA(bk, req){
 
 *الفاتورة / Invoice*
 💰 ${ar?'الإجمالي':'Total'}: ${sym}${(bk.total||0).toFixed(2)}
-${paidSum>0?`✅ ${ar?'المدفوع':'Paid'}: ${sym}${paidSum.toFixed(2)}\n`:''}${remaining>0?`🔶 ${ar?'المتبقي':'Balance due'}: ${sym}${remaining.toFixed(2)}\n`:''}📋 ${bk.invNo}
+${paidSum>0?`✅ ${ar?'المدفوع':'Paid'}: ${sym}${paidSum.toFixed(2)}\n`:''}${remaining>0?`🔶 ${ar?'المتبقي':'Balance due'}: ${sym}${remaining.toFixed(2)}\n`:''}${instapayBlock}📋 ${bk.invNo}
 
 شكراً لاختياركم ${prop.name} 🙏
 Thank you for booking with us 🙏
