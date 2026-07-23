@@ -7346,6 +7346,7 @@ function roomsAdd(num){
       }
     }catch(e){}
   }
+  if(typeof syncRoomsCatalogToSupabase==='function') syncRoomsCatalogToSupabase();
   return {ok:true};
 }
 function roomsRemove(num){
@@ -7354,6 +7355,7 @@ function roomsRemove(num){
   if(idx===-1) return {ok:false};
   ROOMS.splice(idx,1);
   roomsSaveList();
+  if(typeof syncRoomsCatalogToSupabase==='function') syncRoomsCatalogToSupabase();
   return {ok:true};
 }
 // يرجّع غرف الفرع الفعلية من قائمة ROOMS الحقيقية (بدل توليد رينچ تخيلي)، فأي غرفة اتضافت يدويًا تظهر صح
@@ -9904,12 +9906,18 @@ if(bkEdit===null){
 }
 if(bkEdit!==null) bookings[bkEdit]=bk; else bookings.push(bk);
 sv("dta_bk",bookings);
+syncBookingToSupabase(bk);
 closeM("bk-modal");
 renderBookings();
 if(typeof renderRooms==="function") renderRooms();
 if(typeof renderDashboard==="function") renderDashboard();
 if(typeof autoUpdateRooms==="function") autoUpdateRooms(false);
 if(typeof renderCalendar==="function") renderCalendar();
+if(_bkReqActiveApproval){
+  linkBookingRequestToBooking(_bkReqActiveApproval.id, bk.id);
+  sendBookingConfirmationWA(bk, _bkReqActiveApproval);
+  _bkReqActiveApproval = null;
+}
 }
 // ═══════════ CANCELLATION WITH REFUND ═══════════
 let cancelIdx=null;
@@ -10210,6 +10218,7 @@ if(depositSum>0){
   }
 }
 sv("dta_bk",bookings);
+syncBookingToSupabase(bookings[cancelIdx]);
 closeM("cancel-modal");
 cancelIdx=null;
 renderBookings();renderDashboard();autoUpdateRooms(false);
@@ -10767,7 +10776,7 @@ closeM("adj-modal");
 renderBookings();renderDashboard();autoUpdateRooms(false);if(typeof renderRooms==="function")renderRooms();
 showToast(mode==="add"?"🌙 تمديد "+amount+" ليلة — مغادرة: "+fmtD(newCo):"🌅 تقليل "+amount+" ليلة — مغادرة: "+fmtD(newCo));
 }
-function delBK(i){if(confirm("Delete this booking?")){pushUndo("حذف حجز: "+(bookings[i]?.name||""), getUndoSnapshot());bookings.splice(i,1);sv("dta_bk",bookings);renderBookings();}}
+function delBK(i){if(confirm("Delete this booking?")){const _delId=bookings[i]?.id;pushUndo("حذف حجز: "+(bookings[i]?.name||""), getUndoSnapshot());bookings.splice(i,1);sv("dta_bk",bookings);if(_delId) removeBookingSync(_delId);renderBookings();}}
 function restoreBK(i){
   const b=bookings[i];
   if(!confirm("Restore this booking for "+b.name+"?")) return;
@@ -14145,6 +14154,7 @@ function saveRoomTypes(){
     }
   });
   sv('dta_room_types', roomTypes);
+  if(typeof syncRoomsCatalogToSupabase==='function') syncRoomsCatalogToSupabase();
   sNotify('✅ تم الحفظ','تم حفظ أنواع الغرف بنجاح','success',2000);
 }
 
@@ -31841,6 +31851,41 @@ function renderSupplierDebtTracker(){
   </div>`;
 }
 
+// ── ROOM AVAILABILITY SYNC — keeps Supabase updated so the guest form can show real availability ──
+async function syncRoomsCatalogToSupabase(){
+  try{
+    const rows = ROOMS.map(r=>{
+      const info = roomTypes['room_'+r] || {type:'Double', capacity:2};
+      return { room:String(r), type:info.type||'Double', capacity:info.capacity||2, updated_at:new Date().toISOString() };
+    });
+    if(!rows.length) return;
+    await fetch(BKREQ_URL+'/rest/v1/rooms_catalog?on_conflict=room', {
+      method:'POST',
+      headers:{ apikey:BKREQ_KEY, 'Authorization':'Bearer '+BKREQ_KEY, 'Content-Type':'application/json', 'Prefer':'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(rows)
+    });
+  }catch(e){ console.warn('[syncRoomsCatalogToSupabase]', e); }
+}
+
+async function syncBookingToSupabase(bk){
+  try{
+    await fetch(BKREQ_URL+'/rest/v1/bookings_sync?on_conflict=id', {
+      method:'POST',
+      headers:{ apikey:BKREQ_KEY, 'Authorization':'Bearer '+BKREQ_KEY, 'Content-Type':'application/json', 'Prefer':'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify([{ id:String(bk.id), room:String(bk.room), ci:bk.ci, co:bk.co, status:bk.status, updated_at:new Date().toISOString() }])
+    });
+  }catch(e){ console.warn('[syncBookingToSupabase]', e); }
+}
+
+async function removeBookingSync(id){
+  try{
+    await fetch(BKREQ_URL+'/rest/v1/bookings_sync?id=eq.'+id, {
+      method:'DELETE',
+      headers:{ apikey:BKREQ_KEY, 'Authorization':'Bearer '+BKREQ_KEY }
+    });
+  }catch(e){ console.warn('[removeBookingSync]', e); }
+}
+
 // ── GUEST BOOKING REQUESTS (طلبات حجز الضيوف) — via Supabase ──
 const BKREQ_URL = 'https://yjornfwipngoqsriekhi.supabase.co';
 // ⚠️ حط هنا نفس الـ Legacy anon key اللي حطيته في فورم الضيف
@@ -31899,8 +31944,8 @@ async function renderBookingRequests(){
   }
 
   listEl.innerHTML = data.map(r=>{
-    const statusColor = r.status==='pending' ? '#c9a84c' : r.status==='approved' ? '#4cda7a' : '#e0685e';
-    const statusLabel = r.status==='pending' ? (ar?'قيد المراجعة':'Pending') : r.status==='approved' ? (ar?'مقبول':'Approved') : (ar?'مرفوض':'Rejected');
+    const statusColor = r.status==='pending' ? '#c9a84c' : r.status==='approved' ? '#4cda7a' : r.status==='cancelled_by_guest' ? '#e74c3c' : '#e0685e';
+    const statusLabel = r.status==='pending' ? (ar?'قيد المراجعة':'Pending') : r.status==='approved' ? (ar?'مقبول':'Approved') : r.status==='cancelled_by_guest' ? (ar?'ألغاه الضيف':'Cancelled by guest') : (ar?'مرفوض':'Rejected');
     const phoneDigits = (r.phone||'').replace(/\D/g,'');
     const waLink = phoneDigits ? 'https://wa.me/'+phoneDigits : '';
     return '<div class="card" style="border-color:'+statusColor+'55;margin-bottom:10px;">'+
@@ -31913,9 +31958,10 @@ async function renderBookingRequests(){
       '</div>'+
       '<div style="display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--text);margin-bottom:8px;">'+
         '<div>📅 '+fmtD(r.ci)+' → '+fmtD(r.co)+'</div>'+
-        '<div>🛏️ '+bkReqEsc(r.room_type||'-')+'</div>'+
+        '<div>🛏️ '+(r.room?('غرفة '+bkReqEsc(r.room)+' — '):'')+bkReqEsc(r.room_type||'-')+'</div>'+
         '<div>👥 '+(r.adults||1)+(r.children?' + '+r.children+' 👶':'')+'</div>'+
       '</div>'+
+      (r.status==='cancelled_by_guest' && r.synced_booking_id?'<div style="font-size:12px;color:#e74c3c;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.35);border-radius:8px;padding:8px 10px;margin-bottom:10px;">⚠️ '+(ar?'الضيف ألغى — لازم تلغي الحجز الفعلي يدويًا من صفحة الحجوزات (لمراجعة الاسترداد)':'Guest cancelled — manually cancel the actual booking from the Bookings page (to review any refund)')+'</div>':'')+
       (r.notes?'<div style="font-size:12px;color:var(--muted);background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;margin-bottom:10px;">📝 '+bkReqEsc(r.notes)+'</div>':'')+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
         (waLink?'<a href="'+waLink+'" target="_blank" class="btn bsm" style="background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);text-decoration:none;">💬 '+(ar?'واتساب':'WhatsApp')+'</a>':'')+
@@ -31927,6 +31973,8 @@ async function renderBookingRequests(){
     '</div>';
   }).join('');
 }
+
+let _bkReqActiveApproval = null;
 
 async function approveBookingRequest(id){
   const r = _bkReqCache.find(x=>x.id===id);
@@ -31940,11 +31988,100 @@ async function approveBookingRequest(id){
       body: JSON.stringify({status:'approved'})
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
-    sNotify('✅ '+(ar?'تم القبول':'Approved'), ar?'افتح "حجز جديد" وسجل بيانات الضيف من الكارت':'Open "New Booking" and enter the guest\'s details from the card', 'success', 4000);
+    sNotify('✅ '+(ar?'تم القبول':'Approved'), ar?'راجع الحجز واضغط حفظ لإرسال التأكيد للضيف':'Review the booking and hit Save to send confirmation to the guest', 'success', 4000);
     renderBookingRequests();
+    openBookingFromRequest(r);
   }catch(e){
     sNotify('❌ '+(ar?'خطأ':'Error'), (ar?'فشل تحديث الطلب: ':'Failed to update request: ')+e.message, 'error', 3500);
   }
+}
+
+// Map guest-form room type labels to the New Booking modal's bm-type options
+function _bkReqMapRoomType(rt){
+  if(!rt) return null;
+  const s = rt.toLowerCase();
+  if(s.startsWith('suite')) return 'Suite';
+  if(s.startsWith('single')) return 'Single';
+  if(s.startsWith('double')) return 'Double';
+  if(s.startsWith('triple')) return 'Triple';
+  if(s.startsWith('dorm')) return 'Dorm Bed';
+  return null; // e.g. "Quad" has no matching option — leave default
+}
+
+// Opens the New Booking modal pre-filled with an approved guest request's data.
+// The guest already picked a specific room on the public form, so we set it directly;
+// saveBM()'s existing conflict check still guards against a race with another booking.
+function openBookingFromRequest(r){
+  const ar = currentLang==='ar';
+  openBM();
+  setTimeout(()=>{
+    document.getElementById('bm-name').value = r.name || '';
+    document.getElementById('bm-phone').value = r.phone || '';
+    if(document.getElementById('bm-whatsapp')) document.getElementById('bm-whatsapp').value = r.phone || '';
+    document.getElementById('bm-ci').value = r.ci || '';
+    document.getElementById('bm-co').value = r.co || '';
+    document.getElementById('bm-adults').value = r.adults || 1;
+    document.getElementById('bm-children').value = r.children || 0;
+    if(typeof rebuildGuestRows === 'function') rebuildGuestRows();
+
+    const roomSel = document.getElementById('bm-room');
+    if(roomSel && r.room){
+      const hasOption = Array.from(roomSel.options).some(o=>o.value===String(r.room));
+      if(!hasOption) roomSel.innerHTML += '<option>'+r.room+'</option>';
+      roomSel.value = String(r.room);
+    }
+
+    const mappedType = _bkReqMapRoomType(r.room_type);
+    if(mappedType) document.getElementById('bm-type').value = mappedType;
+    if(r.notes && document.getElementById('bm-notes')) document.getElementById('bm-notes').value = r.notes;
+    calcBM();
+    _bkReqActiveApproval = r;
+    sNotify('📋 '+(ar?'تم تعبئة البيانات':'Details filled in'), ar?'الغرفة '+(r.room||'—')+' اللي اختارها الضيف متحددة — راجع وادفع حفظ':'Room '+(r.room||'—')+' the guest picked is selected — review and hit Save', 'default', 4000);
+  }, 400);
+}
+
+// After a request is approved and saved as a real booking, remember the link so a guest-initiated cancellation can find & free the room
+async function linkBookingRequestToBooking(reqId, bookingId){
+  try{
+    await fetch(BKREQ_URL+'/rest/v1/booking_requests?id=eq.'+reqId, {
+      method:'PATCH',
+      headers:{ apikey:BKREQ_KEY, 'Authorization':'Bearer '+BKREQ_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      body: JSON.stringify({synced_booking_id:String(bookingId)})
+    });
+  }catch(e){ console.warn('[linkBookingRequestToBooking]', e); }
+}
+
+const GUEST_BOOKING_FORM_URL = 'https://hidiversdahab-ai.github.io/dahab-trendy-booking/';
+
+// Sends a WhatsApp confirmation + invoice-style summary directly to the guest after their approved request is saved as a real booking
+function sendBookingConfirmationWA(bk, req){
+  const ar = currentLang==='ar';
+  const prop = (typeof PROP!=="undefined") ? PROP : {name:"Dahab Trendy Accommodation", phone:"+20 109 953 1272"};
+  const sym = bk.cur==="USD"?"$":bk.cur==="EUR"?"€":"£";
+  const nights = (typeof nts==='function') ? nts(bk.ci,bk.co) : 0;
+  const paidSum = (typeof calcPaid==='function') ? calcPaid(bk) : (bk.prepay||0);
+  const remaining = Math.max(0,(bk.total||0)-paidSum);
+  const cancelLink = req?.id ? GUEST_BOOKING_FORM_URL+'?cancel='+req.id : '';
+  const msg =
+`✅ *تأكيد حجزك — ${prop.name}*
+✅ *Booking Confirmed — ${prop.name}*
+
+👤 ${bk.name}
+🏨 غرفة / Room ${bk.room} — ${bk.type}
+📅 ${fmtD(bk.ci)} → ${fmtD(bk.co)} (${nights} ${ar?'ليالي':'nights'})
+👥 ${bk.adults||1}${bk.children?' + '+bk.children+' 👶':''}
+
+*الفاتورة / Invoice*
+💰 ${ar?'الإجمالي':'Total'}: ${sym}${(bk.total||0).toFixed(2)}
+${paidSum>0?`✅ ${ar?'المدفوع':'Paid'}: ${sym}${paidSum.toFixed(2)}\n`:''}${remaining>0?`🔶 ${ar?'المتبقي':'Balance due'}: ${sym}${remaining.toFixed(2)}\n`:''}📋 ${bk.invNo}
+
+شكراً لاختياركم ${prop.name} 🙏
+Thank you for booking with us 🙏
+${prop.phone}${cancelLink?`\n\n${ar?'عايز تلغي؟':'Need to cancel?'} ${cancelLink}`:''}`;
+
+  const phoneDigits = (bk.phone||req?.phone||'').replace(/\D/g,'');
+  const waUrl = phoneDigits ? 'https://wa.me/'+phoneDigits+'?text='+encodeURIComponent(msg) : 'https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(waUrl, '_blank');
 }
 
 async function rejectBookingRequest(id){
@@ -31973,6 +32110,7 @@ window.addEventListener('load', function(){
       const data = await fetchBookingRequests();
       if(data) updateBkReqBadge(data.filter(r=>r.status==='pending').length);
     }catch(e){ console.warn('[bkReq startup badge]', e); }
+    syncRoomsCatalogToSupabase();
   }, 2500);
 });
 
