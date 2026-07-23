@@ -2601,7 +2601,10 @@ document.addEventListener('DOMContentLoaded', function(){
 <div id="page-bookingrequests" class="page">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
     <h2 style="color:var(--gold);font-size:18px;">📝 <span class="t" data-ar="طلبات حجز الضيوف" data-en="Guest Booking Requests">طلبات حجز الضيوف</span></h2>
-    <button class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.35);" onclick="renderBookingRequests()">🔄 <span class="t" data-ar="تحديث" data-en="Refresh">تحديث</span></button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn bsm" style="background:rgba(37,211,102,0.15);color:#25D366;border:1px solid rgba(37,211,102,0.35);" onclick="shareBookingFormLink()">📤 <span class="t" data-ar="إرسال رابط الحجز" data-en="Share Booking Link">إرسال رابط الحجز</span></button>
+      <button class="btn bsm" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.35);" onclick="renderBookingRequests()">🔄 <span class="t" data-ar="تحديث" data-en="Refresh">تحديث</span></button>
+    </div>
   </div>
 
   <div id="bookingrequests-error" class="empty" style="display:none;color:#e0685e;">⚠️ <span class="t" data-ar="تعذر تحميل الطلبات. تحقق من الاتصال بالإنترنت." data-en="Couldn't load requests. Check your internet connection.">تعذر تحميل الطلبات. تحقق من الاتصال بالإنترنت.</span></div>
@@ -31971,6 +31974,13 @@ window.addEventListener('load', function(){
     }catch(e){ console.warn('[bkReq startup badge]', e); }
   }, 2500);
 });
+
+function shareBookingFormLink(){
+  const link = 'https://hidiversdahab-ai.github.io/dahab-trendy-booking/';
+  const msg = 'أهلاً بيك في Dahab Trendy 🌊\nممكن تسجل تفاصيل حجزك من هنا:\n\n'+
+    'Welcome to Dahab Trendy 🌊\nPlease fill in your booking details here:\n\n'+link;
+  window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
+}
 
 function exportSupplierDebtCSV(){
   const list = getSupplierDebtData();
