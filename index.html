@@ -32020,7 +32020,8 @@ async function renderBookingRequests(){
       '</div>'+
       (r.status==='cancelled_by_guest' && r.synced_booking_id?'<div style="font-size:12px;color:#e74c3c;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.35);border-radius:8px;padding:8px 10px;margin-bottom:10px;">⚠️ '+(ar?'الضيف ألغى — لازم تلغي الحجز الفعلي يدويًا من صفحة الحجوزات (لمراجعة الاسترداد)':'Guest cancelled — manually cancel the actual booking from the Bookings page (to review any refund)')+'</div>':'')+
       (r.notes?'<div style="font-size:12px;color:var(--muted);background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;margin-bottom:10px;">📝 '+bkReqEsc(r.notes)+'</div>':'')+
-      ((r.guest_names && r.guest_names.length)?'<div style="font-size:12px;color:var(--text);background:rgba(122,184,245,0.07);border-radius:8px;padding:8px 10px;margin-bottom:10px;">👥 '+(ar?'باقي الضيوف: ':'Other guests: ')+bkReqEsc(r.guest_names.join('، '))+'</div>':'')+
+      ((r.guest_names && r.guest_names.length)?'<div style="font-size:12px;color:var(--text);background:rgba(122,184,245,0.07);border-radius:8px;padding:8px 10px;margin-bottom:10px;">👥 '+(ar?'باقي الضيوف: ':'Other guests: ')+bkReqEsc(r.guest_names.map((n,i)=>n+((r.guest_dobs&&r.guest_dobs[i])?(' ('+fmtD(r.guest_dobs[i])+')'):'')).join('، '))+'</div>':'')+
+      (r.dob?'<div style="font-size:12px;color:var(--muted);">🎂 '+(ar?'ميلاد الضيف الرئيسي: ':'Main guest DOB: ')+fmtD(r.dob)+'</div>':'')+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
         (waLink?'<a href="'+waLink+'" target="_blank" class="btn bsm" style="background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);text-decoration:none;">💬 '+(ar?'واتساب':'WhatsApp')+'</a>':'')+
         (r.status==='pending'?(
@@ -32133,14 +32134,19 @@ function openBookingFromRequest(r){
     const g0n = document.getElementById('g0-name'); if(g0n) g0n.value = r.name || '';
     const g0p = document.getElementById('g0-phone'); if(g0p) g0p.value = r.phone || '';
     const g0w = document.getElementById('g0-wa'); if(g0w) g0w.value = r.phone || '';
+    const g0d = document.getElementById('g0-dob'); if(g0d && r.dob) g0d.value = r.dob;
     // keep the legacy hidden fields in sync too, in case anything reads them before saveBM() runs
     document.getElementById('bm-name').value = r.name || '';
     document.getElementById('bm-phone').value = r.phone || '';
     if(document.getElementById('bm-whatsapp')) document.getElementById('bm-whatsapp').value = r.phone || '';
-    // Fill in extra guest names (rows g1, g2, ...) if the guest listed any on the public form
+    if(r.dob && document.getElementById('bm-dob')) document.getElementById('bm-dob').value = r.dob;
+    // Fill in extra guest names + DOBs (rows g1, g2, ...) if the guest listed any on the public form
+    const extraDobs = Array.isArray(r.guest_dobs) ? r.guest_dobs : [];
     extraNames.forEach((n,i)=>{
       const el = document.getElementById('g'+(i+1)+'-name');
       if(el) el.value = n;
+      const dEl = document.getElementById('g'+(i+1)+'-dob');
+      if(dEl && extraDobs[i]) dEl.value = extraDobs[i];
     });
 
     const roomSel = document.getElementById('bm-room');
