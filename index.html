@@ -31853,7 +31853,7 @@ function bkReqEsc(s){
 async function fetchBookingRequests(){
   try{
     const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?order=created_at.desc', {
-      headers:{ apikey: BKREQ_KEY, Authorization: 'Bearer '+BKREQ_KEY }
+      headers:{ apikey: BKREQ_KEY }
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
     return await res.json();
@@ -31935,7 +31935,7 @@ async function approveBookingRequest(id){
   try{
     const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?id=eq.'+id, {
       method:'PATCH',
-      headers:{ apikey:BKREQ_KEY, Authorization:'Bearer '+BKREQ_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      headers:{ apikey:BKREQ_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
       body: JSON.stringify({status:'approved'})
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
@@ -31954,7 +31954,7 @@ async function rejectBookingRequest(id){
   try{
     const res = await fetch(BKREQ_URL+'/rest/v1/booking_requests?id=eq.'+id, {
       method:'PATCH',
-      headers:{ apikey:BKREQ_KEY, Authorization:'Bearer '+BKREQ_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      headers:{ apikey:BKREQ_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
       body: JSON.stringify({status:'rejected'})
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
