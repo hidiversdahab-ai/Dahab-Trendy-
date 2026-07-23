@@ -3103,6 +3103,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 
 <div id="db-branch-indicator" style="margin-bottom:10px;"></div>
+<div id="db-guestreq-alert" style="margin-bottom:12px;"></div>
 <div id="db-alerts" style="margin-bottom:12px;"></div>
 <div id="db-wl-alert" style="margin-bottom:12px;"></div>
 <div class="g4" id="db-stats" style="margin-bottom:12px;"></div>
@@ -8337,6 +8338,7 @@ const dbRoomSetStr=new Set(dbRooms.map(String));
 const maintenanceCount=Object.entries(roomSt).filter(([r,s])=>s==="maintenance"&&dbRoomSetStr.has(String(r))&&!allBookedRooms.has(String(r))).length;
 const availableCount=dbRooms.length-allBookedRooms.size-maintenanceCount;
 const ar=currentLang==="ar";
+if(typeof renderDashGuestReqAlert==="function") renderDashGuestReqAlert();
 const dbBranchEl=document.getElementById("db-branch-indicator");
 if(dbBranchEl){
   if(_dbBranch){
@@ -31918,7 +31920,58 @@ function updateBkReqBadge(count){
   });
 }
 
+// ── Persistent Dashboard card for pending guest requests (stays until Approved/Rejected) ──
+function renderDashGuestReqAlert(){
+  const el = document.getElementById('db-guestreq-alert');
+  if(!el) return;
+  const ar = currentLang==='ar';
+  const pending = (_bkReqCache||[]).filter(r=>r.status==='pending');
+  if(!pending.length){ el.innerHTML=''; return; }
+  const cards = pending.map(r=>
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-top:6px;">'+
+      '<div style="min-width:0;">'+
+        '<div style="font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+bkReqEsc(r.name)+'</div>'+
+        '<div style="font-size:10.5px;color:var(--muted);">📅 '+fmtD(r.ci)+' → '+fmtD(r.co)+(r.room?' · 🛏️ '+bkReqEsc(r.room):'')+'</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex-shrink:0;">'+
+        '<button class="btn bsm" style="background:rgba(76,218,122,0.15);color:#4cda7a;border:1px solid rgba(76,218,122,0.35);" onclick="approveBookingRequest(\''+r.id+'\')">✅</button>'+
+        '<button class="btn bsm" style="background:rgba(224,104,94,0.15);color:#e0685e;border:1px solid rgba(224,104,94,0.35);" onclick="rejectBookingRequest(\''+r.id+'\')">❌</button>'+
+      '</div>'+
+    '</div>'
+  ).join('');
+  el.innerHTML = "<div class='card' style='padding:12px 16px;border-color:rgba(52,152,219,0.4);background:rgba(52,152,219,0.05);margin-bottom:0;cursor:pointer;' onclick=\"bnGo('bookingrequests',null)\">"+
+    "<div class='ctitle' style='color:#7ab8f5;margin-bottom:0;'>🛎️ "+(ar?'طلبات حجز ضيوف جديدة':'New Guest Booking Requests')+
+    " <span style='background:#3498db;color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;'>"+pending.length+"</span></div>"+
+    cards+
+  "</div>";
+}
+
+// ── Detect requests that are new since the last time we checked, and pop a toast for them ──
+function _bkReqSeenIds(){
+  try{ return JSON.parse(localStorage.getItem('dta_bkreq_seen')||'[]'); }catch(e){ return []; }
+}
+function _bkReqMarkSeen(ids){
+  try{ localStorage.setItem('dta_bkreq_seen', JSON.stringify(ids)); }catch(e){}
+}
+function notifyNewGuestRequests(data){
+  if(!data) return;
+  const ar = currentLang==='ar';
+  const seen = new Set(_bkReqSeenIds());
+  const pending = data.filter(r=>r.status==='pending');
+  const fresh = pending.filter(r=>!seen.has(String(r.id)));
+  if(fresh.length){
+    if(fresh.length===1){
+      sNotify('🛎️ '+(ar?'طلب حجز جديد':'New booking request'), fresh[0].name+' — '+fmtD(fresh[0].ci)+' → '+fmtD(fresh[0].co), 'default', 6000);
+    } else {
+      sNotify('🛎️ '+(ar?fresh.length+' طلبات حجز جديدة':fresh.length+' new booking requests'), ar?'افتح صفحة طلبات حجز الضيوف للمراجعة':'Open Guest Requests to review', 'default', 6000);
+    }
+  }
+  // Mark ALL currently-pending requests as seen (so re-opening the app doesn't re-toast the same ones)
+  _bkReqMarkSeen(pending.map(r=>String(r.id)));
+}
+
 async function renderBookingRequests(){
+  if(typeof syncRoomsCatalogToSupabase==='function') syncRoomsCatalogToSupabase();
   const listEl = document.getElementById('bookingrequests-list');
   const emptyEl = document.getElementById('bookingrequests-empty');
   const errEl = document.getElementById('bookingrequests-error');
@@ -31936,6 +31989,7 @@ async function renderBookingRequests(){
   }
   _bkReqCache = data;
   updateBkReqBadge(data.filter(r=>r.status==='pending').length);
+  renderDashGuestReqAlert();
 
   if(!data.length){
     listEl.innerHTML = '';
@@ -32015,14 +32069,23 @@ function openBookingFromRequest(r){
   const ar = currentLang==='ar';
   openBM();
   setTimeout(()=>{
-    document.getElementById('bm-name').value = r.name || '';
-    document.getElementById('bm-phone').value = r.phone || '';
-    if(document.getElementById('bm-whatsapp')) document.getElementById('bm-whatsapp').value = r.phone || '';
     document.getElementById('bm-ci').value = r.ci || '';
     document.getElementById('bm-co').value = r.co || '';
     document.getElementById('bm-adults').value = r.adults || 1;
     document.getElementById('bm-children').value = r.children || 0;
+    // rebuildGuestRows() must run first so the g0-* row (main guest) actually exists in the DOM
     if(typeof rebuildGuestRows === 'function') rebuildGuestRows();
+
+    // g0-name / g0-phone / g0-wa are the real source of truth — syncMainGuest() overwrites
+    // bm-name/bm-phone FROM them on every save, so filling only the hidden bm-* fields
+    // (the old code) got silently wiped out the moment Save was pressed.
+    const g0n = document.getElementById('g0-name'); if(g0n) g0n.value = r.name || '';
+    const g0p = document.getElementById('g0-phone'); if(g0p) g0p.value = r.phone || '';
+    const g0w = document.getElementById('g0-wa'); if(g0w) g0w.value = r.phone || '';
+    // keep the legacy hidden fields in sync too, in case anything reads them before saveBM() runs
+    document.getElementById('bm-name').value = r.name || '';
+    document.getElementById('bm-phone').value = r.phone || '';
+    if(document.getElementById('bm-whatsapp')) document.getElementById('bm-whatsapp').value = r.phone || '';
 
     const roomSel = document.getElementById('bm-room');
     if(roomSel && r.room){
@@ -32103,12 +32166,17 @@ async function rejectBookingRequest(id){
   }
 }
 
-// Lightweight isolated startup check for the pending-requests badge (does not touch existing init flow)
+// Lightweight isolated startup check for the pending-requests badge/alert/toast (does not touch existing init flow)
 window.addEventListener('load', function(){
   setTimeout(async function(){
     try{
       const data = await fetchBookingRequests();
-      if(data) updateBkReqBadge(data.filter(r=>r.status==='pending').length);
+      if(data){
+        _bkReqCache = data;
+        updateBkReqBadge(data.filter(r=>r.status==='pending').length);
+        renderDashGuestReqAlert();
+        notifyNewGuestRequests(data);
+      }
     }catch(e){ console.warn('[bkReq startup badge]', e); }
     syncRoomsCatalogToSupabase();
   }, 2500);
