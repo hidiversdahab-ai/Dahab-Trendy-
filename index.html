@@ -32110,6 +32110,7 @@ async function renderBookingRequests(){
       (r.dob?'<div style="font-size:12px;color:var(--muted);">🎂 '+(ar?'ميلاد الضيف الرئيسي: ':'Main guest DOB: ')+fmtD(r.dob)+'</div>':'')+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
         (waLink?'<a href="'+waLink+'" target="_blank" class="btn bsm" style="background:rgba(37,211,102,0.15);color:#4cda7a;border:1px solid rgba(37,211,102,0.35);text-decoration:none;">💬 '+(ar?'واتساب':'WhatsApp')+'</a>':'')+
+        (r.status==='cancelled_by_guest' && phoneDigits?'<button class="btn bsm" style="background:rgba(37,211,102,0.15);color:#25d366;border:1px solid rgba(37,211,102,0.35);" onclick="sendCancelConfirmWA(\''+r.id+'\')">✅ '+(ar?'تأكيد الإلغاء واتساب':'Confirm Cancellation on WhatsApp')+'</button>':'')+
         (r.status==='pending'?(
           '<button class="btn bsm" style="background:rgba(76,218,122,0.15);color:#4cda7a;border:1px solid rgba(76,218,122,0.35);" onclick="approveBookingRequest(\''+r.id+'\')">✅ '+(ar?'قبول':'Approve')+'</button>'+
           '<button class="btn bsm" style="background:rgba(224,104,94,0.15);color:#e0685e;border:1px solid rgba(224,104,94,0.35);" onclick="rejectBookingRequest(\''+r.id+'\')">❌ '+(ar?'رفض':'Reject')+'</button>'
@@ -32119,6 +32120,26 @@ async function renderBookingRequests(){
       '</div>'+
     '</div>';
   }).join('');
+}
+
+// Opens WhatsApp with a ready-made bilingual message confirming the cancellation to the guest,
+// so reception has one tap to close the loop instead of typing it from scratch every time.
+function sendCancelConfirmWA(id){
+  const r = _bkReqCache.find(x=>String(x.id)===String(id));
+  if(!r) return;
+  const phoneDigits = (r.phone||'').replace(/\D/g,'');
+  if(!phoneDigits) return;
+  const propName = (typeof PROP!=='undefined' && PROP && PROP.name) ? PROP.name : '';
+  const msg =
+    '✅ تأكيد إلغاء الحجز · Booking Cancellation Confirmed\n\n' +
+    'مرحبًا ' + (r.name||'') + '،\n' +
+    'تم تأكيد إلغاء طلب حجزك (' + fmtD(r.ci) + ' → ' + fmtD(r.co) + ')' + (r.room?(' — غرفة '+r.room):'') + '.\n' +
+    'نتمنى نستضيفك معانا في زيارة قادمة 🌊\n\n' +
+    'Hi ' + (r.name||'') + ',\n' +
+    'Your booking request cancellation (' + fmtD(r.ci) + ' → ' + fmtD(r.co) + ')' + (r.room?(' — Room '+r.room):'') + ' has been confirmed.\n' +
+    'We hope to host you another time 🌊' +
+    (propName ? ('\n\n🏨 ' + propName) : '');
+  window.open('https://wa.me/' + phoneDigits + '?text=' + encodeURIComponent(msg), '_blank');
 }
 
 async function deleteBookingRequest(id){
