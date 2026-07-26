@@ -32020,28 +32020,43 @@ function renderDashGuestReqAlert(){
   "</div>";
 }
 
-// ── Detect requests that are new since the last time we checked, and pop a toast for them ──
-function _bkReqSeenIds(){
-  try{ return JSON.parse(localStorage.getItem('dta_bkreq_seen')||'[]'); }catch(e){ return []; }
+// ── Detect requests that are new / changed since the last time we checked, and pop a toast for them ──
+// Tracks last-known status per request id, so we can catch BOTH new pending requests
+// AND existing requests the guest cancelled (status -> 'cancelled_by_guest'), not just new arrivals.
+function _bkReqSeenStatus(){
+  try{ return JSON.parse(localStorage.getItem('dta_bkreq_seen_status')||'{}'); }catch(e){ return {}; }
 }
-function _bkReqMarkSeen(ids){
-  try{ localStorage.setItem('dta_bkreq_seen', JSON.stringify(ids)); }catch(e){}
+function _bkReqMarkSeenStatus(map){
+  try{ localStorage.setItem('dta_bkreq_seen_status', JSON.stringify(map)); }catch(e){}
 }
 function notifyNewGuestRequests(data){
   if(!data) return;
   const ar = currentLang==='ar';
-  const seen = new Set(_bkReqSeenIds());
+  const seenMap = _bkReqSeenStatus();
+
+  // New pending requests we haven't shown a toast for yet
   const pending = data.filter(r=>r.status==='pending');
-  const fresh = pending.filter(r=>!seen.has(String(r.id)));
-  if(fresh.length){
-    if(fresh.length===1){
-      sNotify('🛎️ '+(ar?'طلب حجز جديد':'New booking request'), fresh[0].name+' — '+fmtD(fresh[0].ci)+' → '+fmtD(fresh[0].co), 'default', 6000);
+  const freshPending = pending.filter(r=>!(String(r.id) in seenMap));
+  if(freshPending.length){
+    if(freshPending.length===1){
+      sNotify('🛎️ '+(ar?'طلب حجز جديد':'New booking request'), freshPending[0].name+' — '+fmtD(freshPending[0].ci)+' → '+fmtD(freshPending[0].co), 'default', 6000);
     } else {
-      sNotify('🛎️ '+(ar?fresh.length+' طلبات حجز جديدة':fresh.length+' new booking requests'), ar?'افتح صفحة طلبات حجز الضيوف للمراجعة':'Open Guest Requests to review', 'default', 6000);
+      sNotify('🛎️ '+(ar?freshPending.length+' طلبات حجز جديدة':freshPending.length+' new booking requests'), ar?'افتح صفحة طلبات حجز الضيوف للمراجعة':'Open Guest Requests to review', 'default', 6000);
     }
   }
-  // Mark ALL currently-pending requests as seen (so re-opening the app doesn't re-toast the same ones)
-  _bkReqMarkSeen(pending.map(r=>String(r.id)));
+
+  // Requests the guest cancelled since we last checked (status just transitioned to cancelled_by_guest)
+  const freshCancelled = data.filter(r=>r.status==='cancelled_by_guest' && seenMap[String(r.id)] && seenMap[String(r.id)]!=='cancelled_by_guest');
+  freshCancelled.forEach(r=>{
+    sNotify('❌ '+(ar?'الضيف ألغى الحجز':'Guest cancelled booking'),
+      r.name+' — '+fmtD(r.ci)+' → '+fmtD(r.co)+(r.synced_booking_id?(ar?' ⚠️ لازم تلغي الحجز الفعلي يدويًا':' ⚠️ Manually cancel the actual booking'):''),
+      'error', 7000);
+  });
+
+  // Remember the current status of every request so future polls only notify on real changes
+  const newMap = {};
+  data.forEach(r=>{ newMap[String(r.id)] = r.status; });
+  _bkReqMarkSeenStatus(newMap);
 }
 
 async function renderBookingRequests(){
