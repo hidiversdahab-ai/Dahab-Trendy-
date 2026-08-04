@@ -32247,13 +32247,16 @@ function openBookingFromRequest(r){
     document.getElementById('bm-phone').value = r.phone || '';
     if(document.getElementById('bm-whatsapp')) document.getElementById('bm-whatsapp').value = r.phone || '';
     if(r.dob && document.getElementById('bm-dob')) document.getElementById('bm-dob').value = r.dob;
-    // Fill in extra guest names + DOBs (rows g1, g2, ...) if the guest listed any on the public form
+    // Fill in extra guest names + DOBs + WhatsApp/phone (rows g1, g2, ...) if the guest listed any on the public form
     const extraDobs = Array.isArray(r.guest_dobs) ? r.guest_dobs : [];
+    const extraPhones = Array.isArray(r.guest_phones) ? r.guest_phones : [];
     extraNames.forEach((n,i)=>{
       const el = document.getElementById('g'+(i+1)+'-name');
       if(el) el.value = n;
       const dEl = document.getElementById('g'+(i+1)+'-dob');
       if(dEl && extraDobs[i]) dEl.value = extraDobs[i];
+      const wEl = document.getElementById('g'+(i+1)+'-wa');
+      if(wEl && extraPhones[i]) wEl.value = extraPhones[i];
     });
 
     const roomSel = document.getElementById('bm-room');
