@@ -26426,30 +26426,117 @@ function watSaveCustomFromCurrent(){
   if(typeof sNotify==='function')sNotify('💾 تم الحفظ','تم حفظ القالب المخصص','success',2500);
 }
 
-// ── مطابقة جنسية الضيف بالمناسبة الوطنية ──
+// ── مطابقة جنسية الضيف بالمناسبة الوطنية (تغطية موسّعة: عرب + أوروبا + دول أخرى) ──
 const NATIONAL_DAYS_MAP = {
-  FR:{month:7, day:14, ar:'🇫🇷 عيد الباستيل الفرنسي',      en:'🇫🇷 Bastille Day',                fr:'🇫🇷 Fête Nationale',                    de:'🇫🇷 Französischer Nationalfeiertag',  ru:'🇫🇷 День взятия Бастилии'},
-  US:{month:7, day:4,  ar:'🇺🇸 عيد استقلال أمريكا',         en:'🇺🇸 US Independence Day',          fr:"🇺🇸 Fête de l'Indépendance (USA)",      de:'🇺🇸 Amerikanischer Unabhängigkeitstag',ru:'🇺🇸 День независимости США'},
-  DE:{month:10,day:3,  ar:'🇩🇪 اليوم الوطني الألماني',       en:'🇩🇪 German Unity Day',             fr:"🇩🇪 Jour de l'unité allemande",         de:'🇩🇪 Tag der Deutschen Einheit',       ru:'🇩🇪 День немецкого единства'},
-  IT:{month:6, day:2,  ar:'🇮🇹 عيد الجمهورية الإيطالية',     en:'🇮🇹 Italian Republic Day',         fr:'🇮🇹 Fête de la République italienne',   de:'🇮🇹 Tag der Republik (Italien)',       ru:'🇮🇹 День Республики (Италия)'},
-  RU:{month:6, day:12, ar:'🇷🇺 يوم روسيا',                  en:'🇷🇺 Russia Day',                   fr:'🇷🇺 Fête de la Russie',                 de:'🇷🇺 Tag Russlands',                    ru:'🇷🇺 День России'},
-  ES:{month:10,day:12, ar:'🇪🇸 العيد الوطني الإسباني',       en:'🇪🇸 Spain National Day',           fr:"🇪🇸 Fête nationale d'Espagne",          de:'🇪🇸 Spanischer Nationalfeiertag',     ru:'🇪🇸 Национальный день Испании'},
-  CN:{month:10,day:1,  ar:'🇨🇳 العيد الوطني الصيني',         en:'🇨🇳 China National Day',           fr:'🇨🇳 Fête nationale chinoise',           de:'🇨🇳 Chinesischer Nationalfeiertag',    ru:'🇨🇳 День образования КНР'}
+  // ── أوروبا وأمريكا (الأصلية) ──
+  FR:{month:7, day:14, ar:'🇫🇷 عيد الباستيل الفرنسي',        en:'🇫🇷 Bastille Day'},
+  US:{month:7, day:4,  ar:'🇺🇸 عيد استقلال أمريكا',           en:'🇺🇸 US Independence Day'},
+  DE:{month:10,day:3,  ar:'🇩🇪 اليوم الوطني الألماني',         en:'🇩🇪 German Unity Day'},
+  IT:{month:6, day:2,  ar:'🇮🇹 عيد الجمهورية الإيطالية',       en:'🇮🇹 Italian Republic Day'},
+  RU:{month:6, day:12, ar:'🇷🇺 يوم روسيا',                    en:'🇷🇺 Russia Day'},
+  ES:{month:10,day:12, ar:'🇪🇸 العيد الوطني الإسباني',         en:'🇪🇸 Spain National Day'},
+  CN:{month:10,day:1,  ar:'🇨🇳 العيد الوطني الصيني',           en:'🇨🇳 China National Day'},
+  // ── الدول العربية ──
+  EG:{month:7, day:23, ar:'🇪🇬 عيد ثورة 23 يوليو',            en:'🇪🇬 Egypt National Day'},
+  SA:{month:9, day:23, ar:'🇸🇦 اليوم الوطني السعودي',          en:'🇸🇦 Saudi National Day'},
+  AE:{month:12,day:2,  ar:'🇦🇪 اليوم الوطني الإماراتي',         en:'🇦🇪 UAE National Day'},
+  KW:{month:2, day:25, ar:'🇰🇼 اليوم الوطني الكويتي',          en:'🇰🇼 Kuwait National Day'},
+  QA:{month:12,day:18, ar:'🇶🇦 اليوم الوطني القطري',           en:'🇶🇦 Qatar National Day'},
+  BH:{month:12,day:16, ar:'🇧🇭 اليوم الوطني البحريني',         en:'🇧🇭 Bahrain National Day'},
+  OM:{month:11,day:18, ar:'🇴🇲 العيد الوطني العماني',          en:'🇴🇲 Oman National Day'},
+  JO:{month:5, day:25, ar:'🇯🇴 عيد استقلال الأردن',           en:'🇯🇴 Jordan Independence Day'},
+  LB:{month:11,day:22, ar:'🇱🇧 عيد استقلال لبنان',            en:'🇱🇧 Lebanon Independence Day'},
+  SY:{month:4, day:17, ar:'🇸🇾 عيد الجلاء السوري',            en:'🇸🇾 Syria Evacuation Day'},
+  IQ:{month:7, day:14, ar:'🇮🇶 عيد الجمهورية العراقي',         en:'🇮🇶 Iraq Republic Day'},
+  MA:{month:7, day:30, ar:'🇲🇦 عيد العرش المغربي',            en:'🇲🇦 Morocco Throne Day'},
+  TN:{month:3, day:20, ar:'🇹🇳 عيد استقلال تونس',             en:'🇹🇳 Tunisia Independence Day'},
+  DZ:{month:7, day:5,  ar:'🇩🇿 عيد استقلال الجزائر',           en:'🇩🇿 Algeria Independence Day'},
+  LY:{month:12,day:24, ar:'🇱🇾 عيد استقلال ليبيا',            en:'🇱🇾 Libya Independence Day'},
+  SD:{month:1, day:1,  ar:'🇸🇩 عيد استقلال السودان',           en:'🇸🇩 Sudan Independence Day'},
+  PS:{month:11,day:15, ar:'🇵🇸 يوم الاستقلال الفلسطيني',       en:'🇵🇸 Palestine Independence Day'},
+  YE:{month:5, day:22, ar:'🇾🇪 عيد الوحدة اليمنية',            en:'🇾🇪 Yemen Unity Day'},
+  // ── أوروبا إضافية ──
+  NL:{month:4, day:27, ar:'🇳🇱 يوم الملك الهولندي',            en:"🇳🇱 King's Day (Netherlands)"},
+  SE:{month:6, day:6,  ar:'🇸🇪 اليوم الوطني السويدي',          en:'🇸🇪 Sweden National Day'},
+  NO:{month:5, day:17, ar:'🇳🇴 يوم الدستور النرويجي',          en:'🇳🇴 Norway Constitution Day'},
+  BE:{month:7, day:21, ar:'🇧🇪 العيد الوطني البلجيكي',         en:'🇧🇪 Belgian National Day'},
+  CH:{month:8, day:1,  ar:'🇨🇭 العيد الوطني السويسري',         en:'🇨🇭 Swiss National Day'},
+  AT:{month:10,day:26, ar:'🇦🇹 العيد الوطني النمساوي',         en:'🇦🇹 Austrian National Day'},
+  PL:{month:11,day:11, ar:'🇵🇱 عيد استقلال بولندا',            en:'🇵🇱 Poland Independence Day'},
+  CZ:{month:10,day:28, ar:'🇨🇿 يوم الدولة التشيكية',           en:'🇨🇿 Czech Statehood Day'},
+  UA:{month:8, day:24, ar:'🇺🇦 عيد استقلال أوكرانيا',          en:'🇺🇦 Ukraine Independence Day'},
+  PT:{month:6, day:10, ar:'🇵🇹 اليوم الوطني البرتغالي',         en:'🇵🇹 Portugal Day'},
+  GR:{month:3, day:25, ar:'🇬🇷 عيد استقلال اليونان',           en:'🇬🇷 Greek Independence Day'},
+  TR:{month:10,day:29, ar:'🇹🇷 عيد الجمهورية التركي',          en:'🇹🇷 Turkey Republic Day'},
+  FI:{month:12,day:6,  ar:'🇫🇮 عيد استقلال فنلندا',            en:'🇫🇮 Finland Independence Day'},
+  // ── دول أخرى ──
+  JP:{month:2, day:11, ar:'🇯🇵 يوم تأسيس الدولة الياباني',      en:'🇯🇵 Japan National Foundation Day'},
+  KR:{month:8, day:15, ar:'🇰🇷 يوم تحرير كوريا الجنوبية',       en:'🇰🇷 South Korea Liberation Day'},
+  IN:{month:8, day:15, ar:'🇮🇳 عيد استقلال الهند',             en:'🇮🇳 India Independence Day'},
+  BR:{month:9, day:7,  ar:'🇧🇷 عيد استقلال البرازيل',          en:'🇧🇷 Brazil Independence Day'},
+  MX:{month:9, day:16, ar:'🇲🇽 عيد استقلال المكسيك',           en:'🇲🇽 Mexico Independence Day'},
+  AR:{month:7, day:9,  ar:'🇦🇷 عيد استقلال الأرجنتين',         en:'🇦🇷 Argentina Independence Day'},
+  ZA:{month:4, day:27, ar:'🇿🇦 يوم الحرية في جنوب أفريقيا',     en:'🇿🇦 South Africa Freedom Day'},
+  CA:{month:7, day:1,  ar:'🇨🇦 عيد كندا',                     en:'🇨🇦 Canada Day'},
+  AU:{month:1, day:26, ar:'🇦🇺 يوم أستراليا',                  en:'🇦🇺 Australia Day'}
 };
 const NAT_KEYWORDS = {
-  FR:['french','france','فرنس'],
-  US:['american','usa','united states','أمريك'],
-  DE:['german','germany','deutsch','ألماني','الماني'],
-  IT:['italian','italy','italia','ايطالي','إيطالي'],
-  RU:['russian','russia','россия','روسي'],
-  ES:['spanish','spain','españa','اسباني','إسباني'],
-  CN:['chinese','china','中国','صيني']
+  FR:['french','france','فرنسي','فرنسا'],
+  US:['american','usa','أمريكي','أمريكا','united states'],
+  DE:['german','germany','deutsch','ألماني','الماني','ألمانيا'],
+  IT:['italian','italy','italia','ايطالي','إيطالي','ايطاليا','إيطاليا'],
+  RU:['russian','russia','روسي','روسيا'],
+  ES:['spanish','spain','españa','اسباني','إسباني','اسبانيا','إسبانيا'],
+  CN:['chinese','china','صيني','الصين'],
+  EG:['egyptian','egypt','مصري','مصر'],
+  SA:['saudi','ksa','سعودي','السعودية'],
+  AE:['emirati','emirates','اماراتي','إماراتي','الامارات','الإمارات','united arab emirates'],
+  KW:['kuwaiti','kuwait','كويتي','الكويت'],
+  QA:['qatari','qatar','قطري','قطر'],
+  BH:['bahraini','bahrain','بحريني','البحرين'],
+  OM:['omani','oman','عماني','عمان'],
+  JO:['jordanian','jordan','أردني','اردني','الأردن'],
+  LB:['lebanese','lebanon','لبناني','لبنان'],
+  SY:['syrian','syria','سوري','سوريا'],
+  IQ:['iraqi','iraq','عراقي','العراق'],
+  MA:['moroccan','morocco','مغربي','المغرب'],
+  TN:['tunisian','tunisia','تونسي','تونس'],
+  DZ:['algerian','algeria','جزائري','الجزائر'],
+  LY:['libyan','libya','ليبي','ليبيا'],
+  SD:['sudanese','sudan','سوداني','السودان'],
+  PS:['palestinian','palestine','فلسطيني','فلسطين'],
+  YE:['yemeni','yemen','يمني','اليمن'],
+  NL:['dutch','netherlands','holland','هولندي','هولندا'],
+  SE:['swedish','sweden','سويدي','السويد'],
+  NO:['norwegian','norway','نرويجي','النرويج'],
+  BE:['belgian','belgium','بلجيكي','بلجيكا'],
+  CH:['swiss','switzerland','سويسري','سويسرا'],
+  AT:['austrian','austria','نمساوي','النمسا'],
+  PL:['polish','poland','بولندي','بولندا'],
+  CZ:['czech','تشيكي','تشيك'],
+  UA:['ukrainian','ukraine','أوكراني','اوكراني','أوكرانيا'],
+  PT:['portuguese','portugal','برتغالي','البرتغال'],
+  GR:['greek','greece','يوناني','اليونان'],
+  TR:['turkish','turkey','تركي','تركيا'],
+  FI:['finnish','finland','فنلندي','فنلندا'],
+  JP:['japanese','japan','ياباني','اليابان'],
+  KR:['korean','korea','كوري','كوريا','south korea'],
+  IN:['indian','india','هندي','الهند'],
+  BR:['brazilian','brazil','برازيلي','البرازيل'],
+  MX:['mexican','mexico','مكسيكي','المكسيك'],
+  AR:['argentinian','argentine','argentina','أرجنتيني','الأرجنتين'],
+  ZA:['southafrican','جنوب أفريقيا','جنوب افريقيا','south africa'],
+  CA:['canadian','canada','كندي','كندا'],
+  AU:['australian','australia','استرالي','أسترالي','استراليا','أستراليا']
 };
+function _ndTokens(s){ return (s||'').toLowerCase().split(/[^\p{L}]+/u).filter(Boolean); }
 function matchNationalDay(natRaw){
   const nat=(natRaw||'').toString().toLowerCase().trim();
   if(!nat) return null;
+  const tokenSet=new Set(_ndTokens(nat));
   for(const code in NAT_KEYWORDS){
-    if(NAT_KEYWORDS[code].some(k=>nat.includes(k))){
+    const found=NAT_KEYWORDS[code].some(k=>k.includes(' ')?nat.includes(k):tokenSet.has(k));
+    if(found){
       const info=NATIONAL_DAYS_MAP[code];
       const now=new Date(); const todayMid=new Date(now.getFullYear(),now.getMonth(),now.getDate());
       let occ=new Date(now.getFullYear(),info.month-1,info.day);
@@ -26502,8 +26589,9 @@ function sendNationalDayWA(idx){
   const b=(bookings||[])[idx];
   if(!b){ if(typeof sNotify==='function') sNotify('⚠️','Booking not found','error',2500); return; }
   const match=matchNationalDay(b.nat||b.nationality);
+  const arabCodes=['EG','SA','AE','KW','QA','BH','OM','JO','LB','SY','IQ','MA','TN','DZ','LY','SD','PS','YE'];
   const langMap={FR:'fr',DE:'de',RU:'ru'};
-  const lang=match?(langMap[match.code]||'en'):'en';
+  const lang=match?(arabCodes.includes(match.code)?'ar':(langMap[match.code]||'en')):'en';
   const tpl=buildNationalDayMsg(b,lang);
   const phone=(b.whatsapp||b.phone||'').replace(/[^0-9]/g,'');
   const url=phone?'https://wa.me/'+phone+'?text='+encodeURIComponent(tpl.body):'https://wa.me/?text='+encodeURIComponent(tpl.body);
