@@ -8048,15 +8048,29 @@ items.map(makeCard).join("")+"</div></div>";
 // Dashboard alerts panel
 const dbEl=document.getElementById("db-alerts");
 if(dbEl){
-if(!alerts.length){dbEl.innerHTML="";} else {
+const ndMatches=(typeof getNationalDayMatches==='function')?getNationalDayMatches():[];
+const makeNdHtml=(col)=>ndMatches.length?
+"<div style='background:rgba(52,152,219,0.12);border:1px solid rgba(52,152,219,0.45);border-radius:8px;padding:9px 12px;margin-bottom:10px;'>"+
+"<div style='font-size:10px;font-weight:700;letter-spacing:1px;color:#5dade2;margin-bottom:7px;text-transform:uppercase;'>🎉 "+(ar?"مناسبات وطنية للضيوف الحاليين":"National Days — Guests In-House")+" ("+ndMatches.length+")</div>"+
+ndMatches.map(o=>
+"<div style='display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(52,152,219,0.15);'>"+
+"<div>"+
+"<div style='font-size:11px;font-weight:700;color:#5dade2;'>"+(o.match[ar?'ar':'en'])+"</div>"+
+"<div style='font-size:10px;color:var(--muted);'>👤 "+o.b.name+" · "+(ar?"غرفة ":"Rm ")+o.b.room+" · "+(o.match.daysUntil===0?(ar?"اليوم":"today"):(ar?"بعد "+o.match.daysUntil+" يوم":"in "+o.match.daysUntil+"d"))+"</div>"+
+"</div>"+
+"<button onclick='sendNationalDayWA("+o.idx+")' style='background:#25D366;color:#fff;border:none;padding:4px 11px;border-radius:5px;cursor:pointer;font-size:10px;font-weight:700;white-space:nowrap;'>📤 "+(ar?"إرسال":"Send")+"</button>"+
+"</div>"
+).join("")+
+"</div>":"";
+if(!alerts.length&&!ndMatches.length){dbEl.innerHTML="";} else {
 const title=ar?"🔔 جميع الحجوزات القادمة":"🔔 Upcoming Bookings";
-dbEl.innerHTML="<div class='card' style='padding:12px 16px;border-color:rgba(201,168,76,0.35);margin-bottom:0;'>"+
+dbEl.innerHTML=makeNdHtml()+(alerts.length?"<div class='card' style='padding:12px 16px;border-color:rgba(201,168,76,0.35);margin-bottom:0;'>"+
 "<div class='ctitle' style='margin-bottom:10px;'>"+title+" <span style='background:var(--gold);color:#1a1a2e;border-radius:20px;padding:1px 8px;font-size:11px;'>"+alerts.length+"</span></div>"+
 makeGroup(ar?"اليوم":"Today", today, "#e74c3c")+
 makeGroup(ar?"هذا الأسبوع":"This Week", week, "#e67e22")+
 makeGroup(ar?"هذا الشهر":"This Month", month, "#7ab8f5")+
 makeGroup(ar?"قادمة (أكثر من شهر)":"Future (1+ month)", future, "#4cda7a")+
-"</div>";
+"</div>":"");
 }
 }
 // ── Rooms page alerts (same as dashboard) ──
@@ -8113,13 +8127,14 @@ standbyAlerts.map(a=>"<div style='display:flex;align-items:center;justify-conten
 // Bell badge - show total count
 const badge=document.getElementById("notif-badge");
 if(badge){
-if(alerts.length){badge.textContent=alerts.length;badge.style.display="flex";}
+if(alerts.length||(typeof getNationalDayMatches==='function'&&getNationalDayMatches().length)){badge.textContent=alerts.length+((typeof getNationalDayMatches==='function')?getNationalDayMatches().length:0);badge.style.display="flex";}
 else badge.style.display="none";
 }
 // Bell panel list - grouped
 const nlist=document.getElementById("notif-list");
 if(nlist){
-if(!alerts.length){
+const _ndCount=(typeof getNationalDayMatches==='function')?getNationalDayMatches().length:0;
+if(!alerts.length&&!_ndCount){
 nlist.innerHTML="<div style='color:var(--muted);font-size:12px;text-align:center;padding:16px;'>"+(ar?"لا توجد حجوزات قادمة":"No upcoming bookings")+"</div>";
 return;
 }
@@ -8157,6 +8172,22 @@ return "<div style='border-bottom:1px solid rgba(255,255,255,0.06);padding:7px 0
 }).join("")+"</div>";
 }
 nlist.innerHTML=
+(function(){
+  const ndMatches=(typeof getNationalDayMatches==='function')?getNationalDayMatches():[];
+  if(!ndMatches.length) return "";
+  return "<div style='background:rgba(52,152,219,0.12);border:1px solid rgba(52,152,219,0.45);border-radius:8px;padding:9px 12px;margin-bottom:8px;'>"+
+  "<div style='font-size:9px;font-weight:700;letter-spacing:1px;color:#5dade2;margin-bottom:6px;text-transform:uppercase;'>🎉 "+(ar?"مناسبات وطنية":"National Days")+" ("+ndMatches.length+")</div>"+
+  ndMatches.map(o=>
+  "<div style='display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(52,152,219,0.15);'>"+
+  "<div>"+
+  "<div style='font-size:10px;font-weight:700;color:#5dade2;'>"+(o.match[ar?'ar':'en'])+"</div>"+
+  "<div style='font-size:10px;color:var(--text);'>"+o.b.name+" · "+(ar?"غرفة ":"Rm ")+o.b.room+"</div>"+
+  "</div>"+
+  "<button onclick='sendNationalDayWA("+o.idx+");toggleNotif();' style='background:#25D366;color:#fff;border:none;padding:3px 9px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:700;white-space:nowrap;'>📤</button>"+
+  "</div>"
+  ).join("")+
+  "</div>";
+})()+
 makeNotifGroup(ar?"اليوم":"Today", today, "#e74c3c")+
 makeNotifGroup(ar?"هذا الأسبوع":"This Week", week, "#e67e22")+
 makeNotifGroup(ar?"هذا الشهر":"This Month", month, "#7ab8f5")+
@@ -25161,6 +25192,7 @@ function applyScanData(){
         <button class="btn bb bsm" onclick="setWAType('comfort_check')">راحتك أولويتنا 🏨</button>
         <button class="btn bb bsm" onclick="setWAType('extend')">تمديد إقامة 🌙</button>
         <button class="btn bb bsm" onclick="setWAType('stay_summary')">ملخص إقامة 📋</button>
+        <button class="btn bb bsm" onclick="setWAType('national_day')">مناسبة وطنية 🎉</button>
       </div>
     </div>
 
@@ -26283,7 +26315,11 @@ function openWATemplates(){
 function _watFillSelect(list){
   const sel=document.getElementById('wat-booking-sel');
   sel.innerHTML=list.length
-    ?list.map(b=>`<option value="${(bookings||[]).indexOf(b)}">${b.name} · غرفة ${b.room} · ${b.ci}</option>`).join('')
+    ?list.map(b=>{
+        const m=matchNationalDay(b.nat||b.nationality);
+        const flag=(m&&m.daysUntil<=14)?' 🎉':'';
+        return `<option value="${(bookings||[]).indexOf(b)}">${b.name} · غرفة ${b.room} · ${b.ci}${flag}</option>`;
+      }).join('')
     :'<option value="">لا توجد حجوزات</option>';
 }
 
@@ -26302,8 +26338,8 @@ function setWALang(lang){
   loadWATemplate();
 }
 const _watTypeLabels={
-  ar:{confirm:'تأكيد حجز ✅',reminder:'تذكير وصول ⏰',thanks:'شكر مغادرة 🙏',deposit:'طلب عربون 💰',bday:'عيد ميلاد 🎂',welcome:'ترحيب وصول 🎉',checkin_info:'تعليمات وصول 🔑',review:'طلب تقييم ⭐',late_pay:'تذكير دفع ⚠️',rebook:'إعادة حجز 🔄',upgrade:'عرض خاص 🏖️',pay_thanks:'شكر دفع 💚',review_thanks:'شكر تقييم 🌟',comfort_check:'راحتك أولويتنا 🏨',extend:'تمديد إقامة 🌙',stay_summary:'ملخص إقامة 📋'},
-  en:{confirm:'Confirm ✅',reminder:'Arrival Reminder ⏰',thanks:'Thank You 🙏',deposit:'Deposit Request 💰',bday:'Birthday 🎂',welcome:'Welcome 🎉',checkin_info:'Check-in Info 🔑',review:'Review Request ⭐',late_pay:'Payment Reminder ⚠️',rebook:'Re-booking 🔄',upgrade:'Special Offer 🏖️',pay_thanks:'Payment Thanks 💚',review_thanks:'Review Thanks 🌟',comfort_check:'Comfort Check 🏨',extend:'Extend Stay 🌙',stay_summary:'Stay Summary 📋'},
+  ar:{confirm:'تأكيد حجز ✅',reminder:'تذكير وصول ⏰',thanks:'شكر مغادرة 🙏',deposit:'طلب عربون 💰',bday:'عيد ميلاد 🎂',welcome:'ترحيب وصول 🎉',checkin_info:'تعليمات وصول 🔑',review:'طلب تقييم ⭐',late_pay:'تذكير دفع ⚠️',rebook:'إعادة حجز 🔄',upgrade:'عرض خاص 🏖️',pay_thanks:'شكر دفع 💚',review_thanks:'شكر تقييم 🌟',comfort_check:'راحتك أولويتنا 🏨',extend:'تمديد إقامة 🌙',stay_summary:'ملخص إقامة 📋',national_day:'مناسبة وطنية 🎉'},
+  en:{confirm:'Confirm ✅',reminder:'Arrival Reminder ⏰',thanks:'Thank You 🙏',deposit:'Deposit Request 💰',bday:'Birthday 🎂',welcome:'Welcome 🎉',checkin_info:'Check-in Info 🔑',review:'Review Request ⭐',late_pay:'Payment Reminder ⚠️',rebook:'Re-booking 🔄',upgrade:'Special Offer 🏖️',pay_thanks:'Payment Thanks 💚',review_thanks:'Review Thanks 🌟',comfort_check:'Comfort Check 🏨',extend:'Extend Stay 🌙',stay_summary:'Stay Summary 📋',national_day:'National Day 🎉'},
   fr:{confirm:'Confirmation ✅',reminder:'Rappel arrivée ⏰',thanks:'Merci 🙏',deposit:'Acompte 💰',bday:'Anniversaire 🎂',welcome:'Bienvenue 🎉',checkin_info:'Infos arrivée 🔑',review:'Avis ⭐',late_pay:'Rappel paiement ⚠️',rebook:'Re-réservation 🔄',upgrade:'Offre spéciale 🏖️',pay_thanks:'Merci paiement 💚',review_thanks:'Merci avis 🌟',comfort_check:'Confort 🏨',extend:'Prolonger 🌙',stay_summary:'Résumé séjour 📋'},
   de:{confirm:'Bestätigung ✅',reminder:'Ankunft Erinnerung ⏰',thanks:'Danke 🙏',deposit:'Anzahlung 💰',bday:'Geburtstag 🎂',welcome:'Willkommen 🎉',checkin_info:'Check-in Info 🔑',review:'Bewertung ⭐',late_pay:'Zahlungserinnerung ⚠️',rebook:'Neubuchung 🔄',upgrade:'Sonderangebot 🏖️',pay_thanks:'Danke Zahlung 💚',review_thanks:'Danke Bewertung 🌟',comfort_check:'Komfort 🏨',extend:'Verlängerung 🌙',stay_summary:'Aufenthaltsübersicht 📋'},
   ru:{confirm:'Подтверждение ✅',reminder:'Напоминание о заезде ⏰',thanks:'Благодарность 🙏',deposit:'Запрос депозита 💰',bday:'День рождения 🎂',welcome:'Добро пожаловать 🎉',checkin_info:'Инфо о заезде 🔑',review:'Запрос отзыва ⭐',late_pay:'Напоминание об оплате ⚠️',rebook:'Повторное бронирование 🔄',upgrade:'Спец. предложение 🏖️',pay_thanks:'Спасибо за оплату 💚',review_thanks:'Спасибо за отзыв 🌟',comfort_check:'Проверка комфорта 🏨',extend:'Продление 🌙',stay_summary:'Итог пребывания 📋'}
@@ -26388,6 +26424,91 @@ function watSaveCustomFromCurrent(){
   _watCustomTpls.push({id:Date.now(),name,body:msg});
   _watSaveCustom();
   if(typeof sNotify==='function')sNotify('💾 تم الحفظ','تم حفظ القالب المخصص','success',2500);
+}
+
+// ── مطابقة جنسية الضيف بالمناسبة الوطنية ──
+const NATIONAL_DAYS_MAP = {
+  FR:{month:7, day:14, ar:'🇫🇷 عيد الباستيل الفرنسي',      en:'🇫🇷 Bastille Day',                fr:'🇫🇷 Fête Nationale',                    de:'🇫🇷 Französischer Nationalfeiertag',  ru:'🇫🇷 День взятия Бастилии'},
+  US:{month:7, day:4,  ar:'🇺🇸 عيد استقلال أمريكا',         en:'🇺🇸 US Independence Day',          fr:"🇺🇸 Fête de l'Indépendance (USA)",      de:'🇺🇸 Amerikanischer Unabhängigkeitstag',ru:'🇺🇸 День независимости США'},
+  DE:{month:10,day:3,  ar:'🇩🇪 اليوم الوطني الألماني',       en:'🇩🇪 German Unity Day',             fr:"🇩🇪 Jour de l'unité allemande",         de:'🇩🇪 Tag der Deutschen Einheit',       ru:'🇩🇪 День немецкого единства'},
+  IT:{month:6, day:2,  ar:'🇮🇹 عيد الجمهورية الإيطالية',     en:'🇮🇹 Italian Republic Day',         fr:'🇮🇹 Fête de la République italienne',   de:'🇮🇹 Tag der Republik (Italien)',       ru:'🇮🇹 День Республики (Италия)'},
+  RU:{month:6, day:12, ar:'🇷🇺 يوم روسيا',                  en:'🇷🇺 Russia Day',                   fr:'🇷🇺 Fête de la Russie',                 de:'🇷🇺 Tag Russlands',                    ru:'🇷🇺 День России'},
+  ES:{month:10,day:12, ar:'🇪🇸 العيد الوطني الإسباني',       en:'🇪🇸 Spain National Day',           fr:"🇪🇸 Fête nationale d'Espagne",          de:'🇪🇸 Spanischer Nationalfeiertag',     ru:'🇪🇸 Национальный день Испании'},
+  CN:{month:10,day:1,  ar:'🇨🇳 العيد الوطني الصيني',         en:'🇨🇳 China National Day',           fr:'🇨🇳 Fête nationale chinoise',           de:'🇨🇳 Chinesischer Nationalfeiertag',    ru:'🇨🇳 День образования КНР'}
+};
+const NAT_KEYWORDS = {
+  FR:['french','france','فرنس'],
+  US:['american','usa','united states','أمريك'],
+  DE:['german','germany','deutsch','ألماني','الماني'],
+  IT:['italian','italy','italia','ايطالي','إيطالي'],
+  RU:['russian','russia','россия','روسي'],
+  ES:['spanish','spain','españa','اسباني','إسباني'],
+  CN:['chinese','china','中国','صيني']
+};
+function matchNationalDay(natRaw){
+  const nat=(natRaw||'').toString().toLowerCase().trim();
+  if(!nat) return null;
+  for(const code in NAT_KEYWORDS){
+    if(NAT_KEYWORDS[code].some(k=>nat.includes(k))){
+      const info=NATIONAL_DAYS_MAP[code];
+      const now=new Date(); const todayMid=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+      let occ=new Date(now.getFullYear(),info.month-1,info.day);
+      if(occ<todayMid) occ=new Date(now.getFullYear()+1,info.month-1,info.day);
+      const daysUntil=Math.round((occ-todayMid)/86400000);
+      return {code,...info,date:occ,daysUntil};
+    }
+  }
+  return null;
+}
+function buildNationalDayMsg(b,lang){
+  const prop=(typeof PROP!=='undefined'?PROP:{name:'Dahab Trendy Accommodation',phone:''});
+  const match=matchNationalDay(b.nat||b.nationality);
+  const noMatch={
+    ar:`لا توجد مناسبة وطنية مسجلة حالياً لجنسية هذا الضيف (${b.nat||b.nationality||'—'}).`,
+    en:`No national day is currently registered for this guest's nationality (${b.nat||b.nationality||'—'}).`,
+    fr:`Aucune fête nationale n'est actuellement enregistrée pour la nationalité de ce client (${b.nat||b.nationality||'—'}).`,
+    de:`Für die Nationalität dieses Gastes ist derzeit kein Nationalfeiertag hinterlegt (${b.nat||b.nationality||'—'}).`,
+    ru:`Для гражданства этого гостя пока не зарегистрирован национальный праздник (${b.nat||b.nationality||'—'}).`
+  };
+  if(!match){ const t=noMatch[lang]||noMatch.en; return {title:lang==='ar'?'🎉 مناسبة وطنية':'🎉 National Day',body:t}; }
+  const dStr=fmtD?fmtD(match.date.toISOString().slice(0,10)):match.date.toLocaleDateString();
+  const holidayName=match[lang]||match.en;
+  const whenPhrase={
+    ar: match.daysUntil===0?'اليوم':`بعد ${match.daysUntil} يوم`,
+    en: match.daysUntil===0?'today':`in ${match.daysUntil} day(s)`,
+    fr: match.daysUntil===0?"aujourd'hui":`dans ${match.daysUntil} jour(s)`,
+    de: match.daysUntil===0?'heute':`in ${match.daysUntil} Tag(en)`,
+    ru: match.daysUntil===0?'сегодня':`через ${match.daysUntil} дн.`
+  }[lang]||`in ${match.daysUntil} day(s)`;
+  const bodies={
+    ar:`عزيزنا *${b.name}* 🌊\n\n${holidayName} يوافق ${dStr} (${whenPhrase})!\n\nكل عام وأنتم بخير بهذه المناسبة الوطنية الغالية على قلوبكم 🎉\nيسعدنا استضافتكم في *${prop.name}* في دهب ونتمنى لكم إقامة سعيدة تليق بهذا اليوم المميز 💛\n📞 ${prop.phone}`,
+    en:`Dear *${b.name}* 🌊\n\n${holidayName} falls on ${dStr} (${whenPhrase})!\n\nWishing you a joyful celebration of this special national occasion 🎉\nWe're delighted to host you at *${prop.name}* in Dahab, and we hope your stay is as memorable as this day 💛\n📞 ${prop.phone}`,
+    fr:`Cher/Chère *${b.name}* 🌊\n\n${holidayName} tombe le ${dStr} (${whenPhrase}) !\n\nNous vous souhaitons une joyeuse célébration de cette occasion nationale 🎉\nNous sommes ravis de vous accueillir à *${prop.name}* à Dahab et espérons que votre séjour sera mémorable 💛\n📞 ${prop.phone}`,
+    de:`Liebe(r) *${b.name}* 🌊\n\n${holidayName} fällt auf den ${dStr} (${whenPhrase})!\n\nWir wünschen Ihnen eine schöne Feier dieses besonderen Nationalfeiertags 🎉\nWir freuen uns, Sie in *${prop.name}* in Dahab begrüßen zu dürfen, und hoffen auf einen unvergesslichen Aufenthalt 💛\n📞 ${prop.phone}`,
+    ru:`Уважаемый/ая *${b.name}* 🌊\n\n${holidayName} отмечается ${dStr} (${whenPhrase})!\n\nПоздравляем с этим особым национальным праздником 🎉\nМы рады принимать Вас в *${prop.name}* в Дахабе и надеемся, что Ваше пребывание будет незабываемым 💛\n📞 ${prop.phone}`
+  };
+  return {title:(lang==='ar'?'🎉 مناسبة وطنية: ':'🎉 National Day: ')+holidayName,body:bodies[lang]||bodies.en};
+}
+// ── جلب الحجوزات النشطة اللي جنسيتها بتوافق مناسبة وطنية خلال 14 يوم ──
+function getNationalDayMatches(){
+  const today_=(typeof toDay==='function')?toDay():new Date().toISOString().slice(0,10);
+  return (bookings||[]).map((b,idx)=>({b,idx}))
+    .filter(o=>o.b.status!=='Cancelled' && o.b.ci && o.b.co && o.b.ci<=today_ && o.b.co>=today_)
+    .map(o=>{ const m=matchNationalDay(o.b.nat||o.b.nationality); return (m&&m.daysUntil<=14)?{...o,match:m}:null; })
+    .filter(Boolean);
+}
+// ── إرسال رسالة المناسبة الوطنية مباشرة من التنبيهات بضغطة واحدة ──
+function sendNationalDayWA(idx){
+  const b=(bookings||[])[idx];
+  if(!b){ if(typeof sNotify==='function') sNotify('⚠️','Booking not found','error',2500); return; }
+  const match=matchNationalDay(b.nat||b.nationality);
+  const langMap={FR:'fr',DE:'de',RU:'ru'};
+  const lang=match?(langMap[match.code]||'en'):'en';
+  const tpl=buildNationalDayMsg(b,lang);
+  const phone=(b.whatsapp||b.phone||'').replace(/[^0-9]/g,'');
+  const url=phone?'https://wa.me/'+phone+'?text='+encodeURIComponent(tpl.body):'https://wa.me/?text='+encodeURIComponent(tpl.body);
+  window.open(url,'_blank');
+  if(typeof sNotify==='function') sNotify('📱 '+(currentLang==='ar'?'تم فتح واتساب':'WhatsApp opened'), b.name, 'success', 2500);
 }
 
 function loadWATemplate(){
@@ -26509,7 +26630,7 @@ function loadWATemplate(){
     }
   };
   const templates=allTemplates[_watLang]||allTemplates.en;
-  const tpl=templates[_watCurrentType]||templates.confirm;
+  const tpl=_watCurrentType==='national_day'?buildNationalDayMsg(b,_watLang):(templates[_watCurrentType]||templates.confirm);
   document.getElementById('wat-tpl-title').textContent=tpl.title;
   const _bodyEl=document.getElementById('wat-tpl-body');
   _bodyEl.textContent=tpl.body;
