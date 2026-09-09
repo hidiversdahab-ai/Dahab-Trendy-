@@ -4024,55 +4024,55 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <!-- Filter -->
 <div class="card" style="padding:10px 14px;margin-bottom:12px;">
   <div class="flex">
-    <span style="font-size:11px;color:var(--gold);font-weight:700;">فلتر:</span>
+    <span style="font-size:11px;color:var(--gold);font-weight:700;"><span class="t" data-ar="فلتر:" data-en="Filter:">فلتر:</span></span>
     <select id="wl-filter" onchange="renderWL()" style="width:auto;padding:4px 8px;font-size:12px;">
-      <option value="all">الكل</option>
-      <option value="waiting">⏳ انتظار</option>
-      <option value="notified">🔔 تم الإبلاغ</option>
-      <option value="converted">✅ تحوّل لحجز</option>
-      <option value="cancelled">❌ ملغي</option>
+      <option value="all">الكل / All</option>
+      <option value="waiting">⏳ انتظار / Waiting</option>
+      <option value="notified">🔔 تم الإبلاغ / Notified</option>
+      <option value="converted">✅ تحوّل لحجز / Converted</option>
+      <option value="cancelled">❌ ملغي / Cancelled</option>
     </select>
-    <input id="wl-search" placeholder="🔍 بحث عن ضيف..." oninput="renderWL()" style="width:150px;padding:4px 8px;font-size:12px;">
+    <input id="wl-search" placeholder="🔍 بحث عن ضيف... / Search guest..." oninput="renderWL()" style="width:180px;padding:4px 8px;font-size:12px;">
   </div>
 </div>
 
 <!-- List -->
 <div id="wl-list"></div>
-<div id="wl-empty" class="empty" style="display:none;">📭 قائمة الانتظار فارغة</div>
+<div id="wl-empty" class="empty" style="display:none;">📭 <span class="t" data-ar="قائمة الانتظار فارغة" data-en="Waiting list is empty">قائمة الانتظار فارغة</span></div>
 </div>
 
 <!-- WAITLIST MODAL — Add/Edit -->
 <div class="ovl" id="wl-modal">
 <div class="mdl" style="max-width:520px;">
   <div class="flex" style="justify-content:space-between;margin-bottom:14px;">
-    <div class="mtitle" style="margin-bottom:0;" id="wl-modal-title">⏳ طلب انتظار جديد</div>
+    <div class="mtitle t" style="margin-bottom:0;" id="wl-modal-title" data-ar="⏳ طلب انتظار جديد" data-en="⏳ New Waiting Request">⏳ طلب انتظار جديد</div>
     <button onclick="closeM('wl-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
   </div>
 
   <!-- Guest Info -->
-  <div class="sdiv">👤 بيانات الضيف</div>
+  <div class="sdiv">👤 <span class="t" data-ar="بيانات الضيف" data-en="Guest Info">بيانات الضيف</span></div>
   <div class="g2">
-    <div class="fld s2"><label>اسم الضيف *</label><input id="wl-name" placeholder="Ahmed Hassan"></div>
-    <div class="fld"><label>📞 الهاتف</label><input id="wl-phone" placeholder="+20..."></div>
-    <div class="fld"><label>💬 واتساب</label><input id="wl-wa" placeholder="+20..." style="border-color:rgba(37,211,102,0.4);"></div>
-    <div class="fld"><label>✉️ البريد</label><input id="wl-email" type="email" autocomplete="off" placeholder="guest@email.com"></div>
-    <div class="fld"><label>🌍 الجنسية</label><input id="wl-nat" placeholder="Egyptian"></div>
+    <div class="fld s2"><label><span class="t" data-ar="اسم الضيف *" data-en="Guest Name *">اسم الضيف *</span></label><input id="wl-name" placeholder="Ahmed Hassan"></div>
+    <div class="fld"><label>📞 <span class="t" data-ar="الهاتف" data-en="Phone">الهاتف</span></label><input id="wl-phone" placeholder="+20..."></div>
+    <div class="fld"><label>💬 <span class="t" data-ar="واتساب" data-en="WhatsApp">واتساب</span></label><input id="wl-wa" placeholder="+20..." style="border-color:rgba(37,211,102,0.4);"></div>
+    <div class="fld"><label>✉️ <span class="t" data-ar="البريد" data-en="Email">البريد</span></label><input id="wl-email" type="email" autocomplete="off" placeholder="guest@email.com"></div>
+    <div class="fld"><label>🌍 <span class="t" data-ar="الجنسية" data-en="Nationality">الجنسية</span></label><input id="wl-nat" placeholder="Egyptian"></div>
   </div>
 
   <!-- Stay Details -->
-  <div class="sdiv">📅 تفاصيل الإقامة المطلوبة</div>
+  <div class="sdiv">📅 <span class="t" data-ar="تفاصيل الإقامة المطلوبة" data-en="Requested Stay Details">تفاصيل الإقامة المطلوبة</span></div>
   <div class="g2">
-    <div class="fld"><label>📅 تاريخ الوصول المطلوب *</label><input id="wl-ci" type="date"></div>
-    <div class="fld"><label>📅 تاريخ المغادرة المطلوب *</label><input id="wl-co" type="date" oninput="calcWL()"></div>
-    <div class="fld"><label>🏨 نوع الغرفة</label>
+    <div class="fld"><label>📅 <span class="t" data-ar="تاريخ الوصول المطلوب *" data-en="Requested Check-in *">تاريخ الوصول المطلوب *</span></label><input id="wl-ci" type="date"></div>
+    <div class="fld"><label>📅 <span class="t" data-ar="تاريخ المغادرة المطلوب *" data-en="Requested Check-out *">تاريخ المغادرة المطلوب *</span></label><input id="wl-co" type="date" oninput="calcWL()"></div>
+    <div class="fld"><label>🏨 <span class="t" data-ar="نوع الغرفة" data-en="Room Type">نوع الغرفة</span></label>
       <select id="wl-type">
         <option value="">أي نوع / Any</option>
         <option>Single</option><option>Double</option><option>Triple</option><option>Suite</option>
       </select>
     </div>
-    <div class="fld"><label>👥 عدد الأشخاص</label><input id="wl-guests" type="number" min="1" max="10" value="1"></div>
-    <div class="fld"><label>💰 الميزانية اليومية ($)</label><input id="wl-budget" type="number" min="0" step="0.01" placeholder="0 = مفتوح"></div>
-    <div class="fld"><label>💱 العملة المفضلة</label>
+    <div class="fld"><label>👥 <span class="t" data-ar="عدد الأشخاص" data-en="Guests">عدد الأشخاص</span></label><input id="wl-guests" type="number" min="1" max="10" value="1"></div>
+    <div class="fld"><label>💰 <span class="t" data-ar="الميزانية اليومية ($)" data-en="Daily Budget ($)">الميزانية اليومية ($)</span></label><input id="wl-budget" type="number" min="0" step="0.01" placeholder="0 = Open"></div>
+    <div class="fld"><label>💱 <span class="t" data-ar="العملة المفضلة" data-en="Preferred Currency">العملة المفضلة</span></label>
       <select id="wl-cur">
         <option value="USD">🇺🇸 USD</option>
         <option value="EGP">🇪🇬 EGP</option>
@@ -4083,18 +4083,18 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
   <div id="wl-calc" style="background:rgba(230,126,34,0.08);border:1px solid rgba(230,126,34,0.25);border-radius:7px;padding:8px 12px;font-size:12px;margin-bottom:10px;display:none;"></div>
 
   <!-- Priority & Notes -->
-  <div class="sdiv">📌 الأولوية والملاحظات</div>
+  <div class="sdiv">📌 <span class="t" data-ar="الأولوية والملاحظات" data-en="Priority &amp; Notes">الأولوية والملاحظات</span></div>
   <div class="g2">
-    <div class="fld"><label>الأولوية</label>
+    <div class="fld"><label><span class="t" data-ar="الأولوية" data-en="Priority">الأولوية</span></label>
       <select id="wl-priority">
-        <option value="high">🔴 عالية — VIP / رد فوري</option>
-        <option value="normal" selected>🟡 عادية</option>
-        <option value="low">🟢 منخفضة</option>
+        <option value="high">🔴 عالية / High — VIP</option>
+        <option value="normal" selected>🟡 عادية / Normal</option>
+        <option value="low">🟢 منخفضة / Low</option>
       </select>
     </div>
-    <div class="fld"><label>📅 تاريخ انتهاء الطلب</label><input id="wl-expires" type="date"></div>
-    <div class="fld s2"><label>📝 ملاحظات خاصة</label><textarea id="wl-notes" rows="2" placeholder="مثال: يفضل طابق علوي، مع إطلالة على البحر..."></textarea></div>
-    <div class="fld"><label>📣 مصدر الطلب</label>
+    <div class="fld"><label>📅 <span class="t" data-ar="تاريخ انتهاء الطلب" data-en="Request Expiry Date">تاريخ انتهاء الطلب</span></label><input id="wl-expires" type="date"></div>
+    <div class="fld s2"><label>📝 <span class="t" data-ar="ملاحظات خاصة" data-en="Private Notes">ملاحظات خاصة</span></label><textarea id="wl-notes" rows="2" placeholder="مثال: يفضل طابق علوي، مع إطلالة على البحر... / e.g. prefers upper floor, sea view..."></textarea></div>
+    <div class="fld"><label>📣 <span class="t" data-ar="مصدر الطلب" data-en="Request Source">مصدر الطلب</span></label>
       <select id="wl-source">
         <option>WhatsApp</option><option>Phone</option><option>Email</option>
         <option>Booking.com</option><option>Walk-in</option><option>Other</option>
@@ -4103,8 +4103,8 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
   </div>
 
   <div class="flex mt">
-    <button class="btn" style="background:#e67e22;color:#fff;flex:2;" onclick="saveWL()">💾 حفظ الطلب</button>
-    <button class="btn bb" onclick="closeM('wl-modal')" style="flex:1;">إلغاء</button>
+    <button class="btn" style="background:#e67e22;color:#fff;flex:2;" onclick="saveWL()">💾 <span class="t" data-ar="حفظ الطلب" data-en="Save Request">حفظ الطلب</span></button>
+    <button class="btn bb" onclick="closeM('wl-modal')" style="flex:1;"><span class="t" data-ar="إلغاء" data-en="Cancel">إلغاء</span></button>
   </div>
 </div>
 </div>
@@ -33212,7 +33212,12 @@ function openWL(idx){
   const isEdit = wlEdit !== null;
   const w = isEdit ? waitlist[wlEdit] : null;
 
-  document.getElementById("wl-modal-title").textContent = isEdit ? "✏️ تعديل طلب الانتظار" : "⏳ طلب انتظار جديد";
+  const titleEl = document.getElementById("wl-modal-title");
+  const ar = "✏️ تعديل طلب الانتظار", en = "✏️ Edit Waiting Request";
+  const arNew = "⏳ طلب انتظار جديد", enNew = "⏳ New Waiting Request";
+  titleEl.setAttribute("data-ar", isEdit ? ar : arNew);
+  titleEl.setAttribute("data-en", isEdit ? en : enNew);
+  titleEl.textContent = currentLang==="ar" ? (isEdit?ar:arNew) : (isEdit?en:enNew);
   document.getElementById("wl-name").value   = w ? (w.name||"") : "";
   document.getElementById("wl-phone").value  = w ? (w.phone||"") : "";
   document.getElementById("wl-wa").value     = w ? (w.wa||"") : "";
@@ -33251,12 +33256,14 @@ function calcWL(){
 
 // ── SAVE WAITING LIST ENTRY ──
 function saveWL(){
+  const ar = currentLang==="ar";
   const name = document.getElementById("wl-name").value.trim();
   const ci   = document.getElementById("wl-ci").value;
   const co   = document.getElementById("wl-co").value;
-  if(!name){ alert("يرجى إدخال اسم الضيف"); return; }
-  if(!ci || !co){ alert("يرجى إدخال تواريخ الإقامة"); return; }
-  if(ci >= co){ alert("تاريخ المغادرة يجب أن يكون بعد الوصول"); return; }
+  if(!name){ alert(ar?"يرجى إدخال اسم الضيف":"Please enter the guest name"); return; }
+  if(!ci || !co){ alert(ar?"يرجى إدخال تواريخ الإقامة":"Please enter the stay dates"); return; }
+  if(ci >= co){ alert(ar?"تاريخ المغادرة يجب أن يكون بعد الوصول":"Check-out date must be after check-in"); return; }
+  const wasEdit = wlEdit !== null;
 
   const entry = {
     id: wlEdit !== null ? waitlist[wlEdit].id : "WL-"+Date.now(),
@@ -33290,7 +33297,7 @@ function saveWL(){
   wlEdit = null;
   renderWL();
   updateWLNavBadge();
-  sNotify("⏳ قائمة الانتظار", wlEdit !== null ? "تم التعديل بنجاح" : "تمت إضافة "+name+" لقائمة الانتظار", "success", 3000);
+  sNotify(ar?"⏳ قائمة الانتظار":"⏳ Waiting List", wasEdit ? (ar?"تم التعديل بنجاح":"Updated successfully") : (ar?("تمت إضافة "+name+" لقائمة الانتظار"):(name+" added to the waiting list")), "success", 3000);
 }
 
 // ── RENDER WAITING LIST ──
@@ -33350,9 +33357,13 @@ function renderWL(){
   if(emptyEl) emptyEl.style.display = "none";
 
   const prioColors = {high:"#e74c3c", normal:"#f39c12", low:"#4cda7a"};
-  const prioLabels = {high:"🔴 عالية", normal:"🟡 عادية", low:"🟢 منخفضة"};
+  const prioLabels = currentLang==="ar"
+    ? {high:"🔴 عالية", normal:"🟡 عادية", low:"🟢 منخفضة"}
+    : {high:"🔴 High", normal:"🟡 Normal", low:"🟢 Low"};
   const stColors   = {waiting:"#e67e22", notified:"#3498db", converted:"#4cda7a", cancelled:"#e74c3c"};
-  const stLabels   = {waiting:"⏳ انتظار", notified:"🔔 تم الإبلاغ", converted:"✅ تحوّل لحجز", cancelled:"❌ ملغي"};
+  const stLabels   = currentLang==="ar"
+    ? {waiting:"⏳ انتظار", notified:"🔔 تم الإبلاغ", converted:"✅ تحوّل لحجز", cancelled:"❌ ملغي"}
+    : {waiting:"⏳ Waiting", notified:"🔔 Notified", converted:"✅ Converted", cancelled:"❌ Cancelled"};
   const srcIcons   = {WhatsApp:"💬", Phone:"📞", Email:"✉️", "Booking.com":"🌐", "Walk-in":"🚶", Other:"📌"};
 
   listEl.innerHTML = list.map(w => {
@@ -33381,9 +33392,9 @@ function renderWL(){
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
           ${availRooms.map(r=>`
             <div style="display:flex;align-items:center;gap:0;border-radius:7px;overflow:hidden;border:1px solid rgba(37,211,102,0.35);">
-              <span style="background:rgba(37,211,102,0.12);color:#4cda7a;font-size:11px;font-weight:700;padding:4px 9px;border-right:1px solid rgba(37,211,102,0.25);">غرفة ${r}</span>
-              <button onclick="quickConvertWL(${realIdx},'${r}')" style="background:#25D366;color:#fff;border:none;padding:4px 9px;cursor:pointer;font-size:10px;font-weight:700;font-family:Arial,sans-serif;" title="تحويل لحجز فوري">✅ تحويل</button>
-              <button onclick="wlNotifyForRoom(${realIdx},'${r}')" style="background:rgba(52,152,219,0.7);color:#fff;border:none;padding:4px 8px;cursor:pointer;font-size:10px;font-weight:700;font-family:Arial,sans-serif;" title="إبلاغ الضيف بهذه الغرفة">📱</button>
+              <span style="background:rgba(37,211,102,0.12);color:#4cda7a;font-size:11px;font-weight:700;padding:4px 9px;border-right:1px solid rgba(37,211,102,0.25);">${currentLang==="ar"?"غرفة":"Room"} ${r}</span>
+              <button onclick="quickConvertWL(${realIdx},'${r}')" style="background:#25D366;color:#fff;border:none;padding:4px 9px;cursor:pointer;font-size:10px;font-weight:700;font-family:Arial,sans-serif;" title="${currentLang==="ar"?"تحويل لحجز فوري":"Convert to booking now"}">✅ ${currentLang==="ar"?"تحويل":"Convert"}</button>
+              <button onclick="wlNotifyForRoom(${realIdx},'${r}')" style="background:rgba(52,152,219,0.7);color:#fff;border:none;padding:4px 8px;cursor:pointer;font-size:10px;font-weight:700;font-family:Arial,sans-serif;" title="${currentLang==="ar"?"إبلاغ الضيف بهذه الغرفة":"Notify guest about this room"}">📱</button>
             </div>
           `).join("")}
         </div>
@@ -33400,7 +33411,7 @@ function renderWL(){
           <div>
             <div style="font-weight:700;font-size:14px;color:var(--text);">
               ${srcIcons[w.source]||"📌"} ${w.name}
-              <span style="background:${pc}22;color:${pc};border:1px solid ${pc}44;border-radius:12px;padding:1px 8px;font-size:9px;font-weight:700;margin-left:5px;">${prioLabels[w.priority]||"عادية"}</span>
+              <span style="background:${pc}22;color:${pc};border:1px solid ${pc}44;border-radius:12px;padding:1px 8px;font-size:9px;font-weight:700;margin-left:5px;">${prioLabels[w.priority]||(currentLang==="ar"?"عادية":"Normal")}</span>
             </div>
             <div style="font-size:11px;color:var(--muted);margin-top:3px;">
               ${w.phone?`📞 ${w.phone}`:""}  ${w.wa?`· 💬 ${w.wa}`:""}  ${w.nat?`· 🌍 ${w.nat}`:""}
@@ -33470,11 +33481,12 @@ function checkSingleWLMatch(w){
 function checkWLMatches(){
   const alertEl = document.getElementById("wl-availability-alert");
   if(!alertEl) return;
+  const ar = currentLang==="ar";
 
   const waiting = waitlist.filter(w => w.status==="waiting");
   if(!waiting.length){
     alertEl.innerHTML = `<div style="background:rgba(230,126,34,0.08);border:1px solid rgba(230,126,34,0.25);border-radius:8px;padding:10px 14px;font-size:12px;color:#e67e22;">
-      📭 قائمة الانتظار فارغة — لا يوجد طلبات بانتظار
+      📭 ${ar?"قائمة الانتظار فارغة — لا يوجد طلبات بانتظار":"Waiting list is empty — no pending requests"}
     </div>`;
     return;
   }
@@ -33498,26 +33510,26 @@ function checkWLMatches(){
 
   let html = `<div style="border:1px solid rgba(37,211,102,0.35);border-radius:10px;overflow:hidden;">
     <div style="background:rgba(37,211,102,0.12);padding:10px 14px;font-size:12px;font-weight:700;color:#4cda7a;">
-      🔍 نتيجة الفحص — ${waiting.length} طلب في الانتظار
+      🔍 ${ar?"نتيجة الفحص":"Scan result"} — ${waiting.length} ${ar?"طلب في الانتظار":"pending request(s)"}
     </div>`;
 
   if(withRooms.length){
     html += `<div style="padding:10px 14px;">
-      <div style="font-size:11px;color:#4cda7a;font-weight:700;margin-bottom:8px;">✅ ${withRooms.length} طلب يوجد له غرف متاحة:</div>`;
+      <div style="font-size:11px;color:#4cda7a;font-weight:700;margin-bottom:8px;">✅ ${withRooms.length} ${ar?"طلب يوجد له غرف متاحة:":"request(s) have available rooms:"}</div>`;
     withRooms.forEach(({w, idx, availRooms}) => {
       html += `<div style="background:rgba(37,211,102,0.07);border:1px solid rgba(37,211,102,0.2);border-radius:8px;padding:10px 12px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
           <div>
             <span style="font-weight:700;color:#f0e6cc;">👤 ${w.name}</span>
-            <span style="color:var(--muted);font-size:11px;margin-left:8px;">📅 ${fmtD(w.ci)} → ${fmtD(w.co)} · ${nts(w.ci,w.co)} ليلة</span>
+            <span style="color:var(--muted);font-size:11px;margin-left:8px;">📅 ${fmtD(w.ci)} → ${fmtD(w.co)} · ${nts(w.ci,w.co)} ${ar?"ليلة":"nts"}</span>
           </div>
-          <button class="btn bsm" style="background:#3498db;color:#fff;" onclick="openWLNotify(${idx})">🔔 إبلاغ</button>
+          <button class="btn bsm" style="background:#3498db;color:#fff;" onclick="openWLNotify(${idx})">🔔 ${ar?"إبلاغ":"Notify"}</button>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           ${availRooms.map(r => {
             const info = roomTypes['room_'+r] || {type:'Double'};
             return `<button class="btn bsm" style="background:#25D366;color:#fff;font-size:11px;" onclick="quickConvertWL(${idx},${r})">
-              🏨 ${r} · ${info.type} → حول لحجز
+              🏨 ${r} · ${info.type} → ${ar?"حول لحجز":"Convert"}
             </button>`;
           }).join('')}
         </div>
@@ -33528,7 +33540,7 @@ function checkWLMatches(){
 
   if(noRooms.length){
     html += `<div style="padding:8px 14px;border-top:1px solid rgba(255,255,255,0.05);">
-      <div style="font-size:11px;color:#e74c3c;font-weight:700;margin-bottom:6px;">❌ ${noRooms.length} طلب لا توجد له غرف متاحة:</div>`;
+      <div style="font-size:11px;color:#e74c3c;font-weight:700;margin-bottom:6px;">❌ ${noRooms.length} ${ar?"طلب لا توجد له غرف متاحة:":"request(s) have no available rooms:"}</div>`;
     noRooms.forEach(({w}) => {
       html += `<div style="font-size:11px;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
         👤 ${w.name} · ${fmtD(w.ci)} → ${fmtD(w.co)}
@@ -33541,9 +33553,9 @@ function checkWLMatches(){
   alertEl.innerHTML = html;
 
   if(withRooms.length)
-    sNotify("✅ غرف متاحة!", `${withRooms.length} طلب يوجد له غرف — اضغط "حول لحجز"`, "success", 4000);
+    sNotify(ar?"✅ غرف متاحة!":"✅ Rooms available!", ar?`${withRooms.length} طلب يوجد له غرف — اضغط "حول لحجز"`:`${withRooms.length} request(s) have rooms — tap "Convert"`, "success", 4000);
   else
-    sNotify("😔 لا توجد غرف", "كل الطلبات لا توجد لها غرف متاحة الآن", "info", 3000);
+    sNotify(ar?"😔 لا توجد غرف":"😔 No rooms", ar?"كل الطلبات لا توجد لها غرف متاحة الآن":"None of the requests have available rooms right now", "info", 3000);
 }
 
 // ── OPEN NOTIFY MODAL ──
