@@ -7347,6 +7347,8 @@ function applyBrandingToDOM(){
   if(empBrand) empBrand.textContent = PROP.name;
   var pwaText = document.getElementById('pwa-install-text');
   if(pwaText) pwaText.textContent = '📱 ثبّت ' + PROP.name + ' على هاتفك للوصول السريع!';
+  var kioskTitle = document.getElementById('kiosk-title-text');
+  if(kioskTitle) kioskTitle.textContent = '🌊 ' + PROP.name;
 }
 document.addEventListener('DOMContentLoaded', applyBrandingToDOM);
 // ══ FEATURE: تعديل بيانات الفندق مباشرة من الإعدادات (بدل ما تمر بمفتاح ترخيص) ══
@@ -26101,7 +26103,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a2e;direc
 <div id="kiosk-overlay">
   <div class="kiosk-hdr">
     <div>
-      <div class="kiosk-title">🌊 Dahab Trendy Accommodation</div>
+      <div class="kiosk-title" id="kiosk-title-text">🌊 Dahab Trendy Accommodation</div>
       <div class="kiosk-date" id="kiosk-date"></div>
     </div>
     <div style="text-align:center;">
@@ -33023,8 +33025,9 @@ window.addEventListener('load', function(){
 
 function shareBookingFormLink(){
   const link = 'https://hidiversdahab-ai.github.io/dahab-trendy-booking/';
-  const msg = 'أهلاً بيك في Dahab Trendy 🌊\nممكن تسجل تفاصيل حجزك من هنا:\n\n'+
-    'Welcome to Dahab Trendy 🌊\nPlease fill in your booking details here:\n\n'+link;
+  const hn = (typeof PROP!=='undefined' && PROP.name) ? PROP.name : 'Dahab Trendy';
+  const msg = 'أهلاً بيك في '+hn+' 🌊\nممكن تسجل تفاصيل حجزك من هنا:\n\n'+
+    'Welcome to '+hn+' 🌊\nPlease fill in your booking details here:\n\n'+link;
   window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
 }
 
