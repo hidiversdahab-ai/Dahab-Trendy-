@@ -11715,12 +11715,13 @@ const isAvail=(st==="available");
 // Check for future booking even when room is occupied/checkin/checkout
 const hasFutureRes=(st==="occupied"||st==="checkin"||st==="checkout")&&(res||resStandby);
 const futureBook=res||resStandby;
-const rtype = b ? b.type : (res ? res.type : (ci ? ci.type : (co ? co.type : '')));
-const rphotos = (rtype && roomPhotos[rtype] && roomPhotos[rtype].length) ? roomPhotos[rtype] : [];
+const rtype = b ? b.type : (res ? res.type : (ci ? ci.type : (co ? co.type : ((roomTypes['room_'+r]&&roomTypes['room_'+r].type)||''))));
+const rphotoKey = (roomPhotos['room_'+r] && roomPhotos['room_'+r].length) ? ('room_'+r) : ((rtype && roomPhotos[rtype] && roomPhotos[rtype].length) ? rtype : '');
+const rphotos = rphotoKey ? roomPhotos[rphotoKey] : [];
 const rphoto = rphotos[0] || '';
 const rphotoHtml = rphotos.length
   ? "<div style='width:100%;height:160px;border-radius:10px;overflow:hidden;margin-bottom:10px;box-shadow:0 3px 12px rgba(0,0,0,0.4);position:relative;'>"
-    + "<img id='rph-"+r+"' src='"+rphoto+"' style='width:100%;height:100%;object-fit:cover;cursor:pointer;' onclick=\"viewRoomPhotoIdx('"+rtype+"',0)\">"
+    + "<img id='rph-"+r+"' src='"+rphoto+"' style='width:100%;height:100%;object-fit:cover;cursor:pointer;' onclick=\"viewRoomPhotoIdx('"+rphotoKey+"',0)\">"
     + (rphotos.length>1 ? "<div style='position:absolute;bottom:6px;right:8px;background:rgba(0,0,0,0.55);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;'>📷 "+rphotos.length+"</div>" : "")
     + "</div>"
   : "";
