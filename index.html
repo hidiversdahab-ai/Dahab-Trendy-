@@ -8926,6 +8926,9 @@ if(commSec){
       if(b.commissionPct>0) agencyMap[key].commPct = b.commissionPct;
     });
     const agencies = Object.values(agencyMap).sort((a,b)=>b.commEGP-a.commEGP);
+    // الإجمالي (قبل خصم العمولة) والصافي (بعد خصمها) لِحجوزات العمولة فقط — بديل صحيح عن استخدام صافي كل المحفظة
+    const grossRevEGP_db = agencies.reduce((s,ag)=>s+ag.grossEGP,0);
+    const netRevAfterCommScoped = grossRevEGP_db - totalCommEGP_db;
 
     const rows = agencies.map(ag=>{
       const pct = ag.commPct>0 ? ag.commPct+"%" : ((ag.grossEGP>0?(ag.commEGP/ag.grossEGP*100).toFixed(1):0)+"%");
@@ -9000,9 +9003,9 @@ if(commSec){
       <!-- بار ملخص سريع -->
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
         ${mkFin("£"+totalCommEGP_db.toFixed(0),ar?"إجمالي العمولات المخصومة":"Total Commissions","rgba(230,126,34,0.08)","rgba(230,126,34,0.25)","#e67e22")}
-        ${mkFin("£"+revEGP.toFixed(0),ar?"إجمالي الإيرادات":"Total Revenue","rgba(201,168,76,0.08)","rgba(201,168,76,0.25)","var(--gold)")}
-        ${mkFin("£"+netRevAfterCommEGP.toFixed(0),ar?"صافي الإيرادات":"Net Revenue","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#2ecc71")}
-        ${mkFin(((totalCommEGP_db/revEGP)*100).toFixed(1)+"%",ar?"نسبة العمولة الكلية":"Overall Commission %","rgba(155,89,182,0.08)","rgba(155,89,182,0.25)","#c39bd3")}
+        ${mkFin("£"+grossRevEGP_db.toFixed(0),ar?"إجمالي الإيرادات (قبل العمولة)":"Total Revenue (before commission)","rgba(201,168,76,0.08)","rgba(201,168,76,0.25)","var(--gold)")}
+        ${mkFin("£"+netRevAfterCommScoped.toFixed(0),ar?"صافي الإيرادات (بعد العمولة)":"Net Revenue (after commission)","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#2ecc71")}
+        ${mkFin((grossRevEGP_db>0?(totalCommEGP_db/grossRevEGP_db*100):0).toFixed(1)+"%",ar?"نسبة العمولة الكلية":"Overall Commission %","rgba(155,89,182,0.08)","rgba(155,89,182,0.25)","#c39bd3")}
       </div>
       <!-- تفاصيل كل شركة -->
       ${rows}
@@ -13151,7 +13154,7 @@ const css = [
 ].join("");
 const tentativeNote = pftype==="full"
 ? "<div class='warn-box'>⚠️ هذه فاتورة مبدئية / PROFORMA — NOT A FINAL INVOICE<br>غير نهائية حتى استلام العربون وتأكيد الحجز<br>Valid only after deposit receipt and booking confirmation</div>"
-: "<div class='warn-box'>💰 طلب عربون / DEPOSIT REQUEST<br>المبلغ المطلوب لتأكيد الحجز: <strong>"+sym+depAmt.toFixed(2)+"</strong>"+(deadline?"<br>⏰ الموعد النهائي: "+fmtD(deadline):"")+"</div>";
+: "<div class='warn-box'>💰 طلب عربون / DEPOSIT REQUEST<br>المبلغ المطلوب لتأكيد الحجز: <strong>"+sym+depAmt.toFixed(2)+"</strong>"+(deadline?"<br>⏰ الموعد النهائي / Deadline: "+fmtD(deadline):"")+"</div>";
 const html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Proforma — "+b.name+"</title><style>"+css+"</style></head><body>"+
 watermark+
 "<div class='no-print' style='background:#fffbe6;border:1px solid #f0c040;border-radius:7px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#7a5c00;line-height:1.7;'>"+
@@ -13638,7 +13641,7 @@ const deadlinePF = (document.getElementById("inv-deposit-deadline")||{value:""})
 const badgeText = isDepositPF ? "PROFORMA — DEPOSIT" : isFullPF ? "PROFORMA (TENTATIVE)" : "INVOICE";
 const badgeColor = isDepositPF ? "#8e44ad" : isFullPF ? "#2471a3" : "#123f34";
 const proformaBanner = isDepositPF
-? "<div style='background:#fdf3f8;border:2px dashed #8e44ad;border-radius:7px;padding:8px 12px;margin-bottom:10px;font-size:9px;color:#8e44ad;font-weight:700;text-align:center;'>💰 طلب عربون / DEPOSIT REQUEST — مبلغ العربون المطلوب: <strong>"+d.sym+depAmtPF.toFixed(2)+"</strong>"+(deadlinePF?"<br>⏰ الموعد النهائي: "+fmtD(deadlinePF):"")+"</div>"
+? "<div style='background:#fdf3f8;border:2px dashed #8e44ad;border-radius:7px;padding:8px 12px;margin-bottom:10px;font-size:9px;color:#8e44ad;font-weight:700;text-align:center;'>💰 طلب عربون / DEPOSIT REQUEST — مبلغ العربون المطلوب: <strong>"+d.sym+depAmtPF.toFixed(2)+"</strong>"+(deadlinePF?"<br>⏰ الموعد النهائي / Deadline: "+fmtD(deadlinePF):"")+"</div>"
 : isFullPF
 ? "<div style='background:#eaf4fb;border:2px dashed #2471a3;border-radius:7px;padding:8px 12px;margin-bottom:10px;font-size:9px;color:#2471a3;font-weight:700;text-align:center;'>⚠️ PROFORMA — NOT A FINAL INVOICE / فاتورة مبدئية غير نهائية<br>Prices subject to change until booking is confirmed</div>"
 : "";
