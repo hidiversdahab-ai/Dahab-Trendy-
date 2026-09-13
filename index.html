@@ -3713,7 +3713,14 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
 <div class="fld" style="flex:1;margin-bottom:0;">
 <label>مبلغ العربون المطلوب (<span id="inv-dep-sym">$</span>)</label>
-<input id="inv-deposit-amount" type="number" min="0" step="0.01" placeholder="0 = نسبة الإعدادات تلقائياً" oninput="buildPreview()">
+<input id="inv-deposit-amount" type="number" min="0" step="0.01" placeholder="اتركها فاضية = يتحسب تلقائي" oninput="buildPreview()">
+<div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;">
+<button type="button" onclick="setInvDepositPct(10)" style="flex:1;min-width:42px;padding:4px 2px;border-radius:6px;border:1px solid rgba(184,118,63,0.5);background:rgba(184,118,63,0.1);color:#b8763f;font-size:9.5px;font-weight:700;cursor:pointer;">10%</button>
+<button type="button" onclick="setInvDepositPct(25)" style="flex:1;min-width:42px;padding:4px 2px;border-radius:6px;border:1px solid rgba(184,118,63,0.5);background:rgba(184,118,63,0.1);color:#b8763f;font-size:9.5px;font-weight:700;cursor:pointer;">25%</button>
+<button type="button" onclick="setInvDepositPct(50)" style="flex:1;min-width:42px;padding:4px 2px;border-radius:6px;border:1px solid rgba(184,118,63,0.5);background:rgba(184,118,63,0.1);color:#b8763f;font-size:9.5px;font-weight:700;cursor:pointer;">50%</button>
+<button type="button" onclick="setInvDepositPct(100)" style="flex:1;min-width:42px;padding:4px 2px;border-radius:6px;border:1px solid rgba(184,118,63,0.5);background:rgba(184,118,63,0.1);color:#b8763f;font-size:9.5px;font-weight:700;cursor:pointer;">100%</button>
+</div>
+<div id="inv-deposit-hint" style="font-size:9px;color:#b8763f;margin-top:3px;"></div>
 </div>
 <div class="fld" style="flex:1;margin-bottom:0;">
 <label>الموعد النهائي للعربون</label>
@@ -12920,6 +12927,13 @@ function exportExpensesExcel(){
 }
 // ═══════════ INVOICE TYPE ═══════════
 let invType = "official";
+function setInvDepositPct(pct) {
+const d = getIV();
+const amt = (d.total||0) * (pct/100);
+const inp = document.getElementById("inv-deposit-amount");
+if(inp) inp.value = amt.toFixed(2);
+buildPreview();
+}
 function setInvType(type) {
 invType = type;
 document.getElementById("inv-type").value = type;
@@ -13611,7 +13625,15 @@ const invTypeVal = (document.getElementById("inv-type")||{value:"official"}).val
 const isProforma = invTypeVal !== "official";
 const isDepositPF = invTypeVal === "proforma-deposit";
 const isFullPF = invTypeVal === "proforma-full";
-const _polP=policies&&policies.prepay;const _rN=d.nights>0?d.total/d.nights:0;const _defDep=_polP==="1night"?_rN:_polP==="10pct"?d.total*0.10:_polP==="25pct"?d.total*0.25:_polP==="100pct"?d.total:d.total*0.5;const depAmtPF = isDepositPF ? (parseFloat((document.getElementById("inv-deposit-amount")||{value:"0"}).value)||0) || _defDep : 0;
+const _polP=policies&&policies.prepay;const _ivTotalNights=(d.lines||[]).reduce((s,l)=>s+(l.n||0),0);const _rN=_ivTotalNights>0?d.total/_ivTotalNights:0;const _defDep=_polP==="1night"?_rN:_polP==="10pct"?d.total*0.10:_polP==="25pct"?d.total*0.25:_polP==="100pct"?d.total:d.total*0.5;
+if(isDepositPF){
+  const _depInput=document.getElementById("inv-deposit-amount");
+  const _depHint=document.getElementById("inv-deposit-hint");
+  const polLabelMap={none:"بدون سياسة محددة (افتراضي 50%)","1night":"ليلة واحدة","10pct":"10%","25pct":"25%","50pct":"50%","100pct":"دفع كامل مقدماً"};
+  if(_depInput && !_depInput.value){ _depInput.value = _defDep>0 ? _defDep.toFixed(2) : ""; }
+  if(_depHint){ _depHint.textContent = "🔹 محسوب تلقائياً حسب سياسة الإعدادات: "+(polLabelMap[_polP]||polLabelMap.none)+" — يمكنك تعديل الرقم يدوياً"; }
+}
+const depAmtPF = isDepositPF ? (parseFloat((document.getElementById("inv-deposit-amount")||{value:"0"}).value)||0) || _defDep : 0;
 const deadlinePF = (document.getElementById("inv-deposit-deadline")||{value:""}).value;
 const badgeText = isDepositPF ? "PROFORMA — DEPOSIT" : isFullPF ? "PROFORMA (TENTATIVE)" : "INVOICE";
 const badgeColor = isDepositPF ? "#8e44ad" : isFullPF ? "#2471a3" : "#123f34";
