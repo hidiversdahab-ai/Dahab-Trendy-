@@ -4675,6 +4675,45 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 </div>
 </div>
 
+<!-- Marketing / Offers -->
+<div class="card" style="border:1px solid rgba(24,119,242,0.35);background:rgba(24,119,242,0.04);">
+<div class="ctitle" style="color:#1877f2;">📣 <span class="t" data-ar="تسويق وعروض" data-en="Marketing & Offers">تسويق وعروض</span></div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;"><span class="t" data-ar="اكتب أي عرض أو خصم حالي، واحفظه، وابعته على فيسبوك أو واتساب أو أي مكان تاني بضغطة واحدة." data-en="Write any current offer or discount, save it, then share it to Facebook, WhatsApp, or anywhere else with one tap.">اكتب أي عرض أو خصم حالي، واحفظه، وابعته على فيسبوك أو واتساب أو أي مكان تاني بضغطة واحدة.</span></div>
+<div class="fld"><label><span class="t" data-ar="نص العرض" data-en="Offer Text">نص العرض</span></label><textarea id="prop-f-offer" rows="3" placeholder="🎉 خصم 20% على الحجز المباشر خلال سبتمبر!" style="width:100%;resize:vertical;"></textarea></div>
+<div class="flex mt" style="display:flex;gap:8px;">
+  <button class="btn bg" onclick="propSaveHotelInfo()" style="flex:1;">💾 <span class="t" data-ar="حفظ العرض" data-en="Save Offer">حفظ العرض</span></button>
+  <button class="btn" onclick="propShareOfferFB()" style="flex:1;background:#1877f2;color:#fff;">📘 <span class="t" data-ar="مشاركة" data-en="Share">مشاركة</span></button>
+</div>
+<button class="btn" onclick="waBroadcastOpen()" style="width:100%;margin-top:8px;background:#25d366;color:#fff;">📢 <span class="t" data-ar="إرسال العرض لكل النزلاء عبر واتساب" data-en="Send Offer to All Guests via WhatsApp">إرسال العرض لكل النزلاء عبر واتساب</span></button>
+</div>
+
+<!-- WhatsApp Broadcast Modal -->
+<div class="ovl" id="wa-broadcast-modal">
+<div class="mdl" style="max-width:420px;">
+<div class="flex" style="justify-content:space-between;margin-bottom:14px;">
+<div class="mtitle" style="margin-bottom:0;">📢 <span class="t" data-ar="إرسال العرض لكل النزلاء" data-en="Send Offer to All Guests">إرسال العرض لكل النزلاء</span></div>
+<button onclick="closeM('wa-broadcast-modal')" style="background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;">✕</button>
+</div>
+<div id="wab-progress" style="font-size:12px;color:var(--muted);margin-bottom:10px;text-align:center;"></div>
+<div style="background:rgba(0,0,0,0.15);border-radius:8px;height:6px;margin-bottom:16px;overflow:hidden;">
+  <div id="wab-progress-bar" style="height:100%;background:#25d366;width:0%;transition:.3s;"></div>
+</div>
+<div id="wab-current-card" style="background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.35);border-radius:9px;padding:14px;margin-bottom:14px;text-align:center;">
+  <div id="wab-guest-name" style="font-size:15px;font-weight:700;margin-bottom:4px;"></div>
+  <div id="wab-guest-phone" dir="ltr" style="font-size:12px;color:var(--muted);"></div>
+</div>
+<div id="wab-empty-msg" style="display:none;text-align:center;padding:20px 10px;color:var(--muted);font-size:13px;"></div>
+<div id="wab-done-msg" style="display:none;text-align:center;padding:20px 10px;color:#58d68d;font-size:14px;font-weight:700;"></div>
+<div id="wab-actions" style="display:flex;gap:8px;">
+  <button class="btn bg" onclick="waBroadcastSend()" style="flex:2;background:#25d366;">📤 <span class="t" data-ar="فتح واتساب وإرسال" data-en="Open WhatsApp & Send">فتح واتساب وإرسال</span></button>
+  <button class="btn bb" onclick="waBroadcastSkip()" style="flex:1;">⏭️ <span class="t" data-ar="تخطي" data-en="Skip">تخطي</span></button>
+</div>
+<div style="display:flex;gap:8px;margin-top:8px;">
+  <button class="btn" onclick="waBroadcastReset()" style="flex:1;font-size:11px;background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.35);">🔄 <span class="t" data-ar="ابدأ الحملة من جديد" data-en="Restart Campaign">ابدأ الحملة من جديد</span></button>
+</div>
+</div>
+</div>
+
 <!-- Rooms Management -->
 <div class="card" style="border:1px solid rgba(52,152,219,0.35);background:rgba(52,152,219,0.04);">
 <div class="ctitle" style="color:#5dade2;">🚪 <span class="t" data-ar="إدارة الغرف" data-en="Rooms Management">إدارة الغرف</span></div>
@@ -7350,7 +7389,8 @@ const PROP = {
   name: (_licHotelInfo && _licHotelInfo.n) || "Dahab Trendy Accommodation",
   address: (_licHotelInfo && _licHotelInfo.a) || "Dahab, South Sinai, Egypt",
   phone: (_licHotelInfo && _licHotelInfo.p) || "+20 109 953 1272",
-  email: (_licHotelInfo && _licHotelInfo.e) || "dahabtrendyinn@gmail.com"
+  email: (_licHotelInfo && _licHotelInfo.e) || "dahabtrendyinn@gmail.com",
+  offerText: (_licHotelInfo && _licHotelInfo.of) || ""
 };
 // يرجع بيانات التواصل (اسم/هاتف/واتساب/إيميل/موقع/عنوان) بتاعة الفرع النشط،
 // ولو الفرع مفيهوش بيانات خاصة، بيرجع بيانات الفندق العامة (PROP) بدلاً منها.
@@ -7395,6 +7435,8 @@ function propLoadSettingsUI(){
   document.getElementById('prop-f-address').value = PROP.address || '';
   document.getElementById('prop-f-phone').value = PROP.phone || '';
   document.getElementById('prop-f-email').value = PROP.email || '';
+  var offEl = document.getElementById('prop-f-offer');
+  if(offEl) offEl.value = PROP.offerText || '';
 }
 function propSaveHotelInfo(){
   var en = (typeof empLangIsEn==='function') ? empLangIsEn() : false;
@@ -7402,11 +7444,13 @@ function propSaveHotelInfo(){
   var address = (document.getElementById('prop-f-address').value||'').trim();
   var phone = (document.getElementById('prop-f-phone').value||'').trim();
   var email = (document.getElementById('prop-f-email').value||'').trim();
+  var offerEl = document.getElementById('prop-f-offer');
+  var offer = offerEl ? (offerEl.value||'').trim() : (PROP.offerText||'');
   var errEl = document.getElementById('prop-form-error');
   if(!name){ errEl.textContent = en?'Please enter the hotel name':'من فضلك أدخل اسم الفندق'; return; }
   errEl.textContent = '';
-  PROP.name = name; PROP.address = address; PROP.phone = phone; PROP.email = email;
-  localStorage.setItem('_sys_lic_hotel', JSON.stringify({n:name, a:address, p:phone, e:email}));
+  PROP.name = name; PROP.address = address; PROP.phone = phone; PROP.email = email; PROP.offerText = offer;
+  localStorage.setItem('_sys_lic_hotel', JSON.stringify({n:name, a:address, p:phone, e:email, of:offer}));
   if(typeof DTA_BRANCH!=='undefined' && DTA_BRANCH.updateBranch){
     DTA_BRANCH.updateBranch('main', {nameAr:name, nameEn:name});
     if(DTA_BRANCH.renderBranchSwitcher) DTA_BRANCH.renderBranchSwitcher();
@@ -7422,6 +7466,7 @@ function propResetHotelInfo(){
   PROP.address = "Dahab, South Sinai, Egypt";
   PROP.phone = "+20 109 953 1272";
   PROP.email = "dahabtrendyinn@gmail.com";
+  PROP.offerText = "";
   if(typeof DTA_BRANCH!=='undefined' && DTA_BRANCH.updateBranch){
     DTA_BRANCH.updateBranch('main', {nameAr:PROP.name, nameEn:PROP.name});
     if(DTA_BRANCH.renderBranchSwitcher) DTA_BRANCH.renderBranchSwitcher();
@@ -7429,6 +7474,129 @@ function propResetHotelInfo(){
   applyBrandingToDOM();
   propLoadSettingsUI();
   if(typeof sNotify==='function') sNotify(en?'↩️ Reset done':'↩️ رجعت للوضع الافتراضي', '', 'success', 2000);
+}
+function propShareOfferFB(){
+  var en = (typeof empLangIsEn==='function') ? empLangIsEn() : false;
+  var offerEl = document.getElementById('prop-f-offer');
+  var txt = (offerEl ? (offerEl.value||'') : (PROP.offerText||'')).trim();
+  if(!txt){
+    if(typeof sNotify==='function') sNotify(en?'⚠️ No offer text':'⚠️ اكتب نص العرض الأول', '', 'error', 2500);
+    else alert(en?'Please write an offer first':'من فضلك اكتب نص العرض الأول');
+    return;
+  }
+  var fullTxt = txt + "\n\n🏨 " + PROP.name + "\n📞 " + PROP.phone;
+  if(navigator.share){
+    navigator.share({ title: PROP.name, text: fullTxt }).catch(function(){});
+  } else {
+    var fbUrl = "https://www.facebook.com/sharer/sharer.php?u="+encodeURIComponent(location.href)+"&quote="+encodeURIComponent(fullTxt);
+    window.open(fbUrl, "_blank");
+  }
+}
+// ══ حملة إرسال عرض ترويجي لكل النزلاء عبر واتساب (شبه تلقائي — إرسال بضغطة واحدة لكل نزيل) ══
+function _waBcKey(txt){
+  var h = 0;
+  for(var i=0;i<txt.length;i++){ h = ((h<<5)-h+txt.charCodeAt(i))|0; }
+  return 'dta_wa_bc_sent_' + Math.abs(h);
+}
+function waBroadcastOpen(){
+  var en = (typeof empLangIsEn==='function') ? empLangIsEn() : false;
+  var offerEl = document.getElementById('prop-f-offer');
+  var txt = (offerEl ? (offerEl.value||'') : (PROP.offerText||'')).trim();
+  if(!txt){
+    if(typeof sNotify==='function') sNotify(en?'⚠️ No offer text':'⚠️ اكتب وحفظ نص العرض الأول', '', 'error', 2500);
+    else alert(en?'Please write and save an offer first':'من فضلك اكتب واحفظ نص العرض الأول');
+    return;
+  }
+  // تجميع كل أرقام النزلاء (الحاليين والسابقين) من كل الحجوزات — الضيف الرئيسي + المرافقين — مع إزالة التكرار
+  var map = {};
+  (bookings||[]).forEach(function(b){
+    var list = [];
+    if(b && b.name && b.phone) list.push({name:b.name, phone:b.phone});
+    if(b && Array.isArray(b.allGuestsData)){
+      b.allGuestsData.forEach(function(g){ if(g && g.name && g.phone) list.push({name:g.name, phone:g.phone}); });
+    }
+    list.forEach(function(g){
+      var norm = (g.phone||"").replace(/[^0-9+]/g,"");
+      if(norm.length<8) return;
+      if(!map[norm]) map[norm] = {name:g.name, phone:norm};
+    });
+  });
+  var guests = Object.keys(map).map(function(k){ return map[k]; });
+  window._waBroadcast = {
+    guests: guests,
+    idx: 0,
+    text: txt,
+    sentKey: _waBcKey(txt)
+  };
+  try{ window._waBroadcast.sent = JSON.parse(localStorage.getItem(window._waBroadcast.sentKey)) || []; }
+  catch(e){ window._waBroadcast.sent = []; }
+  // نبدأ من أول نزيل لسه ما اتبعتلوش في نفس الحملة دي
+  while(window._waBroadcast.idx < guests.length && window._waBroadcast.sent.indexOf(guests[window._waBroadcast.idx].phone) !== -1){
+    window._waBroadcast.idx++;
+  }
+  document.getElementById("wa-broadcast-modal").classList.add("on");
+  waBroadcastRender();
+}
+function waBroadcastRender(){
+  var en = (typeof empLangIsEn==='function') ? empLangIsEn() : false;
+  var st = window._waBroadcast;
+  var nameEl = document.getElementById('wab-guest-name');
+  var phoneEl = document.getElementById('wab-guest-phone');
+  var progEl = document.getElementById('wab-progress');
+  var barEl = document.getElementById('wab-progress-bar');
+  var cardEl = document.getElementById('wab-current-card');
+  var actionsEl = document.getElementById('wab-actions');
+  var emptyEl = document.getElementById('wab-empty-msg');
+  var doneEl = document.getElementById('wab-done-msg');
+  if(!st) return;
+  var total = st.guests.length;
+  var sentCount = st.sent.length;
+  progEl.textContent = (en?"Sent: ":"اتبعت: ")+sentCount+" / "+total+" "+(en?"guests":"نزيل");
+  barEl.style.width = total ? Math.round((sentCount/total)*100)+"%" : "0%";
+  if(total===0){
+    cardEl.style.display='none'; actionsEl.style.display='none'; doneEl.style.display='none';
+    emptyEl.style.display='block';
+    emptyEl.textContent = en?"No guest phone numbers found in the system.":"مفيش أرقام نزلاء متسجلة في النظام.";
+    return;
+  }
+  if(st.idx >= total){
+    cardEl.style.display='none'; actionsEl.style.display='none'; emptyEl.style.display='none';
+    doneEl.style.display='block';
+    doneEl.textContent = en?"✅ Offer sent to all guests!":"✅ اتبعت العرض لكل النزلاء!";
+    return;
+  }
+  emptyEl.style.display='none'; doneEl.style.display='none';
+  cardEl.style.display='block'; actionsEl.style.display='flex';
+  var g = st.guests[st.idx];
+  nameEl.textContent = g.name;
+  phoneEl.textContent = g.phone;
+}
+function waBroadcastSend(){
+  var st = window._waBroadcast;
+  if(!st || st.idx>=st.guests.length) return;
+  var g = st.guests[st.idx];
+  var msg = st.text + "\n\n🏨 " + PROP.name + "\n📞 " + PROP.phone;
+  window.open("https://wa.me/"+g.phone+"?text="+encodeURIComponent(msg), "_blank");
+  if(st.sent.indexOf(g.phone)===-1) st.sent.push(g.phone);
+  try{ localStorage.setItem(st.sentKey, JSON.stringify(st.sent)); }catch(e){}
+  st.idx++;
+  waBroadcastRender();
+}
+function waBroadcastSkip(){
+  var st = window._waBroadcast;
+  if(!st || st.idx>=st.guests.length) return;
+  st.idx++;
+  waBroadcastRender();
+}
+function waBroadcastReset(){
+  var en = (typeof empLangIsEn==='function') ? empLangIsEn() : false;
+  var st = window._waBroadcast;
+  if(!st) return;
+  if(!confirm(en?"Restart the campaign? All guests will be marked as not-yet-sent.":"تبدأ الحملة من جديد؟ كل النزلاء هيرجعوا 'لسه ما اتبعتلهمش'.")) return;
+  st.sent = [];
+  st.idx = 0;
+  try{ localStorage.removeItem(st.sentKey); }catch(e){}
+  waBroadcastRender();
 }
 const RTYPES = ["Single","Double","Triple","Suite","Dorm Bed"];
 let ROOMS = (function(){
