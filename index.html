@@ -13691,26 +13691,26 @@ function screenshotAndWA(){
 const d=getIV();
 if(!d.name){alert("الرجاء ملء بيانات الفاتورة أولاً.");return;}
 const phone=(d.phone||"").replace(/\D/g,"");
-const statusTxt=d.status==="Paid"?"✅ مسدد":d.status==="Partial"?"🔶 مسدد جزئياً":"🔴 غير مسدد";
+const statusTxt=d.status==="Paid"?"✅ مدفوع بالكامل / Paid in Full":d.status==="Partial"?"🔶 مدفوع جزئياً / Partially Paid":"🔴 غير مسدد / Pending";
 const extLines=(ivExtensions&&ivExtensions.length>0)
-  ?"\n"+ivExtensions.map(e=>"🌙 تمديد: "+e.nights+" ليلة · "+d.sym+(e.amount||0).toFixed(2)+" · "+(e.payStatus||"Unpaid")).join("\n")
+  ?"\n"+ivExtensions.map(e=>"🌙 تمديد / Extension: "+e.nights+" ليلة/night(s) · "+d.sym+(e.amount||0).toFixed(2)+" · "+(e.payStatus||"Unpaid")).join("\n")
   :"";
 const msg=
 `🏨 *${DTA_BC(d.branchId).name}*
 ━━━━━━━━━━━━━━━━━━
-📄 *فاتورة رقم: ${curInvNo}*
+📄 *فاتورة رقم / Invoice No: ${curInvNo}*
 ━━━━━━━━━━━━━━━━━━
-👤 الضيف: *${d.name}*${d.nat&&d.nat!=="—"?"\n🌍 الجنسية: "+d.nat:""}${d.phone?"\n📞 "+d.phone:""}
+👤 الضيف / Guest: *${d.name}*${d.nat&&d.nat!=="—"?"\n🌍 الجنسية / Nationality: "+d.nat:""}${d.phone?"\n📞 "+d.phone:""}
 
-🏨 الغرفة: *${d.room}* (${d.type})
-📅 الوصول: *${fmtD(d.ci)}*
-📅 المغادرة: *${fmtD(d.co)}*
-🌙 الليالي: *${d.n}*
-🍳 الإفطار: ${d.bf?"مشمول ✅":"غير مشمول"}
+🏨 الغرفة / Room: *${d.room}* (${d.type})
+📅 الوصول / Check-in: *${fmtD(d.ci)}*
+📅 المغادرة / Check-out: *${fmtD(d.co)}*
+🌙 الليالي / Nights: *${d.n}*
+🍳 الإفطار / Breakfast: ${d.bf?"مشمول ✅ / Included":"غير مشمول / Not Included"}
 ━━━━━━━━━━━━━━━━━━
-💰 الإجمالي: *${d.sym}${d.total.toFixed(2)}*${d.prepay>0?"\n⬇️ مدفوع مسبقاً: "+d.sym+d.prepay.toFixed(2)+"\n🔴 المتبقي: "+d.sym+d.balance.toFixed(2):""}${extLines}
-💳 طريقة الدفع: ${d.method}
-📊 الحالة: ${statusTxt}${d.notes?"\n📝 ملاحظات: "+d.notes:""}
+💰 الإجمالي / Total: *${d.sym}${d.total.toFixed(2)}*${d.prepay>0?"\n⬇️ مدفوع مسبقاً / Prepaid: "+d.sym+d.prepay.toFixed(2)+"\n🔴 المتبقي / Balance Due: "+d.sym+d.balance.toFixed(2):""}${extLines}
+💳 طريقة الدفع / Payment Method: ${d.method}
+📊 الحالة / Status: ${statusTxt}${d.notes?"\n📝 ملاحظات / Notes: "+d.notes:""}
 ━━━━━━━━━━━━━━━━━━
 📞 ${DTA_BC(d.branchId).phone}
 📍 ${DTA_BC(d.branchId).address||""}`;
