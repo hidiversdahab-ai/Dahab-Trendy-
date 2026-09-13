@@ -3516,6 +3516,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
   <button class="btn bb bsm" onclick="addGrpRoom()" style="font-size:12px;padding:8px 14px;">➕ <span class="t" data-ar="إضافة غرفة" data-en="Add Room">إضافة غرفة</span></button>
   <button class="btn bb bsm" onclick="addAllAvailableRooms()" style="font-size:12px;padding:8px 14px;background:rgba(52,152,219,0.1);color:#7ab8f5;border-color:rgba(52,152,219,0.3);">🏨 <span class="t" data-ar="إضافة كل الغرف المتاحة" data-en="Add All Available Rooms">إضافة كل الغرف المتاحة</span></button>
+  <button class="btn bb bsm" onclick="splitGrpTotalOnRooms()" style="font-size:12px;padding:8px 14px;background:rgba(46,204,113,0.1);color:#2ecc71;border-color:rgba(46,204,113,0.3);">🔢 <span class="t" data-ar="توزيع سعر إجمالي على الغرف" data-en="Split Total Price Across Rooms">توزيع سعر إجمالي على الغرف</span></button>
   <span id="grp-rooms-summary" style="font-size:11px;color:var(--muted);"></span>
 </div>
 </div>
@@ -14963,6 +14964,70 @@ function addAllAvailableRooms(){
   calcGrpTotal();
 }
 
+// ── جلب "سعر مرجعي" لنوع الغرفة (نفس منطق grpAutoPrice) عشان نستخدمه كوزن في التوزيع بالتناسب ──
+function _grpRefPrice(roomType, roomNum){
+  const type = roomType || 'Double';
+  let refPrice = 0;
+  const plData = LS('dta_pl',{});
+  const season = (typeof getCurrentSeason==='function') ? getCurrentSeason() : null;
+  if(season && plData[season] && plData[season][type] !== undefined){
+    refPrice = plData[season][type];
+  }
+  if(!refPrice && typeof DEF_PRICES!=='undefined' && DEF_PRICES[type]){
+    refPrice = DEF_PRICES[type].usd || 0;
+  }
+  if(!refPrice && typeof prices!=='undefined' && prices[type]){
+    refPrice = prices[type].usd || 0;
+  }
+  if(!refPrice && roomNum){
+    const lastBk = [...bookings].reverse().find(b=>String(b.room)===String(roomNum)&&b.status!=='Cancelled');
+    if(lastBk){
+      const n = Math.round((new Date(lastBk.co)-new Date(lastBk.ci))/86400000);
+      if(n>0) refPrice = Math.round(lastBk.total/n);
+    }
+  }
+  return refPrice;
+}
+
+// ── توزيع سعر إجمالي (لكل الغرف مع بعض) على كل غرفة على حدة ──
+// المشكلة اللي بتحلها: المستخدم بيكتب سعر واحد (زي 3700) على إنه سعر الجروب كله في الليلة،
+// بس النظام كان بياخده كـ "سعر الغرفة الواحدة في الليلة" فيتضاعف السعر × عدد الغرف بدل ما ينقسم عليهم.
+// هنا بناخد رقم إجمالي واحد وننزله على كل غرفة — بالتناسب مع سعر نوعها (مش بالتساوي)،
+// عشان لو عندك مثلاً Double و Suite في نفس الجروب، الـ Suite تاخد نصيب أكبر من الإجمالي.
+function splitGrpTotalOnRooms(){
+  if(!grpRooms.length){ sNotify('⚠️','أضف الغرف أولاً','warning',2000); return; }
+  const ci = document.getElementById('grp-ci').value;
+  const co = document.getElementById('grp-co').value;
+  const nights = (ci && co && co > ci) ? nts(ci, co) : 0;
+  if(!nights){ sNotify('⚠️','حدد تواريخ الجروب أولاً (وصول/مغادرة)','warning',2500); return; }
+  const validRooms = grpRooms.filter(r=>r.roomNum);
+  const roomCount = validRooms.length || grpRooms.length;
+  if(!roomCount){ sNotify('⚠️','لا توجد غرف مضافة','warning',2000); return; }
+  const sym = ((typeof PROP!=="undefined"&&PROP.currency)?PROP.currency==="USD"?"$":PROP.currency==="EUR"?"€":"£":"£");
+  const input = prompt('أدخل السعر الإجمالي لكل الغرف مع بعض (لكل مدة الإقامة، '+nights+' ليلة):\n(هيتقسم بالتناسب مع سعر نوع كل غرفة، مش بالتساوي)');
+  if(input===null) return;
+  const total = parseFloat(input);
+  if(!total || total<=0){ sNotify('⚠️','أدخل رقم صحيح أكبر من صفر','warning',2500); return; }
+
+  // وزن كل غرفة = السعر المرجعي لنوعها (لو مش موجود، الوزن = 1 عشان توزيع متساوي fallback)
+  const weights = grpRooms.map(r => _grpRefPrice(r.type, r.roomNum) || 1);
+  const sumWeights = weights.reduce((s,w)=>s+w, 0) || grpRooms.length;
+  const totalPerNight = total / nights;
+
+  const breakdown = [];
+  grpRooms.forEach((r,i)=>{
+    const share = weights[i] / sumWeights;
+    const ppn = Math.round((totalPerNight * share) * 100) / 100;
+    r.pricePerNight = ppn;
+    r.customPrice = true;
+    breakdown.push(`${r.roomNum||'#'+(i+1)} (${r.type}): ${sym}${ppn}/ليلة`);
+  });
+
+  renderGrpRooms();
+  calcGrpTotal();
+  sNotify('✅ تم التوزيع بالتناسب', breakdown.join(' | '), 'success', 4500);
+}
+
 function addGrpRoom(){
   const id = Date.now();
   grpRooms.push({id, roomNum:'', type:'Double', qty:1, pricePerNight:0, guestName:'', customPrice:false});
@@ -16423,6 +16488,7 @@ function saveGrpBooking(){
       adults:getRoomCapacity(info.type, r.roomNum),
       children:0,
       total: roomNet,
+      customPrice: r.pricePerNight,
       commissionAmt: commForRoom,
       commissionPct: d.commType==='percent' ? d.commVal : 0,
       commissionType: d.commType,
@@ -16526,6 +16592,7 @@ function doConvertGrp(roomNums){
       phone:d.phone, type:info.type, ci:d.ci, co:d.co,
       adults:getRoomCapacity(info.type, r.roomNum), children:0,
       total:roomNet,
+      customPrice:r.pricePerNight,
       commissionAmt:commForRoom,
       commissionPct:d.commType==='percent'?d.commVal:0,
       commissionType:d.commType,
