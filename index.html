@@ -6577,7 +6577,7 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 </div>
 <div class="fld">
 <label>وقت المغادرة الرسمي / Standard</label>
-<input type="time" value="12:00" disabled style="background:rgba(255,255,255,0.04);color:var(--muted);">
+<input id="earlyco-std-time" type="time" value="12:00" disabled style="background:rgba(255,255,255,0.04);color:var(--muted);">
 </div>
 </div>
 <div class="sdiv">✏️ سعر مخصص / Custom Price per Night</div>
@@ -7693,6 +7693,30 @@ const RSTATUS_LBL = {available:"✅ Available",occupied:"🔴 Occupied",reserved
 const RSTATUS_BDG = {available:"bg-green",occupied:"bg-red",reserved:"bg-yellow",checkin:"bg-blue",checkout:"bg-orange",maintenance:"bg-gray",dayuse:"bg-orange",standby:"bg-purple"};
 const RSTATUS_CLS = {available:"room-available",occupied:"room-occupied",reserved:"room-reserved",checkin:"room-checkin",checkout:"room-checkout",maintenance:"room-maintenance",dayuse:"room-checkout",standby:"room-standby"};
 function LS(k,d){try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}}
+// ── Unified Check-in/Check-out time (single source of truth: QR Settings) ──
+function getQRTimes(){
+  try{
+    const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
+    return {ci: (qrs.checkinTime||'2:00 PM').trim(), co: (qrs.checkoutTime||'12:00 PM').trim()};
+  }catch(e){ return {ci:'2:00 PM', co:'12:00 PM'}; }
+}
+function timeStrToMinutes(str){
+  if(!str) return null;
+  const m = String(str).trim().match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])?$/);
+  if(!m) return null;
+  let h=parseInt(m[1],10), mins=parseInt(m[2],10);
+  if(m[3]){
+    const ap=m[3].toUpperCase();
+    if(ap==='PM' && h!==12) h+=12;
+    if(ap==='AM' && h===12) h=0;
+  }
+  return h*60+mins;
+}
+function minsToHHMM(mins){
+  if(mins==null) return "12:00";
+  const h=Math.floor(mins/60)%24, m=mins%60;
+  return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+}
 function LSS(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){
   if(e.name==="QuotaExceededError"||e.code===22){showStorageWarning();}
   return false;
@@ -10600,6 +10624,7 @@ document.getElementById("earlyco-rate-info").textContent="";
 document.getElementById("earlyco-orig-date").value=fmtD(b.co);
 document.getElementById("earlyco-new-date").value=b.co;
 document.getElementById("earlyco-time").value="10:00";
+document.getElementById("earlyco-std-time").value=minsToHHMM(timeStrToMinutes(getQRTimes().co));
 document.getElementById("earlyco-summary").style.display="none";
 document.getElementById("earlyco-refund-box").style.display="none";
 document.getElementById("earlyco-refund").value="0";
@@ -10703,7 +10728,7 @@ refundBox.style.display="none";
 } else {
 refundBox.style.display="none";
 }
-if(coTime) lines.push("⏰ وقت المغادرة: <span style='color:#e67e22;font-weight:700;'>"+coTime+"</span> (رسمي: 12:00)");
+if(coTime) lines.push("⏰ وقت المغادرة: <span style='color:#e67e22;font-weight:700;'>"+coTime+"</span> (رسمي: "+getQRTimes().co+")");
 if(lines.length){
 summaryContent.innerHTML=lines.map(l=>"<div>"+l+"</div>").join("");
 summary.style.display="block";
@@ -10802,6 +10827,7 @@ document.getElementById("earlyci-orig-date").value=fmtD(b.ci);
 document.getElementById("earlyci-new-date").value=b.ci;
 document.getElementById("earlyci-fee").value="0";
 document.getElementById("earlyci-time").value="08:00";
+document.getElementById("earlyci-std-time").value=minsToHHMM(timeStrToMinutes(getQRTimes().ci));
 document.getElementById("earlyci-summary").style.display="none";
 const paidSum=calcPaid(b);
 document.getElementById("earlyci-info").innerHTML=
@@ -10858,7 +10884,7 @@ lines.push("📅 تاريخ الوصول: <span style='color:#3498db;'>"+fmtD(or
 lines.push("🌙 الليالي: "+oldN+" → "+newN+" ("+(diff>0?"+":"")+diff+")");
 lines.push("💰 الإجمالي: "+sym+b.total.toFixed(2)+" → <strong style='color:var(--gold);'>"+sym+newTotal.toFixed(2)+"</strong>"+(customP>0?" <span style='color:#f39c12;font-size:10px;'>✏️ Custom</span>":"")+(diffAmt!==0?" <span style='color:"+(diffAmt>0?"#4cda7a":"#e74c3c")+";'>("+(diffAmt>0?"+":"")+sym+diffAmt.toFixed(2)+")</span>":""));
 }
-if(arrTime) lines.push("⏰ وقت الوصول: <span style='color:#f39c12;font-weight:700;'>"+arrTime+"</span> (رسمي: 12:00)");
+if(arrTime) lines.push("⏰ وقت الوصول: <span style='color:#f39c12;font-weight:700;'>"+arrTime+"</span> (رسمي: "+getQRTimes().ci+")");
 if(fee>0) lines.push("💳 رسوم early check-in: <span style='color:#f39c12;font-weight:700;'>"+sym+fee.toFixed(2)+"</span>");
 if(lines.length){
 summaryContent.innerHTML=lines.map(l=>"<div>"+l+"</div>").join("");
@@ -11350,7 +11376,7 @@ function openEditCO(i) {
     "</div>";
   // Default dates
   document.getElementById("editco-early-date").value = b.co;
-  document.getElementById("editco-early-time").value = b.earlyCOTime || "12:00";
+  document.getElementById("editco-early-time").value = b.earlyCOTime || minsToHHMM(timeStrToMinutes(getQRTimes().co));
   document.getElementById("editco-early-price").value = "0";
   document.getElementById("editco-fix-date").value = b.co;
   document.getElementById("editco-fix-price").value = "0";
@@ -13628,9 +13654,8 @@ return;
 const ssc=d.status==="Paid"?"background:#d4edda;color:#155724;":"background:#fff3cd;color:#856404;";
 const bkPolHtml=policies.bktext?"<div class='invp-pol'><strong>"+(policies.bktitle||"Booking Policy")+":</strong> "+policies.bktext+"</div>":"";
 const polHtml=policies.text?"<div class='invp-pol'><strong>"+(policies.title||"Cancellation Policy")+":</strong> "+policies.text+"</div>":"";
-const _qrsT = (function(){ try{ return JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'); }catch(e){ return {}; } })();
-const tncCheckIn = _qrsT.checkinTime || "2:00 PM";
-const tncCheckOut = _qrsT.checkoutTime || "12:00 PM";
+const tncCheckIn = getQRTimes().ci;
+const tncCheckOut = getQRTimes().co;
 const tncHtml = "<div class='invp-pol' style='border-left-color:#8a7a5c;'><strong>Terms & Conditions / الشروط والأحكام:</strong><ul style='margin:4px 0 0;padding-left:14px;padding-right:14px;'>"+
 "<li>Check-in from <span dir='ltr' style='unicode-bidi:isolate;'>"+tncCheckIn+"</span> · Check-out until <span dir='ltr' style='unicode-bidi:isolate;'>"+tncCheckOut+"</span><br><span style='color:#888;' dir='rtl'>تسجيل الوصول من <span dir='ltr' style='unicode-bidi:isolate;'>"+tncCheckIn+"</span> وتسجيل المغادرة حتى <span dir='ltr' style='unicode-bidi:isolate;'>"+tncCheckOut+"</span></span></li>"+
 "<li>A valid ID or passport is required at check-in for all guests<br><span style='color:#888;' dir='rtl'>يجب إبراز بطاقة هوية أو جواز سفر ساري عند تسجيل الوصول</span></li>"+
@@ -17968,8 +17993,9 @@ const hour = now.getHours();
 const minute = now.getMinutes();
 const td = toDay();
 const timeNow = hour*60+minute;
-const checkInTime  = 14*60;  // 2:00 PM
-const checkOutTime = 11*60;  // 11:00 AM
+const _qrT = getQRTimes();
+const checkInTime  = timeStrToMinutes(_qrT.ci)  ?? 14*60;  // fallback 2:00 PM
+const checkOutTime = timeStrToMinutes(_qrT.co)  ?? 11*60;  // fallback 11:00 AM
 let changes=[];
 // ─── Build a map: for each room, what booking occupies it ON TODAY? ───
 // A booking with movements may occupy different rooms on different dates.
@@ -27502,7 +27528,7 @@ function loadWATemplate(){
       deposit:{title:'💰 طلب عربون',body:`السلام عليكم *${b.name}* 🌊\n\nبالإشارة إلى حجزكم في *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)} (${nights_} ليالي)\n🏨 الغرفة: ${b.room}\n💰 الإجمالي: ${sym}${b.total}\n\nيرجى تسديد العربون (50%): *${sym}${(b.total/2).toFixed(2)}*\n📞 ${_propPhone}\n\nشكراً لحجزكم معنا 🙏`},
       bday:{title:'🎂 تهنئة عيد ميلاد',body:`🎂 عيد ميلاد سعيد يا *${b.name}*! 🎉\n\nيسعدنا أن نكون معكم في هذه المناسبة الجميلة 💛\nكل عام وأنتم بخير وسعادة وصحة!\n— فريق *${prop.name}* 🌊`},
       welcome:{title:'🎉 مرحباً بكم!',body:`أهلاً وسهلاً *${b.name}* 🌊\n\nيسعدنا استقبالكم في *${prop.name}*! نتمنى أن تكون إقامتكم مريحة ومميزة.\n\n🏨 غرفتكم: *${b.room}*\n📅 المغادرة: ${fmtD(b.co)}\n\nنحن هنا لخدمتكم على مدار الساعة.\nلا تترددوا في التواصل معنا لأي طلب 🙏\n📞 ${_propPhone}\n\nأهلاً بكم 💛`},
-      checkin_info:{title:'🔑 تعليمات الوصول',body:`مرحباً *${b.name}* 🌊\n\nنرحب بكم في *${prop.name}*! إليكم تفاصيل إقامتكم:\n\n🏨 الغرفة: *${b.room}*\n📅 الوصول: ${fmtD(b.ci)} من الساعة 2:00 PM\n📅 المغادرة: ${fmtD(b.co)} قبل 12:00 PM\n\nلأي استفسار نحن على تواصل:\n📞 ${_propPhone}\n\nنتمنى لكم إقامة رائعة! 💛`},
+      checkin_info:{title:'🔑 تعليمات الوصول',body:`مرحباً *${b.name}* 🌊\n\nنرحب بكم في *${prop.name}*! إليكم تفاصيل إقامتكم:\n\n🏨 الغرفة: *${b.room}*\n📅 الوصول: ${fmtD(b.ci)} من الساعة ${getQRTimes().ci}\n📅 المغادرة: ${fmtD(b.co)} قبل ${getQRTimes().co}\n\nلأي استفسار نحن على تواصل:\n📞 ${_propPhone}\n\nنتمنى لكم إقامة رائعة! 💛`},
       review:{title:'⭐ طلب تقييم',body:`عزيزنا *${b.name}* 🌊\n\nشكراً على إقامتكم معنا في *${prop.name}* من ${fmtD(b.ci)} إلى ${fmtD(b.co)}.\n\nرأيكم يهمنا ويساعدنا على تحسين خدماتنا.\nنقدّر تقييمكم على Google Maps أو TripAdvisor 🙏\n\nشكراً جزيلاً لكم 💛\n— فريق *${prop.name}*`},
       late_pay:{title:'⚠️ تذكير دفع',body:`السلام عليكم *${b.name}* 🌊\n\nبالإشارة إلى حجزكم في *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)}\n🏨 الغرفة: ${b.room}\n💰 الإجمالي: ${sym}${b.total}${paidSum_wat>0?'\n✅ المدفوع: '+sym+paidSum_wat.toFixed(2):''}\n⚠️ *المبلغ المتبقي: ${sym}${remAmt_wat.toFixed(2)}*\n\n⚠️ يرجى التواصل معنا لتسديد المبلغ المتبقي في أقرب وقت.\n📞 ${_propPhone}\n\nشكراً لتعاونكم 🙏`},
       rebook:{title:'🔄 عرض إعادة الحجز',body:`عزيزنا *${b.name}* 🌊\n\nنأمل أن تكون إقامتكم في *${prop.name}* كانت ممتعة!\n\n🎁 لدينا عروض خاصة لضيوفنا الكرام عند إعادة الحجز مباشرة معنا.\n\nللحجز والاستفسار:\n📞 ${_propPhone}\n\nنتطلع لاستقبالكم مجدداً! 💛`},
@@ -27516,7 +27542,7 @@ function loadWATemplate(){
     },
     en:{
       confirm:{title:'✅ Booking Confirmation',body:`Dear *${b.name}*, 🌊\n\nWe are pleased to confirm your booking at *${prop.name}*:\n\n🏨 Room: ${b.room} (${b.type||''})\n📅 Check-in: ${fmtD(b.ci)}\n📅 Check-out: ${fmtD(b.co)}\n🌙 Nights: ${nights_}\n💰 Total: ${sym}${b.total}\n💳 Status: ${payLbl}\n\nWe look forward to welcoming you! Please let us know your arrival time.\n📞 ${prop.phone}`},
-      reminder:{title:'⏰ Arrival Reminder',body:`Hello *${b.name}* 🌊\n\nThis is a reminder that your check-in at *${prop.name}* is:\n📅 *${fmtD(b.ci)}*\n🏨 Room: ${b.room}\n⏰ Official check-in time: 2:00 PM\n\nPlease let us know your approximate arrival time 🙏\n📞 ${prop.phone}`},
+      reminder:{title:'⏰ Arrival Reminder',body:`Hello *${b.name}* 🌊\n\nThis is a reminder that your check-in at *${prop.name}* is:\n📅 *${fmtD(b.ci)}*\n🏨 Room: ${b.room}\n⏰ Official check-in time: ${getQRTimes().ci}\n\nPlease let us know your approximate arrival time 🙏\n📞 ${prop.phone}`},
       thanks:{title:'🙏 Thank You',body:`Dear *${b.name}* 🌊\n\nThank you so much for choosing *${prop.name}*!\nIt was a pleasure hosting you from ${fmtD(b.ci)} to ${fmtD(b.co)}.\n\nWe hope your stay was comfortable and memorable.\nWe'd love to welcome you back! 💛\n📍 ${prop.address}`},
       deposit:{title:'💰 Deposit Request',body:`Dear *${b.name}* 🌊\n\nRegarding your booking at *${prop.name}*:\n📅 ${fmtD(b.ci)} — ${fmtD(b.co)} (${nights_} nights)\n🏨 Room: ${b.room}\n💰 Total: ${sym}${b.total}\n\nKindly pay the deposit (50%): *${sym}${(b.total/2).toFixed(2)}*\n📞 ${prop.phone}\n\nThank you for booking with us 🙏`},
       bday:{title:'🎂 Happy Birthday',body:`🎂 Happy Birthday *${b.name}*! 🎉\n\nWe're so happy to celebrate with you! 💛\nWishing you health, happiness & joy!\n— Team *${prop.name}* 🌊`},
