@@ -4747,6 +4747,13 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <div style="font-size:11px;color:var(--muted);margin-top:4px;">يظهر تنبيه في الـ Dashboard للغرف التي لم يكن فيها حجز لأكثر من هذه المدة</div>
 </div>
 <div class="card">
+<div class="ctitle">📋 Booking Policy</div>
+<div class="fld"><label>Title</label><input id="st-bktitle" placeholder="Booking Policy" oninput="savePolicies()"></div>
+<div class="fld mt"><label>Details (shown on invoice)</label>
+<textarea id="st-bktext" rows="4" placeholder="Bookings are confirmed only after deposit payment. Guest must present valid ID at check-in..." oninput="savePolicies()"></textarea>
+</div>
+</div>
+<div class="card">
 <div class="ctitle">📜 Cancellation Policy</div>
 <div class="fld"><label>Title</label><input id="st-ptitle" placeholder="Free Cancellation 48hrs" oninput="savePolicies()"></div>
 <div class="fld mt"><label>Details (shown on invoice)</label>
@@ -7089,6 +7096,18 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 <button class="btn bg" onclick="addPayment()">💾 Add Payment</button>
 <button class="btn bb" onclick="closeM('pay-modal')">Close</button>
 </div>
+<div class="sdiv" style="color:#c9a84c;border-color:rgba(201,168,76,0.3);">💰 بقشيش / Tip <span style="font-weight:400;color:var(--muted);font-size:10px;">(منفصل عن حساب الغرفة، مش بيدخل ضمن الإيراد / Separate from room bill, not counted as revenue)</span></div>
+<div id="pay-tips-list" style="margin-bottom:8px;"></div>
+<div class="g2" style="margin-top:8px;">
+<div class="fld"><label>المبلغ / Amount (<span id="tip-sym">$</span>)</label><input id="tip-amount" type="number" min="0" step="0.01" placeholder="0.00"></div>
+<div class="fld"><label>طريقة الدفع / Method</label>
+<select id="tip-method"><option value="Cash">💵 كاش / Cash</option><option value="Card">💳 بطاقة / Card</option><option value="Bank Transfer">🏦 تحويل بنكي / Bank Transfer</option></select>
+</div>
+<div class="fld"><label>ملاحظات / Notes</label><input id="tip-note" placeholder="مثال: للريسبشن / e.g. for reception"></div>
+</div>
+<div class="flex mt">
+<button class="btn bb" onclick="addTip()" style="border-color:#c9a84c;color:#c9a84c;">💰 إضافة بقشيش / Add Tip</button>
+</div>
 </div>
 </div>
 <div class="ovl" id="sh-modal">
@@ -7679,6 +7698,7 @@ function LSS(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}cat
   return false;
 }}
 let bookings   = LS("dta_bk",[]);
+let tips       = LS("dta_tips",[]);
 // ── migration: grp bookings قديمة كانت بتحفظ total = gross (قبل الكوميشن)
 // دلوقتي total = net (بعد الكوميشن) — نصحح تلقائيًا
 (function migrateGrpNetTotal(){
@@ -7740,7 +7760,7 @@ let roomPhotos = (function(){
   return upgraded;
 })();
 let roomSt     = LS("dta_rs",{});
-let policies   = LS("dta_pol",{title:"Free Cancellation 48hrs",text:"Free cancellation up to 48 hours before check-in. After that, 1 night charge applies.",fee:"1night",prepay:"none",pnotes:""});
+let policies   = LS("dta_pol",{bktitle:"سياسة الحجز / Booking Policy",bktext:"يتم تأكيد الحجز فقط بعد دفع عربون (دفعة مقدمة) بالنسبة المحددة من إجمالي قيمة الإقامة. الحجوزات غير المدفوعة تعتبر غير مؤكدة وقد يتم إلغاؤها دون إشعار مسبق. يجب إبراز بطاقة هوية أو جواز سفر ساري عند تسجيل الوصول باسم صاحب الحجز.\n\nBooking is confirmed only after payment of a deposit as specified below. Unpaid bookings are considered unconfirmed and may be released without prior notice. A valid ID or passport matching the guest name is required at check-in.",title:"سياسة الإلغاء / Cancellation Policy",text:"يمكن للضيف إلغاء الحجز مجانًا حتى 7 أيام قبل موعد تسجيل الوصول، مع استرداد كامل العربون المدفوع. الإلغاء خلال أقل من 7 أيام من تاريخ الوصول أو عدم الحضور (No-Show) يستوجب خصم قيمة ليلة واحدة أو نسبة من الإجمالي وفقًا للحالة. أي استرداد يتم عبر نفس وسيلة الدفع خلال 5-7 أيام عمل.\n\nGuests may cancel free of charge up to 7 days before check-in, with a full refund of the deposit paid. Cancellations made less than 7 days before arrival, or no-shows, are subject to a one-night charge or a percentage of the total, as applicable. Refunds are processed via the original payment method within 5–7 business days.",fee:"1night",prepay:"none",pnotes:""});
 let expenses   = LS("dta_ex",[]);
 let exBudgets  = LS("dta_exbudget",{});
 let exRecurring = LS("dta_exrecur",[]);
@@ -13602,6 +13622,7 @@ document.getElementById("iv-preview").innerHTML="<div style='text-align:center;c
 return;
 }
 const ssc=d.status==="Paid"?"background:#d4edda;color:#155724;":"background:#fff3cd;color:#856404;";
+const bkPolHtml=policies.bktext?"<div class='invp-pol'><strong>"+(policies.bktitle||"Booking Policy")+":</strong> "+policies.bktext+"</div>":"";
 const polHtml=policies.text?"<div class='invp-pol'><strong>"+(policies.title||"Cancellation Policy")+":</strong> "+policies.text+"</div>":"";
 const _qrsT = (function(){ try{ return JSON.parse(localStorage.getItem('dta_qr_settings')||'{}'); }catch(e){ return {}; } })();
 const tncCheckIn = _qrsT.checkinTime || "2:00 PM";
@@ -13793,11 +13814,11 @@ proformaBanner+
   const _ivCoGuests = _ivGuestsList.slice(1).filter(g=>(g.name||"").trim());
   const _ivGuestRows = [{name:d.name, gender:d.gender, isChild:false}]
     .concat(_ivCoGuests.map((g,idx)=>({name:(g.name||"").trim(), gender:g.gender||"", isChild:(idx+1)>=_ivAdultsN})));
-  const _ivGuestCountTag = _ivGuestRows.length>1 ? " <span style='color:#888;font-weight:400;font-size:8px;'>("+_ivGuestRows.length+" guests · نزلاء)</span>" : "";
+  const _ivGuestCountTag = _ivGuestRows.length>1 ? "<div style='margin-top:3px;'><span style='display:inline-block;background:#eaf4fb;color:#1a6a9a;border:1px solid #b8d9f5;border-radius:10px;padding:2px 9px;font-size:9px;font-weight:700;'>👥 "+_ivGuestRows.length+" Guests · "+_ivGuestRows.length+" نزلاء</span></div>" : "";
   const _ivGuestsHtml = _ivGuestRows.map((g,i)=>
     "<div style='display:flex;align-items:center;gap:7px;"+(i>0?"margin-top:5px;":"")+"'>"+
-    "<div style='width:"+(i===0?"52px":"34px")+";height:"+(i===0?"52px":"34px")+";border-radius:50%;background:linear-gradient(135deg,#e9f2ee,#cfe3d9);border:2px solid #b8763f;display:flex;align-items:center;justify-content:center;font-size:"+(i===0?"28px":"18px")+";flex-shrink:0;'>"+guestGenderIcon(g.gender, g.name, g.isChild)+"</div>"+
-    "<div>"+(i===0?"<strong>"+g.name+"</strong>"+_ivGuestCountTag:g.name)+"</div>"+
+    "<div style='width:"+(i===0?"38px":"34px")+";height:"+(i===0?"38px":"34px")+";border-radius:50%;background:linear-gradient(135deg,#e9f2ee,#cfe3d9);border:2px solid #b8763f;display:flex;align-items:center;justify-content:center;font-size:"+(i===0?"20px":"18px")+";flex-shrink:0;'>"+guestGenderIcon(g.gender, g.name, g.isChild)+"</div>"+
+    "<div>"+(i===0?"<strong>"+g.name+"</strong>"+(i===0?_ivGuestCountTag:""):g.name)+"</div>"+
     "</div>"
   ).join("");
   return "<div class='invp-gbox' style='display:flex;gap:12px;align-items:flex-start;'>"+
@@ -13816,6 +13837,13 @@ proformaBanner+
 "<table class='invp-tbl'><thead><tr><th>Description</th><th>Qty</th><th>Rate</th><th>Total</th></tr></thead>"+
 "<tbody>"+roomRows+extRows+roomChargesRows+tourChargesRows+
 (ivTransfer.has?"<tr style='background:#eaf4fb;'><td>✈️ Airport Transfer — <span style='font-size:9px;color:#2471a3;font-weight:700;'>"+ivTransfer.typeLabel+"</span>"+(ivTransfer.flight?"<br><span style='color:#888;font-size:9px;'>Flight: "+ivTransfer.flight+(ivTransfer.airline?" · "+ivTransfer.airline:"")+"</span>":"")+"</td><td>1</td><td>"+d.sym+ivTransfer.price.toFixed(2)+"</td><td><strong>"+d.sym+ivTransfer.price.toFixed(2)+"</strong></td></tr>":"")+
+(function(){
+  const bkId=(typeof curBookingIdx!=="undefined" && curBookingIdx>=0 && bookings[curBookingIdx]) ? bookings[curBookingIdx].id : null;
+  const bTips=bkId?tips.filter(t=>t.bookingId===bkId):[];
+  if(!bTips.length) return "";
+  const tipTotal=bTips.reduce((s,t)=>s+t.amount,0);
+  return "<tr><td>💰 بقشيش / Tip</td><td>1</td><td>"+d.sym+tipTotal.toFixed(2)+"</td><td><strong>"+d.sym+tipTotal.toFixed(2)+"</strong></td></tr>";
+})()+
 "<tr><td colspan='3' style='color:#888;font-size:9px;'>Payment: "+d.method+"</td><td></td></tr></tbody></table>"+
 "<div style='display:flex;justify-content:flex-end;margin-bottom:11px;'>"+
 "<div class='invp-totbox'>"+
@@ -13846,6 +13874,7 @@ proformaBanner+
   }).join("<br>");
   return "<div style='background:rgba(230,126,34,0.1);border:1px solid rgba(230,126,34,0.4);padding:7px 10px;border-radius:5px;margin-bottom:9px;font-size:9px;color:#a0521d;'><strong>🔐 لديه أمانات في الخزنة / Has items in the safe: </strong><br>"+lines2+"</div>";
 })():"")+
+bkPolHtml+
 polHtml+
 tncHtml+
 "<div class='invp-sig2'>"+
@@ -14129,6 +14158,7 @@ document.getElementById("pay-modal").classList.add("on");
 function renderPayList(){
 if(payEdit===null) return;
 const b=bookings[payEdit];
+renderTipsList();
 const sym=b.cur==="USD"?"$":"EGP ";
 if(!b.payments) b.payments=[];
 const paidSum=calcPaid(b);
@@ -14291,6 +14321,48 @@ const pw=document.getElementById("pay-amount-warn");if(pw)pw.style.display="none
 renderPayList();
 renderBookings();
 }
+function addTip(){
+if(payEdit===null) return;
+const amt=parseFloat(document.getElementById("tip-amount").value)||0;
+if(!amt){alert("من فضلك أدخل مبلغ البقشيش / Please enter a tip amount.");return;}
+const b=bookings[payEdit];
+tips.push({
+id:'tip_'+Date.now()+Math.random(),
+bookingId:b.id,
+guestName:b.name||"",
+date:toDay(),
+amount:amt,
+cur:b.cur||"EGP",
+method:document.getElementById("tip-method").value,
+note:document.getElementById("tip-note").value,
+});
+sv("dta_tips",tips);
+document.getElementById("tip-amount").value="";
+document.getElementById("tip-note").value="";
+renderTipsList();
+}
+function delTip(tipId){
+if(!confirm("هل تريد حذف هذا البقشيش؟ / Delete this tip?")) return;
+tips=tips.filter(t=>t.id!==tipId);
+sv("dta_tips",tips);
+renderTipsList();
+}
+function renderTipsList(){
+if(payEdit===null) return;
+const b=bookings[payEdit];
+const list=document.getElementById("pay-tips-list");
+if(!list) return;
+const sym=b.cur==="USD"?"$":b.cur==="EUR"?"€":"£";
+document.getElementById("tip-sym").textContent=sym;
+const bTips=tips.filter(t=>t.bookingId===b.id);
+if(!bTips.length){list.innerHTML="<div style='color:var(--muted);font-size:11px;'>لا يوجد بقشيش مسجل لهذا الحجز / No tips recorded for this booking</div>";return;}
+list.innerHTML=bTips.map(t=>
+"<div style='display:flex;justify-content:space-between;align-items:center;background:rgba(201,168,76,0.07);border-radius:6px;padding:6px 9px;margin-bottom:5px;font-size:11px;'>"+
+"<span>"+t.date+" · "+sym+t.amount.toFixed(2)+" · "+t.method+(t.note?" · "+t.note:"")+"</span>"+
+"<button onclick=\"delTip('"+t.id+"')\" style='background:none;border:none;color:#e74c3c;cursor:pointer;'>✕</button>"+
+"</div>"
+).join("");
+}
 function delPayment(pidx){
 if(payEdit===null) return;
 if(!confirm("Delete this payment?")) return;
@@ -14340,6 +14412,8 @@ RTYPES.map(t=>"<div style='font-size:11px;color:#d0c4a0;padding:2px 0;border-bot
 ).join("");
 // Update price-prev grid to 4 columns
 document.getElementById("price-prev").style.gridTemplateColumns="1fr 1fr 1fr 1fr";
+document.getElementById("st-bktitle").value=policies.bktitle||"";
+document.getElementById("st-bktext").value=policies.bktext||"";
 document.getElementById("st-ptitle").value=policies.title||"";
 document.getElementById("st-ptext").value=policies.text||"";
 document.getElementById("st-pfee").value=policies.fee||"none";
@@ -17017,6 +17091,8 @@ function loadBkPhotos(bk){_bkPhotos=bk&&bk.photos?[...bk.photos]:[];renderBkPhot
 // u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0 ROOM u0026 BOOKING PHOTOS u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0u25d0
 function savePolicies(){
 policies={
+bktitle:document.getElementById("st-bktitle").value,
+bktext:document.getElementById("st-bktext").value,
 title:document.getElementById("st-ptitle").value,
 text:document.getElementById("st-ptext").value,
 fee:document.getElementById("st-pfee").value,
@@ -29200,6 +29276,10 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
   const amanatDepositsInPeriod = amanatList.filter(d=> (d.dateIn||"")>=from && (d.dateIn||"")<=to);
   const amanatCashHeldNow = amanatList.filter(d=>!isAmanatDepositClosed(d)).reduce((s,d)=> s + (d.currency==="EGP"?getAmanatRemaining(d):0), 0);
 
+  // ── Tips (بقشيش — معلومة فقط، مش إيراد فندق) ──
+  const tipsInPeriod = (tips||[]).filter(t=> (t.date||"")>=from && (t.date||"")<=to);
+  const tipsTotalEGP = tipsInPeriod.reduce((s,t)=>s+toEGP(t.amount||0, t.cur),0);
+
   const totalRevenueEGP = roomsRevEGP + restIncEGP + toursRevEGP;
   const totalExpensesEGP = expTotalEGP + restExpEGP;
   const netProfitEGP = totalRevenueEGP - totalExpensesEGP;
@@ -29223,6 +29303,13 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
     <div style="font-size:11px;color:#555;background:#fdf9f0;border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:10px 14px;line-height:1.9;">
       ${ar?'عدد الأمانات المُودعة في هذه الفترة':'Deposits made in this period'}: <strong>${amanatDepositsInPeriod.length}</strong><br>
       ${ar?'إجمالي الكاش المحفوظ حالياً في الخزنة (جنيه)':'Total cash currently held in safe (EGP)'}: <strong>£${amanatCashHeldNow.toLocaleString(undefined,{maximumFractionDigits:0})}</strong>
+    </div>`;
+
+  const tipsNote = `
+    <div class="sec-title">💰 ${ar?'ملاحظة البقشيش (غير محسوب كإيراد)':'Tips Note (Not counted as revenue)'}</div>
+    <div style="font-size:11px;color:#555;background:#fdf9f0;border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:10px 14px;line-height:1.9;">
+      ${ar?'عدد مرات البقشيش في هذه الفترة':'Tips recorded in this period'}: <strong>${tipsInPeriod.length}</strong><br>
+      ${ar?'إجمالي البقشيش (بالجنيه)':'Total tips (EGP equivalent)'}: <strong>£${tipsTotalEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</strong>
     </div>`;
 
   const w = window.open('','_blank','width=1050,height=800');
@@ -29307,6 +29394,7 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
       </table>
 
       ${amanatNote}
+      ${tipsNote}
 
     </div>
 
