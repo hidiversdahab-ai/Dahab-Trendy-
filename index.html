@@ -12348,6 +12348,7 @@ if(typeof renderExBudgetAlert==='function') renderExBudgetAlert(exBranch);
 if(typeof renderRecurSummary==='function') renderRecurSummary();
 const totEGP=list.reduce((s,e)=>s+e.egp,0);
 const totUSD=list.reduce((s,e)=>s+e.usd,0);
+const totEUR=list.reduce((s,e)=>s+(e.eur||+(e.egp/eurRate)),0);
 const mthEGP=list.filter(e=>e.date&&e.date.substring(0,7)===toDay().substring(0,7)).reduce((s,e)=>s+e.egp,0);
 const exBkFiltered=exBranch?bookings.filter(b=>b.branchId?b.branchId===exBranch.id:exBranch.id==='main'):bookings;
 const revEGP=exBkFiltered.filter(b=>b.status!=="Cancelled").reduce((s,b)=>s+(b.cur==="USD"?b.total*exRate:b.cur==="EUR"?b.total*eurRate:b.total),0);
@@ -12374,6 +12375,7 @@ const net = exBaseNetEGP - exTotalTransferred - exTotalOwnerTx - exCustDeficit;
 document.getElementById("ex-stats").innerHTML=
 mkFin("£"+totEGP.toFixed(0),"Total Expenses EGP","rgba(231,76,60,0.09)","rgba(231,76,60,0.22)","#e74c3c")+
 mkFin("$"+totUSD.toFixed(0),"Total Expenses USD","rgba(230,126,34,0.09)","rgba(230,126,34,0.22)","#e67e22")+
+mkFin("€"+totEUR.toFixed(0),"Total Expenses EUR","rgba(52,152,219,0.09)","rgba(52,152,219,0.22)","#3498db")+
 mkFin("£"+mthEGP.toFixed(0),"This Month EGP","rgba(243,156,18,0.09)","rgba(243,156,18,0.22)","#f39c12")+
 mkFin("£"+net.toFixed(0),"Net Profit EGP","rgba("+(net>=0?"39,174,96":"231,76,60")+",0.09)","rgba("+(net>=0?"39,174,96":"231,76,60")+",0.22)",net>=0?"#27ae60":"#e74c3c");
 renderStaffAdvSummary();
@@ -12399,8 +12401,8 @@ const tagTotals={};
 list.forEach(e=>{
   if(!e.tag) return;
   const k=e.tag.trim().toLowerCase();
-  if(!tagTotals[k]) tagTotals[k]={egp:0,usd:0,count:0,label:e.tag.trim()};
-  tagTotals[k].egp+=e.egp; tagTotals[k].usd+=e.usd; tagTotals[k].count++;
+  if(!tagTotals[k]) tagTotals[k]={egp:0,usd:0,eur:0,count:0,label:e.tag.trim()};
+  tagTotals[k].egp+=e.egp; tagTotals[k].usd+=e.usd; tagTotals[k].eur+=(e.eur||+(e.egp/eurRate)); tagTotals[k].count++;
 });
 // Track which tags have already shown subtotal
 const tagShownSubtotal=new Set();
@@ -12427,7 +12429,7 @@ if(tc && !tagShownSubtotal.has(tk)){
   const tot=tagTotals[tk];
   subtotalBand="<div class='ex-band' style='background:"+tc.bg+";border:1px solid "+tc.border+";'>"+
     "<span style='color:"+tc.text+";font-weight:700;'>🔗 "+tot.label+" <span style='color:var(--muted);font-weight:400;'>("+tot.count+" مصروفات مرتبطة)</span></span>"+
-    "<span style='color:"+tc.text+";font-weight:700;'>£"+tot.egp.toFixed(0)+" total · $"+tot.usd.toFixed(0)+"</span>"+
+    "<span style='color:"+tc.text+";font-weight:700;'>£"+tot.egp.toFixed(0)+" total · $"+tot.usd.toFixed(0)+" · €"+tot.eur.toFixed(0)+"</span>"+
     "</div>";
 }
 return subtotalBand+
@@ -12940,7 +12942,9 @@ function exportExpensesExcel(){
     e.paid||'', e.source==='custody'?'العهدة':'صافي الربح', e.tag||'', e.notes||''
   ]);
   const totEGP=list.reduce((s,e)=>s+e.egp,0);
-  rows.push(['','','الإجمالي',totEGP.toFixed(2),'','','','','','']);
+  const totUSD=list.reduce((s,e)=>s+e.usd,0);
+  const totEUR=list.reduce((s,e)=>s+(e.eur||+(e.egp/eurRate)),0);
+  rows.push(['','','الإجمالي',totEGP.toFixed(2),totUSD.toFixed(2),totEUR.toFixed(2),'','','','']);
   const csv=[header,...rows].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
@@ -34354,6 +34358,7 @@ function getExpensesFilteredList(){
 function buildExpensesSummaryText(list){
   const totEGP = list.reduce((s,e)=>s+e.egp,0);
   const totUSD = list.reduce((s,e)=>s+e.usd,0);
+  const totEUR = list.reduce((s,e)=>s+(e.eur||+(e.egp/eurRate)),0);
   const cats = {};
   list.forEach(e=>{ cats[e.cat] = (cats[e.cat]||0)+e.egp; });
   const sortedCats = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
@@ -34385,6 +34390,7 @@ function buildExpensesSummaryText(list){
 ━━━━━━━━━━━━━━━━━━━━━━
 🔴 إجمالي EGP :  *£${totEGP.toLocaleString()}*
 🟠 إجمالي USD :  *$${totUSD.toLocaleString()}*
+🔵 إجمالي EUR :  *€${totEUR.toLocaleString()}*
 📦 عدد البنود :  *${list.length} مصروف*${topCat}
 
 ━━━━━━━━━━━━━━━━━━━━━━
@@ -34421,6 +34427,7 @@ function printExpensesPDF(){
 
   const totEGP = list.reduce((s,e)=>s+e.egp,0);
   const totUSD = list.reduce((s,e)=>s+e.usd,0);
+  const totEUR = list.reduce((s,e)=>s+(e.eur||+(e.egp/eurRate)),0);
   const cats = {};
   list.forEach(e=>{ cats[e.cat] = (cats[e.cat]||0)+e.egp; });
   const sortedCats = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
@@ -34460,6 +34467,7 @@ function printExpensesPDF(){
       <td>${e.desc||""}</td>
       <td style="text-align:right;font-weight:700;color:#c0392b;white-space:nowrap;">£${e.egp.toLocaleString()}</td>
       <td style="text-align:right;color:#e67e22;white-space:nowrap;">$${e.usd.toLocaleString()}</td>
+      <td style="text-align:right;color:#3498db;white-space:nowrap;">€${(e.eur||+(e.egp/eurRate)).toLocaleString()}</td>
       <td style="font-size:10px;">${e.paid||""}</td>
       <td style="color:#999;font-size:10px;">${e.notes||""}</td>
     </tr>`;
@@ -34495,7 +34503,7 @@ function printExpensesPDF(){
     .body{padding:22px 28px;}
 
     /* ── KPI Cards ── */
-    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+    .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px;}
     .kpi{border-radius:8px;padding:14px 16px;text-align:center;border:1px solid #eee;}
     .kpi-num{font-size:18px;font-weight:700;margin-bottom:3px;}
     .kpi-lbl{font-size:9px;color:#888;letter-spacing:1px;text-transform:uppercase;}
@@ -34507,6 +34515,8 @@ function printExpensesPDF(){
     .kpi.dark .kpi-num{color:#1a1a2e;}
     .kpi.gold{background:#fdf9f0;border-color:rgba(201,168,76,0.3);}
     .kpi.gold .kpi-num{color:#b8860b;font-size:13px;}
+    .kpi.blue{background:#f0f7fd;border-color:rgba(52,152,219,0.25);}
+    .kpi.blue .kpi-num{color:#3498db;}
 
     /* ── Section titles ── */
     .sec-title{font-size:11px;font-weight:700;color:#1a1a2e;letter-spacing:2px;text-transform:uppercase;margin:18px 0 10px;padding:8px 12px;background:linear-gradient(90deg,rgba(201,168,76,0.12),transparent);border-right:3px solid #c9a84c;border-radius:0 4px 4px 0;}
@@ -34566,6 +34576,10 @@ function printExpensesPDF(){
           <div class="kpi-num">$${totUSD.toLocaleString()}</div>
           <div class="kpi-lbl">إجمالي المصروفات (USD)</div>
         </div>
+        <div class="kpi blue">
+          <div class="kpi-num">€${totEUR.toLocaleString()}</div>
+          <div class="kpi-lbl">إجمالي المصروفات (EUR)</div>
+        </div>
         <div class="kpi dark">
           <div class="kpi-num">${list.length}</div>
           <div class="kpi-lbl">عدد البنود</div>
@@ -34603,6 +34617,7 @@ function printExpensesPDF(){
           <th>الوصف</th>
           <th style="text-align:right;">EGP</th>
           <th style="text-align:right;">USD</th>
+          <th style="text-align:right;">EUR</th>
           <th>طريقة الدفع</th>
           <th>ملاحظات</th>
         </tr></thead>
@@ -34611,6 +34626,7 @@ function printExpensesPDF(){
           <td colspan="4" style="text-align:right;">الإجمالي:</td>
           <td style="text-align:right;color:#c0392b;">£${totEGP.toLocaleString()}</td>
           <td style="text-align:right;color:#e67e22;">$${totUSD.toLocaleString()}</td>
+          <td style="text-align:right;color:#3498db;">€${totEUR.toLocaleString()}</td>
           <td colspan="2"></td>
         </tr></tfoot>
       </table>
