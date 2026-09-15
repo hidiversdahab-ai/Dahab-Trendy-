@@ -1693,6 +1693,7 @@ label {
     <div class="bn-more-item" id="bn-emp-badge-item" style="display:none;border-color:rgba(201,168,76,0.6);background:rgba(201,168,76,0.12);" onclick="empLogout()"><span class="bm-icon">🚪</span><span id="bn-emp-badge-text" style="font-size:11px;">خروج</span></div>
     <div class="bn-more-item" onclick="openOwnerDailyReport();closeBnMore()" style="position:relative;border-color:rgba(201,168,76,0.7);background:rgba(201,168,76,0.15);"><span class="bm-icon" style="color:var(--gold);">📋</span><span class="t" style="color:var(--gold);font-weight:700;" data-ar="تقرير المالك" data-en="Owner Report">تقرير المالك</span></div>
     <div class="bn-more-item" onclick="openMorningBriefing();closeBnMore()" style="border-color:rgba(245,197,24,0.5);background:rgba(245,197,24,0.1);"><span class="bm-icon" style="color:#f5c518;">☀️</span><span style="color:#f5c518;" class="t" data-ar="التقرير الصباحي" data-en="Morning Briefing">التقرير الصباحي</span></div>
+    <div class="bn-more-item" onclick="openConsolidatedReport();closeBnMore()" style="position:relative;border-color:rgba(46,204,113,0.6);background:rgba(46,204,113,0.13);"><span class="bm-icon" style="color:#2ecc71;">💹</span><span style="color:#2ecc71;font-weight:700;" class="t" data-ar="تقرير شامل" data-en="Full Report">تقرير شامل</span></div>
     <div class="bn-more-item" onclick="openPDFReport();closeBnMore()" style="position:relative;border-color:rgba(201,168,76,0.5);background:rgba(201,168,76,0.08);"><span class="bm-icon">📅</span><span class="t" data-ar="تقرير شهري" data-en="Monthly Report">تقرير شهري</span></div>
     <div class="bn-more-item" onclick="bnGo('calendar',null);closeBnMore()"><span class="bm-icon">🗓️</span><span class="t" data-ar="التقويم" data-en="Calendar">التقويم</span></div>
     <div class="bn-more-item" onclick="bnGo('rooms',null);closeBnMore()"><span class="bm-icon">🏨</span><span class="t" data-ar="الغرف" data-en="Rooms">الغرف</span></div>
@@ -8701,6 +8702,11 @@ const expFromNetProfit=dbExpenses.filter(e=>e.source!=='custody').filter(isPaidE
 const restIncEGP=restaurantTx.filter(t=>t.type==="income").reduce((s,t)=>s+t.egp,0);
 const restExpEGP=restaurantTx.filter(t=>t.type==="expense").filter(isPaidRestTx).reduce((s,t)=>s+t.egp,0);
 const restNetEGP=restIncEGP-restExpEGP;
+// إيراد نقل المطار (منفصل عن صافي الإيرادات — معلومة فقط)
+const transferEGP=dbBookings.filter(b=>b.status!=="Cancelled"&&b.hasTransfer&&(b.transferPrice||0)>0).reduce((s,b)=>{
+  const tp=b.transferPrice||0;
+  return s+(b.cur==="USD"?tp*exRate:b.cur==="EUR"?tp*eurRate:tp);
+},0);
 // تحويلات المالك للمكان (from_owner): تعوّض المصروفات ولا تُعدّ إيراداً
 // from_owner = سلفة من المالك (دين عليك) → تُخصم من Net Profit
 // to_owner   = رددت للمالك → تُضاف (تقلّل الدين)
@@ -8764,6 +8770,7 @@ mkFin("£"+revEGP.toFixed(0), ar?"صافي الإيرادات":"Net Revenue","rg
 (totalCommEGP_db>0?mkFin("−£"+totalCommEGP_db.toFixed(0), ar?"عمولات الشركات":"Agency Commissions","rgba(231,76,60,0.07)","rgba(231,76,60,0.2)","#e74c3c"):"")+
 mkFin("£"+collectedEGP.toFixed(0), ar?"المحصّل فعلاً":"Collected","rgba(37,211,102,0.08)","rgba(37,211,102,0.22)","#4cda7a")+
 mkFin("£"+unpaidEGP.toFixed(0), ar?"المستحق / غير مدفوع":"Unpaid Balance","rgba(230,126,34,0.1)","rgba(230,126,34,0.28)","#e67e22")+
+(transferEGP>0?mkFin("🚐 £"+transferEGP.toFixed(0), ar?"إيراد نقل المطار":"Transfer Revenue","rgba(52,152,219,0.08)","rgba(52,152,219,0.22)","#3498db"):"")+
 mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231,76,60,0.08)","rgba(231,76,60,0.22)","#e74c3c")+
 (()=>{
   const custList = window._custodyList || [];
@@ -8792,10 +8799,11 @@ mkFin("£"+expFromNetProfit.toFixed(0), ar?"مصروفات":"Expenses","rgba(231
   const custDeficit = Math.max(0, expFromCustody - totalCustAmt);
   const displayNetEGP = netEGP - totalTransferred - totalOwnerTx - custDeficit;
 
+  window._dbProfitAudit = {ar, revEGP, collectedEGP, expFromNetProfit, restIncEGP, restExpEGP, restNetEGP, _fromOwnerTotal, netEGP, totalTransferred, totalOwnerTx, custDeficit, displayNetEGP, custList};
   let html = mkFin("£"+displayNetEGP.toFixed(0), ar?"صافي الربح":"Net Profit",
     "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.1)",
     "rgba("+(displayNetEGP>=0?"39,174,96":"231,76,60")+",0.25)",
-    displayNetEGP>=0?"#27ae60":"#e74c3c");
+    displayNetEGP>=0?"#27ae60":"#e74c3c", 'onclick="openProfitAudit()"');
 
   if(custList.length===0){
     // مفيش عهدة — بس زرار إضافة
@@ -9237,6 +9245,40 @@ function mkFin(n,l,bg,br,col,extra){
   const oc=extra?extra:"";
   const cursor=extra?"cursor:pointer;":"";
   return "<div "+oc+" style='text-align:center;padding:11px;background:"+bg+";border-radius:10px;border:1px solid "+br+";"+cursor+"'><div style='font-size:20px;font-weight:700;color:"+col+";'>"+n+"</div><div style='font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;text-transform:uppercase;'>"+l+"</div></div>";
+}
+// ── فحص سريع لصافي الربح — بيفكك الرقم خطوة بخطوة ──
+function openProfitAudit(){
+  const d = window._dbProfitAudit;
+  if(!d) return;
+  const ar = d.ar;
+  const fmt = n => (n<0?"−":"")+"£"+Math.abs(n).toLocaleString(undefined,{maximumFractionDigits:0});
+  const row = (label,val,bold,color) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;${bold?'':'border-bottom:1px solid rgba(255,255,255,0.06);'}">
+    <span style="font-size:12px;${bold?'font-weight:800;':''}color:${color||'var(--text)'};">${label}</span>
+    <span style="font-size:${bold?'15px':'13px'};font-weight:${bold?'800':'700'};color:${color||'var(--text)'};">${val}</span>
+  </div>`;
+  let mc=document.getElementById("profit-audit-modal");
+  if(!mc){mc=document.createElement("div");mc.id="profit-audit-modal";mc.className="ovl";document.body.appendChild(mc);}
+  mc.innerHTML = `<div class="modal" style="max-width:420px;">
+    <h3 style="color:var(--gold);margin:0 0 4px;font-size:16px;">🔍 ${ar?'فحص سريع — صافي الربح':'Quick Check — Net Profit'}</h3>
+    <p style="color:var(--muted);font-size:11px;margin:0 0 12px;">${ar?'تسلسل الحساب خطوة بخطوة':'Step-by-step calculation'}</p>
+    ${row(ar?'💰 صافي الإيرادات':'💰 Net Revenue', fmt(d.revEGP))}
+    ${row(ar?'✅ المحصّل فعلاً':'✅ Collected', fmt(d.collectedEGP))}
+    ${row(ar?'💸 مصروفات (من الربح)':'💸 Expenses (from profit)', "−"+fmt(d.expFromNetProfit).replace('−',''), false, '#e74c3c')}
+    ${d.restIncEGP>0||d.restExpEGP>0?row(ar?'🍽️ صافي المطعم':'🍽️ Restaurant Net', (d.restNetEGP>=0?'+':'')+fmt(d.restNetEGP), false, d.restNetEGP>=0?'#4cda7a':'#e74c3c'):''}
+    ${d._fromOwnerTotal>0?row(ar?'🏦 سلفة من المالك قايمة':'🏦 Outstanding owner advance', "−"+fmt(d._fromOwnerTotal).replace('−',''), false, '#e67e22'):''}
+    ${row(ar?'= الربح الخام قبل السحب':'= Gross Profit (before withdrawals)', fmt(d.netEGP), true, d.netEGP>=0?'#4cda7a':'#e74c3c')}
+    ${d.totalTransferred>0?row(ar?'🔒 محوّل للعهدة':'🔒 Transferred to custody', "−"+fmt(d.totalTransferred).replace('−',''), false, '#9b59b6'):''}
+    ${d.totalOwnerTx>0?row(ar?'👤 سُحب للمالك (Owner Transfer)':'👤 Owner Transfers (withdrawn)', "−"+fmt(d.totalOwnerTx).replace('−',''), false, '#e67e22'):''}
+    ${d.custDeficit>0?row(ar?'⚠️ عجز صرف من العهدة':'⚠️ Custody overspend deficit', "−"+fmt(d.custDeficit).replace('−',''), false, '#e74c3c'):''}
+    <div style="margin-top:6px;padding-top:8px;border-top:2px solid rgba(201,168,76,0.3);">
+    ${row(ar?'= الربح المتاح (النهائي)':'= Available Profit (final)', fmt(d.displayNetEGP), true, d.displayNetEGP>=0?'#27ae60':'#e74c3c')}
+    </div>
+    ${d.displayNetEGP<0?`<div style="margin-top:10px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.35);border-radius:8px;padding:9px 11px;font-size:11px;color:#e74c3c;line-height:1.6;">
+      ${ar?'الرقم سالب لأن اللي اتسحب (عهدة + تحويلات للمالك) أكتر من الربح الفعلي المتحقق حتى الآن.':'This is negative because what was withdrawn (custody + owner transfers) exceeds the actual profit earned so far.'}
+    </div>`:''}
+    <button class="btn bb" style="width:100%;margin-top:14px;" onclick="closeM('profit-audit-modal')">${ar?'إغلاق':'Close'}</button>
+  </div>`;
+  mc.classList.add("on");
 }
 // ═══════════ GUEST COLOR PALETTE ═══════════
 // Each guest name that has 2+ bookings gets a unique accent color
@@ -29297,6 +29339,10 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
   const toursInPeriod = (tours||[]).filter(t=> (t.date||"")>=from && (t.date||"")<=to);
   const toursRevEGP = toursInPeriod.reduce((s,t)=>s+(t.price||0),0);
 
+  // ── Airport Transfers (إيراد نقل منفصل — مش داخل حساب صافي الربح) ──
+  const transferBks = (bookings||[]).filter(b=> b.status!=="Cancelled" && b.hasTransfer && (b.transferPrice||0)>0 && b.ci>=from && b.ci<=to);
+  const transferRevEGP = transferBks.reduce((s,b)=>s+toEGP(b.transferPrice||0, b.cur),0);
+
   // ── Expenses (general) ──
   const expInPeriod = (expenses||[]).filter(e=> (e.date||"").slice(0,10)>=from && (e.date||"").slice(0,10)<=to);
   const expTotalEGP = expInPeriod.filter(isPaidExpense).reduce((s,e)=>s+(e.egp||0),0);
@@ -29322,6 +29368,7 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
     <tr><td>🏨 ${ar?'إيراد الغرف':'Rooms Revenue'}</td><td style="text-align:center;">${roomBks.length} ${ar?'حجز':'bookings'} · ${roomsNights} ${ar?'ليلة':'nights'}</td><td style="text-align:right;color:#27ae60;font-weight:700;">£${roomsRevEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
     <tr><td>🍽️ ${ar?'إيراد المطعم':'Restaurant Income'}</td><td style="text-align:center;">${restInPeriod.filter(t=>t.type==='income').length} ${ar?'معاملة':'txns'}</td><td style="text-align:right;color:#27ae60;font-weight:700;">£${restIncEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
     <tr><td>🏔️ ${ar?'إيراد الجولات':'Tours Revenue'}</td><td style="text-align:center;">${toursInPeriod.length} ${ar?'رحلة':'tours'}</td><td style="text-align:right;color:#27ae60;font-weight:700;">£${toursRevEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
+    <tr style="background:#f0f7fd;"><td>🚐 ${ar?'إيراد نقل المطار':'Airport Transfer Revenue'} <span style="font-size:9px;color:#888;font-weight:400;">(${ar?'غير مُدرج في صافي الربح':'not included in Net Profit'})</span></td><td style="text-align:center;">${transferBks.length} ${ar?'حجز':'bookings'}</td><td style="text-align:right;color:#3498db;font-weight:700;">£${transferRevEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
     <tr style="background:#f8f4eb;"><td colspan="2" style="font-weight:800;">${ar?'إجمالي الإيرادات':'Total Revenue'}</td><td style="text-align:right;color:#27ae60;font-weight:800;">£${totalRevenueEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
     <tr><td>🍽️ ${ar?'مصروفات المطعم':'Restaurant Expenses'}</td><td style="text-align:center;">${restInPeriod.filter(t=>t.type==='expense').length} ${ar?'معاملة':'txns'}</td><td style="text-align:right;color:#c0392b;font-weight:700;">£${restExpEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
     <tr><td>💸 ${ar?'مصروفات عامة':'General Expenses'}</td><td style="text-align:center;">${expInPeriod.length} ${ar?'بند':'items'}</td><td style="text-align:right;color:#c0392b;font-weight:700;">£${expTotalEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
