@@ -4099,7 +4099,7 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
     <div class="fld"><label>🏨 <span class="t" data-ar="نوع الغرفة" data-en="Room Type">نوع الغرفة</span></label>
       <select id="wl-type">
         <option value="">أي نوع / Any</option>
-        <option>Single</option><option>Double</option><option>Triple</option><option>Suite</option>
+        <option>Single</option><option>Double</option><option>Triple</option><option>Suite</option><option>Dorm Bed</option><option>Junior Suite</option><option>Senior Suite</option><option>Family Suite</option><option>Deluxe Room</option><option>Caravan</option><option>Bungalow / Chalet</option><option>Villa (Studio)</option><option>Private Villa</option><option>Villa (2 Bedroom)</option><option>Villa (3 Bedroom)</option>
       </select>
     </div>
     <div class="fld"><label>👥 <span class="t" data-ar="عدد الأشخاص" data-en="Guests">عدد الأشخاص</span></label><input id="wl-guests" type="number" min="1" max="10" value="1"></div>
@@ -4839,7 +4839,7 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
   <div id="bm-room-photo-inner" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:8px 10px;"></div>
 </div>
 <div class="fld"><label>Type</label>
-<select id="bm-type" onchange="calcBM()"><option>Single</option><option selected>Double</option><option>Triple</option><option>Suite</option><option>Dorm Bed</option></select>
+<select id="bm-type" onchange="calcBM()"><option>Single</option><option selected>Double</option><option>Triple</option><option>Suite</option><option>Dorm Bed</option><option>Junior Suite</option><option>Senior Suite</option><option>Family Suite</option><option>Deluxe Room</option><option>Caravan</option><option>Bungalow / Chalet</option><option>Villa (Studio)</option><option>Private Villa</option><option>Villa (2 Bedroom)</option><option>Villa (3 Bedroom)</option></select>
 </div>
 <div class="fld" id="bm-ci-wrap"><label>Check-in</label><input id="bm-ci" type="date" onchange="calcBM();checkBirthdayAlert()"></div>
 <div class="fld" id="bm-co-wrap"><label>Check-out</label><input id="bm-co" type="date" onchange="calcBM();checkBirthdayAlert()"></div>
@@ -6442,6 +6442,17 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 <option value="Double">Double</option>
 <option value="Triple">Triple</option>
 <option value="Suite">Suite</option>
+<option value="Dorm Bed">Dorm Bed</option>
+<option value="Junior Suite">Junior Suite</option>
+<option value="Senior Suite">Senior Suite</option>
+<option value="Family Suite">Family Suite</option>
+<option value="Deluxe Room">Deluxe Room</option>
+<option value="Caravan">Caravan</option>
+<option value="Bungalow / Chalet">Bungalow / Chalet</option>
+<option value="Villa (Studio)">Villa (Studio)</option>
+<option value="Private Villa">Private Villa</option>
+<option value="Villa (2 Bedroom)">Villa (2 Bedroom)</option>
+<option value="Villa (3 Bedroom)">Villa (3 Bedroom)</option>
 </select>
 </div>
 </div>
@@ -7633,7 +7644,7 @@ function waBroadcastReset(){
   try{ localStorage.removeItem(st.sentKey); }catch(e){}
   waBroadcastRender();
 }
-const RTYPES = ["Single","Double","Triple","Suite","Dorm Bed"];
+const RTYPES = ["Single","Double","Triple","Suite","Dorm Bed","Junior Suite","Senior Suite","Family Suite","Deluxe Room","Caravan","Bungalow / Chalet","Villa (Studio)","Private Villa","Villa (2 Bedroom)","Villa (3 Bedroom)"];
 let ROOMS = (function(){
   try{
     const saved = JSON.parse(localStorage.getItem('dta_rooms_list'));
@@ -7686,8 +7697,8 @@ function roomsInBranch(branch){
   const start = branch.roomStart, end = branch.roomStart + branch.roomCount - 1;
   return ROOMS.filter(function(r){ const n = Number(r); return !isNaN(n) && n >= start && n <= end; });
 }
-const DEF_PRICES = {Single:{usd:30,egp:1500,eur:28},Double:{usd:55,egp:2700,eur:52},Triple:{usd:75,egp:3700,eur:70},Suite:{usd:100,egp:5000,eur:93},"Dorm Bed":{usd:15,egp:750,eur:14}};
-const DEF_DU_PRICES = {Single:{usd:15,egp:750,eur:14},Double:{usd:25,egp:1250,eur:23},Triple:{usd:35,egp:1750,eur:33},Suite:{usd:50,egp:2500,eur:47},"Dorm Bed":{usd:8,egp:400,eur:8}};
+const DEF_PRICES = {Single:{usd:30,egp:1500,eur:28},Double:{usd:55,egp:2700,eur:52},Triple:{usd:75,egp:3700,eur:70},Suite:{usd:100,egp:5000,eur:93},"Dorm Bed":{usd:15,egp:750,eur:14},"Junior Suite":{usd:120,egp:6000,eur:112},"Senior Suite":{usd:150,egp:7500,eur:140},"Family Suite":{usd:140,egp:7000,eur:130},"Deluxe Room":{usd:90,egp:4500,eur:84},Caravan:{usd:60,egp:3000,eur:56},"Bungalow / Chalet":{usd:110,egp:5500,eur:103},"Villa (Studio)":{usd:130,egp:6500,eur:121},"Private Villa":{usd:200,egp:10000,eur:187},"Villa (2 Bedroom)":{usd:220,egp:11000,eur:205},"Villa (3 Bedroom)":{usd:280,egp:14000,eur:261}};
+const DEF_DU_PRICES = {Single:{usd:15,egp:750,eur:14},Double:{usd:25,egp:1250,eur:23},Triple:{usd:35,egp:1750,eur:33},Suite:{usd:50,egp:2500,eur:47},"Dorm Bed":{usd:8,egp:400,eur:8},"Junior Suite":{usd:60,egp:3000,eur:56},"Senior Suite":{usd:75,egp:3750,eur:70},"Family Suite":{usd:70,egp:3500,eur:65},"Deluxe Room":{usd:45,egp:2250,eur:42},Caravan:{usd:30,egp:1500,eur:28},"Bungalow / Chalet":{usd:55,egp:2750,eur:51},"Villa (Studio)":{usd:65,egp:3250,eur:61},"Private Villa":{usd:100,egp:5000,eur:93},"Villa (2 Bedroom)":{usd:110,egp:5500,eur:103},"Villa (3 Bedroom)":{usd:140,egp:7000,eur:130}};
 const EICONS = {Salaries:"👔",Rent:"🏠",Maintenance:"🔧",Electricity:"⚡",Water:"💧",Laundry:"👕",Supplies:"🛒",Internet:"📡",Other:"📦"};
 const ECOLS = {Salaries:"#e74c3c",Rent:"#9b59b6",Maintenance:"#95a5a6",Electricity:"#f1c40f",Water:"#3498db",Laundry:"#1abc9c",Supplies:"#e67e22",Internet:"#2ecc71",Other:"#bdc3c7"};
 const RSTATUS_LBL = {available:"✅ Available",occupied:"🔴 Occupied",reserved:"🟡 Reserved",checkin:"🔵 Check-in Today",checkout:"🟠 Check-out Today",maintenance:"🔧 Maintenance",dayuse:"🌤️ Day Use",standby:"⏳ Standby"};
@@ -13399,7 +13410,7 @@ ${ROOMS.map(rm=>`<option value="${rm}" ${String(r.room)===String(rm)?"selected":
 <div class="fld" style="margin-bottom:4px;">
 <label>Type</label>
 <select onchange="updateInvRoom(${r.id},'type',this.value)" style="padding:5px 8px;font-size:12px;">
-${["Single","Double","Triple","Suite","Dorm Bed"].map(t=>`<option ${r.type===t?"selected":""}>${t}</option>`).join("")}
+${["Single","Double","Triple","Suite","Dorm Bed","Junior Suite","Senior Suite","Family Suite","Deluxe Room","Caravan","Bungalow / Chalet","Villa (Studio)","Private Villa","Villa (2 Bedroom)","Villa (3 Bedroom)"].map(t=>`<option ${r.type===t?"selected":""}>${t}</option>`).join("")}
 </select>
 </div>
 <div class="fld" style="margin-bottom:4px;">
@@ -14507,7 +14518,7 @@ function savePrices(){sv("dta_pr",prices);renderSettings();}
 function resetPrices(){prices=JSON.parse(JSON.stringify(DEF_PRICES));sv("dta_pr",prices);renderSettings();}
 
 // ==================== PRICE LIST ====================
-const PL_ROOM_TYPES = ['Single','Double','Triple','Suite (غرفتين)','Quad (رباعي)','Dorm Bed'];
+const PL_ROOM_TYPES = ['Single','Double','Triple','Suite (غرفتين)','Quad (رباعي)','Dorm Bed','Junior Suite','Senior Suite','Family Suite','Deluxe Room','Caravan','Bungalow / Chalet','Villa (Studio)','Private Villa','Villa (2 Bedroom)','Villa (3 Bedroom)'];
 const PL_SEASONS = {low:'Low Season',mid:'Mid Season',high:'High Season',peak:'Peak Season'};
 let plSeason = LS('dta_pl_season','low');
 let plData   = LS('dta_pl_data', null);
@@ -14517,7 +14528,7 @@ function getPLData(){
   if(!plData){
     plData = {};
     PL_ROOM_TYPES.forEach(t=>{
-      const key = t.includes('Suite')?'Suite':t.includes('Quad')?'Suite':t==='Dorm Bed'?'Dorm Bed':t;
+      const key = t.includes('Suite (')?'Suite':t.includes('Quad')?'Suite':t==='Dorm Bed'?'Dorm Bed':t;
       const base = (prices[key]||{egp:0});
       plData[t] = {low: base.egp||0, mid: Math.round((base.egp||0)*1.2), high: Math.round((base.egp||0)*1.4), peak: Math.round((base.egp||0)*1.6)};
     });
@@ -14649,7 +14660,7 @@ function renderPLTable(){
         return `<td style="padding:6px 4px;text-align:center;">
           <div style="display:flex;align-items:center;justify-content:center;gap:2px;">
             <span style="color:#888;font-size:10px;">${sym}</span>
-            <input type="number" id="pl-inp-${t.replace(/[^a-zA-Z]/g,'')}-${s}-${curTab}" value="${val}"
+            <input type="number" id="pl-inp-${t.replace(/[^a-zA-Z0-9]/g,'')}-${s}-${curTab}" value="${val}"
               style="width:68px;background:${s===plSeason?'rgba(201,168,76,0.15)':'var(--bg)'};color:${s===plSeason?'#c9a84c':'var(--text)'};
               border:1px solid ${s===plSeason?'#c9a84c':'var(--border)'};border-radius:6px;padding:4px 5px;
               font-size:12px;font-weight:${s===plSeason?'700':'400'};text-align:center;"
@@ -14675,7 +14686,7 @@ function savePriceListData(){
   const curTab = window._plCur||'gbp';
   PL_ROOM_TYPES.forEach(t=>{
     ['low','mid','high','peak'].forEach(s=>{
-      const inp = document.getElementById('pl-inp-'+t.replace(/[^a-zA-Z]/g,'')+'-'+s+'-'+curTab);
+      const inp = document.getElementById('pl-inp-'+t.replace(/[^a-zA-Z0-9]/g,'')+'-'+s+'-'+curTab);
       if(inp){
         if(!plData[t]) plData[t]={};
         plData[t][s+'_'+curTab]=parseFloat(inp.value)||0;
@@ -14701,6 +14712,16 @@ function plRoomLabel(t){
   // نفس مفتاح التخزين الأصلي بيفضل زي ما هو، بس شكل العرض بيبقى ثنائي اللغة
   if(t==='Suite (غرفتين)') return 'Suite · جناح (غرفتين / 2 Rooms)';
   if(t==='Quad (رباعي)') return 'Quad · رباعي (4 Guests)';
+  if(t==='Junior Suite') return 'Junior Suite · جناح جونيور';
+  if(t==='Senior Suite') return 'Senior Suite · جناح سينيور';
+  if(t==='Family Suite') return 'Family Suite · جناح عائلي';
+  if(t==='Deluxe Room') return 'Deluxe Room · غرفة ديلوكس';
+  if(t==='Caravan') return 'Caravan · كارافان';
+  if(t==='Bungalow / Chalet') return 'Bungalow/Chalet · شاليه';
+  if(t==='Villa (Studio)') return 'Villa Studio · فيلا استوديو';
+  if(t==='Private Villa') return 'Private Villa · فيلا خاصة';
+  if(t==='Villa (2 Bedroom)') return 'Villa 2BR · فيلا غرفتين';
+  if(t==='Villa (3 Bedroom)') return 'Villa 3BR · فيلا 3 غرف';
   return t;
 }
 function buildPLContent(forWA=false){
@@ -14760,7 +14781,17 @@ function printPriceList(){
     'Triple':         {icon:'🛏️', ar:'غرفة تريبل',    en:'Triple Room',     guests:'3 أفراد / 3 Guests'},
     'Suite (غرفتين)':{icon:'🏡', ar:'جناح (غرفتين)', en:'Suite (2 Rooms)', guests:'4 أفراد / 4 Guests'},
     'Quad (رباعي)':  {icon:'👨‍👩‍👧‍👦', ar:'غرفة رباعية',   en:'Quad Room',       guests:'4 أفراد / 4 Guests'},
-    'Dorm Bed':       {icon:'🏕️', ar:'سرير دورم',     en:'Dorm Bed',        guests:'مشترك / Shared'}
+    'Dorm Bed':       {icon:'🏕️', ar:'سرير دورم',     en:'Dorm Bed',        guests:'مشترك / Shared'},
+    'Junior Suite':   {icon:'🏡', ar:'جناح جونيور',    en:'Junior Suite',    guests:'2 أفراد / 2 Guests'},
+    'Senior Suite':   {icon:'🏡', ar:'جناح سينيور',    en:'Senior Suite',    guests:'3 أفراد / 3 Guests'},
+    'Family Suite':   {icon:'👨‍👩‍👧‍👦', ar:'جناح عائلي',    en:'Family Suite',    guests:'5 أفراد / 5 Guests'},
+    'Deluxe Room':    {icon:'✨', ar:'غرفة ديلوكس',   en:'Deluxe Room',     guests:'2 أفراد / 2 Guests'},
+    'Caravan':        {icon:'🚐', ar:'كارافان',        en:'Caravan',         guests:'2 أفراد / 2 Guests'},
+    'Bungalow / Chalet':{icon:'🏕️', ar:'شاليه',        en:'Bungalow/Chalet', guests:'4 أفراد / 4 Guests'},
+    'Villa (Studio)': {icon:'🏖️', ar:'فيلا استوديو',   en:'Villa Studio',    guests:'2 أفراد / 2 Guests'},
+    'Private Villa':  {icon:'🏝️', ar:'فيلا خاصة',      en:'Private Villa',   guests:'6 أفراد / 6 Guests'},
+    'Villa (2 Bedroom)':{icon:'🏝️', ar:'فيلا غرفتين',   en:'Villa (2BR)',     guests:'4 أفراد / 4 Guests'},
+    'Villa (3 Bedroom)':{icon:'🏝️', ar:'فيلا 3 غرف',    en:'Villa (3BR)',     guests:'6 أفراد / 6 Guests'}
   };
 
   const rows = PL_ROOM_TYPES.map((t,i)=>{
@@ -14942,8 +14973,8 @@ function resetDUPrices(){duPrices=JSON.parse(JSON.stringify(DEF_DU_PRICES));sv("
 // 🏷️ ROOM TYPES CONFIG
 // ═══════════════════════════════════════════════
 let roomTypes = LS('dta_room_types', {});
-const ROOM_TYPE_OPTIONS = ['Single','Double','Triple','Suite (غرفتين)','Quad (رباعي)'];
-const ROOM_TYPE_CAPACITY = {'Single':1,'Double':2,'Triple':3,'Suite (غرفتين)':4,'Quad (رباعي)':4,'Suite':4,'Quad':4};
+const ROOM_TYPE_OPTIONS = ['Single','Double','Triple','Suite (غرفتين)','Quad (رباعي)','Junior Suite','Senior Suite','Family Suite','Deluxe Room','Caravan','Bungalow / Chalet','Villa (Studio)','Private Villa','Villa (2 Bedroom)','Villa (3 Bedroom)'];
+const ROOM_TYPE_CAPACITY = {'Single':1,'Double':2,'Triple':3,'Suite (غرفتين)':4,'Quad (رباعي)':4,'Suite':4,'Quad':4,'Junior Suite':2,'Senior Suite':3,'Family Suite':5,'Deluxe Room':2,'Caravan':2,'Bungalow / Chalet':4,'Villa (Studio)':2,'Private Villa':6,'Villa (2 Bedroom)':4,'Villa (3 Bedroom)':6};
 function getRoomCapacity(type, roomNum){
   // أولاً: من roomTypes المحفوظة
   if(roomNum && roomTypes && roomTypes['room_'+roomNum] && roomTypes['room_'+roomNum].capacity){
@@ -15025,11 +15056,9 @@ function sendAvailableRoomsWA(){
 
   const lines = availableRooms.map(r => {
     const info = roomTypes['room_'+r] || {type:'Double', capacity:2};
-    const typeAr = info.type.includes('Suite')?'جناح (غرفتين)':
-                   info.type.includes('Quad')?'غرفة رباعي':
-                   info.type==='Single'?'غرفة سنجل':
-                   info.type==='Double'?'غرفة دبل':
-                   info.type==='Triple'?'غرفة تريبل':info.type;
+    const typeAr = {'Single':'غرفة سنجل','Double':'غرفة دبل','Triple':'غرفة تريبل','Junior Suite':'جناح جونيور','Senior Suite':'جناح سينيور','Family Suite':'جناح عائلي','Deluxe Room':'غرفة ديلوكس','Caravan':'كارافان','Bungalow / Chalet':'شاليه','Villa (Studio)':'فيلا استوديو','Private Villa':'فيلا خاصة','Villa (2 Bedroom)':'فيلا غرفتين','Villa (3 Bedroom)':'فيلا 3 غرف'}[info.type] ||
+                   (info.type.includes('Suite')?'جناح (غرفتين)':
+                   info.type.includes('Quad')?'غرفة رباعي':info.type);
     const cap = info.capacity;
     return `✅ غرفة ${r} | Room ${r}\n   ${typeAr} — ${cap} ${cap===1?'نفر':'أفراد'} | ${info.type} — ${cap} ${cap===1?'Guest':'Guests'}`;
   }).join('\n\n');
