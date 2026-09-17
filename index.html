@@ -22667,6 +22667,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     try{
       const params = new URLSearchParams(window.location.search);
       const guestRoom = params.get('guest');
+      const guestDebugMode = params.get('debug') === '1';
       const isMenuOnly = params.get('menu') === '1';
       if(!guestRoom && !isMenuOnly) return;
 
@@ -22750,7 +22751,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             }catch(e){ console.warn('[GuestMode] hash decode error:',e); }
           }
           // بناء صفحة الضيف
-          const html = DTA_QR.buildGuestPage(guestRoom);
+          const html = DTA_QR.buildGuestPage(guestRoom, guestDebugMode);
           document.open();
           document.write(html);
           document.close();
@@ -40077,8 +40078,9 @@ const DTA_QR = (function(){
   }
 
   // ─── صفحة الضيف (HTML مستقل) ───
-  function buildGuestPage(roomNo){
+  function buildGuestPage(roomNo, debugMode){
     const room = String(roomNo);
+    const _debugMode = !!debugMode;
     const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy Accommodation',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
     const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
     const wifiName     = qrs.wifiName     || 'DahabTrendy_Guest';
@@ -40413,8 +40415,8 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var ACT=[]; var _dbgErr='';
     var ba='${_actB64}';
     try{ if(ba) ACT=JSON.parse(decodeURIComponent(escape(atob(ba)))); }catch(e){ _dbgErr=String(e); }
-    if(window.location.search.indexOf('debug=1')>-1 || window.location.protocol==='blob:'){
-      alert('🔍 DEBUG activities\nb64 length: '+ba.length+'\ndecoded items: '+ACT.length+(_dbgErr?('\nerror: '+_dbgErr):'')+(ACT.length?('\nfirst: '+JSON.stringify(ACT[0])):''));
+    if(${_debugMode ? 'true' : 'false'} || window.location.search.indexOf('debug=1')>-1 || window.location.protocol==='blob:'){
+      alert('🔍 DEBUG activities\nb64 length: '+ba.length+'\ndecoded items: '+ACT.length+(_dbgErr?('\nerror: '+_dbgErr):'')+(ACT.length?('\nfirst: '+JSON.stringify(ACT[0])):'')+'\ncurrent URL search: '+window.location.search);
     }
     var grid=document.getElementById('act-grid');
     var sec=document.getElementById('act-sec');
