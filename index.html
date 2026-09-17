@@ -314,7 +314,7 @@ select option{background:#1a1a2e;color:var(--text)}
 .invp-tr{display:flex;justify-content:space-between;font-size:9.8px;padding:2.5px 0;color:#57574c;font-weight:500;}
 .invp-tr.grd{border-top:1.5px solid #123f34;padding-top:7px;margin-top:5px;font-size:13px;font-weight:700;color:#122820;background:none;padding:7px 2px 0 2px;border-radius:0;font-family:Georgia,'Iowan Old Style',serif;}
 .invp-tr.grd span:last-child{color:#145c46;font-size:18px;font-weight:700;}
-.invp-pol{background:linear-gradient(135deg,#f8f6ee,#f2efdf);padding:7px 11px;border-radius:7px;margin-bottom:8px;font-size:8.5px;color:#65614f;border:1px solid #e7e0d0;border-left:3px solid #145c46;page-break-inside:avoid;white-space:pre-line;unicode-bidi:plaintext;}
+.invp-pol{background:linear-gradient(135deg,#f8f6ee,#f2efdf);padding:7px 11px;border-radius:7px;margin-bottom:8px;font-size:8.5px;color:#65614f;border:1px solid #e7e0d0;border-left:3px solid #145c46;page-break-inside:avoid;}
 .invp-sig2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0 12px;page-break-inside:avoid;}
 .invp-sig2 div{border-top:1.5px solid #d9d2bf;padding-top:6px;text-align:center;font-size:8.8px;color:#867e6a;}
 .invp-sig2 b{display:block;font-size:10px;color:#122820;margin-bottom:2px;font-weight:700;}
@@ -33261,7 +33261,7 @@ async function removeBookingSync(id){
 // ── GUEST BOOKING REQUESTS (طلبات حجز الضيوف) — via Supabase ──
 const BKREQ_URL = 'https://yjornfwipngoqsriekhi.supabase.co';
 // ⚠️ حط هنا نفس الـ Legacy anon key اللي حطيته في فورم الضيف
-const BKREQ_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlqb3JuZndpcG5nb3Fzcmlla2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NjEwMTksImV4cCI6MjEwMDMzNzAxOX0.12qAZiWFJQyZKcI3vEVQqjih_hch6-9oeQuUHzzx3Js';
+const BKREQ_KEY = 'sb_publishable_NfU9-hU8_PNWgLCN_uJ7nQ_dBXDIe6j';
 let _bkReqCache = [];
 
 function bkReqEsc(s){
