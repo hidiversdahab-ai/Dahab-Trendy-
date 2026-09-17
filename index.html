@@ -40031,10 +40031,10 @@ const DTA_QR = (function(){
     const base = (qrsBase.appUrl && qrsBase.appUrl.trim())
       ? qrsBase.appUrl.trim().replace(/[?#].*$/, '')
       : window.location.origin + window.location.pathname;
-    async function tryBuild(withMenu, withActivities){
+    async function tryBuild(withMenu, withActivities, actOverride){
       const payload = {
         menu: withMenu ? menuSlim : [],
-        activities: withActivities ? actSlim : [],
+        activities: withActivities ? (actOverride || actSlim) : [],
         wifi: { name: qrs.wifiName || 'DahabTrendy_Guest', pass: qrs.wifiPass || 'dahab2024' },
         wa: qrs.waNum || '201099531272'
       };
@@ -40059,7 +40059,12 @@ const DTA_QR = (function(){
     if(url.length > 2200 && menuSlim.length){
       url = await tryBuild(false, true);
     }
-    // المحاولة 3 (نادرة جداً): لو حتى النشاطات لوحدها كبيرة أوي، آخر حل نشيلها كمان
+    // المحاولة 3: لو النشاطات نفسها (مع الوصف) كبيرة، نشيل الوصف بس ونسيب زرار الحجز
+    if(url.length > 2200 && actSlim.length){
+      const actNoDesc = actSlim.map(function(a){ return Object.assign({}, a, {desc:''}); });
+      url = await tryBuild(false, true, actNoDesc);
+    }
+    // المحاولة 4 (نادرة جداً): لو حتى النشاطات من غير وصف لسه كبيرة، آخر حل نشيلها كمان
     if(url.length > 2200 && actSlim.length){
       url = await tryBuild(false, false);
     }
