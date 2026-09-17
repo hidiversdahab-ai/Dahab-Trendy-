@@ -40417,18 +40417,18 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     if(sec) sec.style.display='block';
     var defWA='${waNum}';
     window._actToast = function(msg, ok){
-      var el = document.getElementById('act-toast');
-      if(!el){
-        el = document.createElement('div');
-        el.id = 'act-toast';
-        el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:700;max-width:88%;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,0.35);color:#fff;transition:opacity .3s;';
-        document.body.appendChild(el);
-      }
-      el.style.background = ok ? '#1abc9c' : '#e0685e';
-      el.style.opacity = '1';
-      el.textContent = msg;
-      clearTimeout(el._t);
-      el._t = setTimeout(function(){ el.style.opacity='0'; }, 3500);
+      var old = document.getElementById('act-toast'); if(old) old.remove();
+      var el = document.createElement('div');
+      el.id = 'act-toast';
+      el.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,0.55);cursor:pointer;';
+      el.innerHTML = '<div style="background:'+(ok?'#1abc9c':'#e0685e')+';color:#fff;padding:24px 22px;border-radius:16px;max-width:320px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.45);">'+
+        '<div style="font-size:38px;margin-bottom:10px;">'+(ok?'✅':'⚠️')+'</div>'+
+        '<div style="font-size:15px;font-weight:800;line-height:1.5;">'+msg+'</div>'+
+      '</div>';
+      document.body.appendChild(el);
+      el.addEventListener('click', function(){ el.remove(); });
+      clearTimeout(window._actToastTimer);
+      window._actToastTimer = setTimeout(function(){ if(el.parentNode) el.remove(); }, 5000);
     };
     window._reportActReq = async function(name, nameEn, price, duration, waUrl){
       var ok=false, detail='';
@@ -40442,7 +40442,9 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
         ok = res.ok;
         if(!ok){ try{ detail = await res.text(); }catch(e){} console.error('[activity request] HTTP '+res.status, detail); }
       }catch(e){ detail = String(e); console.error('[activity request] network error', e); }
-      window._actToast(ok ? '✅ اتبعت طلبك بنجاح · Request sent' : '⚠️ فشل إرسال الطلب، بلّغ الاستقبال · Failed to send', ok);
+      window._actToast(ok
+        ? 'تم استلام طلبك بنجاح!<br><span style="font-size:12px;font-weight:400;opacity:.9;">سيتم التواصل معك من الاستقبال<br>Reception will contact you shortly</span>'
+        : 'فشل إرسال الطلب، بلّغ الاستقبال<br><span style="font-size:12px;font-weight:400;opacity:.9;">Failed to send — please tell reception</span>', ok);
       if(waUrl) window.open(waUrl, '_blank');
     };
     grid.innerHTML=ACT.map(function(a,idx){
