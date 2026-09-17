@@ -18535,6 +18535,8 @@ function renderDA_Bookings(){
     const idx = bks.indexOf(b);
     const statusColor = {pending:'#f1c40f',confirmed:'#2ecc71',cancelled:'#e74c3c'}[b.status]||'#f1c40f';
     const statusLabel = {pending:'🟡 معلق · Pending',confirmed:'✅ مؤكد · Confirmed',cancelled:'❌ ملغي · Cancelled'}[b.status]||'🟡 معلق';
+    const stage = (typeof DA_getStage==='function') ? DA_getStage(b) : null;
+    const stageMeta = (typeof DA_stageMeta==='function') ? DA_stageMeta(stage, true) : null;
     return `<div class="card" style="padding:12px;margin-bottom:8px;border-left:3px solid ${statusColor};">
       <div style="display:flex;gap:10px;align-items:flex-start;">
         <div style="font-size:28px;">${b.emoji||'🌅'}</div>
@@ -18546,11 +18548,14 @@ function renderDA_Bookings(){
           ${b.supplierName?`<div style="font-size:10px;color:#7ab8f5;margin-top:2px;">🏢 ${b.supplierName}${b.supplierPhone?' · '+b.supplierPhone:''}</div>`:''}
           <div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;">
             <span style="background:rgba(${statusColor==='#2ecc71'?'46,204,113':statusColor==='#f1c40f'?'241,196,15':'231,76,60'},0.15);color:${statusColor};border:1px solid ${statusColor}40;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;">${statusLabel}</span>
+            ${stageMeta?`<span style="background:${stageMeta.color}22;color:${stageMeta.color};border:1px solid ${stageMeta.color}40;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;">${stageMeta.label}</span>`:''}
             ${b.price?`<span style="font-weight:700;color:#2ecc71;">£${Number(b.price).toLocaleString()}</span>`:''}
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
           ${b.status!=='confirmed'?`<button class="btn bsm" onclick="updateDA_BookStatus(${idx},'confirmed')" style="background:rgba(46,204,113,0.15);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);padding:6px 10px;font-size:11px;">✅ تأكيد</button>`:''}
+          ${stage==='upcoming'?`<button class="btn bsm" onclick="DA_setStage(${idx},'active')" style="background:rgba(52,152,219,0.15);color:#3498db;border:1px solid rgba(52,152,219,0.35);padding:6px 10px;font-size:11px;">🟢 بدء الآن</button>`:''}
+          ${stage==='active'?`<button class="btn bsm" onclick="DA_setStage(${idx},'completed')" style="background:rgba(122,143,166,0.15);color:#7a8fa6;border:1px solid rgba(122,143,166,0.35);padding:6px 10px;font-size:11px;">⚪ إنهاء</button>`:''}
           ${b.status!=='cancelled'?`<button class="btn bsm" onclick="updateDA_BookStatus(${idx},'cancelled')" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);padding:6px 10px;font-size:11px;">❌ إلغاء</button>`:''}
           ${b.phone?`<button class="btn bsm" onclick="window.open('https://wa.me/${b.phone.replace(/[^0-9]/g,'')}','_blank')" style="background:#25D366;color:#fff;padding:6px 10px;font-size:11px;">📱</button>`:''}
           ${b.supplierPhone||b.supplierName?`<button class="btn bsm" onclick="waDA_Supplier(${idx})" style="background:rgba(52,152,219,0.2);color:#7ab8f5;border:1px solid rgba(52,152,219,0.4);padding:6px 10px;font-size:11px;" title="${b.supplierName||'شركة المورد'}">🏢📱</button>`:''}
@@ -28511,12 +28516,18 @@ function renderOpsBoard(){
     aEl.innerHTML = daBks.length ? daBks.map(b=>{
       const stColor = b.status==="confirmed" ? "#2ecc71" : b.status==="pending" ? "#f5c518" : "#e74c3c";
       const stLabel = b.status==="confirmed" ? (ar?"مؤكد":"Confirmed") : b.status==="pending" ? (ar?"معلق":"Pending") : (ar?"ملغي":"Cancelled");
-      return `<div class="card" style="border-color:${stColor}44;">
-        <div style="font-weight:800;color:#1abc9c;font-size:14px;">${b.emoji||"🌅"} ${ar?b.actNameAr:b.actNameEn}</div>
+      const stage = (typeof DA_getStage==='function') ? DA_getStage(b) : null;
+      const stageMeta = (typeof DA_stageMeta==='function') ? DA_stageMeta(stage, ar) : null;
+      return `<div class="card" style="border-color:${stColor}44;position:relative;">
+        <button onclick="opsDeleteActivityBooking('${b.id}')" title="${ar?'حذف':'Delete'}" style="position:absolute;top:6px;${ar?'left':'right'}:6px;background:rgba(231,76,60,0.15);color:#e74c3c;border:1px solid rgba(231,76,60,0.3);border-radius:6px;width:22px;height:22px;font-size:11px;line-height:1;cursor:pointer;">🗑</button>
+        <div style="font-weight:800;color:#1abc9c;font-size:14px;padding-${ar?'left':'right'}:24px;">${b.emoji||"🌅"} ${ar?b.actNameAr:b.actNameEn}</div>
         <div style="font-size:12px;color:var(--text);margin-top:2px;">${b.guest||""}${b.room?" · "+(ar?"غرفة":"Room")+" "+b.room:""}${b.guestType==="walkin"?` · <span style="color:#e67e22;font-weight:700;">🚶 ${ar?"زائر خارجي":"Walk-in"}</span>`:""}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px;">⏰ ${b.time||"—"} · 👥 ${b.persons||1}</div>
         ${b.supplierName?`<div style="font-size:10px;color:#7ab8f5;margin-top:2px;">🏢 ${b.supplierName}</div>`:""}
-        <div style="margin-top:6px;font-size:10px;font-weight:700;color:${stColor};">● ${stLabel}</div>
+        <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:10px;font-weight:700;color:${stColor};">● ${stLabel}</span>
+          ${stageMeta?`<span style="font-size:10px;font-weight:700;color:${stageMeta.color};">${stageMeta.label}</span>`:""}
+        </div>
       </div>`;
     }).join("") : `<div class="empty" style="grid-column:1/-1;">📭 ${ar?"لا توجد نشاطات اليوم":"No activities today"}</div>`;
   }
@@ -33815,7 +33826,12 @@ async function confirmActDate(id){
   if(m) m.remove();
   const req = (_actReqCache||[]).find(r=>String(r.id)===String(id));
   await doMarkActReq(id, 'approved', iso);
-  if(req) sendActivityConfirmWA(req, iso);
+  if(req){
+    DA_addBookingFromRequest(req, iso);
+    if(typeof renderDailyActivity==='function') renderDailyActivity();
+    if(typeof renderOpsBoard==='function') renderOpsBoard();
+    sendActivityConfirmWA(req, iso);
+  }
 }
 
 // Finds the phone number of the guest currently checked into (or booked for) a room,
@@ -33826,6 +33842,106 @@ function getRoomGuestPhone(room){
   const b = bookings.find(bk=>bk.room===String(room) && bk.status!=='Cancelled' && bk.status!=='Standby' && bk.ci<=td && bk.co>td)
          || bookings.filter(bk=>bk.room===String(room) && bk.status!=='Cancelled' && bk.ci>=td).sort((a,z)=>a.ci.localeCompare(z.ci))[0];
   return b ? (b.phone||b.whatsapp||'') : '';
+}
+
+// Finds the name of the guest currently checked into (or booked for) a room —
+// used to fill guest name automatically when an approved activity request
+// is turned into a real Daily Activity booking.
+function getRoomGuestName(room){
+  if(!room) return '';
+  const td = toDay();
+  const b = bookings.find(bk=>bk.room===String(room) && bk.status!=='Cancelled' && bk.status!=='Standby' && bk.ci<=td && bk.co>td)
+         || bookings.filter(bk=>bk.room===String(room) && bk.status!=='Cancelled' && bk.ci>=td).sort((a,z)=>a.ci.localeCompare(z.ci))[0];
+  return b ? (b.name||'') : '';
+}
+
+// Creates a real Daily Activity booking (in DA_getBookings / "dta_daily_bookings")
+// from an approved guest activity request, so approved requests actually show up
+// under Daily Activity → Bookings, not just as an updated request status.
+function DA_addBookingFromRequest(req, dateISO){
+  if(typeof DA_getBookings!=='function' || typeof DA_saveBookings!=='function') return null;
+  const d = dateISO ? dateISO.slice(0,10) : '';
+  const t = dateISO ? dateISO.slice(11,16) : '';
+  const bk = {
+    id: Date.now(),
+    reqId: req.id,
+    emoji: '🌅',
+    actNameAr: req.activity_name || '',
+    actNameEn: req.activity_name_en || req.activity_name || '',
+    guest: getRoomGuestName(req.room) || '',
+    guestType: 'hotel',
+    room: req.room || '',
+    date: d, time: t,
+    persons: 1,
+    phone: getRoomGuestPhone(req.room) || '',
+    notes: '',
+    payment: 'On Room',
+    price: Number(req.price)||0, pricePerPerson: Number(req.price)||0,
+    costPrice: 0, costPerPerson: 0, profit: Number(req.price)||0,
+    supplierName: '', supplierPhone: '',
+    status: 'confirmed', stage: 'upcoming', settled: false,
+    createdAt: new Date().toISOString(), source: 'guest_request'
+  };
+  const bks = DA_getBookings();
+  bks.push(bk);
+  DA_saveBookings(bks);
+  return bk;
+}
+
+// Computes the live lifecycle stage of a confirmed activity booking — mirrors the
+// reserved/checked-in/checked-out idea used for rooms: upcoming → active → completed.
+// A manually-set stage (via DA_setStage) always wins over the time-based guess, so
+// staff can start/finish an activity by hand even if the clock disagrees.
+function DA_getStage(b){
+  if(!b || b.status==='cancelled') return null;
+  if(b.status!=='confirmed') return null;
+  if(b.stage==='active' || b.stage==='completed') return b.stage;
+  if(!b.date) return 'upcoming';
+  const durMin = Number(b.durationMin)||60;
+  const start = new Date(b.date+'T'+(b.time||'00:00')+':00');
+  if(isNaN(start.getTime())) return 'upcoming';
+  const end = new Date(start.getTime()+durMin*60000);
+  const now = new Date();
+  if(now < start) return 'upcoming';
+  if(now <= end) return 'active';
+  return 'completed';
+}
+
+function DA_stageMeta(stage, ar){
+  if(stage==='active')    return {color:'#2ecc71', label: ar?'🟢 نشط الآن · Active Now':'🟢 Active Now'};
+  if(stage==='completed') return {color:'#7a8fa6', label: ar?'⚪ انتهى · Completed':'⚪ Completed'};
+  if(stage==='upcoming')  return {color:'#3498db', label: ar?'🔵 محجوز · Upcoming':'🔵 Upcoming'};
+  return null;
+}
+
+// Manually moves a booking to the next stage (start it now / mark it finished).
+function DA_setStage(idx, stage){
+  const bks = DA_getBookings();
+  if(!bks[idx]) return;
+  bks[idx].stage = stage;
+  bks[idx][stage+'At'] = new Date().toISOString();
+  DA_saveBookings(bks);
+  const ar = (typeof currentLang!=='undefined') ? currentLang==='ar' : true;
+  if(typeof sNotify==='function'){
+    sNotify(
+      stage==='active' ? (ar?'🟢 بدأ النشاط':'🟢 Activity Started') : (ar?'✅ اكتمل النشاط':'✅ Activity Completed'),
+      '', 'success', 2500
+    );
+  }
+  if(typeof renderDA_Bookings==='function') renderDA_Bookings();
+  if(typeof renderOpsBoard==='function') renderOpsBoard();
+}
+
+// Deletes an activity booking straight from the Dashboard/Ops Board card (no delete
+// option existed there before — this mirrors the 🗑 button already in the Bookings tab).
+function opsDeleteActivityBooking(id){
+  const ar = (typeof currentLang!=='undefined') ? currentLang==='ar' : true;
+  if(!confirm(ar?'⚠️ حذف هذا النشاط؟':'⚠️ Delete this activity?')) return;
+  if(typeof DA_getBookings!=='function' || typeof DA_saveBookings!=='function') return;
+  const bks = DA_getBookings().filter(b=>String(b.id)!==String(id));
+  DA_saveBookings(bks);
+  if(typeof renderOpsBoard==='function') renderOpsBoard();
+  if(typeof renderDailyActivity==='function') renderDailyActivity();
 }
 
 // Opens WhatsApp with a ready-made bilingual confirmation message to the guest once
