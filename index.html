@@ -22667,7 +22667,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     try{
       const params = new URLSearchParams(window.location.search);
       const guestRoom = params.get('guest');
-      const guestDebugMode = params.get('debug') === '1';
       const isMenuOnly = params.get('menu') === '1';
       if(!guestRoom && !isMenuOnly) return;
 
@@ -22751,7 +22750,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             }catch(e){ console.warn('[GuestMode] hash decode error:',e); }
           }
           // بناء صفحة الضيف
-          const html = DTA_QR.buildGuestPage(guestRoom, guestDebugMode);
+          const html = DTA_QR.buildGuestPage(guestRoom);
           document.open();
           document.write(html);
           document.close();
@@ -40032,10 +40031,10 @@ const DTA_QR = (function(){
     const base = (qrsBase.appUrl && qrsBase.appUrl.trim())
       ? qrsBase.appUrl.trim().replace(/[?#].*$/, '')
       : window.location.origin + window.location.pathname;
-    async function tryBuild(withMenu, withActivities, actOverride){
+    async function tryBuild(withMenu, withActivities){
       const payload = {
         menu: withMenu ? menuSlim : [],
-        activities: withActivities ? (actOverride || actSlim) : [],
+        activities: withActivities ? actSlim : [],
         wifi: { name: qrs.wifiName || 'DahabTrendy_Guest', pass: qrs.wifiPass || 'dahab2024' },
         wa: qrs.waNum || '201099531272'
       };
@@ -40060,12 +40059,7 @@ const DTA_QR = (function(){
     if(url.length > 2200 && menuSlim.length){
       url = await tryBuild(false, true);
     }
-    // المحاولة 3: لو النشاطات نفسها (مع الوصف) كبيرة، نشيل الوصف بس ونسيب زرار الحجز
-    if(url.length > 2200 && actSlim.length){
-      const actNoDesc = actSlim.map(function(a){ return Object.assign({}, a, {desc:''}); });
-      url = await tryBuild(false, true, actNoDesc);
-    }
-    // المحاولة 4 (نادرة جداً): لو حتى النشاطات من غير وصف لسه كبيرة، آخر حل نشيلها كمان
+    // المحاولة 3 (نادرة جداً): لو حتى النشاطات لوحدها كبيرة أوي، آخر حل نشيلها كمان
     if(url.length > 2200 && actSlim.length){
       url = await tryBuild(false, false);
     }
@@ -40078,9 +40072,8 @@ const DTA_QR = (function(){
   }
 
   // ─── صفحة الضيف (HTML مستقل) ───
-  function buildGuestPage(roomNo, debugMode){
+  function buildGuestPage(roomNo){
     const room = String(roomNo);
-    const _debugMode = !!debugMode;
     const prop = (typeof PROP !== 'undefined') ? PROP : {name:'Dahab Trendy Accommodation',address:'Dahab, South Sinai, Egypt',phone:'+20 109 953 1272',email:'dahabtrendyinn@gmail.com'};
     const qrs = JSON.parse(localStorage.getItem('dta_qr_settings')||'{}');
     const wifiName     = qrs.wifiName     || 'DahabTrendy_Guest';
@@ -40415,8 +40408,8 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var ACT=[]; var _dbgErr='';
     var ba='${_actB64}';
     try{ if(ba) ACT=JSON.parse(decodeURIComponent(escape(atob(ba)))); }catch(e){ _dbgErr=String(e); }
-    if(${_debugMode ? 'true' : 'false'} || window.location.search.indexOf('debug=1')>-1 || window.location.protocol==='blob:'){
-      alert('🔍 DEBUG activities\nb64 length: '+ba.length+'\ndecoded items: '+ACT.length+(_dbgErr?('\nerror: '+_dbgErr):'')+(ACT.length?('\nfirst: '+JSON.stringify(ACT[0])):'')+'\ncurrent URL search: '+window.location.search);
+    if(window.location.search.indexOf('debug=1')>-1 || window.location.protocol==='blob:'){
+      alert('🔍 DEBUG activities\\nb64 length: '+ba.length+'\\ndecoded items: '+ACT.length+(_dbgErr?('\\nerror: '+_dbgErr):'')+(ACT.length?('\\nfirst: '+JSON.stringify(ACT[0])):''));
     }
     var grid=document.getElementById('act-grid');
     var sec=document.getElementById('act-sec');
@@ -40470,7 +40463,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
         +'<span class="act-emoji">'+(a.e||'🎯')+'</span>'
         +'<div class="act-name">'+(a.n||'')+(a.ne?'<br><span class="act-name-en">'+a.ne+'</span>':'')+'</div>'
         +priceHtml+durHtml+descHtml
-        +'<a class="act-wa" href="javascript:void(0)" onclick="window._reportActReq(\''+nSafe+'\',\''+neSafe+'\','+(a.p||0)+',\''+dSafe+'\',\'https://wa.me/'+waNum2+'?text='+encodeURIComponent(waMsg).replace(/'/g,'%27')+'\')">💬 Book Now · احجز الآن</a>'
+        +'<a class="act-wa" href="javascript:void(0)" onclick="window._reportActReq(\\''+nSafe+'\\',\\''+neSafe+'\\','+(a.p||0)+',\\''+dSafe+'\\',\\'https://wa.me/'+waNum2+'?text='+encodeURIComponent(waMsg).replace(/'/g,'%27')+'\\')">💬 Book Now · احجز الآن</a>'
         +'</div>';
     }).join('');
   })();
