@@ -33813,11 +33813,50 @@ async function confirmActDate(id){
   const iso = d + 'T' + t + ':00';
   const m = document.getElementById('actdate-modal');
   if(m) m.remove();
+  const req = (_actReqCache||[]).find(r=>String(r.id)===String(id));
   await doMarkActReq(id, 'approved', iso);
+  if(req) sendActivityConfirmWA(req, iso);
+}
+
+// Finds the phone number of the guest currently checked into (or booked for) a room,
+// so we can WhatsApp them without needing the activity-request form to collect a phone.
+function getRoomGuestPhone(room){
+  if(!room) return '';
+  const td = toDay();
+  const b = bookings.find(bk=>bk.room===String(room) && bk.status!=='Cancelled' && bk.status!=='Standby' && bk.ci<=td && bk.co>td)
+         || bookings.filter(bk=>bk.room===String(room) && bk.status!=='Cancelled' && bk.ci>=td).sort((a,z)=>a.ci.localeCompare(z.ci))[0];
+  return b ? (b.phone||b.whatsapp||'') : '';
+}
+
+// Opens WhatsApp with a ready-made bilingual confirmation message to the guest once
+// an activity request has been approved and given a date/time — closes the loop that
+// previously only updated the request status without ever notifying the guest.
+function sendActivityConfirmWA(req, dateISO){
+  const ar = currentLang==='ar';
+  const phoneDigits = getRoomGuestPhone(req.room).replace(/\D/g,'');
+  if(!phoneDigits){
+    sNotify('⚠️ '+(ar?'محدش موجود برقم في الغرفة دي':'No guest phone found for this room'), ar?'لازم تبلغ الضيف يدويًا':'Please notify the guest manually', 'info', 4000);
+    return;
+  }
+  const prop = (typeof PROP!=='undefined' && PROP) ? PROP : {};
+  const dt = dateISO ? new Date(dateISO) : null;
+  const dateStr = dt ? fmtD(dateISO) : '';
+  const timeStr = dt ? String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0') : '';
+  const msg =
+`✅ *تأكيد حجز النشاط · Activity Booking Confirmed*
+
+🌅 ${req.activity_name||''}${req.activity_name_en?' / '+req.activity_name_en:''}
+🛏️ غرفة / Room ${req.room||''}
+${dateStr?`📅 ${dateStr}${timeStr?' — '+timeStr:''}\n`:''}${req.price?`💰 £${req.price}\n`:''}
+تم تأكيد حجزك، نشوفك قريب 🙏
+Your booking is confirmed, see you soon 🙏
+${prop.name?('\n🏨 '+prop.name):''}${prop.phone?('\n📞 '+prop.phone):''}`;
+  window.open('https://wa.me/'+phoneDigits+'?text='+encodeURIComponent(msg), '_blank');
 }
 window.markActReqHandled = markActReqHandled;
 window.openActDateModal = openActDateModal;
 window.confirmActDate = confirmActDate;
+window.sendActivityConfirmWA = sendActivityConfirmWA;
 
 async function pollActivityRequests(){
   try{
