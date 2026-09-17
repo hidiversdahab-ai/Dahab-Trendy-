@@ -1712,7 +1712,7 @@ label {
     <div class="bn-more-item" onclick="bnGo('guestsreg',null);closeBnMore()"><span class="bm-icon">📋</span><span class="t" data-ar="سجل الضيوف" data-en="Guests Reg.">سجل الضيوف</span></div>
     <div class="bn-more-item" onclick="bnGo('restaurant',null);closeBnMore()"><span class="bm-icon">🍽️</span><span class="t" data-ar="مطعم" data-en="Rest.">مطعم</span><span id="bn-rest-badge" class="bn-more-badge" style="display:none;">0</span></div>
     <div class="bn-more-item" onclick="bnGo('tours',null);closeBnMore()"><span class="bm-icon">🏔️</span><span class="t" data-ar="رحلات" data-en="Tours">رحلات</span></div>
-    <div class="bn-more-item" onclick="bnGo('dailyactivity',null);closeBnMore()" style="border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.07);"><span class="bm-icon" style="color:#1abc9c;">🌅</span><span style="color:#1abc9c;" class="t" data-ar="نشاطات يومية" data-en="Daily Activity">نشاطات يومية</span></div>
+    <div class="bn-more-item" onclick="bnGo('dailyactivity',null);closeBnMore()" style="border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.07);position:relative;"><span class="bm-icon" style="color:#1abc9c;">🌅</span><span style="color:#1abc9c;" class="t" data-ar="نشاطات يومية" data-en="Daily Activity">نشاطات يومية</span><span id="bn-actreq-badge" class="bn-more-badge" style="display:none;">0</span></div>
     <div class="bn-more-item" onclick="bnGo('events',null);closeBnMore()" style="border-color:rgba(241,196,15,0.4);background:rgba(241,196,15,0.07);"><span class="bm-icon" style="color:#f1c40f;">🎉</span><span style="color:#f1c40f;" class="t" data-ar="أحداث" data-en="Events">أحداث</span></div>
     <div class="bn-more-item" onclick="bnGo('reviews',null);closeBnMore()"><span class="bm-icon">⭐</span><span class="t" data-ar="تقييمات" data-en="Reviews">تقييمات</span></div>
     <div class="bn-more-item" onclick="bnGo('chatbot',null);closeBnMore()" style="border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);"><span class="bm-icon">🤖💬</span><span class="t" data-ar="شات بوت" data-en="Chatbot">شات بوت</span></div>
@@ -3132,6 +3132,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <div id="db-branch-indicator" style="margin-bottom:10px;"></div>
 <div id="db-guestreq-alert" style="margin-bottom:12px;"></div>
+<div id="db-actreq-alert" style="margin-bottom:12px;"></div>
 <div id="db-alerts" style="margin-bottom:12px;"></div>
 <div id="db-wl-alert" style="margin-bottom:12px;"></div>
 <div class="g4" id="db-stats" style="margin-bottom:12px;"></div>
@@ -5450,6 +5451,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 </div>
 
 <!-- SUMMARY STRIP -->
+<div id="da-pending-requests" style="margin-bottom:14px;"></div>
 <div id="da-summary-strip" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:14px;"></div>
 
 <!-- BOOKINGS TABS -->
@@ -18405,10 +18407,35 @@ function DA_saveActivities(arr){ sv("dta_daily_activities", arr); }
 function DA_saveBookings(arr){ sv("dta_daily_bookings", arr); }
 
 function renderDailyActivity(){
+  renderDA_PendingRequests();
   renderDA_Activities();
   renderDA_Bookings();
   renderDA_Summary();
   renderDA_Suppliers();
+}
+
+function renderDA_PendingRequests(){
+  const el = document.getElementById("da-pending-requests");
+  if(!el) return;
+  const ar = currentLang==='ar';
+  const pending = (_actReqCache||[]).filter(r=>r.status==='pending');
+  if(!pending.length){ el.innerHTML=''; return; }
+  const rows = pending.map(r=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border-radius:8px;padding:9px 12px;margin-top:7px;">
+      <div style="min-width:0;">
+        <div style="font-weight:700;font-size:13px;">${bkReqEsc(r.activity_name)}${r.activity_name_en?' <span style="color:var(--muted);font-weight:400;">/ '+bkReqEsc(r.activity_name_en)+'</span>':''}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">🛏️ ${ar?'غرفة':'Room'} ${bkReqEsc(r.room)}${r.price?' · £'+r.price:''}${r.duration?' · ⏱️ '+bkReqEsc(r.duration):''} · ${new Date(r.created_at).toLocaleString(ar?'ar-EG':'en-GB',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn bsm" style="background:rgba(76,218,122,0.15);color:#4cda7a;border:1px solid rgba(76,218,122,0.35);" onclick="markActReqHandled('${r.id}','approved')">✅ ${ar?'تم':'Done'}</button>
+        <button class="btn bsm" style="background:rgba(224,104,94,0.15);color:#e0685e;border:1px solid rgba(224,104,94,0.35);" onclick="markActReqHandled('${r.id}','rejected')">❌</button>
+      </div>
+    </div>`).join('');
+  el.innerHTML = `<div class="card" style="padding:12px 16px;border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.05);margin-bottom:0;">
+    <div class="ctitle" style="color:#1abc9c;margin-bottom:0;">🌅 ${ar?'طلبات نشاطات جديدة من الضيوف':'New Guest Activity Requests'}
+      <span style="background:#1abc9c;color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;">${pending.length}</span></div>
+    ${rows}
+  </div>`;
 }
 
 function renderDA_Summary(){
@@ -22353,6 +22380,27 @@ let _snotifQueue = [];
 let _snotifActive = 0;
 const MAX_NOTIFS = 4;
 
+// ── صوت تنبيه بسيط (Web Audio API — من غير أي ملف صوت خارجي) ──
+function playAlertSound(){
+  try{
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return;
+    const ctx = new Ctx();
+    [0,0.16].forEach((delay,i)=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = i===0 ? 880 : 1046.5;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime+delay);
+      gain.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime+delay+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+delay+0.28);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ctx.currentTime+delay);
+      osc.stop(ctx.currentTime+delay+0.3);
+    });
+    setTimeout(()=>{ try{ ctx.close(); }catch(e){} }, 700);
+  }catch(e){}
+}
 function sNotify(title, msg, type='default', duration=5000){
   const container = document.getElementById('snotif-container');
   if(!container) return;
@@ -33265,6 +33313,7 @@ function notifyNewGuestRequests(data){
   const pending = data.filter(r=>r.status==='pending');
   const freshPending = pending.filter(r=>!(String(r.id) in seenMap));
   if(freshPending.length){
+    playAlertSound();
     if(freshPending.length===1){
       sNotify('🛎️ '+(ar?'طلب حجز جديد':'New booking request'), freshPending[0].name+' — '+fmtD(freshPending[0].ci)+' → '+fmtD(freshPending[0].co), 'default', 6000);
     } else {
@@ -33274,6 +33323,7 @@ function notifyNewGuestRequests(data){
 
   // Requests the guest cancelled since we last checked (status just transitioned to cancelled_by_guest)
   const freshCancelled = data.filter(r=>r.status==='cancelled_by_guest' && seenMap[String(r.id)] && seenMap[String(r.id)]!=='cancelled_by_guest');
+  if(freshCancelled.length) playAlertSound();
   freshCancelled.forEach(r=>{
     sNotify('❌ '+(ar?'الضيف ألغى الحجز':'Guest cancelled booking'),
       r.name+' — '+fmtD(r.ci)+' → '+fmtD(r.co)+(r.synced_booking_id?(ar?' ⚠️ لازم تلغي الحجز الفعلي يدويًا':' ⚠️ Manually cancel the actual booking'):''),
@@ -33587,14 +33637,125 @@ async function pollBookingRequests(){
     }
   }catch(e){ console.warn('[bkReq poll]', e); }
 }
+// ── ACTIVITY BOOKING REQUESTS (طلبات حجز الأنشطة اليومية من صفحة الضيف QR) — via Supabase ──
+// ⚠️ لازم تعمل الجدول ده في Supabase مرة واحدة (SQL Editor):
+//   create table activity_requests (
+//     id bigint generated always as identity primary key,
+//     created_at timestamptz default now(),
+//     room text, activity_name text, activity_name_en text,
+//     price numeric, duration text, status text default 'pending'
+//   );
+//   alter table activity_requests enable row level security;
+//   create policy "anon insert" on activity_requests for insert to anon with check (true);
+//   create policy "anon select" on activity_requests for select to anon using (true);
+//   create policy "anon update" on activity_requests for update to anon using (true);
+let _actReqCache = [];
+
+async function fetchActivityRequests(){
+  try{
+    const res = await fetch(BKREQ_URL+'/rest/v1/activity_requests?order=created_at.desc', {
+      headers:{ apikey: BKREQ_KEY, 'Authorization': 'Bearer ' + BKREQ_KEY }
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return await res.json();
+  }catch(e){
+    console.warn('[fetchActivityRequests]', e);
+    return null;
+  }
+}
+
+function updateActReqBadge(count){
+  const b1 = document.getElementById('bn-actreq-badge');
+  const b2 = document.getElementById('bn-actreq-badge-desktop');
+  [b1,b2].forEach(b=>{
+    if(!b) return;
+    if(count>0){ b.textContent=count; b.style.display='inline-block'; } else { b.style.display='none'; }
+  });
+}
+
+function renderDashActReqAlert(){
+  const el = document.getElementById('db-actreq-alert');
+  if(!el) return;
+  const ar = currentLang==='ar';
+  const pending = (_actReqCache||[]).filter(r=>r.status==='pending');
+  if(!pending.length){ el.innerHTML=''; return; }
+  const cards = pending.map(r=>
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-top:6px;">'+
+      '<div style="min-width:0;">'+
+        '<div style="font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+bkReqEsc(r.activity_name)+(r.activity_name_en?' / '+bkReqEsc(r.activity_name_en):'')+'</div>'+
+        '<div style="font-size:10.5px;color:var(--muted);">🛏️ '+bkReqEsc(r.room)+(r.price?' · £'+r.price:'')+'</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;flex-shrink:0;">'+
+        '<button class="btn bsm" style="background:rgba(76,218,122,0.15);color:#4cda7a;border:1px solid rgba(76,218,122,0.35);" onclick="markActReqHandled(\''+r.id+'\',\'approved\')">✅</button>'+
+        '<button class="btn bsm" style="background:rgba(224,104,94,0.15);color:#e0685e;border:1px solid rgba(224,104,94,0.35);" onclick="markActReqHandled(\''+r.id+'\',\'rejected\')">❌</button>'+
+      '</div>'+
+    '</div>'
+  ).join('');
+  el.innerHTML = "<div class='card' style='padding:12px 16px;border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.05);margin-bottom:0;cursor:pointer;' onclick=\"bnGo('dailyactivity',null)\">"+
+    "<div class='ctitle' style='color:#1abc9c;margin-bottom:0;'>🌅 "+(ar?'طلبات نشاطات جديدة':'New Activity Requests')+
+    " <span style='background:#1abc9c;color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;'>"+pending.length+"</span></div>"+
+    cards+
+  "</div>";
+}
+
+function _actReqSeen(){ try{ return JSON.parse(localStorage.getItem('dta_actreq_seen')||'[]'); }catch(e){ return []; } }
+function _actReqMarkSeen(ids){ try{ localStorage.setItem('dta_actreq_seen', JSON.stringify(ids)); }catch(e){} }
+
+function notifyNewActivityRequests(data){
+  if(!data) return;
+  const ar = currentLang==='ar';
+  const seen = _actReqSeen();
+  const pending = data.filter(r=>r.status==='pending');
+  const fresh = pending.filter(r=>!seen.includes(String(r.id)));
+  if(fresh.length){
+    playAlertSound();
+    if(fresh.length===1){
+      sNotify('🌅 '+(ar?'طلب نشاط جديد':'New activity request'), fresh[0].activity_name+' — 🛏️ '+fresh[0].room, 'default', 6000);
+    } else {
+      sNotify('🌅 '+(ar?fresh.length+' طلبات نشاطات جديدة':fresh.length+' new activity requests'), ar?'افتح صفحة النشاطات اليومية للمراجعة':'Open Daily Activity to review', 'default', 6000);
+    }
+  }
+  _actReqMarkSeen(data.map(r=>String(r.id)));
+}
+
+async function markActReqHandled(id, status){
+  try{
+    await fetch(BKREQ_URL+'/rest/v1/activity_requests?id=eq.'+id, {
+      method:'PATCH',
+      headers:{ apikey: BKREQ_KEY, 'Authorization': 'Bearer ' + BKREQ_KEY, 'Content-Type':'application/json' },
+      body: JSON.stringify({status: status})
+    });
+    pollActivityRequests();
+  }catch(e){ console.warn('[markActReqHandled]', e); }
+}
+
+async function pollActivityRequests(){
+  try{
+    const data = await fetchActivityRequests();
+    if(data){
+      _actReqCache = data;
+      updateActReqBadge(data.filter(r=>r.status==='pending').length);
+      renderDashActReqAlert();
+      notifyNewActivityRequests(data);
+      if(typeof renderDailyActivity==='function'){
+        const pg = document.getElementById('page-dailyactivity');
+        if(pg && pg.classList.contains('on')) renderDailyActivity();
+      }
+    }
+  }catch(e){ console.warn('[actReq poll]', e); }
+}
+
 window.addEventListener('load', function(){
   setTimeout(function(){
     pollBookingRequests();
+    pollActivityRequests();
     syncRoomsCatalogToSupabase();
     syncPolicyToSupabase();
     setInterval(pollBookingRequests, 60000); // check every 60s for new/updated requests
+    setInterval(pollActivityRequests, 60000);
   }, 2500);
 });
+
 
 function shareBookingFormLink(){
   const link = 'https://hidiversdahab-ai.github.io/dahab-trendy-booking/';
@@ -40128,7 +40289,16 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     if(!grid||!ACT.length){ if(sec) sec.style.display='none'; return; }
     if(sec) sec.style.display='block';
     var defWA='${waNum}';
-    grid.innerHTML=ACT.map(function(a){
+    window._reportActReq = function(name, nameEn, price, duration){
+      try{
+        fetch('${BKREQ_URL}/rest/v1/activity_requests', {
+          method:'POST',
+          headers:{ apikey:'${BKREQ_KEY}', 'Authorization':'Bearer ${BKREQ_KEY}', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
+          body: JSON.stringify({room:'${room}', activity_name:name, activity_name_en:nameEn||null, price:price||null, duration:duration||null, status:'pending'})
+        }).catch(function(){});
+      }catch(e){}
+    };
+    grid.innerHTML=ACT.map(function(a,idx){
       var waNum2=(a.w||defWA).replace(/\D/g,'');
       var waMsg='🎯 Activity Request / طلب نشاط — Room / غرفة ${room}\\n\\n'
         +(a.n||'')+(a.ne?' / '+a.ne:'')+'\\n'
@@ -40141,11 +40311,12 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
         : '<div class="act-price" style="color:var(--muted);font-size:11px;">On request · السعر عند الطلب</div>';
       var durHtml = a.d ? '<div class="act-dur">⏱️ '+a.d+'</div>' : '';
       var descHtml = a.ds ? '<div class="act-desc">'+a.ds+'</div>' : '';
+      var nSafe=(a.n||'').replace(/'/g,"\\'"), neSafe=(a.ne||'').replace(/'/g,"\\'"), dSafe=(a.d||'').replace(/'/g,"\\'");
       return '<div class="act-card">'
         +'<span class="act-emoji">'+(a.e||'🎯')+'</span>'
         +'<div class="act-name">'+(a.n||'')+(a.ne?'<br><span class="act-name-en">'+a.ne+'</span>':'')+'</div>'
         +priceHtml+durHtml+descHtml
-        +'<a class="act-wa" href="https://wa.me/'+waNum2+'?text='+encodeURIComponent(waMsg)+'" target="_blank">💬 Book Now · احجز الآن</a>'
+        +'<a class="act-wa" href="https://wa.me/'+waNum2+'?text='+encodeURIComponent(waMsg)+'" target="_blank" onclick="window._reportActReq(\''+nSafe+'\',\''+neSafe+'\','+(a.p||0)+',\''+dSafe+'\')">💬 Book Now · احجز الآن</a>'
         +'</div>';
     }).join('');
   })();
