@@ -40031,9 +40031,9 @@ const DTA_QR = (function(){
     const base = (qrsBase.appUrl && qrsBase.appUrl.trim())
       ? qrsBase.appUrl.trim().replace(/[?#].*$/, '')
       : window.location.origin + window.location.pathname;
-    async function tryBuild(withActivities){
+    async function tryBuild(withMenu, withActivities){
       const payload = {
-        menu: menuSlim,
+        menu: withMenu ? menuSlim : [],
         activities: withActivities ? actSlim : [],
         wifi: { name: qrs.wifiName || 'DahabTrendy_Guest', pass: qrs.wifiPass || 'dahab2024' },
         wa: qrs.waNum || '201099531272'
@@ -40051,13 +40051,20 @@ const DTA_QR = (function(){
       return base + '?guest=' + encodeURIComponent(room) + hashPart;
     }
 
-    let url = await tryBuild(true);
-    // لو الرابط لسه طويل قوي (منيو كبير) — نجرب من غير النشاطات
-    if(url.length > 2200 && actSlim.length){
-      url = await tryBuild(false);
+    // المحاولة 1: كل حاجة (منيو + نشاطات) — الوضع المثالي
+    let url = await tryBuild(true, true);
+    // المحاولة 2: لو الرابط طال قوي — نشيل المنيو ونسيب النشاطات (زرار Book Now)
+    // النشاطات بتتشال آخر حاجة دلوقتي، مش أول حاجة، لأن مفيش بديل لزرار الحجز ده
+    // غير كده، أما المنيو فممكن الضيف يشوفه عن طريق "QR المنيو" العام المنفصل
+    if(url.length > 2200 && menuSlim.length){
+      url = await tryBuild(false, true);
     }
-    // لو لسه طويل قوي (منيو ضخم فعلاً) — نرجع لرابط قصير من غير بيانات مضمّنة
-    // (الحل الأنسب وقتها: استخدام "QR المنيو" العام في نفس الشاشة بعد رفع menu.html على GitHub)
+    // المحاولة 3 (نادرة جداً): لو حتى النشاطات لوحدها كبيرة أوي، آخر حل نشيلها كمان
+    if(url.length > 2200 && actSlim.length){
+      url = await tryBuild(false, false);
+    }
+    // حماية أخيرة: لو لسه طويل قوي، رابط من غير بيانات مضمّنة خالص
+    // (الصفحة وقتها هتعرض بيانات localStorage الجهاز اللي فاتح منه بس)
     if(url.length > 2500){
       url = base + '?guest=' + encodeURIComponent(room);
     }
