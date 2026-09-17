@@ -5035,6 +5035,7 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
   <div style="display:flex;gap:6px;flex-wrap:wrap;">
     <button class="btn bg bsm" id="btn-new-tour-main" onclick="openTourModal()">+ <span class="t" data-ar="رحلة جديدة" data-en="New Tour">رحلة جديدة</span></button>
     <button class="btn bsm" id="btn-new-act-main" style="display:none;background:rgba(26,188,156,0.2);color:#1abc9c;border:1px solid rgba(26,188,156,0.5);font-weight:700;" onclick="openActivityModal()">+ <span class="t" data-ar="نشاط جديد" data-en="New Activity">نشاط جديد</span></button>
+    <button class="btn bsm" id="btn-diag-act-main" style="display:none;background:rgba(230,126,34,0.15);color:#e67e22;border:1px solid rgba(230,126,34,0.4);font-weight:700;" onclick="diagActivitiesData()">🔍 فحص البيانات</button>
   </div>
 </div>
 
@@ -20341,6 +20342,7 @@ function switchToursTab(tab){
   const actBtn     = document.getElementById("activities-tab-btn");
   const newTourBtn = document.getElementById("btn-new-tour-main");
   const newActBtn  = document.getElementById("btn-new-act-main");
+  const diagActBtn = document.getElementById("btn-diag-act-main");
 
   if(tab==="tours"){
     if(toursPanel)  toursPanel.style.display="block";
@@ -20349,6 +20351,7 @@ function switchToursTab(tab){
     if(actBtn)      { actBtn.style.background="transparent"; actBtn.style.color="var(--muted)"; }
     if(newTourBtn)  newTourBtn.style.display="";
     if(newActBtn)   newActBtn.style.display="none";
+    if(diagActBtn)  diagActBtn.style.display="none";
     renderTours();
   } else {
     if(toursPanel)  toursPanel.style.display="none";
@@ -20357,9 +20360,26 @@ function switchToursTab(tab){
     if(actBtn)      { actBtn.style.background="rgba(26,188,156,0.15)"; actBtn.style.color="#1abc9c"; actBtn.style.borderColor="rgba(26,188,156,0.5)"; }
     if(newTourBtn)  newTourBtn.style.display="none";
     if(newActBtn)   newActBtn.style.display="";
+    if(diagActBtn)  diagActBtn.style.display="";
     renderActivities();
   }
 }
+
+function diagActivitiesData(){
+  try{
+    const raw = localStorage.getItem('dta_activities');
+    let parsed = null;
+    try{ parsed = JSON.parse(raw||'[]'); }catch(e){}
+    const count = Array.isArray(parsed) ? parsed.length : 0;
+    const availCount = Array.isArray(parsed) ? parsed.filter(a=>a.available!==false).length : 0;
+    let msg = '📦 dta_activities\n';
+    msg += 'عدد العناصر: ' + count + '\n';
+    msg += 'متاح (available): ' + availCount + '\n\n';
+    msg += 'الخام (raw):\n' + (raw || '(فارغ / null)');
+    alert(msg);
+  }catch(e){ alert('خطأ فى القراءة: ' + e.message); }
+}
+window.diagActivitiesData = diagActivitiesData;
 
 function renderActivities(){
   activities = LS("dta_activities",[]);
