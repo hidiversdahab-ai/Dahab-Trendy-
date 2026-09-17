@@ -3803,7 +3803,18 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 <select id="iv-method" onchange="buildPreview()"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Online</option></select>
 </div>
 <div class="fld"><label>Prepayment (<span id="iv-psym">$</span>)</label>
-<input id="iv-prepay" type="number" min="0" value="0" oninput="buildPreview()">
+<div style="display:flex;gap:6px;">
+<select id="iv-prepay-pct" onchange="applyPrepayPct()" style="flex:0 0 90px;">
+<option value="custom">Custom</option>
+<option value="none">0%</option>
+<option value="1night">1 Night</option>
+<option value="10pct">10%</option>
+<option value="25pct">25%</option>
+<option value="50pct">50%</option>
+<option value="100pct">100%</option>
+</select>
+<input id="iv-prepay" type="number" min="0" value="0" oninput="ivPrepayManual();buildPreview()" style="flex:1;min-width:0;">
+</div>
 </div>
 <div class="fld s2" style="display:flex;align-items:center;gap:8px;">
 <input type="checkbox" id="iv-bf" checked onchange="buildPreview()" style="width:15px;height:15px;accent-color:var(--gold);">
@@ -11934,6 +11945,7 @@ document.getElementById("iv-status").value=b.status;
 document.getElementById("iv-method").value=b.method;
 const actualPaid=calcPaid(b);
 document.getElementById("iv-prepay").value=actualPaid;
+if(document.getElementById("iv-prepay-pct")) document.getElementById("iv-prepay-pct").value="custom";
 document.getElementById("iv-bf").checked=b.bf;
 document.getElementById("iv-notes").value=b.notes||"";
 // تحميل صور الجوازات — مصدر واحد فقط لتجنب التكرار
@@ -13621,11 +13633,40 @@ function onBSourceChange(){
   }
   buildPreview();
 }
+function ivPrepayPctLabel(d){
+  const _pctLabels={none:"0%",'1night':"1 Night",'10pct':"10%",'25pct':"25%",'50pct':"50%",'100pct':"100%"};
+  if(d.prepayPct&&d.prepayPct!=="custom"&&_pctLabels[d.prepayPct]) return _pctLabels[d.prepayPct];
+  return d.total>0 ? Math.round(d.prepay/d.total*100)+"%" : "";
+}
+function ivPrepayManual(){
+  // Manual typing means the amount no longer matches a fixed preset label
+  const sel=document.getElementById("iv-prepay-pct");
+  if(sel) sel.value="custom";
+}
+function applyPrepayPct(){
+  const sel=document.getElementById("iv-prepay-pct").value;
+  if(sel==="custom"){ buildPreview(); return; }
+  const d=getIV();
+  const total=d.total||0;
+  let amt=0;
+  if(sel==="none") amt=0;
+  else if(sel==="1night"){
+    const totalNights=(ivRooms||[]).reduce((s,r)=>s+(r.isDU?0:nts(r.ci,r.co)),0);
+    amt = totalNights>0 ? total/totalNights : 0;
+  }
+  else if(sel==="10pct") amt=total*0.10;
+  else if(sel==="25pct") amt=total*0.25;
+  else if(sel==="50pct") amt=total*0.50;
+  else if(sel==="100pct") amt=total;
+  document.getElementById("iv-prepay").value = amt>0 ? amt.toFixed(2) : 0;
+  buildPreview();
+}
 function getIV(){
 // Collect from multi-room list
 const symMap={USD:"$",EGP:"EGP ",EUR:"€"};
 const sym=symMap[invCur]||"$";
 const prepay=parseFloat(document.getElementById("iv-prepay").value)||0;
+const prepayPct=(document.getElementById("iv-prepay-pct")||{value:"custom"}).value;
 const lines = ivRooms.map(r=>{
 const p=r.isDU?(duPrices[r.type]||{usd:0,egp:0,eur:0}):(prices[r.type]||{usd:0,egp:0,eur:0});
 const base=invCur==="USD"?p.usd:invCur==="EUR"?(p.eur||p.usd):p.egp;
@@ -13659,7 +13700,7 @@ room:first.room,
 type:first.type,
 ci:first.ci,co:first.co,
 n:first.n,rate:first.rate,
-sym,total,prepay,
+sym,total,prepay,prepayPct,
 balance:Math.max(0,total-prepay),
 adults:first.adults,
 children:first.children,
@@ -13961,7 +14002,7 @@ proformaBanner+
 "<div class='invp-tr'><span>Tax (0%)</span><span>"+d.sym+"0.00</span></div>"+
 (roomChargesRows&&rcTotal>0?"<div class='invp-tr' style='color:#856404;'><span>🧾 Room Charges (Pending)</span><span>£"+rcTotal.toFixed(0)+"</span></div>":"")+
 (tourChargesRows&&tourChargesTotal>0?"<div class='invp-tr' style='color:#1a6a9a;'><span>🏔️ Tour Charges</span><span>£"+tourChargesTotal.toLocaleString()+"</span></div>":"")+
-(d.prepay>0&&!isProforma?"<div class='invp-tr'><span>Prepayment</span><span>- "+d.sym+fmtMoney(d.prepay)+"</span></div>":"")+
+(d.prepay>0&&!isProforma?"<div class='invp-tr'><span>Prepayment ("+ivPrepayPctLabel(d)+")</span><span>- "+d.sym+fmtMoney(d.prepay)+"</span></div>":"")+
 (isDepositPF
 ? "<div class='invp-tr'><span>Balance at Check-in</span><span>"+d.sym+(subtotal+ivTransfer.price+extraChargesConv-depAmtPF).toFixed(2)+"</span></div>"+
 "<div class='invp-tr grd'><span>💰 Deposit Required</span><span>"+d.sym+depAmtPF.toFixed(2)+"</span></div>"
@@ -14029,7 +14070,7 @@ roomLines+"\n"+
 "💰 *تفاصيل الدفع / Payment Details*\n"+
 "   ───────────────\n"+
 "   *الإجمالي / Total: "+d.sym+d.total.toFixed(2)+"*\n"+
-(d.prepay>0?"   دفعة مقدمة / Prepaid: "+d.sym+d.prepay.toFixed(2)+"\n   *المتبقي / Balance Due: "+d.sym+d.balance.toFixed(2)+"*\n":"")+
+(d.prepay>0?"   دفعة مقدمة ("+ivPrepayPctLabel(d)+") / Prepaid: "+d.sym+d.prepay.toFixed(2)+"\n   *المتبقي / Balance Due: "+d.sym+d.balance.toFixed(2)+"*\n":"")+
 "   طريقة الدفع / Method: "+d.method+"\n"+
 "   الحالة / Status: "+statusTxt+"\n"+
 (d.notes?"\n📝 *ملاحظات / Notes:* "+d.notes+"\n":"")+
@@ -14062,7 +14103,7 @@ const msg=
 🌙 الليالي / Nights: *${d.n}*
 🍳 الإفطار / Breakfast: ${d.bf?"مشمول ✅ / Included":"غير مشمول / Not Included"}
 ━━━━━━━━━━━━━━━━━━
-💰 الإجمالي / Total: *${d.sym}${d.total.toFixed(2)}*${d.prepay>0?"\n⬇️ مدفوع مسبقاً / Prepaid: "+d.sym+d.prepay.toFixed(2)+"\n🔴 المتبقي / Balance Due: "+d.sym+d.balance.toFixed(2):""}${extLines}
+💰 الإجمالي / Total: *${d.sym}${d.total.toFixed(2)}*${d.prepay>0?"\n⬇️ مدفوع مسبقاً ("+ivPrepayPctLabel(d)+") / Prepaid: "+d.sym+d.prepay.toFixed(2)+"\n🔴 المتبقي / Balance Due: "+d.sym+d.balance.toFixed(2):""}${extLines}
 💳 طريقة الدفع / Payment Method: ${d.method}
 📊 الحالة / Status: ${statusTxt}${d.notes?"\n📝 ملاحظات / Notes: "+d.notes:""}
 ━━━━━━━━━━━━━━━━━━
