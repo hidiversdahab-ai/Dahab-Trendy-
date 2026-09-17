@@ -14299,9 +14299,12 @@ if(rcSection&&rcList&&rcTotalEl){
           "<div style='font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'>"+r.desc+"</div>"+
           "<div style='font-size:9px;color:var(--muted);'>📅 "+r.date+"</div>"+
         "</div>"+
-        "<button class='btn bsm' style='background:"+(isPaid?"rgba(230,126,34,0.15)":"rgba(37,211,102,0.15)")+";color:"+(isPaid?"#e67e22":"#4cda7a")+";border:1px solid "+(isPaid?"rgba(230,126,34,0.4)":"rgba(37,211,102,0.4)")+";white-space:nowrap;flex-shrink:0;' onclick='toggleRCStatus("+ri+")'>"+
+        "<div style='display:flex;gap:6px;flex-shrink:0;'>"+
+        "<button class='btn bsm' style='background:"+(isPaid?"rgba(230,126,34,0.15)":"rgba(37,211,102,0.15)")+";color:"+(isPaid?"#e67e22":"#4cda7a")+";border:1px solid "+(isPaid?"rgba(230,126,34,0.4)":"rgba(37,211,102,0.4)")+";white-space:nowrap;' onclick='toggleRCStatus("+ri+")'>"+
           (isPaid?"↩️ Pending":"✅ Mark Paid")+
         "</button>"+
+        "<button class='btn bsm br' style='flex-shrink:0;' onclick='deleteRoomChargeFromPay("+ri+")' title='حذف'>🗑</button>"+
+        "</div>"+
       "</div>";
     }).join("");
   } else {
@@ -14324,7 +14327,12 @@ return "<div style='display:flex;align-items:center;justify-content:space-betwee
 }).join("");
 }
 function deleteRoomCharge(bIdx, ri){
-  if(!confirm("🗑 حذف مصروف المطعم هذا من الفاتورة؟")) return;
+  const b0=bookings[bIdx];
+  const r0=b0&&b0.roomCharges&&b0.roomCharges[ri];
+  const isAct=r0&&((r0.source==="dailyactivity")||(r0.id&&String(r0.id).startsWith("da_")));
+  const isMB=r0&&((r0.source==="minibar")||(r0.id&&String(r0.id).startsWith("mb_")));
+  const label=isAct?"النشاط":isMB?"المينيبار":"مصروف المطعم";
+  if(!confirm("🗑 حذف "+label+" هذا من الفاتورة؟")) return;
   if(!bookings[bIdx]||!bookings[bIdx].roomCharges) return;
   bookings[bIdx].roomCharges.splice(ri,1);
   // Recalc status
@@ -14337,7 +14345,32 @@ function deleteRoomCharge(bIdx, ri){
   sv("dta_bk",bookings);
   buildPreview();
   renderBookings();
-  sNotify("🗑️ تم الحذف","تم حذف مصروف المطعم من الفاتورة","success",2500);
+  sNotify("🗑️ تم الحذف","تم حذف "+label+" من الفاتورة"+(isAct?" — النشاط نفسه لسه محفوظ في صفحة النشاطات اليومية":""),"success",3000);
+}
+
+// Same as deleteRoomCharge but for the Payment History modal (uses payEdit instead
+// of an explicit booking index). Removing the invoice line here never touches the
+// underlying Daily Activity booking — it stays in its own independent record even
+// if you decide not to bill the guest for it.
+function deleteRoomChargeFromPay(ri){
+  if(payEdit===null) return;
+  const b=bookings[payEdit];
+  if(!b||!b.roomCharges||!b.roomCharges[ri]) return;
+  const r=b.roomCharges[ri];
+  const isAct=(r.source==="dailyactivity")||(r.id&&String(r.id).startsWith("da_"));
+  const isMB=(r.source==="minibar")||(r.id&&String(r.id).startsWith("mb_"));
+  const label=isAct?"النشاط":isMB?"المينيبار":"مصروف المطعم";
+  if(!confirm("🗑 حذف "+label+" هذا من الفاتورة؟"+(isAct?" (النشاط نفسه هيفضل محفوظ في صفحة النشاطات اليومية)":""))) return;
+  b.roomCharges.splice(ri,1);
+  const paidSum=calcPaid(b);
+  const rcPending=(b.roomCharges||[]).filter(r=>(r.status||"pending")!=="paid").reduce((s,r)=>s+(r.amount||0),0);
+  if(paidSum>=b.total && rcPending===0 && paidSum>0) b.status="Paid";
+  else if(paidSum>0) b.status="Partial";
+  else if(!b.roomCharges||!b.roomCharges.length) { if(b.status==="Partial"&&paidSum===0) b.status="Pending"; }
+  sv("dta_bk",bookings);
+  renderPayList();
+  renderBookings();
+  sNotify("🗑️ تم الحذف","تم حذف "+label+" من الفاتورة","success",2500);
 }
 function deleteTourCharge(bIdx, ti){
   if(!confirm("🗑 حذف هذه الرحلة من فاتورة الغرفة؟")) return;
@@ -18756,8 +18789,14 @@ function updateDA_BookStatus(idx, status){
 function deleteDA_Booking(idx){
   if(!confirm("⚠️ حذف الحجز؟ · Delete Booking?")) return;
   const bks = DA_getBookings();
+  const bk = bks[idx];
   bks.splice(idx,1);
   DA_saveBookings(bks);
+  // If this booking came from an approved guest request, close the request out
+  // server-side too — otherwise Supabase still thinks it's "approved & upcoming"
+  // and the 24h reminder keeps matching it and ringing the alert sound for an
+  // activity that no longer exists locally.
+  if(bk && bk.reqId && typeof doMarkActReq==='function') doMarkActReq(bk.reqId, 'rejected');
   renderDA_Bookings();
   renderDA_Summary();
 }
@@ -34027,8 +34066,13 @@ function opsDeleteActivityBooking(id){
   const ar = (typeof currentLang!=='undefined') ? currentLang==='ar' : true;
   if(!confirm(ar?'⚠️ حذف هذا النشاط؟':'⚠️ Delete this activity?')) return;
   if(typeof DA_getBookings!=='function' || typeof DA_saveBookings!=='function') return;
-  const bks = DA_getBookings().filter(b=>String(b.id)!==String(id));
+  const all = DA_getBookings();
+  const bk = all.find(b=>String(b.id)===String(id));
+  const bks = all.filter(b=>String(b.id)!==String(id));
   DA_saveBookings(bks);
+  // Same reasoning as deleteDA_Booking: close the linked guest request out on the
+  // server so the 24h reminder poll stops matching it and re-triggering the sound.
+  if(bk && bk.reqId && typeof doMarkActReq==='function') doMarkActReq(bk.reqId, 'rejected');
   if(typeof renderOpsBoard==='function') renderOpsBoard();
   if(typeof renderDailyActivity==='function') renderDailyActivity();
   if(typeof renderDashActReqAlert==='function') renderDashActReqAlert();
