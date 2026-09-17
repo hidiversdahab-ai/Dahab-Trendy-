@@ -40401,7 +40401,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var ACT=[]; var _dbgErr='';
     var ba='${_actB64}';
     try{ if(ba) ACT=JSON.parse(decodeURIComponent(escape(atob(ba)))); }catch(e){ _dbgErr=String(e); }
-    if(window.location.search.indexOf('debug=1')>-1){
+    if(window.location.search.indexOf('debug=1')>-1 || window.location.protocol==='blob:'){
       alert('🔍 DEBUG activities\nb64 length: '+ba.length+'\ndecoded items: '+ACT.length+(_dbgErr?('\nerror: '+_dbgErr):'')+(ACT.length?('\nfirst: '+JSON.stringify(ACT[0])):''));
     }
     var grid=document.getElementById('act-grid');
