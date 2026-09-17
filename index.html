@@ -18782,8 +18782,13 @@ function updateDA_BookStatus(idx, status){
   }
 
   DA_saveBookings(bks);
+  // If cancelling (or moving away from confirmed) a booking that came from a guest
+  // request, close the request out server-side too, same reasoning as the delete
+  // functions below — otherwise Supabase keeps thinking it's "approved & upcoming".
+  if(status === "cancelled" && b.reqId && typeof doMarkActReq==='function') doMarkActReq(b.reqId, 'rejected');
   renderDA_Bookings();
   renderDA_Summary();
+  if(typeof renderDashActReqAlert==='function') renderDashActReqAlert();
 }
 
 function deleteDA_Booking(idx){
@@ -34135,6 +34140,13 @@ function checkActivityReminders(){
   const now = Date.now();
   const upcoming = (_actReqCache||[]).filter(r=>{
     if(r.status!=='approved' || !r.activity_date) return false;
+    // Require the linked Daily-Activity booking to still exist locally AND not be
+    // cancelled. This way, deleting OR cancelling the activity stops the reminder
+    // (and its sound) immediately even if the reject request to Supabase hasn't
+    // gone through yet (offline, slow network, etc.) — we don't depend on the
+    // server round-trip to silence it.
+    const _bk = _actReqLinkedBooking(r.id);
+    if(!_bk || _bk.status==='cancelled') return false;
     const t = new Date(r.activity_date).getTime();
     if(isNaN(t)) return false;
     const hoursLeft = (t-now)/3600000;
