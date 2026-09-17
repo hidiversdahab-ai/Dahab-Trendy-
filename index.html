@@ -40405,20 +40405,34 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     if(!grid||!ACT.length){ if(sec) sec.style.display='none'; return; }
     if(sec) sec.style.display='block';
     var defWA='${waNum}';
-    window._reportActReq = function(name, nameEn, price, duration, waUrl){
-      // مهم: بنستنى نتيجة الطلب (أو 1.2 ثانية كحد أقصى) قبل ما نفتح واتساب،
-      // عشان الموبايل ما يقفلش/يجمدش الصفحة قبل ما الـ fetch يخلص ويوصل لـ Supabase
-      var opened=false;
-      function go(){ if(opened) return; opened=true; if(waUrl) window.open(waUrl, '_blank'); }
-      var t=setTimeout(go, 1200);
+    window._actToast = function(msg, ok){
+      var el = document.getElementById('act-toast');
+      if(!el){
+        el = document.createElement('div');
+        el.id = 'act-toast';
+        el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:700;max-width:88%;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,0.35);color:#fff;transition:opacity .3s;';
+        document.body.appendChild(el);
+      }
+      el.style.background = ok ? '#1abc9c' : '#e0685e';
+      el.style.opacity = '1';
+      el.textContent = msg;
+      clearTimeout(el._t);
+      el._t = setTimeout(function(){ el.style.opacity='0'; }, 3500);
+    };
+    window._reportActReq = async function(name, nameEn, price, duration, waUrl){
+      var ok=false, detail='';
       try{
-        fetch('${BKREQ_URL}/rest/v1/activity_requests', {
+        var res = await fetch('${BKREQ_URL}/rest/v1/activity_requests', {
           method:'POST',
           keepalive:true,
           headers:{ apikey:'${BKREQ_KEY}', 'Authorization':'Bearer ${BKREQ_KEY}', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
           body: JSON.stringify({room:'${room}', activity_name:name, activity_name_en:nameEn||null, price:price||null, duration:duration||null, status:'pending'})
-        }).catch(function(){}).finally(function(){ clearTimeout(t); go(); });
-      }catch(e){ clearTimeout(t); go(); }
+        });
+        ok = res.ok;
+        if(!ok){ try{ detail = await res.text(); }catch(e){} console.error('[activity request] HTTP '+res.status, detail); }
+      }catch(e){ detail = String(e); console.error('[activity request] network error', e); }
+      window._actToast(ok ? '✅ اتبعت طلبك بنجاح · Request sent' : '⚠️ فشل إرسال الطلب، بلّغ الاستقبال · Failed to send', ok);
+      if(waUrl) window.open(waUrl, '_blank');
     };
     grid.innerHTML=ACT.map(function(a,idx){
       var waNum2=(a.w||defWA).replace(/\D/g,'');
