@@ -40389,6 +40389,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
       try{
         fetch('${BKREQ_URL}/rest/v1/activity_requests', {
           method:'POST',
+          keepalive:true,
           headers:{ apikey:'${BKREQ_KEY}', 'Authorization':'Bearer ${BKREQ_KEY}', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
           body: JSON.stringify({room:'${room}', activity_name:name, activity_name_en:nameEn||null, price:price||null, duration:duration||null, status:'pending'})
         }).catch(function(){});
