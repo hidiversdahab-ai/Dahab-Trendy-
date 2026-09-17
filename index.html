@@ -40408,7 +40408,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     var ACT=[]; var _dbgErr='';
     var ba='${_actB64}';
     try{ if(ba) ACT=JSON.parse(decodeURIComponent(escape(atob(ba)))); }catch(e){ _dbgErr=String(e); }
-    if(window.location.search.indexOf('debug=1')>-1 || window.location.protocol==='blob:'){
+    if(window.location.search.indexOf('debug=1')>-1 || (window.location.protocol==='blob:'||window.location.protocol==='file:'||window.location.protocol==='content:')){
       alert('🔍 DEBUG activities\\nb64 length: '+ba.length+'\\ndecoded items: '+ACT.length+(_dbgErr?('\\nerror: '+_dbgErr):'')+(ACT.length?('\\nfirst: '+JSON.stringify(ACT[0])):''));
     }
     var grid=document.getElementById('act-grid');
@@ -40443,7 +40443,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
         if(!ok){ try{ detail = await res.text(); }catch(e){} console.error('[activity request] HTTP '+res.status, detail); }
       }catch(e){ detail = String(e); console.error('[activity request] network error', e); }
       var failMsg = 'فشل إرسال الطلب، بلّغ الاستقبال<br><span style="font-size:12px;font-weight:400;opacity:.9;">Failed to send — please tell reception</span>';
-      if(!ok && (window.location.search.indexOf('debug=1')>-1 || window.location.protocol==='blob:')){
+      if(!ok && (window.location.search.indexOf('debug=1')>-1 || (window.location.protocol==='blob:'||window.location.protocol==='file:'||window.location.protocol==='content:'))){
         failMsg += '<br><span style="font-size:11px;font-weight:400;opacity:.8;direction:ltr;display:block;margin-top:6px;">'+String(detail).slice(0,200)+'</span>';
       }
       window._actToast(ok
