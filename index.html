@@ -4177,6 +4177,16 @@ style="flex:1;padding:9px 8px;border-radius:8px;border:2px solid rgba(74,144,217
 </div>
 </div>
 
+<!-- ═══ WHATSAPP FALLBACK MODAL — لو المتصفح منع الفتح التلقائي ═══ -->
+<div class="ovl" id="da-wa-fallback-modal" style="z-index:9700;">
+  <div class="mdl" style="max-width:420px;text-align:center;">
+    <div class="mtitle">📱 اضغط لإرسال الرسالة · Tap to Send</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">المتصفح منع الفتح التلقائي لواتساب — دوس على الزرار ده تدويًا عشان الرسالة توصل للضيف · The browser blocked the automatic pop-up — tap below to send it yourself.</div>
+    <a id="da-wa-fallback-link" href="#" target="_blank" rel="noopener" style="display:block;background:#25D366;color:#fff;padding:14px;border-radius:10px;font-weight:800;text-decoration:none;margin-bottom:10px;">📲 فتح واتساب وإرسال التأكيد · Open WhatsApp</a>
+    <button class="btn bb" onclick="closeM('da-wa-fallback-modal')">إغلاق · Close</button>
+  </div>
+</div>
+
 <!-- ═══ REVIEW MODAL ═══ -->
 <div class="ovl" id="review-modal">
 <div class="mdl" style="max-width:480px;">
@@ -18662,16 +18672,29 @@ function clearDA_Filters(){
   renderDA_Bookings();
 }
 
+function DA_openWA(phone, msg){
+  // بنحاول نفتح واتساب فورًا (لسه في نفس لحظة ضغطة المستخدم).
+  // لو المتصفح منع الـ pop-up (بيرجع null/undefined)، بنفتح مودال فيه لينك حقيقي يضغط عليه الأدمن يدويًا.
+  const digits = (phone||"").replace(/[^0-9]/g,"");
+  const url = "https://wa.me/"+digits+"?text="+encodeURIComponent(msg);
+  let waWin = null;
+  try{ waWin = window.open(url, "_blank"); }catch(e){ waWin = null; }
+  if(!waWin || waWin.closed){
+    const link = document.getElementById('da-wa-fallback-link');
+    if(link) link.href = url;
+    const modal = document.getElementById('da-wa-fallback-modal');
+    if(modal) modal.classList.add('on');
+  }
+}
+
 function updateDA_BookStatus(idx, status){
   const bks = DA_getBookings();
-  bks[idx].status = status;
-  DA_saveBookings(bks);
-  renderDA_Bookings();
-  renderDA_Summary();
+  const b = bks[idx];
+  if(!b) return;
+  b.status = status;
 
-  // ✅ تأكيد — ابعت رسالة مباشرة للضيف
+  // ✅ تأكيد — ابعت رسالة مباشرة للضيف (قبل أي إعادة رسم للقائمة، عشان لمسة المستخدم متتفقدش)
   if(status === "confirmed"){
-    const b = bks[idx];
     if(b.phone){
       const msg =
         `✅ *تم تأكيد حجزك · Booking Confirmed!*\n\n` +
@@ -18682,15 +18705,14 @@ function updateDA_BookStatus(idx, status){
         `👥 الأشخاص · Persons: *${b.persons}*\n` +
         (b.price?`💰 الإجمالي · Total: *£${Number(b.price).toLocaleString()}*\n`:'') +
         `\n🏨 *${PROP.name}*\n📞 ${PROP.phone}`;
-      window.open("https://wa.me/"+b.phone.replace(/[^0-9]/g,"")+"?text="+encodeURIComponent(msg),"_blank");
+      DA_openWA(b.phone, msg);
     } else {
       sNotify("✅ تم التأكيد","الضيف ليس لديه رقم واتساب · Guest has no WhatsApp","info",3000);
     }
   }
 
-  // ❌ إلغاء — ابعت رسالة مباشرة للضيف
+  // ❌ إلغاء — ابعت رسالة مباشرة للضيف (قبل أي إعادة رسم للقائمة، عشان لمسة المستخدم متتفقدش)
   if(status === "cancelled"){
-    const b = bks[idx];
     if(b.phone){
       const msg =
         `❌ *تم إلغاء حجزك · Booking Cancelled*\n\n` +
@@ -18702,11 +18724,15 @@ function updateDA_BookStatus(idx, status){
         `نأسف على الإلغاء، يسعدنا خدمتك في وقت آخر 🙏\n` +
         `We\'re sorry for the cancellation, we look forward to serving you again.\n\n` +
         `🏨 *${PROP.name}*\n📞 ${PROP.phone}`;
-      window.open("https://wa.me/"+b.phone.replace(/[^0-9]/g,"")+"?text="+encodeURIComponent(msg),"_blank");
+      DA_openWA(b.phone, msg);
     } else {
       sNotify("❌ تم الإلغاء","الضيف ليس لديه رقم واتساب · Guest has no WhatsApp","info",3000);
     }
   }
+
+  DA_saveBookings(bks);
+  renderDA_Bookings();
+  renderDA_Summary();
 }
 
 function deleteDA_Booking(idx){
