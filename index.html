@@ -29487,6 +29487,10 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
   const toursInPeriod = (tours||[]).filter(t=> (t.date||"")>=from && (t.date||"")<=to);
   const toursRevEGP = toursInPeriod.reduce((s,t)=>s+(t.price||0),0);
 
+  // ── Daily Activities (مستقلة عن إيراد الغرف — حتى لو دفعها الضيف "على الغرفة") ──
+  const daInPeriod = (typeof DA_getBookings==="function" ? DA_getBookings() : []).filter(b=> b.status!=="cancelled" && (b.date||"")>=from && (b.date||"")<=to);
+  const daActRevEGP = daInPeriod.reduce((s,b)=>s+(b.price||0),0);
+
   // ── Airport Transfers (إيراد نقل منفصل — مش داخل حساب صافي الربح) ──
   const transferBks = (bookings||[]).filter(b=> b.status!=="Cancelled" && b.hasTransfer && (b.transferPrice||0)>0 && b.ci>=from && b.ci<=to);
   const transferRevEGP = transferBks.reduce((s,b)=>s+toEGP(b.transferPrice||0, b.cur),0);
@@ -29504,7 +29508,7 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
   const tipsInPeriod = (tips||[]).filter(t=> (t.date||"")>=from && (t.date||"")<=to);
   const tipsTotalEGP = tipsInPeriod.reduce((s,t)=>s+toEGP(t.amount||0, t.cur),0);
 
-  const totalRevenueEGP = roomsRevEGP + restIncEGP + toursRevEGP;
+  const totalRevenueEGP = roomsRevEGP + restIncEGP + toursRevEGP + daActRevEGP;
   const totalExpensesEGP = expTotalEGP + restExpEGP;
   const netProfitEGP = totalRevenueEGP - totalExpensesEGP;
 
@@ -29516,6 +29520,7 @@ function generateConsolidatedReport(periodType, customFrom, customTo){
     <tr><td>🏨 ${ar?'إيراد الغرف':'Rooms Revenue'}</td><td style="text-align:center;">${roomBks.length} ${ar?'حجز':'bookings'} · ${roomsNights} ${ar?'ليلة':'nights'}</td><td style="text-align:right;color:#27ae60;font-weight:700;">£${roomsRevEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
     <tr><td>🍽️ ${ar?'إيراد المطعم':'Restaurant Income'}</td><td style="text-align:center;">${restInPeriod.filter(t=>t.type==='income').length} ${ar?'معاملة':'txns'}</td><td style="text-align:right;color:#27ae60;font-weight:700;">£${restIncEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
     <tr><td>🏔️ ${ar?'إيراد الجولات':'Tours Revenue'}</td><td style="text-align:center;">${toursInPeriod.length} ${ar?'رحلة':'tours'}</td><td style="text-align:right;color:#27ae60;font-weight:700;">£${toursRevEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
+    <tr><td>🌅 ${ar?'إيراد النشاطات':'Activities Revenue'} <span style="font-size:9px;color:#888;font-weight:400;">(${ar?'مستقل عن الغرف':'separate from Rooms'})</span></td><td style="text-align:center;">${daInPeriod.length} ${ar?'نشاط':'activities'}</td><td style="text-align:right;color:#27ae60;font-weight:700;">£${daActRevEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
     <tr style="background:#f0f7fd;"><td>🚐 ${ar?'إيراد نقل المطار':'Airport Transfer Revenue'} <span style="font-size:9px;color:#888;font-weight:400;">(${ar?'غير مُدرج في صافي الربح':'not included in Net Profit'})</span></td><td style="text-align:center;">${transferBks.length} ${ar?'حجز':'bookings'}</td><td style="text-align:right;color:#3498db;font-weight:700;">£${transferRevEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
     <tr style="background:#f8f4eb;"><td colspan="2" style="font-weight:800;">${ar?'إجمالي الإيرادات':'Total Revenue'}</td><td style="text-align:right;color:#27ae60;font-weight:800;">£${totalRevenueEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
     <tr><td>🍽️ ${ar?'مصروفات المطعم':'Restaurant Expenses'}</td><td style="text-align:center;">${restInPeriod.filter(t=>t.type==='expense').length} ${ar?'معاملة':'txns'}</td><td style="text-align:right;color:#c0392b;font-weight:700;">£${restExpEGP.toLocaleString(undefined,{maximumFractionDigits:0})}</td></tr>
@@ -33745,13 +33750,33 @@ function updateActReqBadge(count){
   });
 }
 
+// Finds the Daily-Activity booking created from an approved guest request, so we
+// can check its live stage (upcoming/active/completed) via DA_getStage.
+function _actReqLinkedBooking(reqId){
+  if(typeof DA_getBookings!=='function') return null;
+  try{
+    return DA_getBookings().find(b=>String(b.reqId)===String(reqId)) || null;
+  }catch(e){ return null; }
+}
+
 function renderDashActReqAlert(){
   const el = document.getElementById('db-actreq-alert');
   if(!el) return;
   const ar = currentLang==='ar';
   const pending = (_actReqCache||[]).filter(r=>r.status==='pending');
-  if(!pending.length){ el.innerHTML=''; return; }
-  const cards = pending.map(r=>
+  // Approved requests whose activity hasn't actually finished yet (start+duration
+  // not passed, or not manually marked completed) stay on the dashboard instead of
+  // vanishing the moment they're confirmed — they only drop off once DA_getStage
+  // says the activity is 'completed'.
+  const confirmed = (_actReqCache||[]).filter(r=>{
+    if(r.status!=='approved') return false;
+    const bk = _actReqLinkedBooking(r.id);
+    if(!bk) return false;
+    const stage = (typeof DA_getStage==='function') ? DA_getStage(bk) : null;
+    return stage && stage!=='completed';
+  });
+  if(!pending.length && !confirmed.length){ el.innerHTML=''; return; }
+  const pendingCards = pending.map(r=>
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-top:6px;">'+
       '<div style="min-width:0;">'+
         '<div style="font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+bkReqEsc(r.activity_name)+(r.activity_name_en?' / '+bkReqEsc(r.activity_name_en):'')+'</div>'+
@@ -33763,10 +33788,23 @@ function renderDashActReqAlert(){
       '</div>'+
     '</div>'
   ).join('');
+  const confirmedCards = confirmed.map(r=>{
+    const bk = _actReqLinkedBooking(r.id);
+    const stage = bk ? DA_getStage(bk) : null;
+    const meta = (typeof DA_stageMeta==='function') ? DA_stageMeta(stage, ar) : null;
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-top:6px;">'+
+      '<div style="min-width:0;">'+
+        '<div style="font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+bkReqEsc(r.activity_name)+(r.activity_name_en?' / '+bkReqEsc(r.activity_name_en):'')+'</div>'+
+        '<div style="font-size:10.5px;color:var(--muted);">🛏️ '+bkReqEsc(r.room)+(r.price?' · £'+r.price:'')+'</div>'+
+      '</div>'+
+      (meta?'<span style="font-size:10.5px;font-weight:700;color:'+meta.color+';flex-shrink:0;">'+meta.label+'</span>':'')+
+    '</div>';
+  }).join('');
+  const total = pending.length + confirmed.length;
   el.innerHTML = "<div class='card' style='padding:12px 16px;border-color:rgba(26,188,156,0.4);background:rgba(26,188,156,0.05);margin-bottom:0;cursor:pointer;' onclick=\"bnGo('dailyactivity',null)\">"+
-    "<div class='ctitle' style='color:#1abc9c;margin-bottom:0;'>🌅 "+(ar?'طلبات نشاطات جديدة':'New Activity Requests')+
-    " <span style='background:#1abc9c;color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;'>"+pending.length+"</span></div>"+
-    cards+
+    "<div class='ctitle' style='color:#1abc9c;margin-bottom:0;'>🌅 "+(ar?'نشاطات':'Activities')+
+    " <span style='background:#1abc9c;color:#fff;border-radius:20px;padding:1px 8px;font-size:11px;'>"+total+"</span></div>"+
+    pendingCards+confirmedCards+
   "</div>";
 }
 
@@ -33898,6 +33936,43 @@ function DA_addBookingFromRequest(req, dateISO){
   const bks = DA_getBookings();
   bks.push(bk);
   DA_saveBookings(bks);
+
+  // ── إضافة على حساب الغرفة (Room Charge) ──────────────────
+  // The activity stays its own independent record in Daily Activities (dta_daily_bookings)
+  // — this only adds a linked line item ("da_"+bk.id) to the guest's room invoice so it
+  // gets billed at checkout, same as the manual "Book Activity → On Room" flow does.
+  if(bk.room && bk.price > 0 && typeof bookings!=='undefined'){
+    const ar = (typeof currentLang!=='undefined') ? currentLang==='ar' : true;
+    const _today = new Date().toISOString().slice(0,10);
+    let targetBooking = bookings.find(b =>
+      String(b.room) === String(bk.room) &&
+      (b.status === "Confirmed" || b.status === "Partial" || b.status === "Pending" || b.status === "Paid") &&
+      !b.coConfirmed &&
+      b.ci && b.co && b.ci <= _today && b.co > _today
+    );
+    if(!targetBooking) targetBooking = bookings.find(b =>
+      String(b.room) === String(bk.room) &&
+      (b.status === "Confirmed" || b.status === "Partial" || b.status === "Pending" || b.status === "Paid") &&
+      !b.coConfirmed
+    );
+    if(targetBooking){
+      if(!targetBooking.roomCharges) targetBooking.roomCharges = [];
+      const chargeDesc = ar
+        ? `🌅 نشاط: ${bk.actNameAr} · ${bk.persons} شخص`
+        : `🌅 Activity: ${bk.actNameEn} · ${bk.persons} person(s)`;
+      targetBooking.roomCharges.push({
+        date: bk.date,
+        amount: bk.price,
+        desc: chargeDesc,
+        id: "da_" + bk.id,
+        status: "pending",
+        source: "dailyactivity"
+      });
+      if(targetBooking.status === "Paid") targetBooking.status = "Partial";
+      else if(targetBooking.status === "Pending" || !targetBooking.status) targetBooking.status = "Partial";
+      if(typeof sv==='function') sv("dta_bk", bookings);
+    }
+  }
   return bk;
 }
 
@@ -33943,6 +34018,7 @@ function DA_setStage(idx, stage){
   }
   if(typeof renderDA_Bookings==='function') renderDA_Bookings();
   if(typeof renderOpsBoard==='function') renderOpsBoard();
+  if(typeof renderDashActReqAlert==='function') renderDashActReqAlert();
 }
 
 // Deletes an activity booking straight from the Dashboard/Ops Board card (no delete
@@ -33955,6 +34031,7 @@ function opsDeleteActivityBooking(id){
   DA_saveBookings(bks);
   if(typeof renderOpsBoard==='function') renderOpsBoard();
   if(typeof renderDailyActivity==='function') renderDailyActivity();
+  if(typeof renderDashActReqAlert==='function') renderDashActReqAlert();
 }
 
 // Opens WhatsApp with a ready-made bilingual confirmation message to the guest once
