@@ -13719,8 +13719,21 @@ document.getElementById("iv-preview").innerHTML="<div style='text-align:center;c
 return;
 }
 const ssc=d.status==="Paid"?"background:#d4edda;color:#155724;":"background:#fff3cd;color:#856404;";
-const bkPolHtml=policies.bktext?"<div class='invp-pol'><strong>"+(policies.bktitle||"Booking Policy")+":</strong> "+policies.bktext+"</div>":"";
-const polHtml=policies.text?"<div class='invp-pol'><strong>"+(policies.title||"Cancellation Policy")+":</strong> "+policies.text+"</div>":"";
+// Bilingual policy fields are stored as "Arabic paragraph\n\nEnglish paragraph".
+// They used to be dumped straight into the invoice HTML with no line break and no
+// dir attribute, so the browser's bidi algorithm mangled the Arabic (reversed
+// punctuation, run-together sentences) once it sat next to English. This splits on
+// blank lines and wraps each paragraph with its own direction, mirroring the
+// per-line dir='rtl'/dir='ltr' approach already used for Terms & Conditions.
+function polToHtml(text){
+  if(!text) return "";
+  return String(text).split(/\n\s*\n/).map(function(p){
+    const isAr = /[\u0600-\u06FF]/.test(p);
+    return "<div dir='"+(isAr?"rtl":"ltr")+"' style='margin-top:3px;'>"+bkReqEsc(p).replace(/\n/g,"<br>")+"</div>";
+  }).join("");
+}
+const bkPolHtml=policies.bktext?"<div class='invp-pol'><strong>"+(policies.bktitle||"Booking Policy")+":</strong>"+polToHtml(policies.bktext)+"</div>":"";
+const polHtml=policies.text?"<div class='invp-pol'><strong>"+(policies.title||"Cancellation Policy")+":</strong>"+polToHtml(policies.text)+"</div>":"";
 const tncCheckIn = getQRTimes().ci;
 const tncCheckOut = getQRTimes().co;
 const tncHtml = "<div class='invp-pol' style='border-left-color:#8a7a5c;'><strong>Terms & Conditions / الشروط والأحكام:</strong><ul style='margin:4px 0 0;padding-left:14px;padding-right:14px;'>"+
