@@ -40405,15 +40405,20 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     if(!grid||!ACT.length){ if(sec) sec.style.display='none'; return; }
     if(sec) sec.style.display='block';
     var defWA='${waNum}';
-    window._reportActReq = function(name, nameEn, price, duration){
+    window._reportActReq = function(name, nameEn, price, duration, waUrl){
+      // مهم: بنستنى نتيجة الطلب (أو 1.2 ثانية كحد أقصى) قبل ما نفتح واتساب،
+      // عشان الموبايل ما يقفلش/يجمدش الصفحة قبل ما الـ fetch يخلص ويوصل لـ Supabase
+      var opened=false;
+      function go(){ if(opened) return; opened=true; if(waUrl) window.open(waUrl, '_blank'); }
+      var t=setTimeout(go, 1200);
       try{
         fetch('${BKREQ_URL}/rest/v1/activity_requests', {
           method:'POST',
           keepalive:true,
           headers:{ apikey:'${BKREQ_KEY}', 'Authorization':'Bearer ${BKREQ_KEY}', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
           body: JSON.stringify({room:'${room}', activity_name:name, activity_name_en:nameEn||null, price:price||null, duration:duration||null, status:'pending'})
-        }).catch(function(){});
-      }catch(e){}
+        }).catch(function(){}).finally(function(){ clearTimeout(t); go(); });
+      }catch(e){ clearTimeout(t); go(); }
     };
     grid.innerHTML=ACT.map(function(a,idx){
       var waNum2=(a.w||defWA).replace(/\D/g,'');
@@ -40433,7 +40438,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
         +'<span class="act-emoji">'+(a.e||'🎯')+'</span>'
         +'<div class="act-name">'+(a.n||'')+(a.ne?'<br><span class="act-name-en">'+a.ne+'</span>':'')+'</div>'
         +priceHtml+durHtml+descHtml
-        +'<a class="act-wa" href="https://wa.me/'+waNum2+'?text='+encodeURIComponent(waMsg)+'" target="_blank" onclick="window._reportActReq(\''+nSafe+'\',\''+neSafe+'\','+(a.p||0)+',\''+dSafe+'\')">💬 Book Now · احجز الآن</a>'
+        +'<a class="act-wa" href="javascript:void(0)" onclick="window._reportActReq(\''+nSafe+'\',\''+neSafe+'\','+(a.p||0)+',\''+dSafe+'\',\'https://wa.me/'+waNum2+'?text='+encodeURIComponent(waMsg).replace(/'/g,'%27')+'\')">💬 Book Now · احجز الآن</a>'
         +'</div>';
     }).join('');
   })();
