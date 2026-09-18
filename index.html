@@ -18669,7 +18669,7 @@ function renderDA_PendingRequests(){
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border-radius:8px;padding:9px 12px;margin-top:7px;">
       <div style="min-width:0;">
         <div style="font-weight:700;font-size:13px;">${bkReqEsc(r.activity_name)}${r.activity_name_en?' <span style="color:var(--muted);font-weight:400;">/ '+bkReqEsc(r.activity_name_en)+'</span>':''}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;">🛏️ ${ar?'غرفة':'Room'} ${bkReqEsc(r.room)}${r.persons?' · 👥 '+r.persons+(ar?' شخص':' pax'):''}${r.price?' · £'+r.price:''}${r.duration?' · ⏱️ '+bkReqEsc(r.duration):''} · ${new Date(r.created_at).toLocaleString(ar?'ar-EG':'en-GB',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">🛏️ ${ar?'غرفة':'Room'} ${bkReqEsc(r.room)}${r.persons?' · 👥 '+r.persons+(ar?' شخص':' pax'):''}${r.price?' · £'+r.price:''}${r.duration?' · ⏱️ '+bkReqEsc(r.duration):''}${r.preferred_date?' · 📅 '+bkReqEsc(actReqPrefTxt(r)):''} · ${new Date(r.created_at).toLocaleString(ar?'ar-EG':'en-GB',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})}</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;">
         <button class="btn bsm" style="background:rgba(76,218,122,0.15);color:#4cda7a;border:1px solid rgba(76,218,122,0.35);" onclick="markActReqHandled('${r.id}','approved')">✅ ${ar?'تم':'Done'}</button>
@@ -33961,6 +33961,16 @@ async function pollBookingRequests(){
 //   create policy "anon update" on activity_requests for update to anon using (true);
 //   -- ⚠️ لو الجدول موجود بالفعل من قبل، شغّل السطر ده مرة واحدة كمان عشان تضيف عمود عدد الأشخاص:
 //   alter table activity_requests add column if not exists persons int default 1;
+//   -- ⚠️ عشان الضيف يختار التاريخ والوقت المفضل في صفحة الضيف، شغّل السطرين دول مرة واحدة:
+//   alter table activity_requests add column if not exists preferred_date date;
+//   alter table activity_requests add column if not exists preferred_time text;
+// تاريخ/وقت الضيف المفضل (من صفحة الضيف) بصيغة قصيرة: 20/09/2026 · 10:30
+function actReqPrefTxt(r){
+  if(!r || !r.preferred_date) return '';
+  const d = String(r.preferred_date).slice(0,10).split('-').reverse().join('/');
+  const t = r.preferred_time ? String(r.preferred_time).slice(0,5) : '';
+  return d + (t ? ' · ' + t : '');
+}
 let _actReqCache = [];
 
 async function fetchActivityRequests(){
@@ -34015,7 +34025,7 @@ function renderDashActReqAlert(){
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-top:6px;">'+
       '<div style="min-width:0;">'+
         '<div style="font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+bkReqEsc(r.activity_name)+(r.activity_name_en?' / '+bkReqEsc(r.activity_name_en):'')+'</div>'+
-        '<div style="font-size:10.5px;color:var(--muted);">🛏️ '+bkReqEsc(r.room)+(r.persons?' · 👥 '+r.persons:'')+(r.price?' · £'+r.price:'')+'</div>'+
+        '<div style="font-size:10.5px;color:var(--muted);">🛏️ '+bkReqEsc(r.room)+(r.persons?' · 👥 '+r.persons:'')+(r.price?' · £'+r.price:'')+(r.preferred_date?' · 📅 '+bkReqEsc(actReqPrefTxt(r)):'')+'</div>'+
       '</div>'+
       '<div style="display:flex;gap:6px;flex-shrink:0;">'+
         '<button class="btn bsm" style="background:rgba(76,218,122,0.15);color:#4cda7a;border:1px solid rgba(76,218,122,0.35);" onclick="markActReqHandled(\''+r.id+'\',\'approved\')">✅</button>'+
@@ -34100,6 +34110,18 @@ function openActDateModal(id){
       '</div>'+
     '</div>';
   document.body.appendChild(modal);
+  const _rq = (_actReqCache||[]).find(r=>String(r.id)===String(id));
+  if(_rq && _rq.preferred_date){
+    const _di = document.getElementById('actdate-date'), _ti = document.getElementById('actdate-time');
+    if(_di) _di.value = String(_rq.preferred_date).slice(0,10);
+    if(_ti && _rq.preferred_time) _ti.value = String(_rq.preferred_time).slice(0,5);
+    if(_di && _di.previousElementSibling){
+      const _note = document.createElement('div');
+      _note.style.cssText = 'font-size:11px;color:#1abc9c;margin:-4px 0 10px;';
+      _note.textContent = (ar?'الضيف طلب: ':'Guest requested: ') + actReqPrefTxt(_rq);
+      _di.parentNode.insertBefore(_note, _di.previousElementSibling);
+    }
+  }
 }
 
 async function confirmActDate(id){
@@ -40812,6 +40834,8 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 .act-persons-val{min-width:20px;text-align:center;font-weight:800;font-size:13px;color:var(--text);}
 .act-wa{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:10px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700;margin-top:4px;box-shadow:0 3px 10px rgba(37,211,102,0.2);}
 .act-wa:active{opacity:0.85;}
+.act-when{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;margin:2px 0 4px;}
+.act-when-in{width:100%;padding:7px 8px;border-radius:8px;border:1px solid rgba(26,188,156,0.4);background:rgba(26,188,156,0.08);color:var(--text);font-size:12px;text-align:center;color-scheme:dark;font-family:inherit;}
 </style>
 </head>
 <body>
@@ -41007,22 +41031,34 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
     window._reportActReq = async function(idx, name, nameEn, price, duration, waNum2){
       var pEl = document.getElementById('act-p-'+idx);
       var persons = pEl ? (parseInt(pEl.textContent,10) || 1) : 1;
+      var dEl = document.getElementById('act-d-'+idx), tEl = document.getElementById('act-t-'+idx);
+      var prefDate = (dEl && dEl.value) || '', prefTime = (tEl && tEl.value) || '';
+      var _nw = new Date(), _today = _nw.getFullYear()+'-'+('0'+(_nw.getMonth()+1)).slice(-2)+'-'+('0'+_nw.getDate()).slice(-2);
+      if(prefTime && !prefDate){ window._actToast('اختر التاريخ أولاً<br><span style="font-size:12px;font-weight:400;opacity:.9;">Please pick a date first</span>', false); return; }
+      if(prefDate && prefDate < _today){ window._actToast('التاريخ لازم يكون النهارده أو بعده<br><span style="font-size:12px;font-weight:400;opacity:.9;">Date must be today or later</span>', false); return; }
+      var whenTxt = prefDate ? (prefDate.split('-').reverse().join('/') + (prefTime ? ' · ' + prefTime : '')) : '';
       var totalTxt = (price && persons>1) ? ' (£'+(price*persons)+' '+(persons>1?'total · إجمالي':'')+')' : '';
       var waMsg='🎯 Activity Request / طلب نشاط — Room / غرفة ${room}\\n\\n'
         +(name||'')+(nameEn?' / '+nameEn:'')+'\\n'
         +'👥 Persons / عدد الأشخاص: '+persons+'\\n'
         +(price?'💰 Price / السعر: £'+price+' per person / للفرد'+totalTxt+'\\n':'')
         +(duration?'⏱️ Duration / المدة: '+duration+'\\n':'')
+        +(whenTxt?'📅 Preferred / الموعد المفضل: '+whenTxt+'\\n':'')
         +'\\nI would like to book this · أرجو الحجز 🙏';
       var waUrl = 'https://wa.me/'+waNum2+'?text='+encodeURIComponent(waMsg);
       var ok=false, detail='';
       try{
-        var res = await fetch('${BKREQ_URL}/rest/v1/activity_requests', {
-          method:'POST',
-          keepalive:true,
-          headers:{ apikey:'${BKREQ_KEY}', 'Authorization':'Bearer ${BKREQ_KEY}', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
-          body: JSON.stringify({room:'${room}', activity_name:name, activity_name_en:nameEn||null, price:price||null, duration:duration||null, persons:persons, status:'pending'})
-        });
+        var reqUrl = '${BKREQ_URL}/rest/v1/activity_requests';
+        var reqHdrs = { apikey:'${BKREQ_KEY}', 'Authorization':'Bearer ${BKREQ_KEY}', 'Content-Type':'application/json', 'Prefer':'return=minimal' };
+        var reqBody = {room:'${room}', activity_name:name, activity_name_en:nameEn||null, price:price||null, duration:duration||null, persons:persons, status:'pending'};
+        if(prefDate) reqBody.preferred_date = prefDate;
+        if(prefTime) reqBody.preferred_time = prefTime;
+        var res = await fetch(reqUrl, { method:'POST', keepalive:true, headers:reqHdrs, body: JSON.stringify(reqBody) });
+        // لو أعمدة الموعد لسه ما اتضافتش في Supabase → ابعت الطلب من غيرها (الموعد بيوصل في رسالة الواتساب)
+        if(!res.ok && (prefDate || prefTime) && res.status>=400 && res.status<500){
+          delete reqBody.preferred_date; delete reqBody.preferred_time;
+          res = await fetch(reqUrl, { method:'POST', keepalive:true, headers:reqHdrs, body: JSON.stringify(reqBody) });
+        }
         ok = res.ok;
         if(!ok){ try{ detail = await res.text(); }catch(e){} console.error('[activity request] HTTP '+res.status, detail); }
       }catch(e){ detail = String(e); console.error('[activity request] network error', e); }
@@ -41032,7 +41068,7 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
       }
       var personsLbl = persons>1 ? (persons+' أشخاص · '+persons+' people') : (persons+' شخص · 1 person');
       window._actToast(ok
-        ? '🌅 تم إرسال طلب "'+(name||'')+'"<br><span style="font-size:12px;font-weight:400;opacity:.9;">👥 '+personsLbl+'<br>سيتم التواصل معك من الاستقبال قريباً<br>Reception will confirm with you shortly</span>'
+        ? '🌅 تم إرسال طلب "'+(name||'')+'"<br><span style="font-size:12px;font-weight:400;opacity:.9;">👥 '+personsLbl+(whenTxt?'<br>📅 '+whenTxt:'')+'<br>سيتم التواصل معك من الاستقبال قريباً<br>Reception will confirm with you shortly</span>'
         : failMsg, ok);
       if(waUrl) window.open(waUrl, '_blank');
     };
@@ -41054,9 +41090,18 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
           +'<span class="act-persons-val" id="act-p-'+idx+'">1</span>'
           +'<button type="button" class="act-persons-btn" onclick="window._actPersonsStep('+idx+',1)">+</button>'
         +'</div>'
+        +'<div class="act-when">'
+          +'<span class="act-persons-lbl">📅 الموعد (اختياري) · When (optional)</span>'
+          +'<input type="date" class="act-when-in" id="act-d-'+idx+'">'
+          +'<input type="time" class="act-when-in" id="act-t-'+idx+'">'
+        +'</div>'
         +'<a class="act-wa" href="javascript:void(0)" onclick="window._reportActReq('+idx+',\\''+nSafe+'\\',\\''+neSafe+'\\','+(a.p||0)+',\\''+dSafe+'\\',\\''+waNum2+'\\')">💬 Book Now · احجز الآن</a>'
         +'</div>';
     }).join('');
+    (function(){
+      var n = new Date(), t = n.getFullYear()+'-'+('0'+(n.getMonth()+1)).slice(-2)+'-'+('0'+n.getDate()).slice(-2);
+      Array.prototype.forEach.call(grid.querySelectorAll('input[type=date]'), function(i){ i.min = t; });
+    })();
   })();
   var QS=new Array(MI.length).fill(0);
   var activeCat='all';
