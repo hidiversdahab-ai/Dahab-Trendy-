@@ -3148,6 +3148,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- ══ RESTAURANT REVENUE SECTION ══ -->
 <div id="db-restaurant-section" style="display:none;margin-bottom:12px;"></div>
+<div id="db-activities-section" style="display:none;margin-bottom:12px;"></div>
 <div class="g2">
 <div class="card"><div class="ctitle">🏨 <span class="t" data-ar="حالة الغرف" data-en="Room Status">Room Status</span></div><div id="db-rooms"></div></div>
 <div class="card"><div class="ctitle">📋 <span class="t" data-ar="آخر الحجوزات" data-en="Recent Bookings">Recent Bookings</span></div><div id="db-recent-alerts" style="margin-bottom:8px;"></div><div id="db-recent"></div></div>
@@ -8757,6 +8758,13 @@ const expFromNetProfit=dbExpenses.filter(e=>e.source!=='custody').filter(isPaidE
 const restIncEGP=restaurantTx.filter(t=>t.type==="income").reduce((s,t)=>s+t.egp,0);
 const restExpEGP=restaurantTx.filter(t=>t.type==="expense").filter(isPaidRestTx).reduce((s,t)=>s+t.egp,0);
 const restNetEGP=restIncEGP-restExpEGP;
+// حساب النشاطات (منفصل ومعلوماتي فقط — غير مضاف لصافي الربح، لأن مبلغ "On Room"
+// بالفعل بيتسجل كبند في فاتورة الغرفة نفسها ولو ضمّيناه هنا كمان هيتكرر)
+const daBksAll=(typeof DA_getBookings==="function"?DA_getBookings():[]);
+const daBksActive=daBksAll.filter(b=>b.status!=="cancelled");
+const actIncEGP=daBksActive.reduce((s,b)=>s+(Number(b.price)||0),0);
+const actCostEGP=daBksActive.reduce((s,b)=>s+(Number(b.costPrice)||0),0);
+const actNetEGP=actIncEGP-actCostEGP;
 // إيراد نقل المطار (منفصل عن صافي الإيرادات — معلومة فقط)
 const transferEGP=dbBookings.filter(b=>b.status!=="Cancelled"&&b.hasTransfer&&(b.transferPrice||0)>0).reduce((s,b)=>{
   const tp=b.transferPrice||0;
@@ -9008,6 +9016,80 @@ if(restSec){
       <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">🏆 ${ar?'أكثر عناصر مبيعاً':'Top Selling Items'}</div>
       ${topItemsHTML}
       `:''}
+    </div>`;
+  }
+}
+
+// ══ ACTIVITIES DASHBOARD SECTION ══
+// معلوماتي فقط: نفس منطق قسم المطعم بالظبط، بس بيانات من حجوزات النشاطات اليومية.
+// ملحوظة: لا يدخل في netEGP/صافي الربح — لأن مبلغ "On Room" محسوب أصلاً جوه فاتورة
+// الغرفة نفسها كـ roomCharge، وضمّه هنا كمان هيبقى تكرار (double counting).
+const actSec = document.getElementById("db-activities-section");
+if(actSec){
+  if(actIncEGP===0 && actCostEGP===0){
+    actSec.style.display="none";
+  } else {
+    actSec.style.display="";
+    const onRoomCount = daBksActive.filter(b=>b.payment==="On Room").length;
+    const onRoomEGP    = daBksActive.filter(b=>b.payment==="On Room").reduce((s,b)=>s+(Number(b.price)||0),0);
+    const otherCount   = daBksActive.length - onRoomCount;
+    const otherEGP     = actIncEGP - onRoomEGP;
+    // أكثر النشاطات حجزاً
+    const actMap = {};
+    daBksActive.forEach(b=>{
+      const key = b.actId || b.actNameAr || "—";
+      if(!actMap[key]) actMap[key]={nameAr:b.actNameAr||"—",nameEn:b.actNameEn||"",emoji:b.emoji||"🌅",count:0,total:0};
+      actMap[key].count += 1;
+      actMap[key].total += (Number(b.price)||0);
+    });
+    const topActs = Object.values(actMap).sort((a,b)=>b.total-a.total).slice(0,5);
+    const topActsHTML = topActs.length ? topActs.map((it,idx)=>{
+      const displayName = ar ? it.nameAr : (it.nameEn||it.nameAr);
+      const subName = ar ? (it.nameEn||'') : '';
+      return `
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);min-width:16px;text-align:center;">${idx+1}</span>
+        <span style="font-size:18px;">${it.emoji}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${displayName}${subName?' / '+subName:''}</div>
+          <div style="font-size:10px;color:var(--muted);">${it.count} ${ar?'حجز':'booking(s)'}</div>
+        </div>
+        <div style="text-align:left;">
+          <div style="font-size:13px;font-weight:700;color:#1abc9c;">£${it.total.toFixed(0)}</div>
+        </div>
+      </div>`;}).join("") :
+      `<div style="text-align:center;padding:18px;color:var(--muted);font-size:12px;">— ${ar?'لا توجد حجوزات نشاطات بعد':'No activity bookings yet'} —</div>`;
+
+    actSec.innerHTML = `
+    <div class="card" style="border-color:rgba(26,188,156,0.35);">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div class="ctitle" style="color:#1abc9c;margin-bottom:0;">🌅 ${ar?'حساب النشاطات':'Activities Account'}</div>
+        <button class="btn bsm" style="background:rgba(26,188,156,0.15);color:#1abc9c;border:1px solid rgba(26,188,156,0.35);" onclick="goPage('dailyactivity',null)">
+          ${ar?'تفاصيل النشاطات ›':'Activities Details ›'}
+        </button>
+      </div>
+      <!-- KPI Cards -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;">
+        <div style="text-align:center;padding:12px 8px;background:rgba(37,211,102,0.08);border-radius:10px;border:1px solid rgba(37,211,102,0.22);">
+          <div style="font-size:20px;font-weight:700;color:#4cda7a;">£${actIncEGP.toFixed(0)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;text-transform:uppercase;">${ar?'الدخل':'Income'}</div>
+        </div>
+        <div style="text-align:center;padding:12px 8px;background:rgba(231,76,60,0.08);border-radius:10px;border:1px solid rgba(231,76,60,0.22);">
+          <div style="font-size:20px;font-weight:700;color:#e74c3c;">£${actCostEGP.toFixed(0)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;text-transform:uppercase;">${ar?'تكلفة الشركات':'Company Cost'}</div>
+        </div>
+        <div style="text-align:center;padding:12px 8px;background:rgba(${actNetEGP>=0?'26,188,156':'231,76,60'},0.08);border-radius:10px;border:1px solid rgba(${actNetEGP>=0?'26,188,156':'231,76,60'},0.22);">
+          <div style="font-size:20px;font-weight:700;color:${actNetEGP>=0?'#1abc9c':'#e74c3c'};">£${actNetEGP.toFixed(0)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;text-transform:uppercase;">${ar?'الصافي':'Net'}</div>
+        </div>
+      </div>
+      <div style="background:rgba(26,188,156,0.06);border:1px solid rgba(26,188,156,0.2);border-radius:9px;padding:9px 14px;margin-bottom:12px;font-size:11px;color:var(--muted);line-height:1.6;">
+        ℹ️ ${ar
+          ?`هذا حساب معلوماتي منفصل عن صافي الربح — مبالغ "على الغرفة" (${onRoomCount} حجز · £${onRoomEGP.toFixed(0)}) محسوبة أصلاً في فاتورة الغرفة، والباقي (${otherCount} حجز · £${otherEGP.toFixed(0)}) كاش/طرق أخرى.`
+          :`This is an informational account, separate from Net Profit — "On Room" amounts (${onRoomCount} booking(s) · £${onRoomEGP.toFixed(0)}) are already counted in the room invoice; the rest (${otherCount} booking(s) · £${otherEGP.toFixed(0)}) is cash/other methods.`}
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">🏆 ${ar?'أكثر النشاطات حجزاً':'Top Booked Activities'}</div>
+      ${topActsHTML}
     </div>`;
   }
 }
@@ -18587,7 +18669,7 @@ function renderDA_PendingRequests(){
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border-radius:8px;padding:9px 12px;margin-top:7px;">
       <div style="min-width:0;">
         <div style="font-weight:700;font-size:13px;">${bkReqEsc(r.activity_name)}${r.activity_name_en?' <span style="color:var(--muted);font-weight:400;">/ '+bkReqEsc(r.activity_name_en)+'</span>':''}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;">🛏️ ${ar?'غرفة':'Room'} ${bkReqEsc(r.room)}${r.price?' · £'+r.price:''}${r.duration?' · ⏱️ '+bkReqEsc(r.duration):''} · ${new Date(r.created_at).toLocaleString(ar?'ar-EG':'en-GB',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">🛏️ ${ar?'غرفة':'Room'} ${bkReqEsc(r.room)}${r.persons?' · 👥 '+r.persons+(ar?' شخص':' pax'):''}${r.price?' · £'+r.price:''}${r.duration?' · ⏱️ '+bkReqEsc(r.duration):''} · ${new Date(r.created_at).toLocaleString(ar?'ar-EG':'en-GB',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})}</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;">
         <button class="btn bsm" style="background:rgba(76,218,122,0.15);color:#4cda7a;border:1px solid rgba(76,218,122,0.35);" onclick="markActReqHandled('${r.id}','approved')">✅ ${ar?'تم':'Done'}</button>
@@ -18893,7 +18975,7 @@ function updateDA_BookStatus(idx, status){
   if(status === "cancelled" && b.reqId && typeof doMarkActReq==='function') doMarkActReq(b.reqId, 'rejected');
   renderDA_Bookings();
   renderDA_Summary();
-  if(typeof renderDashActReqAlert==='function') renderDashActReqAlert();
+  if(typeof refreshDashActivityWidgets==='function') refreshDashActivityWidgets();
 }
 
 function deleteDA_Booking(idx){
@@ -18909,6 +18991,7 @@ function deleteDA_Booking(idx){
   if(bk && bk.reqId && typeof doMarkActReq==='function') doMarkActReq(bk.reqId, 'rejected');
   renderDA_Bookings();
   renderDA_Summary();
+  if(typeof refreshDashActivityWidgets==='function') refreshDashActivityWidgets();
 }
 
 function waDA_Supplier(idx){
@@ -33870,12 +33953,14 @@ async function pollBookingRequests(){
 //     created_at timestamptz default now(),
 //     room text, activity_name text, activity_name_en text,
 //     price numeric, duration text, status text default 'pending',
-//     activity_date timestamptz
+//     activity_date timestamptz, persons int default 1
 //   );
 //   alter table activity_requests enable row level security;
 //   create policy "anon insert" on activity_requests for insert to anon with check (true);
 //   create policy "anon select" on activity_requests for select to anon using (true);
 //   create policy "anon update" on activity_requests for update to anon using (true);
+//   -- ⚠️ لو الجدول موجود بالفعل من قبل، شغّل السطر ده مرة واحدة كمان عشان تضيف عمود عدد الأشخاص:
+//   alter table activity_requests add column if not exists persons int default 1;
 let _actReqCache = [];
 
 async function fetchActivityRequests(){
@@ -33930,7 +34015,7 @@ function renderDashActReqAlert(){
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-top:6px;">'+
       '<div style="min-width:0;">'+
         '<div style="font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+bkReqEsc(r.activity_name)+(r.activity_name_en?' / '+bkReqEsc(r.activity_name_en):'')+'</div>'+
-        '<div style="font-size:10.5px;color:var(--muted);">🛏️ '+bkReqEsc(r.room)+(r.price?' · £'+r.price:'')+'</div>'+
+        '<div style="font-size:10.5px;color:var(--muted);">🛏️ '+bkReqEsc(r.room)+(r.persons?' · 👥 '+r.persons:'')+(r.price?' · £'+r.price:'')+'</div>'+
       '</div>'+
       '<div style="display:flex;gap:6px;flex-shrink:0;">'+
         '<button class="btn bsm" style="background:rgba(76,218,122,0.15);color:#4cda7a;border:1px solid rgba(76,218,122,0.35);" onclick="markActReqHandled(\''+r.id+'\',\'approved\')">✅</button>'+
@@ -33945,7 +34030,7 @@ function renderDashActReqAlert(){
     return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-top:6px;">'+
       '<div style="min-width:0;">'+
         '<div style="font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+bkReqEsc(r.activity_name)+(r.activity_name_en?' / '+bkReqEsc(r.activity_name_en):'')+'</div>'+
-        '<div style="font-size:10.5px;color:var(--muted);">🛏️ '+bkReqEsc(r.room)+(r.price?' · £'+r.price:'')+'</div>'+
+        '<div style="font-size:10.5px;color:var(--muted);">🛏️ '+bkReqEsc(r.room)+(r.persons?' · 👥 '+r.persons:'')+(r.price?' · £'+r.price:'')+'</div>'+
       '</div>'+
       (meta?'<span style="font-size:10.5px;font-weight:700;color:'+meta.color+';flex-shrink:0;">'+meta.label+'</span>':'')+
     '</div>';
@@ -34063,6 +34148,9 @@ function DA_addBookingFromRequest(req, dateISO){
   if(typeof DA_getBookings!=='function' || typeof DA_saveBookings!=='function') return null;
   const d = dateISO ? dateISO.slice(0,10) : '';
   const t = dateISO ? dateISO.slice(11,16) : '';
+  const pp = Number(req.persons)||1;
+  const perPerson = Number(req.price)||0;
+  const totalPrice = perPerson * pp;
   const bk = {
     id: Date.now(),
     reqId: req.id,
@@ -34073,12 +34161,12 @@ function DA_addBookingFromRequest(req, dateISO){
     guestType: 'hotel',
     room: req.room || '',
     date: d, time: t,
-    persons: 1,
+    persons: pp,
     phone: getRoomGuestPhone(req.room) || '',
     notes: '',
     payment: 'On Room',
-    price: Number(req.price)||0, pricePerPerson: Number(req.price)||0,
-    costPrice: 0, costPerPerson: 0, profit: Number(req.price)||0,
+    price: totalPrice, pricePerPerson: perPerson,
+    costPrice: 0, costPerPerson: 0, profit: totalPrice,
     supplierName: '', supplierPhone: '',
     status: 'confirmed', stage: 'upcoming', settled: false,
     createdAt: new Date().toISOString(), source: 'guest_request'
@@ -34167,8 +34255,7 @@ function DA_setStage(idx, stage){
     );
   }
   if(typeof renderDA_Bookings==='function') renderDA_Bookings();
-  if(typeof renderOpsBoard==='function') renderOpsBoard();
-  if(typeof renderDashActReqAlert==='function') renderDashActReqAlert();
+  if(typeof refreshDashActivityWidgets==='function') refreshDashActivityWidgets();
 }
 
 // Deletes an activity booking straight from the Dashboard/Ops Board card (no delete
@@ -34184,9 +34271,8 @@ function opsDeleteActivityBooking(id){
   // Same reasoning as deleteDA_Booking: close the linked guest request out on the
   // server so the 24h reminder poll stops matching it and re-triggering the sound.
   if(bk && bk.reqId && typeof doMarkActReq==='function') doMarkActReq(bk.reqId, 'rejected');
-  if(typeof renderOpsBoard==='function') renderOpsBoard();
   if(typeof renderDailyActivity==='function') renderDailyActivity();
-  if(typeof renderDashActReqAlert==='function') renderDashActReqAlert();
+  if(typeof refreshDashActivityWidgets==='function') refreshDashActivityWidgets();
 }
 
 // Opens WhatsApp with a ready-made bilingual confirmation message to the guest once
@@ -34203,12 +34289,15 @@ function sendActivityConfirmWA(req, dateISO){
   const dt = dateISO ? new Date(dateISO) : null;
   const dateStr = dt ? fmtD(dateISO) : '';
   const timeStr = dt ? String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0') : '';
+  const pp = Number(req.persons)||1;
+  const priceLine = req.price ? `💰 £${req.price}${pp>1?' × '+pp+' = £'+(req.price*pp):''} ${ar?'':'per person'}\n` : '';
   const msg =
 `✅ *تأكيد حجز النشاط · Activity Booking Confirmed*
 
 🌅 ${req.activity_name||''}${req.activity_name_en?' / '+req.activity_name_en:''}
 🛏️ غرفة / Room ${req.room||''}
-${dateStr?`📅 ${dateStr}${timeStr?' — '+timeStr:''}\n`:''}${req.price?`💰 £${req.price}\n`:''}
+👥 ${pp} ${pp>1?'أشخاص / people':'شخص / person'}
+${dateStr?`📅 ${dateStr}${timeStr?' — '+timeStr:''}\n`:''}${priceLine}
 تم تأكيد حجزك، نشوفك قريب 🙏
 Your booking is confirmed, see you soon 🙏
 ${prop.name?('\n🏨 '+prop.name):''}${prop.phone?('\n📞 '+prop.phone):''}`;
@@ -34240,11 +34329,10 @@ async function pollActivityRequests(){
 function _actReqReminded(){ try{ return JSON.parse(localStorage.getItem('dta_actreq_reminded')||'[]'); }catch(e){ return []; } }
 function _actReqMarkReminded(ids){ try{ localStorage.setItem('dta_actreq_reminded', JSON.stringify(ids)); }catch(e){} }
 
-function checkActivityReminders(){
-  const ar = currentLang==='ar';
-  const reminded = _actReqReminded();
+// Builds the list shown in the "Activities within 24h" dashboard card.
+function _actReqUpcomingList(){
   const now = Date.now();
-  const upcoming = (_actReqCache||[]).filter(r=>{
+  return (_actReqCache||[]).filter(r=>{
     if(r.status!=='approved' || !r.activity_date) return false;
     // Require the linked Daily-Activity booking to still exist locally AND not be
     // cancelled. This way, deleting OR cancelling the activity stops the reminder
@@ -34258,6 +34346,23 @@ function checkActivityReminders(){
     const hoursLeft = (t-now)/3600000;
     return hoursLeft>0 && hoursLeft<=24;
   }).sort((a,b)=> new Date(a.activity_date)-new Date(b.activity_date));
+}
+
+// Re-renders every dashboard widget that shows activities (no sound / no notifications).
+// Call this after ANY local change to Daily-Activity bookings (delete, cancel, stage change)
+// so a removed activity disappears from the dashboard immediately instead of waiting
+// for the next 60s Supabase poll.
+function refreshDashActivityWidgets(){
+  try{ if(typeof renderDashActReqAlert==='function') renderDashActReqAlert(); }catch(e){ console.warn(e); }
+  try{ if(typeof renderDashActReqReminder==='function') renderDashActReqReminder(_actReqUpcomingList()); }catch(e){ console.warn(e); }
+  try{ if(typeof renderOpsBoard==='function') renderOpsBoard(); }catch(e){ console.warn(e); }
+}
+window.refreshDashActivityWidgets = refreshDashActivityWidgets;
+
+function checkActivityReminders(){
+  const ar = currentLang==='ar';
+  const reminded = _actReqReminded();
+  const upcoming = _actReqUpcomingList();
 
   const fresh = upcoming.filter(r=>!reminded.includes(String(r.id)));
   if(fresh.length){
@@ -40700,6 +40805,11 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
 .act-price{font-size:14px;font-weight:800;color:#1abc9c;margin:4px 0;}
 .act-dur{font-size:10px;color:var(--muted);}
 .act-desc{font-size:10px;color:var(--muted);line-height:1.5;margin:3px 0 6px;}
+.act-persons{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px 0 4px;}
+.act-persons-lbl{font-size:10px;color:var(--muted);}
+.act-persons-btn{width:26px;height:26px;border-radius:8px;border:1px solid rgba(26,188,156,0.4);background:rgba(26,188,156,0.08);color:var(--text);font-size:16px;line-height:1;cursor:pointer;font-weight:700;}
+.act-persons-btn:active{transform:scale(0.92);}
+.act-persons-val{min-width:20px;text-align:center;font-weight:800;font-size:13px;color:var(--text);}
 .act-wa{display:block;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;text-align:center;padding:10px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700;margin-top:4px;box-shadow:0 3px 10px rgba(37,211,102,0.2);}
 .act-wa:active{opacity:0.85;}
 </style>
@@ -40887,14 +40997,31 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
       clearTimeout(window._actToastTimer);
       window._actToastTimer = setTimeout(function(){ if(el.parentNode) el.remove(); }, 5000);
     };
-    window._reportActReq = async function(name, nameEn, price, duration, waUrl){
+    window._actPersonsStep = function(idx, delta){
+      var el = document.getElementById('act-p-'+idx);
+      if(!el) return;
+      var v = parseInt(el.textContent,10) || 1;
+      v = Math.max(1, Math.min(20, v + delta));
+      el.textContent = v;
+    };
+    window._reportActReq = async function(idx, name, nameEn, price, duration, waNum2){
+      var pEl = document.getElementById('act-p-'+idx);
+      var persons = pEl ? (parseInt(pEl.textContent,10) || 1) : 1;
+      var totalTxt = (price && persons>1) ? ' (£'+(price*persons)+' '+(persons>1?'total · إجمالي':'')+')' : '';
+      var waMsg='🎯 Activity Request / طلب نشاط — Room / غرفة ${room}\\n\\n'
+        +(name||'')+(nameEn?' / '+nameEn:'')+'\\n'
+        +'👥 Persons / عدد الأشخاص: '+persons+'\\n'
+        +(price?'💰 Price / السعر: £'+price+' per person / للفرد'+totalTxt+'\\n':'')
+        +(duration?'⏱️ Duration / المدة: '+duration+'\\n':'')
+        +'\\nI would like to book this · أرجو الحجز 🙏';
+      var waUrl = 'https://wa.me/'+waNum2+'?text='+encodeURIComponent(waMsg);
       var ok=false, detail='';
       try{
         var res = await fetch('${BKREQ_URL}/rest/v1/activity_requests', {
           method:'POST',
           keepalive:true,
           headers:{ apikey:'${BKREQ_KEY}', 'Authorization':'Bearer ${BKREQ_KEY}', 'Content-Type':'application/json', 'Prefer':'return=minimal' },
-          body: JSON.stringify({room:'${room}', activity_name:name, activity_name_en:nameEn||null, price:price||null, duration:duration||null, status:'pending'})
+          body: JSON.stringify({room:'${room}', activity_name:name, activity_name_en:nameEn||null, price:price||null, duration:duration||null, persons:persons, status:'pending'})
         });
         ok = res.ok;
         if(!ok){ try{ detail = await res.text(); }catch(e){} console.error('[activity request] HTTP '+res.status, detail); }
@@ -40903,19 +41030,14 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
       if(!ok && (window.location.search.indexOf('debug=1')>-1 || (window.location.protocol==='blob:'||window.location.protocol==='file:'||window.location.protocol==='content:'))){
         failMsg += '<br><span style="font-size:11px;font-weight:400;opacity:.8;direction:ltr;display:block;margin-top:6px;">'+String(detail).slice(0,200)+'</span>';
       }
+      var personsLbl = persons>1 ? (persons+' أشخاص · '+persons+' people') : (persons+' شخص · 1 person');
       window._actToast(ok
-        ? 'تم استلام طلبك بنجاح!<br><span style="font-size:12px;font-weight:400;opacity:.9;">سيتم التواصل معك من الاستقبال<br>Reception will contact you shortly</span>'
+        ? '🌅 تم إرسال طلب "'+(name||'')+'"<br><span style="font-size:12px;font-weight:400;opacity:.9;">👥 '+personsLbl+'<br>سيتم التواصل معك من الاستقبال قريباً<br>Reception will confirm with you shortly</span>'
         : failMsg, ok);
       if(waUrl) window.open(waUrl, '_blank');
     };
     grid.innerHTML=ACT.map(function(a,idx){
       var waNum2=(a.w||defWA).replace(/\D/g,'');
-      var waMsg='🎯 Activity Request / طلب نشاط — Room / غرفة ${room}\\n\\n'
-        +(a.n||'')+(a.ne?' / '+a.ne:'')+'\\n'
-        +(a.p?'💰 Price / السعر: £'+a.p+' per person / للفرد\\n':'')
-        +(a.d?'⏱️ Duration / المدة: '+a.d+'\\n':'')
-        +(a.ds?'📝 '+a.ds+'\\n':'')
-        +'\\nI would like to book this · أرجو الحجز 🙏';
       var priceHtml = a.p
         ? '<div class="act-price">£'+a.p+' <span style="font-size:10px;font-weight:400;color:var(--muted);">/ person · للفرد</span></div>'
         : '<div class="act-price" style="color:var(--muted);font-size:11px;">On request · السعر عند الطلب</div>';
@@ -40926,7 +41048,13 @@ body{background:linear-gradient(160deg,var(--bg1),var(--bg2),var(--bg3));color:v
         +'<span class="act-emoji">'+(a.e||'🎯')+'</span>'
         +'<div class="act-name">'+(a.n||'')+(a.ne?'<br><span class="act-name-en">'+a.ne+'</span>':'')+'</div>'
         +priceHtml+durHtml+descHtml
-        +'<a class="act-wa" href="javascript:void(0)" onclick="window._reportActReq(\\''+nSafe+'\\',\\''+neSafe+'\\','+(a.p||0)+',\\''+dSafe+'\\',\\'https://wa.me/'+waNum2+'?text='+encodeURIComponent(waMsg).replace(/'/g,'%27')+'\\')">💬 Book Now · احجز الآن</a>'
+        +'<div class="act-persons">'
+          +'<span class="act-persons-lbl">👥 عدد الأشخاص · Persons</span>'
+          +'<button type="button" class="act-persons-btn" onclick="window._actPersonsStep('+idx+',-1)">−</button>'
+          +'<span class="act-persons-val" id="act-p-'+idx+'">1</span>'
+          +'<button type="button" class="act-persons-btn" onclick="window._actPersonsStep('+idx+',1)">+</button>'
+        +'</div>'
+        +'<a class="act-wa" href="javascript:void(0)" onclick="window._reportActReq('+idx+',\\''+nSafe+'\\',\\''+neSafe+'\\','+(a.p||0)+',\\''+dSafe+'\\',\\''+waNum2+'\\')">💬 Book Now · احجز الآن</a>'
         +'</div>';
     }).join('');
   })();
