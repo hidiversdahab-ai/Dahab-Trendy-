@@ -4899,7 +4899,18 @@ style="width:100%;padding:9px 10px;border-radius:8px;border:2px solid rgba(155,8
 <select id="bm-method"><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Online</option></select>
 </div>
 <div class="fld"><label>💰 دفعة مقدمة / Prepaid (<span id="bm-psym">$</span>)</label>
-<input id="bm-prepay-input" type="number" min="0" value="0" placeholder="0" oninput="updateBMPrepay()">
+<div style="display:flex;gap:6px;">
+<select id="bm-prepay-pct" onchange="applyBMPrepayPct()" style="flex:0 0 90px;">
+<option value="custom">Custom</option>
+<option value="none">0%</option>
+<option value="1night">1 Night</option>
+<option value="10pct">10%</option>
+<option value="25pct">25%</option>
+<option value="50pct">50%</option>
+<option value="100pct">100%</option>
+</select>
+<input id="bm-prepay-input" type="number" min="0" value="0" placeholder="0" oninput="bmPrepayManual();updateBMPrepay()" style="flex:1;min-width:0;">
+</div>
 </div>
 <div class="fld"><label>طريقة الدفع المقدم / Prepaid Via</label>
 <select id="bm-prepay-method"><option value="Cash">💵 كاش / Cash</option><option value="Bank Transfer">🏦 تحويل بنكي</option><option value="Card">💳 بطاقة</option><option value="Online">🌐 Online</option></select>
@@ -7448,6 +7459,14 @@ style="flex:1;padding:8px 6px;border-radius:8px;border:2px solid rgba(201,168,76
 </div>
 </div>
 <script>
+// FIX: bkReqEsc كان متعرّف في سكريبت تاني لاحق في الملف، فلو الصفحة نادت عليه
+// أثناء التحميل (addInvRoom -> buildPreview -> polToHtml) قبل ما السكريبت التاني يتنفذ،
+// كان بيرمي ReferenceError ويوقف باقي كود السكريبت ده (ومن ضمنه تعريف
+// proceedDespiteBlacklist) عن التنفيذ، وده اللي كان بيسبب رسالة الخطأ عند الحفظ.
+// بنعرّفه هنا بدري عشان يبقى متاح قبل أي استخدام.
+function bkReqEsc(s){
+  return (s||'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
 // ═══════════ DATA ═══════════
 const _licHotelInfo = (function(){ try{ return JSON.parse(localStorage.getItem('_sys_lic_hotel')); }catch(e){ return null; } })();
 const PROP = {
@@ -10099,6 +10118,7 @@ const existPaid=calcPaid(b);
 document.getElementById("bm-prepay-input").value=existPaid||0;
 document.getElementById("bm-prepay").value=existPaid||0;
 document.getElementById("bm-psym").textContent=b.cur==="EGP"?"£":b.cur==="EUR"?"€":"$";
+if(document.getElementById("bm-prepay-pct")) document.getElementById("bm-prepay-pct").value="custom";
 // Linked booking
 var lw=document.getElementById("bm-linked-wrap");
 var lid=document.getElementById("bm-linked-id");
@@ -10127,6 +10147,7 @@ document.getElementById("bm-bf").checked=true;
 document.getElementById("bm-prepay-input").value=0;
 document.getElementById("bm-prepay").value=0;
 document.getElementById("bm-psym").textContent="$";
+if(document.getElementById("bm-prepay-pct")) document.getElementById("bm-prepay-pct").value="custom";
 document.getElementById("bm-calc").textContent="Select dates to calculate";
 document.getElementById("bm-dayuse").checked=false;
 document.getElementById("bm-walkin").checked=false;
@@ -10158,6 +10179,14 @@ showBMRoomPhoto();
 document.getElementById("bk-modal").classList.add("on");
 }
 function saveBM(){
+try{
+saveBM_inner();
+}catch(err){
+console.error("saveBM error:",err);
+alert("⚠️ حصل خطأ أثناء الحفظ ولم يتم حفظ الحجز:\n"+(err&&err.message?err.message:err)+"\n\nصوّر الرسالة دي وابعتها لو المشكلة استمرت.");
+}
+}
+function saveBM_inner(){
 // اقرأ بيانات الضيف الرئيسي من الصفوف الجديدة
 syncMainGuest();
 const allGuests = collectAllGuestData();
@@ -10217,7 +10246,7 @@ const msg=isPast
 const fix=confirm(msg);
 if(!fix) return;
 bookings[conflictIdx].co=ci;
-saveData();
+sv("dta_bk",bookings);
 }
 }
 }
@@ -16780,7 +16809,7 @@ function saveGrpBooking(){
     bookings.push(bk);
     added++;
   });
-  saveData();
+  sv("dta_bk",bookings);
   sNotify('✅ تم الحفظ',`تم إضافة ${added} حجز للجروب ${grpId}${d.commission>0?' (شامل الكوميشن في الإيرادات)':''}`,'success',3000);
 }
 
@@ -16880,7 +16909,7 @@ function doConvertGrp(roomNums){
     });
     added++;
   });
-  saveData();
+  sv("dta_bk",bookings);
   sNotify('✅ تم التحويل',`تم إضافة ${added} حجز (${grpId}) إلى Bookings`,'success',3000);
   setTimeout(()=>goPage('bookings', document.querySelector('.nb[onclick*="bookings"]')), 600);
 }
@@ -17417,7 +17446,7 @@ if(customP>0) bookings[fixCOIdx].customPrice=customP;
 if(bookings[fixCOIdx].nightPrices&&bookings[fixCOIdx].nightPrices.length>0){
 bookings[fixCOIdx].nightPrices=bookings[fixCOIdx].nightPrices.filter(x=>x.date>=b.ci&&x.date<newCO);
 }
-saveData();
+sv("dta_bk",bookings);
 renderBookings();
 renderRooms();
 renderDashboard();
@@ -18298,6 +18327,41 @@ const el=document.getElementById("export-reminder");
 if(el) el.remove();
 }
 // ═══════════ PREPAID UPDATE ═══════════
+function bmCalcTotal(){
+const isDU=document.getElementById("bm-dayuse").checked;
+const ci=document.getElementById("bm-ci").value;
+const co=document.getElementById("bm-co").value;
+const type=document.getElementById("bm-type").value;
+const cur=document.getElementById("bm-cur").value;
+const n=isDU?0:nts(ci,co);
+const p=isDU?(duPrices[type]||{usd:0,egp:0,eur:0}):(prices[type]||{usd:0,egp:0,eur:0});
+const baseRate=cur==="USD"?p.usd:cur==="EUR"?(p.eur||p.usd):p.egp;
+const customP=parseFloat(document.getElementById("bm-customprice").value)||0;
+const rate=customP>0?customP:baseRate;
+const nightTotal=(!isDU&&nightPrices.length===n&&n>0)?nightPrices.reduce((s,x)=>s+x.price,0):(rate*n);
+const grossTotal=isDU?rate:nightTotal;
+const commAmt=parseFloat(document.getElementById("bm-commission-amount")?.value)||0;
+const total=commAmt>0?grossTotal-commAmt:grossTotal;
+return {total,n};
+}
+function bmPrepayManual(){
+const sel=document.getElementById("bm-prepay-pct");
+if(sel) sel.value="custom";
+}
+function applyBMPrepayPct(){
+const sel=document.getElementById("bm-prepay-pct").value;
+if(sel==="custom"){ updateBMPrepay(); return; }
+const {total,n}=bmCalcTotal();
+let amt=0;
+if(sel==="none") amt=0;
+else if(sel==="1night") amt = n>0 ? total/n : 0;
+else if(sel==="10pct") amt=total*0.10;
+else if(sel==="25pct") amt=total*0.25;
+else if(sel==="50pct") amt=total*0.50;
+else if(sel==="100pct") amt=total;
+document.getElementById("bm-prepay-input").value = amt>0 ? amt.toFixed(2) : 0;
+updateBMPrepay();
+}
 function updateBMPrepay(){
 const cur=document.getElementById("bm-cur").value;
 const symMap={USD:"$",EGP:"£",EUR:"€"};
@@ -25898,13 +25962,14 @@ function checkBlacklist(name, idno, exactOnly){
   const n = name.trim().toLowerCase();
 
   // 2) تطابق تام بالاسم
-  const exact = blacklist.find(b=> b.name.trim().toLowerCase()===n);
+  const exact = blacklist.find(b=> b.name && b.name.trim().toLowerCase()===n);
   if(exact) return { entry:exact, matchType:'exact', score:100 };
 
   // 3) Fuzzy — بس عند الحجز الجديد مش في عرض الكروت
   if(!exactOnly){
     let best = null, bestScore = 999;
     for(const b of blacklist){
+      if(!b || !b.name) continue;
       const bn = b.name.trim().toLowerCase();
       const longer = Math.max(n.length, bn.length);
       if(longer === 0) continue;
@@ -36889,6 +36954,7 @@ checkStorageUsage = function(){
 // ═══════════════════════════════════════════════════════════
 const DTA_WORKER = (function(){
   const workerCode = `
+function isPaidExpense(e){ return !((e.paid||"").includes("آجل")); }
 self.onmessage = function(e){
   const {type, payload} = e.data;
 
