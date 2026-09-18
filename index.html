@@ -44478,3 +44478,167 @@ window.ownerTxSave            = ownerTxSave;
   }
 })();
 </script>
+<script>
+// ══════════════════════════════════════════════════════════════════
+// ══ BACK BUTTON — زر رجوع ظاهر + دعم زر/إيماءة الرجوع (موبايل + متصفح) ══
+// الملف كان بيبدّل الصفحات بالـ classList بس من غير ما يسجّل أي خطوة في
+// history، فكان زر الرجوع في أندرويد/كروم بيطلع من الموقع كله.
+// الكود ده مستقل: ما بيلمسش goPage ولا bnGo، بيراقب الصفحة المفتوحة بس.
+//  • رجوع وفي نافذة (مودال) مفتوحة  → بيقفل النافذة
+//  • رجوع من غير نوافذ              → بيرجع للصفحة اللي قبلها
+//  • رجوع وانت في أول صفحة          → تنبيه "اضغط مرة تانية للخروج"
+//  • شريط "رجوع" أعلى الصفحة        → بيظهر لما يكون في صفحة سابقة ترجعلها
+// ══════════════════════════════════════════════════════════════════
+(function(){
+  if(window._dtaBackInit) return;
+  window._dtaBackInit = true;
+  if(!window.history || !history.pushState) return;
+
+  var _last = null;          // آخر صفحة مسجّلة
+  var _idx = 1;              // ترتيب الخطوة الحالية (0 = أساس، 1 = أول صفحة)
+  var _exitArmedAt = 0;      // وقت أول ضغطة رجوع في الصفحة الأولى
+  var _timer = null;
+  var _bar = null;
+
+  function curPage(){
+    var p = document.querySelector('.page.on');
+    return p ? p.id.replace(/^page-/, '') : 'dashboard';
+  }
+
+  function topModal(){
+    var list = Array.prototype.slice.call(document.querySelectorAll('.ovl.on'));
+    if(!list.length) return null;
+    var best = list[0], bz = -1;
+    list.forEach(function(m){
+      var z = parseInt(getComputedStyle(m).zIndex, 10) || 0;
+      if(z >= bz){ bz = z; best = m; }
+    });
+    return best;
+  }
+
+  function syncNav(id){
+    // الشريط العلوي (ديسكتوب)
+    document.querySelectorAll('.nb').forEach(function(b){
+      var oc = b.getAttribute('onclick') || '';
+      if(oc.indexOf("goPage('" + id + "'") !== -1) b.classList.add('act');
+    });
+    // الشريط السفلي (موبايل)
+    if(typeof BN_PAGE_MAP !== 'undefined'){
+      document.querySelectorAll('#bottom-nav .bn-item').forEach(function(b){ b.classList.remove('act'); });
+      Object.keys(BN_PAGE_MAP).forEach(function(k){
+        if(BN_PAGE_MAP[k] === id){
+          var el = document.getElementById(k);
+          if(el) el.classList.add('act');
+        }
+      });
+    }
+  }
+
+  // ── الشريط الظاهر ──
+  function buildBar(){
+    var css = document.createElement('style');
+    css.textContent =
+      '#dta-back-bar{display:none;position:sticky;top:0;z-index:950;padding:6px 12px;' +
+        'background:rgba(10,12,24,0.94);border-bottom:1px solid rgba(201,168,76,0.25);' +
+        'backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}' +
+      '#dta-back-bar.show{display:flex;justify-content:flex-start;}' +
+      '#dta-back-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;' +
+        'background:rgba(201,168,76,0.12);color:#c9a84c;border:1px solid rgba(201,168,76,0.4);' +
+        'border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;font-family:Arial,sans-serif;' +
+        '-webkit-tap-highlight-color:transparent;}' +
+      '#dta-back-btn:active{background:rgba(201,168,76,0.28);}' +
+      '#dta-back-btn .dta-arr::before{content:"\\2190";font-size:16px;line-height:1;}' +
+      'html[dir="rtl"] #dta-back-btn .dta-arr::before{content:"\\2192";}';
+    document.head.appendChild(css);
+
+    _bar = document.createElement('div');
+    _bar.id = 'dta-back-bar';
+    _bar.innerHTML =
+      '<button id="dta-back-btn" type="button">' +
+        '<span class="dta-arr"></span>' +
+        '<span class="t" data-ar="رجوع" data-en="Back">' +
+          ((typeof isEn === 'function' && isEn()) ? 'Back' : 'رجوع') +
+        '</span>' +
+      '</button>';
+    var firstPage = document.querySelector('.page');
+    if(firstPage && firstPage.parentNode) firstPage.parentNode.insertBefore(_bar, firstPage);
+    else document.body.insertBefore(_bar, document.body.firstChild);
+    _bar.querySelector('#dta-back-btn').addEventListener('click', function(){
+      if(_idx > 1) history.back();
+    });
+  }
+
+  function updateBar(){
+    if(_bar) _bar.classList.toggle('show', _idx > 1);
+  }
+
+  function restore(id){
+    try{
+      if(typeof window.goPage === 'function') window.goPage(id, null);
+    }catch(err){ console.warn('[back] goPage failed:', err); }
+    _last = curPage();          // قبل ما المراقب يشتغل، عشان ما يسجّلش خطوة جديدة
+    syncNav(_last);
+    window.scrollTo(0, 0);
+  }
+
+  function onPageChange(){
+    var now = curPage();
+    if(now === _last) return;
+    _last = now;
+    _idx++;
+    history.pushState({ dtaPage: now, dtaIdx: _idx }, '');
+    updateBar();
+  }
+
+  // نبدأ: خطوة أساس + خطوة للصفحة الحالية (عشان الرجوع دايماً يطلّع popstate)
+  _last = curPage();
+  history.replaceState({ dtaBase: true, dtaIdx: 0 }, '');
+  history.pushState({ dtaPage: _last, dtaIdx: 1 }, '');
+  buildBar();
+  updateBar();
+
+  // مراقبة تغيّر الصفحة المفتوحة مهما كانت الطريقة (goPage / bnGo / غيرهم)
+  var mo = new MutationObserver(function(){
+    clearTimeout(_timer);
+    _timer = setTimeout(onPageChange, 0);
+  });
+  document.querySelectorAll('.page').forEach(function(p){
+    mo.observe(p, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  window.addEventListener('popstate', function(e){
+    var st = e.state || {};
+
+    // 1) في نافذة مفتوحة → اقفلها وابقى في نفس الصفحة
+    var m = topModal();
+    if(m){
+      m.classList.remove('on');
+      history.pushState({ dtaPage: _last, dtaIdx: _idx }, '');
+      return;
+    }
+
+    // 2) وصلنا لخطوة الأساس = أول صفحة → تأكيد الخروج
+    if(st.dtaBase || !st.dtaPage){
+      var now = Date.now();
+      if(now - _exitArmedAt < 2000){
+        _exitArmedAt = 0;
+        history.back();          // خروج فعلي
+        return;
+      }
+      _exitArmedAt = now;
+      history.pushState({ dtaPage: _last, dtaIdx: _idx }, '');
+      if(typeof showToast === 'function'){
+        var en = (typeof isEn === 'function') ? isEn() : (document.documentElement.lang === 'en');
+        showToast(en ? 'Press back again to exit' : 'اضغط رجوع مرة تانية للخروج');
+      }
+      return;
+    }
+
+    // 3) رجوع عادي لصفحة سابقة
+    _exitArmedAt = 0;
+    _idx = st.dtaIdx || 1;
+    restore(st.dtaPage);
+    updateBar();
+  });
+})();
+</script>
