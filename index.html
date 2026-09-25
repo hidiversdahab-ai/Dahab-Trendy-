@@ -14482,6 +14482,7 @@ const fullHtml = "<!DOCTYPE html><html><head><meta charset='utf-8'>"
   + "function fitAndPrint(){"
   // 262mm بدل ما نعتمد على A4 بس، عشان نسيب مساحة أمان كافية حتى لو المتصفح/الطابعة استخدم ورق Letter (أقصر من A4).
   + "var el=document.getElementById('print-scale');"
+  + "el.style.marginLeft='auto';el.style.marginRight='auto';"
   + "var mmToPx=96/25.4;var pageHpx=262*mmToPx;var contentHpx=el.scrollHeight;"
   + "if(contentHpx>pageHpx){var s=pageHpx/contentHpx;el.style.zoom=s;}"
   + "document.body.style.height='279mm';document.body.style.overflow='hidden';"
