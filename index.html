@@ -324,7 +324,7 @@ select option{background:#1a1a2e;color:var(--text)}
 .invp-tr{display:flex;justify-content:space-between;font-size:9.8px;padding:2.5px 0;color:#57574c;font-weight:500;}
 .invp-tr.grd{border-top:1.5px solid #123f34;padding-top:7px;margin-top:5px;font-size:13px;font-weight:700;color:#122820;background:none;padding:7px 2px 0 2px;border-radius:0;font-family:Georgia,'Iowan Old Style',serif;}
 .invp-tr.grd span:last-child{color:#145c46;font-size:18px;font-weight:700;}
-.invp-pol{background:linear-gradient(135deg,#f8f6ee,#f2efdf);padding:7px 11px;border-radius:7px;margin-bottom:8px;font-size:8.5px;color:#65614f;border:1px solid #e7e0d0;border-left:3px solid #145c46;page-break-inside:avoid;}
+.invp-pol{background:linear-gradient(135deg,#f8f6ee,#f2efdf);padding:9px 12px 8px;border-radius:7px;margin-bottom:8px;font-size:8.7px;color:#4d4a3d;border:1px solid #e7e0d0;border-left:3px solid #145c46;page-break-inside:avoid;}.invp-pol-ttl{font-family:Georgia,'Iowan Old Style',serif;font-style:italic;font-weight:700;font-size:10.5px;color:#145c46;border-bottom:1px solid #e2dbc8;padding-bottom:4px;margin-bottom:5px;letter-spacing:0.2px;}.invp-pol ul{list-style:none;margin:0;padding:0;}.invp-pol li{position:relative;padding:2px 0 2px 13px;line-height:1.5;}.invp-pol li[dir='rtl']{padding:2px 13px 2px 0;}.invp-pol li::before{content:'\2022';position:absolute;left:0;top:2px;color:#b8763f;font-weight:700;}.invp-pol li[dir='rtl']::before{left:auto;right:0;}.invp-pol p{margin:3px 0;line-height:1.5;}
 .invp-sig2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0 12px;page-break-inside:avoid;}
 .invp-sig2 div{border-top:1.5px solid #d9d2bf;padding-top:6px;text-align:center;font-size:8.8px;color:#867e6a;}
 .invp-sig2 b{display:block;font-size:10px;color:#122820;margin-bottom:2px;font-weight:700;}
@@ -13966,13 +13966,33 @@ const ssc=d.status==="Paid"?"background:#d4edda;color:#155724;":"background:#fff
 // per-line dir='rtl'/dir='ltr' approach already used for Terms & Conditions.
 function polToHtml(text){
   if(!text) return "";
-  return String(text).split(/\n\s*\n/).map(function(p){
-    const isAr = /[\u0600-\u06FF]/.test(p);
-    return "<div dir='"+(isAr?"rtl":"ltr")+"' style='margin-top:3px;'>"+bkReqEsc(p).replace(/\n/g,"<br>")+"</div>";
-  }).join("");
+  // كل سطر يبدأ بـ • بيتحول لعنصر قائمة منسق، وأي سطر عادي بيتحول لفقرة.
+  // اتجاه كل سطر (عربي/إنجليزي) بيتظبط لوحده حسب حروفه.
+  const lines=String(text).split(/\n/);
+  let html="", buf=[];
+  function flush(){
+    if(!buf.length) return;
+    html+="<ul>"+buf.map(function(l){
+      const isAr=/[\u0600-\u06FF]/.test(l);
+      return "<li dir='"+(isAr?"rtl":"ltr")+"'>"+bkReqEsc(l.replace(/^\s*[•\-]\s*/,""))+"</li>";
+    }).join("")+"</ul>";
+    buf=[];
+  }
+  lines.forEach(function(raw){
+    const l=raw.trim();
+    if(!l){ return; }
+    if(/^[•\-]\s*/.test(l)){ buf.push(l); }
+    else{
+      flush();
+      const isAr=/[\u0600-\u06FF]/.test(l);
+      html+="<p dir='"+(isAr?"rtl":"ltr")+"'>"+bkReqEsc(l)+"</p>";
+    }
+  });
+  flush();
+  return html;
 }
-const bkPolHtml=policies.bktext?"<div class='invp-pol'><strong>"+(policies.bktitle||"Booking Policy")+":</strong>"+polToHtml(policies.bktext)+"</div>":"";
-const polHtml=policies.text?"<div class='invp-pol'><strong>"+(policies.title||"Cancellation Policy")+":</strong>"+polToHtml(policies.text)+"</div>":"";
+const bkPolHtml=policies.bktext?"<div class='invp-pol'><div class='invp-pol-ttl'>\ud83d\udccb "+(policies.bktitle||"Booking Policy")+"</div>"+polToHtml(policies.bktext)+"</div>":"";
+const polHtml=policies.text?"<div class='invp-pol'><div class='invp-pol-ttl'>\ud83d\udcdc "+(policies.title||"Cancellation Policy")+"</div>"+polToHtml(policies.text)+"</div>":"";
 const tncCheckIn = getQRTimes().ci;
 const tncCheckOut = getQRTimes().co;
 const tncHtml = "<div class='invp-pol' style='border-left-color:#8a7a5c;'><strong>Terms & Conditions / الشروط والأحكام:</strong><ul style='margin:4px 0 0;padding-left:14px;padding-right:14px;'>"+
