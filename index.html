@@ -14257,7 +14257,7 @@ tncHtml+
 "<div class='invp-ftr2-contact'><span dir='ltr' style='unicode-bidi:plaintext;'>"+DTA_BC(d.branchId).phone+"</span> · "+DTA_BC(d.branchId).email+"</div>"+
 "</div>"+
 "<div class='invp-ftr2-qr'>"+
-"<img loading='lazy' decoding='async' src='https://api.qrserver.com/v1/create-qr-code/?size=110x110&margin=0&data="+encodeURIComponent("INV:"+curInvNo+" | "+DTA_BC(d.branchId).name+" | "+DTA_BC(d.branchId).phone)+"'>"+
+"<img decoding='async' src='https://api.qrserver.com/v1/create-qr-code/?size=110x110&margin=0&data="+encodeURIComponent("INV:"+curInvNo+" | "+DTA_BC(d.branchId).name+" | "+DTA_BC(d.branchId).phone)+"'>"+
 "<div>Scan to verify</div>"+
 "</div>"+
 "</div>"+
@@ -14471,14 +14471,24 @@ const fullHtml = "<!DOCTYPE html><html><head><meta charset='utf-8'>"
   + previewHTML
   + "</div>"
   + "<script>(function(){"
+  + "function waitImages(cb){"
+  + "var imgs=Array.prototype.slice.call(document.images);"
+  + "if(!imgs.length) return cb();"
+  + "var left=imgs.length;var done=false;"
+  + "function one(){ if(done) return; left--; if(left<=0){ done=true; cb(); } }"
+  + "imgs.forEach(function(im){ im.loading='eager'; if(im.complete){ one(); } else { im.addEventListener('load',one); im.addEventListener('error',one); } });"
+  + "setTimeout(function(){ if(!done){ done=true; cb(); } },1500);"
+  + "}"
   + "function fitAndPrint(){"
+  // 262mm بدل ما نعتمد على A4 بس، عشان نسيب مساحة أمان كافية حتى لو المتصفح/الطابعة استخدم ورق Letter (أقصر من A4).
   + "var el=document.getElementById('print-scale');"
-  + "var mmToPx=96/25.4;var pageHpx=274*mmToPx;var contentHpx=el.scrollHeight;"
+  + "var mmToPx=96/25.4;var pageHpx=262*mmToPx;var contentHpx=el.scrollHeight;"
   + "if(contentHpx>pageHpx){var s=pageHpx/contentHpx;el.style.zoom=s;}"
-  + "document.body.style.height='287mm';document.body.style.overflow='hidden';"
+  + "document.body.style.height='279mm';document.body.style.overflow='hidden';"
   + "setTimeout(function(){window.focus();window.__dtaPrinted=true;window.print();},150);"
   + "}"
-  + "if(document.readyState==='complete'){fitAndPrint();}else{window.addEventListener('load',fitAndPrint);}"
+  + "function go(){ waitImages(fitAndPrint); }"
+  + "if(document.readyState==='complete'){go();}else{window.addEventListener('load',go);}"
   + "})();<\/script>"
   + "</body></html>";
 // إزالة أي iframe قديم
